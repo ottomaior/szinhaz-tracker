@@ -107,7 +107,7 @@ export default function ProfileScreen() {
             <View style={styles.grid}>
               {diary.map((p) => (
                 <Pressable key={p.id} style={styles.gridItem} onPress={() => router.push(`/play/${p.id}`)}>
-                  <PosterPlaceholder uri={p.posterUrl} height={88} radius={6} />
+                  <PosterPlaceholder uri={p.posterUrl} height="100%" radius={6} />
                 </Pressable>
               ))}
             </View>
@@ -180,6 +180,6 @@ const styles = StyleSheet.create({
   tabItem: { paddingBottom: 10 },
   tabItemActive: { borderBottomWidth: 2, borderBottomColor: colors.gold },
   grid: { marginTop: 14, flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  gridItem: { width: "23%" },
+  gridItem: { width: "23%", aspectRatio: 2 / 3 },
   emptyState: { marginTop: 24, alignItems: "center", paddingVertical: 30 },
 });

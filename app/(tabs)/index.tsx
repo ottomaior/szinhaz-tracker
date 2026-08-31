@@ -142,7 +142,7 @@ function WatchlistCard({ entry, onOpenPlay }: { entry: WatchlistEntry; onOpenPla
         </View>
       </View>
       <Pressable onPress={() => onOpenPlay(play.id)} style={styles.rowGap12}>
-        <PosterPlaceholder uri={play.posterUrl} width={64} height={88} />
+        <PosterPlaceholder uri={play.posterUrl} width={64} height={96} />
         <View style={{ gap: 3 }}>
           <Text style={{ fontFamily: displayFont(fontsLoaded, "semibold"), fontSize: 16, color: colors.text }}>{play.title}</Text>
           <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 11.5, color: colors.textDim }}>{venue?.name}</Text>

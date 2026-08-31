@@ -42,10 +42,12 @@ export function IconButton({
   onPress,
   children,
   translucent = false,
+  active = false,
 }: {
   onPress?: () => void;
   children: React.ReactNode;
   translucent?: boolean;
+  active?: boolean;
 }) {
   return (
     <Pressable
@@ -53,6 +55,7 @@ export function IconButton({
       style={[
         styles.iconBtn,
         translucent ? styles.iconBtnTranslucent : styles.iconBtnSolid,
+        active && styles.iconBtnActive,
       ]}
     >
       <View>{children}</View>
@@ -90,5 +93,9 @@ const styles = StyleSheet.create({
   iconBtnSolid: {
     borderWidth: 1,
     borderColor: colors.hairline,
+  },
+  iconBtnActive: {
+    backgroundColor: colors.gold,
+    borderColor: colors.gold,
   },
 });

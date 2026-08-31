@@ -18,7 +18,7 @@ export function PosterPlaceholder({
 }: {
   uri?: string;
   width?: DimensionValue;
-  height?: number;
+  height?: DimensionValue;
   radius?: number;
 }) {
   const [failed, setFailed] = useState(false);

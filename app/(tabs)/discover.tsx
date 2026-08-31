@@ -146,7 +146,7 @@ function PremiereCard({ play, onPress }: { play: Play; onPress: () => void }) {
 
   return (
     <Pressable onPress={onPress} style={{ width: 112, gap: 6 }}>
-      <PosterPlaceholder uri={play.posterUrl} height={158} radius={8} />
+      <PosterPlaceholder uri={play.posterUrl} height={168} radius={8} />
       <Text numberOfLines={2} style={{ fontFamily: bodyFont(fontsLoaded, "semibold"), fontSize: 12.5, color: colors.text, lineHeight: 16 }}>
         {play.title}
       </Text>
@@ -164,8 +164,8 @@ function TrendingCard({ play, onPress }: { play: Play; onPress: () => void }) {
 
   return (
     <Pressable onPress={onPress} style={{ width: "47.5%", gap: 6 }}>
-      <View style={{ height: 150 }}>
-        <PosterPlaceholder uri={play.posterUrl} height={150} radius={8} />
+      <View style={{ aspectRatio: 2 / 3 }}>
+        <PosterPlaceholder uri={play.posterUrl} height="100%" radius={8} />
         <View style={styles.ratingBadge}>
           <MaskIcon state="on" size={11} />
           <Text style={{ fontFamily: bodyFont(fontsLoaded, "bold"), fontSize: 10.5, color: colors.gold }}>

@@ -228,6 +228,21 @@ export async function getWatchlist(): Promise<{ play: Play; addedAt: string }[]>
     .filter((x): x is { play: Play; addedAt: string } => !!x);
 }
 
+export async function isInWatchlist(playId: string): Promise<boolean> {
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
+  if (!authUser) return false;
+  const { data, error } = await supabase
+    .from("watchlist_entries")
+    .select("play_id")
+    .eq("play_id", playId)
+    .eq("user_id", authUser.id)
+    .maybeSingle();
+  if (error) throw error;
+  return !!data;
+}
+
 export async function addToWatchlist(playId: string): Promise<void> {
   const {
     data: { user: authUser },

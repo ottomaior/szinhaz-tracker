@@ -4,7 +4,8 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
 import { bodyFont, displayFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
-import { getPlayById, getReviewsForPlay, getUserById, getVenueById } from "@/services/playsService";
+import { addToWatchlist, getPlayById, getReviewsForPlay, getUserById, getVenueById, isInWatchlist, removeFromWatchlist } from "@/services/playsService";
+import { useAuth } from "@/contexts/AuthContext";
 import type { Play, Review, User, Venue } from "@/data/types";
 import { IconButton, Button } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
@@ -18,10 +19,13 @@ export default function PlayDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const fontsLoaded = useAppFonts();
+  const { session } = useAuth();
   const [play, setPlay] = useState<Play>();
   const [venue, setVenue] = useState<Venue>();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loadFailed, setLoadFailed] = useState(false);
+  const [inWatchlist, setInWatchlist] = useState(false);
+  const [watchlistBusy, setWatchlistBusy] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -40,6 +44,34 @@ export default function PlayDetailScreen() {
       .catch(() => setLoadFailed(true));
     getReviewsForPlay(id).then(setReviews);
   }, [id]);
+
+  useEffect(() => {
+    if (!id || !session) {
+      setInWatchlist(false);
+      return;
+    }
+    isInWatchlist(id).then(setInWatchlist);
+  }, [id, session]);
+
+  async function toggleWatchlist() {
+    if (!play || watchlistBusy) return;
+    if (!session) {
+      router.push("/sign-in");
+      return;
+    }
+    setWatchlistBusy(true);
+    try {
+      if (inWatchlist) {
+        await removeFromWatchlist(play.id);
+        setInWatchlist(false);
+      } else {
+        await addToWatchlist(play.id);
+        setInWatchlist(true);
+      }
+    } finally {
+      setWatchlistBusy(false);
+    }
+  }
 
   if (loadFailed) {
     return (
@@ -125,8 +157,8 @@ export default function PlayDetailScreen() {
               style={{ flex: 1 }}
               onPress={() => router.push({ pathname: "/checkin", params: { playId: play.id } })}
             />
-            <IconButton onPress={() => {}}>
-              <TicketIcon size={18} color={colors.text} />
+            <IconButton onPress={toggleWatchlist} active={inWatchlist}>
+              <TicketIcon size={18} color={inWatchlist ? colors.bg : colors.text} />
             </IconButton>
           </View>
 

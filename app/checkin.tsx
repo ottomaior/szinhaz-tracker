@@ -110,7 +110,7 @@ export default function CheckInScreen() {
 
       <ScrollView contentContainerStyle={{ padding: 20, gap: 18, paddingBottom: 40 }}>
         <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
-          <PosterPlaceholder uri={play.posterUrl} width={44} height={60} radius={6} />
+          <PosterPlaceholder uri={play.posterUrl} width={44} height={66} radius={6} />
           <View>
             <Text style={{ fontFamily: displayFont(fontsLoaded, "semibold"), fontSize: 17, color: colors.text }}>{play.title}</Text>
             <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 11.5, color: colors.textFaint }}>{venue?.name}</Text>
