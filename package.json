@@ -8,6 +8,7 @@
     "web": "expo start --web",
     "ios": "expo start --ios",
     "android": "expo start --android",
+    "build": "expo build:web",
     "build:web": "expo build:web",
     "lint": "expo lint"
   },
