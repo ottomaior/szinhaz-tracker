@@ -1,4 +1,8 @@
-FROM node:20-alpine AS build
+# Node 22+ required: @supabase/supabase-js needs native WebSocket support,
+# which Node 20 doesn't have — `expo export` executes app code (including
+# the Supabase client) during static rendering, so the build itself would
+# crash on Node 20, the same way the sync job did on the GitHub Actions runner.
+FROM node:22-alpine AS build
 
 WORKDIR /app
 

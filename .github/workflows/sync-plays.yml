@@ -17,7 +17,11 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # @supabase/supabase-js needs Node 22+ for native WebSocket
+          # support (it initializes a realtime client internally even
+          # though this script only ever makes plain REST calls) —
+          # Node 20 crashes at `createClient()` with "native WebSocket not found".
+          node-version: 22
           cache: npm
 
       - run: npm ci
