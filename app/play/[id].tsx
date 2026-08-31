@@ -60,7 +60,7 @@ export default function PlayDetailScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView bounces={false}>
         <View style={{ height: 300 }}>
-          <PosterPlaceholder height={300} radius={0} />
+          <PosterPlaceholder uri={play.posterUrl} height={300} radius={0} />
           <View style={styles.heroTop}>
             <IconButton translucent onPress={() => closeModal(router, "/(tabs)")}>
               <ChevronLeftIcon />

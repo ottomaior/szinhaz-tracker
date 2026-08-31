@@ -48,7 +48,7 @@ function WatchlistRow({ play, onPress }: { play: Play; onPress: () => void }) {
 
   return (
     <Pressable onPress={onPress} style={styles.row}>
-      <PosterPlaceholder width={64} height={88} radius={8} />
+      <PosterPlaceholder uri={play.posterUrl} width={64} height={88} radius={8} />
       <View style={{ flex: 1, gap: 5 }}>
         <Text style={{ fontFamily: displayFont(fontsLoaded, "semibold"), fontSize: 16, color: colors.text }}>{play.title}</Text>
         <View style={styles.metaRow}>

@@ -107,7 +107,7 @@ export default function ProfileScreen() {
             <View style={styles.grid}>
               {diary.map((p) => (
                 <Pressable key={p.id} style={styles.gridItem} onPress={() => router.push(`/play/${p.id}`)}>
-                  <PosterPlaceholder height={88} radius={6} />
+                  <PosterPlaceholder uri={p.posterUrl} height={88} radius={6} />
                 </Pressable>
               ))}
             </View>

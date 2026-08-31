@@ -80,7 +80,7 @@ function CheckinCard({ review, onOpenPlay }: { review: Review; onOpenPlay: (id: 
       </View>
 
       <Pressable onPress={() => onOpenPlay(play.id)} style={{ height: 180 }}>
-        <PosterPlaceholder height={180} />
+        <PosterPlaceholder uri={play.posterUrl} height={180} />
         <View style={styles.posterCaption}>
           <Text style={{ fontFamily: displayFont(fontsLoaded, "semibold"), fontSize: 22, color: colors.text }}>{play.title}</Text>
           <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12, color: colors.textDim }}>rend. {play.director}</Text>
@@ -142,7 +142,7 @@ function WatchlistCard({ entry, onOpenPlay }: { entry: WatchlistEntry; onOpenPla
         </View>
       </View>
       <Pressable onPress={() => onOpenPlay(play.id)} style={styles.rowGap12}>
-        <PosterPlaceholder width={64} height={88} />
+        <PosterPlaceholder uri={play.posterUrl} width={64} height={88} />
         <View style={{ gap: 3 }}>
           <Text style={{ fontFamily: displayFont(fontsLoaded, "semibold"), fontSize: 16, color: colors.text }}>{play.title}</Text>
           <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 11.5, color: colors.textDim }}>{venue?.name}</Text>

@@ -1,22 +1,36 @@
-import { View, StyleSheet, DimensionValue } from "react-native";
+import { useState } from "react";
+import { View, StyleSheet, DimensionValue, Image } from "react-native";
 import Svg, { Defs, RadialGradient, Stop, Rect, Line } from "react-native-svg";
 import { colors } from "@/theme/colors";
 
 /**
- * Stand-in for a production photo/poster: a warm spotlight-on-velvet
- * gradient with faint curtain-fold lines, matching the placeholder used
- * throughout the design canvas. Swap for a real <Image> once the play's
- * photo/poster URL is available from the data layer.
+ * A production's photo/poster when `uri` is available (e.g. `play.posterUrl`
+ * from a synced or user-added play); otherwise a warm spotlight-on-velvet
+ * gradient stand-in with faint curtain-fold lines, matching the placeholder
+ * used throughout the design canvas. Also falls back to the gradient if the
+ * image fails to load (broken/expired source URL).
  */
 export function PosterPlaceholder({
+  uri,
   width = "100%",
   height = 160,
   radius = 8,
 }: {
+  uri?: string;
   width?: DimensionValue;
   height?: number;
   radius?: number;
 }) {
+  const [failed, setFailed] = useState(false);
+
+  if (uri && !failed) {
+    return (
+      <View style={[styles.wrap, { width, height, borderRadius: radius }]}>
+        <Image source={{ uri }} style={StyleSheet.absoluteFill} resizeMode="cover" onError={() => setFailed(true)} />
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.wrap, { width, height, borderRadius: radius }]}>
       <Svg width="100%" height="100%" style={StyleSheet.absoluteFill}>
