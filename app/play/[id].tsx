@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View, Text, ScrollView, StyleSheet } from "react-native";
+import { View, Text, ScrollView, StyleSheet, Pressable } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
 import { bodyFont, displayFont } from "@/theme/typography";
@@ -12,6 +12,7 @@ import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { MaskRatingRow } from "@/components/icons/MaskIcon";
 import { ChevronLeftIcon, ShareIcon, TicketIcon, PlusIcon } from "@/components/icons/Icons";
 import { strings } from "@/i18n/hu";
+import { closeModal } from "@/utils/navigation";
 
 export default function PlayDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -20,15 +21,38 @@ export default function PlayDetailScreen() {
   const [play, setPlay] = useState<Play>();
   const [venue, setVenue] = useState<Venue>();
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
-    if (!id) return;
-    getPlayById(id).then((p) => {
-      setPlay(p);
-      if (p) getVenueById(p.venueId).then(setVenue);
-    });
+    if (!id) {
+      setLoadFailed(true);
+      return;
+    }
+    getPlayById(id)
+      .then((p) => {
+        if (!p) {
+          setLoadFailed(true);
+          return;
+        }
+        setPlay(p);
+        getVenueById(p.venueId).then(setVenue);
+      })
+      .catch(() => setLoadFailed(true));
     getReviewsForPlay(id).then(setReviews);
   }, [id]);
+
+  if (loadFailed) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: "center", justifyContent: "center", gap: 14, padding: 20 }}>
+        <Text style={{ fontFamily: bodyFont(fontsLoaded, "medium"), fontSize: 13, color: colors.textFaint, textAlign: "center" }}>
+          {strings.checkin.playNotFound}
+        </Text>
+        <Pressable onPress={() => closeModal(router, "/(tabs)")}>
+          <Text style={{ fontFamily: bodyFont(fontsLoaded, "semibold"), fontSize: 12.5, color: colors.gold }}>{strings.checkin.close}</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   if (!play) return null;
 
@@ -38,7 +62,7 @@ export default function PlayDetailScreen() {
         <View style={{ height: 300 }}>
           <PosterPlaceholder height={300} radius={0} />
           <View style={styles.heroTop}>
-            <IconButton translucent onPress={() => router.back()}>
+            <IconButton translucent onPress={() => closeModal(router, "/(tabs)")}>
               <ChevronLeftIcon />
             </IconButton>
             <View style={{ flexDirection: "row", gap: 8 }}>
@@ -62,10 +86,14 @@ export default function PlayDetailScreen() {
             </Text>
             <View style={styles.metaRow}>
               <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12, color: colors.textFaint }}>{venue?.name}</Text>
-              <View style={styles.dot} />
-              <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12, color: colors.textFaint }}>
-                {Math.floor(play.runtimeMinutes / 60)} óra {play.runtimeMinutes % 60} perc
-              </Text>
+              {play.runtimeMinutes != null && (
+                <>
+                  <View style={styles.dot} />
+                  <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12, color: colors.textFaint }}>
+                    {Math.floor(play.runtimeMinutes / 60)} óra {play.runtimeMinutes % 60} perc
+                  </Text>
+                </>
+              )}
               <View style={styles.dot} />
               <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12, color: colors.textFaint }}>
                 {strings.genres[play.genre] ?? play.genre}

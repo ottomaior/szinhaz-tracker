@@ -37,6 +37,50 @@ export const strings = {
     premieresTitle: "E heti bemutatók",
     seeAll: "Összes",
     trendingTitle: "Népszerű Budapesten",
+    searchResultsTitle: (n: number) => `${n} találat`,
+    noResultsTitle: "Nincs találat",
+    noResultsAction: "Nem található? Add hozzá magad",
+    addPlayFab: "Darab hozzáadása",
+  },
+
+  auth: {
+    signInTitle: "Bejelentkezés",
+    signUpTitle: "Regisztráció",
+    nameLabel: "Név",
+    emailLabel: "E-mail cím",
+    passwordLabel: "Jelszó",
+    signInButton: "Bejelentkezés",
+    signUpButton: "Fiók létrehozása",
+    noAccount: "Még nincs fiókod?",
+    haveAccount: "Már van fiókod?",
+    switchToSignUp: "Regisztrálok",
+    switchToSignIn: "Bejelentkezem",
+    signInPrompt: "Jelentkezz be, hogy folytathasd",
+    signOut: "Kijelentkezés",
+    genericError: "Hiba történt. Próbáld újra.",
+  },
+
+  addPlay: {
+    headerTitle: "Darab hozzáadása",
+    save: "Mentés",
+    titleLabel: "Cím",
+    authorLabel: "Szerző",
+    directorLabel: "Rendező",
+    genreLabel: "Műfaj",
+    runtimeLabel: "Időtartam (perc)",
+    intermissionsLabel: "Szünetek száma",
+    premiereDateLabel: "Bemutató dátuma (ÉÉÉÉ-HH-NN)",
+    venueLabel: "Játszóhely",
+    venueSearchPlaceholder: "Keress egy színházat…",
+    venueNotFound: "Nem találod a színházat?",
+    createVenue: "Új játszóhely létrehozása",
+    venueNameLabel: "Név",
+    venueCityLabel: "Város",
+    castLabel: "Szereposztás",
+    castNamePlaceholder: "Színész neve",
+    castRolePlaceholder: "Szerep",
+    addCastMember: "Szereplő hozzáadása",
+    removeCastMember: "Eltávolítás",
   },
 
   watchlist: {
@@ -72,6 +116,8 @@ export const strings = {
     reviewLabel: "Vélemény",
     reviewPlaceholder: "Oszd meg a gondolataidat az előadásról…",
     addPhoto: "Fénykép hozzáadása",
+    playNotFound: "Nem található az előadás.",
+    close: "Bezárás",
   },
 
   profile: {
@@ -84,6 +130,8 @@ export const strings = {
     tabWatchlists: "Kívánságlisták",
     tabReviews: "Vélemények",
     comingSoon: (tab: string) => `${tab} hamarosan.`,
+    signInPrompt: "Jelentkezz be, hogy lásd a profilod",
+    signInButton: "Bejelentkezés",
   },
 
   genres: {

@@ -6,9 +6,12 @@ import { colors } from "@/theme/colors";
 import { bodyFont, displayFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
 import { getCurrentUser, getDiaryPlaysForUser } from "@/services/playsService";
+import { signOut } from "@/services/authService";
+import { useAuth } from "@/contexts/AuthContext";
 import type { Play, User } from "@/data/types";
 import { SettingsIcon } from "@/components/icons/Icons";
 import { Avatar } from "@/components/ui/Avatar";
+import { Button } from "@/components/ui/Button";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { strings } from "@/i18n/hu";
 
@@ -18,16 +21,35 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const fontsLoaded = useAppFonts();
   const router = useRouter();
+  const { session, loading } = useAuth();
   const [user, setUser] = useState<User>();
   const [diary, setDiary] = useState<Play[]>([]);
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>(strings.profile.tabDiary);
 
   useEffect(() => {
+    if (!session) {
+      setUser(undefined);
+      setDiary([]);
+      return;
+    }
     getCurrentUser().then((u) => {
       setUser(u);
-      getDiaryPlaysForUser(u.id).then(setDiary);
+      if (u) getDiaryPlaysForUser(u.id).then(setDiary);
     });
-  }, []);
+  }, [session]);
+
+  if (loading) return null;
+
+  if (!session) {
+    return (
+      <View style={[styles.emptyState, { flex: 1, justifyContent: "center", paddingTop: insets.top, backgroundColor: colors.bg }]}>
+        <Text style={{ fontFamily: bodyFont(fontsLoaded, "medium"), fontSize: 13, color: colors.textFaint, marginBottom: 14 }}>
+          {strings.profile.signInPrompt}
+        </Text>
+        <Button label={strings.profile.signInButton} onPress={() => router.push("/sign-in")} />
+      </View>
+    );
+  }
 
   if (!user) return null;
 
@@ -35,7 +57,7 @@ export default function ProfileScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
         <View style={[styles.cover, { paddingTop: insets.top + 16 }]}>
-          <Pressable style={styles.settingsBtn}>
+          <Pressable style={styles.settingsBtn} onPress={() => signOut()}>
             <SettingsIcon />
           </Pressable>
         </View>

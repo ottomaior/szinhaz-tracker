@@ -1,0 +1,29 @@
+name: Sync theater listings
+
+on:
+  schedule:
+    # Daily at 04:00 UTC — Phase 1 sources only (clean JSON APIs, cheap to
+    # call). Extend with a second, looser-cadence job for Phase 3's Jegy.hu
+    # HTML sources once they exist (their 20s crawl-delay makes a full pass
+    # slow — see the implementation plan's rollout order).
+    - cron: "0 4 * * *"
+  workflow_dispatch: {} # allows a manual run from the Actions tab
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Run listings sync
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: npm run sync

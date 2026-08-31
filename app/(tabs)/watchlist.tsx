@@ -55,12 +55,14 @@ function WatchlistRow({ play, onPress }: { play: Play; onPress: () => void }) {
           <PinIcon size={13} />
           <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 11.5, color: colors.textFaint }}>{venue?.name}</Text>
         </View>
-        <View style={styles.metaRow}>
-          <CalendarIcon size={13} />
-          <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 11.5, color: colors.textFaint }}>
-            {strings.watchlist.premiereLabel}: {formatDate(play.premiereDate)}
-          </Text>
-        </View>
+        {play.premiereDate && (
+          <View style={styles.metaRow}>
+            <CalendarIcon size={13} />
+            <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 11.5, color: colors.textFaint }}>
+              {strings.watchlist.premiereLabel}: {formatDate(play.premiereDate)}
+            </Text>
+          </View>
+        )}
       </View>
     </Pressable>
   );

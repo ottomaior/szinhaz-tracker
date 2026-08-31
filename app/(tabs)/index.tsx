@@ -146,9 +146,11 @@ function WatchlistCard({ entry, onOpenPlay }: { entry: WatchlistEntry; onOpenPla
         <View style={{ gap: 3 }}>
           <Text style={{ fontFamily: displayFont(fontsLoaded, "semibold"), fontSize: 16, color: colors.text }}>{play.title}</Text>
           <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 11.5, color: colors.textDim }}>{venue?.name}</Text>
-          <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 11, color: colors.textFaint }}>
-            {strings.feed.premiereLabel}: {formatDate(play.premiereDate)}
-          </Text>
+          {play.premiereDate && (
+            <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 11, color: colors.textFaint }}>
+              {strings.feed.premiereLabel}: {formatDate(play.premiereDate)}
+            </Text>
+          )}
         </View>
       </Pressable>
     </View>

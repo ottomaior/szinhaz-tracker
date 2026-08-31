@@ -4,13 +4,15 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
 import { bodyFont, displayFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
-import { getPlayById, getVenueById } from "@/services/playsService";
+import { getPlayById, getVenueById, submitReview } from "@/services/playsService";
+import { useAuth } from "@/contexts/AuthContext";
 import type { Play, Venue } from "@/data/types";
 import { CloseIcon, CalendarIcon, PinIcon, CameraIcon } from "@/components/icons/Icons";
 import { MaskRatingRow } from "@/components/icons/MaskIcon";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { Chip } from "@/components/ui/Chip";
 import { strings } from "@/i18n/hu";
+import { closeModal } from "@/utils/navigation";
 
 const MOMENT_TAGS = [strings.checkin.tagStandingOvation, strings.checkin.tagCried, strings.checkin.tagRecommend];
 
@@ -18,8 +20,11 @@ export default function CheckInScreen() {
   const { playId } = useLocalSearchParams<{ playId?: string }>();
   const router = useRouter();
   const fontsLoaded = useAppFonts();
+  const { session, loading } = useAuth();
   const [play, setPlay] = useState<Play>();
   const [venue, setVenue] = useState<Venue>();
+  const [saving, setSaving] = useState(false);
+  const [playLoadFailed, setPlayLoadFailed] = useState(false);
 
   const [overall, setOverall] = useState(4);
   const [acting, setActing] = useState(4);
@@ -29,22 +34,64 @@ export default function CheckInScreen() {
   const [reviewText, setReviewText] = useState("");
 
   useEffect(() => {
-    const id = playId ?? "p1";
-    getPlayById(id).then((p) => {
-      setPlay(p);
-      if (p) getVenueById(p.venueId).then(setVenue);
-    });
+    if (!loading && !session) {
+      router.replace({ pathname: "/sign-in" });
+    }
+  }, [loading, session, router]);
+
+  useEffect(() => {
+    if (!playId) {
+      setPlayLoadFailed(true);
+      return;
+    }
+    getPlayById(playId)
+      .then((p) => {
+        if (!p) {
+          setPlayLoadFailed(true);
+          return;
+        }
+        setPlay(p);
+        getVenueById(p.venueId).then(setVenue);
+      })
+      .catch(() => setPlayLoadFailed(true));
   }, [playId]);
 
   function toggleTag(tag: string) {
     setSelectedTags((cur) => (cur.includes(tag) ? cur.filter((t) => t !== tag) : [...cur, tag]));
   }
 
-  function handleSave() {
-    // MVP: no persistence yet — logging closes the modal. Wire this to a
-    // real mutation (services/playsService -> submitReview) once the data
-    // layer is backed by a server.
-    router.back();
+  async function handleSave() {
+    if (!play || saving) return;
+    setSaving(true);
+    try {
+      await submitReview({
+        playId: play.id,
+        ratingOverall: overall,
+        ratingActing: acting,
+        ratingDirecting: directing,
+        ratingSetDesign: setDesign,
+        text: reviewText,
+        tags: selectedTags,
+      });
+      closeModal(router);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (!session) return null;
+
+  if (playLoadFailed) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: "center", justifyContent: "center", gap: 14, padding: 20 }}>
+        <Text style={{ fontFamily: bodyFont(fontsLoaded, "medium"), fontSize: 13, color: colors.textFaint, textAlign: "center" }}>
+          {strings.checkin.playNotFound}
+        </Text>
+        <Pressable onPress={() => closeModal(router)}>
+          <Text style={{ fontFamily: bodyFont(fontsLoaded, "semibold"), fontSize: 12.5, color: colors.gold }}>{strings.checkin.close}</Text>
+        </Pressable>
+      </View>
+    );
   }
 
   if (!play) return null;
@@ -52,7 +99,7 @@ export default function CheckInScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <View style={styles.topBar}>
-        <Pressable onPress={() => router.back()} hitSlop={8}>
+        <Pressable onPress={() => closeModal(router)} hitSlop={8}>
           <CloseIcon />
         </Pressable>
         <Text style={{ fontFamily: bodyFont(fontsLoaded, "bold"), fontSize: 14.5, color: colors.text }}>{strings.checkin.headerTitle}</Text>

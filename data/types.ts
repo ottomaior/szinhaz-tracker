@@ -33,11 +33,21 @@ export interface Play {
   director: string;
   venueId: string;
   genre: string;
-  runtimeMinutes: number;
+  runtimeMinutes?: number;
   intermissions: number;
-  premiereDate: string; // ISO date
+  premiereDate?: string; // ISO date
+  synopsis?: string;
+  posterUrl?: string;
   cast: CastMember[];
   rating: RatingBreakdown;
+}
+
+export interface Performance {
+  id: string;
+  playId: string;
+  venueId: string;
+  room?: string;
+  startsAt: string; // ISO datetime
 }
 
 export interface User {
