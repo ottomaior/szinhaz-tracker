@@ -17,10 +17,10 @@ npx expo install --fix
 ```
 
 Then create a [Supabase](https://supabase.com) project (free tier is
-enough), run `supabase/migrations/0001_init.sql` and then
-`supabase/migrations/0002_seed.sql` in its SQL editor, and copy
-`.env.example` to `.env`, filling in the URL/anon key from the project's
-Settings → API page:
+enough), run the three files in `supabase/migrations/` **in order**
+(`0001_init.sql`, `0002_seed.sql`, `0003_drop_fabricated_seed_plays.sql`)
+in its SQL editor, and copy `.env.example` to `.env`, filling in the
+URL/anon key from the project's Settings → API page:
 
 ```bash
 cp .env.example .env
@@ -115,25 +115,42 @@ Security, real email/password auth, working search, and a "log a
 performance" flow that persists a real review — see `supabase/migrations/`
 for the schema and `services/` for how the app talks to it.
 
-The initial catalog is the same handful of real Hungarian venues and
-classic plays that used to live only in `data/mockData.ts`, now seeded via
-`supabase/migrations/0002_seed.sql`. On top of that, `sync/` is a
-recurring job (GitHub Actions, daily) that pulls **current** listings
-directly from theaters' own ticketing platforms — see the adapters in
-`sync/adapters/` for source-by-source notes, including sources that were
-deliberately excluded (`jegyx1.hu`, `port.hu`) because their `robots.txt`
-disallows automated access.
+`supabase/migrations/0002_seed.sql` seeds a handful of real Budapest/Debrecen
+venues so there's somewhere for add-play/sync to point `venue_id` at from
+the start. It used to also seed 7 sample plays (transcribed from
+`data/mockData.ts`) as placeholder content, but that data — real titles,
+venues, and directors, combined in ways that were never fact-checked —
+mostly didn't match any real production once checked (e.g. the seeded
+"Csongor és Tünde" was attributed to Vígszínház, but director Zsótér
+Sándor's real production of it was staged at Katona József Színház's
+Kamra). Attaching real photos to that fabricated data would have made it
+look more authoritative, not fixed it, so the play rows were dropped —
+see `supabase/migrations/0003_drop_fabricated_seed_plays.sql` (only
+relevant if your database still has them from before this fix).
 
-Only **Örkény István Színház's** adapter is live and verified against the
-real API (field names, HTML-entity decoding, and cast-name resolution were
-all checked against actual responses, not assumed). Katona/Csokonai's
-Jegymester-based adapters exist but are **not enabled** — their endpoint
-returns `403 requires access token` on a live check, contrary to what the
-robots.txt-only research suggested; see the warning header in
-`sync/adapters/jegymester.ts` for what would be needed to fix that.
+The real catalog now comes entirely from `sync/`, a recurring job (GitHub
+Actions, daily) that pulls **current** listings directly from theaters'
+own ticketing platforms — see the adapters in `sync/adapters/` for
+source-by-source notes, including sources that were deliberately excluded
+(`jegyx1.hu`, `port.hu`) because their `robots.txt` disallows automated
+access.
 
-Not yet built: followers/following, watchlist add/remove UI (the data
-model supports it — `services/playsService.ts` has `addToWatchlist`/
-`removeFromWatchlist` — but no screen calls it yet), a working
-Katona/Csokonai source, and the Phase 3 Jegy.hu-based theaters (Nemzeti,
-Vígszínház, Madách, Centrál, Radnóti, Pesti Magyar, Vojtina).
+Two adapters are live and enabled by default: **Örkény István Színház**
+(Budapest, via their own JSON API) and **Csokonai Nemzeti Színház**
+(Debrecen, scraped from their own WordPress site's calendar and per-show
+pages — both selectors and edge cases like ancillary "series" listings and
+duplicate detail-page links were checked against live data, not assumed).
+Katona's Jegymester-based adapter exists but is **not enabled** — that
+platform's endpoint returns `403 requires access token` on a live check,
+contrary to what the robots.txt-only research suggested; see the warning
+header in `sync/adapters/jegymester.ts` for what would be needed to fix
+that. Csokonai used to be on that same broken platform too — its working
+adapter now reads Csokonai's own site instead, the same way Katona's
+eventually will need to once a token workaround exists (or once a
+Jegy.hu-based fallback is built for it, Phase 3).
+
+Not yet built: followers/following, and the Phase 3 Jegy.hu-based theaters
+(Nemzeti, Vígszínház, Madách, Centrál, Radnóti, Pesti Magyar, Vojtina) and
+Katona (blocked on that access-token issue). Watchlist add/remove is done —
+`services/playsService.ts` has `addToWatchlist`/`removeFromWatchlist`,
+wired to a toggle button on Play Detail.

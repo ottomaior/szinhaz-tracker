@@ -11,7 +11,8 @@
 import "dotenv/config";
 import { supabaseAdmin } from "./lib/supabaseAdmin";
 import { orkenyAdapter } from "./adapters/orkeny";
-import { katonaAdapter, csokonaiAdapter } from "./adapters/jegymester";
+import { katonaAdapter, csokonaiAdapter as csokonaiJegymesterAdapter } from "./adapters/jegymester";
+import { csokonaiAdapter } from "./adapters/csokonai";
 import type { SyncAdapter, SyncedPlay } from "./lib/types";
 
 function errorMessageOf(e: unknown): string {
@@ -21,18 +22,20 @@ function errorMessageOf(e: unknown): string {
 }
 
 // Every adapter that exists, reachable via `--source=<name>` for manual runs.
-const ALL_ADAPTERS: SyncAdapter[] = [orkenyAdapter, katonaAdapter, csokonaiAdapter];
+const ALL_ADAPTERS: SyncAdapter[] = [orkenyAdapter, csokonaiAdapter, katonaAdapter, csokonaiJegymesterAdapter];
 
-// Phase 1 of the plan: clean JSON sources only, run automatically by the
-// scheduled workflow.
+// Run automatically by the scheduled workflow: Örkény's own API, and
+// Csokonai (Debrecen) scraped from their own site (see
+// sync/adapters/csokonai.ts — Csokonai's Jegymester ticketing site has the
+// same access-token wall as Katona's, so this reads their WordPress site's
+// calendar + production pages directly instead).
 //
-// Only orkenyAdapter is enabled by default. katonaAdapter/csokonaiAdapter
-// are excluded — verified against the live site, their endpoint returns
-// 403 "requires access token" (see the warning header in
-// sync/adapters/jegymester.ts), so they'd fail on every scheduled run.
-// Re-enable them here once that's resolved. Add Jegy.hu-based adapters here
-// once they exist (Phase 3), respecting their 20s crawl-delay.
-const DEFAULT_ADAPTERS: SyncAdapter[] = [orkenyAdapter];
+// katonaAdapter/csokonaiJegymesterAdapter stay excluded — verified against
+// the live site, that endpoint returns 403 "requires access token" (see
+// the warning header in sync/adapters/jegymester.ts), so they'd fail on
+// every scheduled run. Re-enable if that's ever resolved. Add Jegy.hu-based
+// adapters here once they exist (Phase 3), respecting their 20s crawl-delay.
+const DEFAULT_ADAPTERS: SyncAdapter[] = [orkenyAdapter, csokonaiAdapter];
 
 async function upsertPlay(sourceName: string, synced: SyncedPlay) {
   const { data: playRow, error: playError } = await supabaseAdmin

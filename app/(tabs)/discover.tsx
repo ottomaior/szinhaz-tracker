@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
 import { bodyFont, displayFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
-import { getPremieres, getTrending, getVenueById } from "@/services/playsService";
+import { getCities, getPremieres, getTrending, getVenueById } from "@/services/playsService";
 import { searchPlays } from "@/services/searchService";
 import type { Play, Venue, VenueType } from "@/data/types";
 import { SearchIcon, PlusIcon } from "@/components/icons/Icons";
@@ -28,6 +28,8 @@ export default function DiscoverScreen() {
   const fontsLoaded = useAppFonts();
   const router = useRouter();
   const [activeFilter, setActiveFilter] = useState(strings.discover.filterAll);
+  const [cities, setCities] = useState<string[]>([]);
+  const [activeCity, setActiveCity] = useState(strings.discover.filterAll);
   const [query, setQuery] = useState("");
   const [premieres, setPremieres] = useState<Play[]>([]);
   const [trending, setTrending] = useState<Play[]>([]);
@@ -35,12 +37,17 @@ export default function DiscoverScreen() {
   const [searching, setSearching] = useState(false);
 
   const venueType = FILTER_TO_VENUE_TYPE[activeFilter];
+  const city = activeCity === strings.discover.filterAll ? undefined : activeCity;
   const isSearching = query.trim().length > 0;
 
   useEffect(() => {
-    getPremieres(venueType).then(setPremieres);
-    getTrending(venueType).then(setTrending);
-  }, [venueType]);
+    getCities().then(setCities);
+  }, []);
+
+  useEffect(() => {
+    getPremieres({ venueType, city }).then(setPremieres);
+    getTrending({ venueType, city }).then(setTrending);
+  }, [venueType, city]);
 
   useEffect(() => {
     if (!isSearching) {
@@ -49,12 +56,12 @@ export default function DiscoverScreen() {
     }
     setSearching(true);
     const handle = setTimeout(() => {
-      searchPlays(query, venueType)
+      searchPlays(query, venueType, city)
         .then(setSearchResults)
         .finally(() => setSearching(false));
     }, 300);
     return () => clearTimeout(handle);
-  }, [query, venueType, isSearching]);
+  }, [query, venueType, city, isSearching]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -82,6 +89,14 @@ export default function DiscoverScreen() {
             <Chip key={f} label={f} active={activeFilter === f} onPress={() => setActiveFilter(f)} />
           ))}
         </ScrollView>
+
+        {cities.length > 0 && (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+            {[strings.discover.filterAll, ...cities].map((c) => (
+              <Chip key={c} label={c} active={activeCity === c} onPress={() => setActiveCity(c)} />
+            ))}
+          </ScrollView>
+        )}
       </View>
 
       {isSearching ? (

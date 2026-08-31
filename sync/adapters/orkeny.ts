@@ -125,6 +125,18 @@ function parseDurationTag(tags?: { text?: string }[]): { runtimeMinutes?: number
   return { runtimeMinutes, intermissions };
 }
 
+// "Művészetközvetítő program" ("Art Mediation Programme") entries are open
+// rehearsals and pre-show intro talks tied to a real production, not
+// productions themselves — confirmed by inspecting live data: they always
+// have null author/director and share one generic branding graphic instead
+// of a real photo (titles like "Nyílt próba: X" / "Intró: X"). Syncing them
+// as separate plays cluttered the catalog with duplicate, photo-less
+// listings for the same show. Filtered out here rather than synced and
+// hidden later, since there's nothing about them worth keeping as a play.
+function isAncillaryEvent(tags?: { text?: string }[]): boolean {
+  return (tags ?? []).some((t) => (t.text ?? "").includes("Művészetközvetítő program"));
+}
+
 async function run(): Promise<SyncedPlay[]> {
   const contributors = await fetchJson<RawContributor[]>(`${SITE_URL}/api/contributors`);
   const nameById = new Map(contributors.map((c) => [c.id, c.name.hu ?? c.name.en ?? ""]));
@@ -137,6 +149,7 @@ async function run(): Promise<SyncedPlay[]> {
 
     for (const occ of occurrences) {
       const p = occ.performance;
+      if (isAncillaryEvent(p.tags)) continue;
       const sourceKey = String(p.id);
 
       let play = byId.get(sourceKey);

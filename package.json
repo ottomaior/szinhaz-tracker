@@ -41,6 +41,7 @@
   "devDependencies": {
     "@babel/core": "^7.25.0",
     "@types/node": "^20.14.0",
+    "cheerio": "^1.0.0",
     "@types/react": "~18.3.12",
     "dotenv": "^16.4.5",
     "eslint": "^8.57.0",

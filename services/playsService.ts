@@ -127,25 +127,41 @@ export async function getFeed(): Promise<FeedItem[]> {
   });
 }
 
-const PLAY_SELECT_WITH_VENUE_TYPE: string = `*, play_cast(name, role, sort_order), venues!inner(type)`;
+const PLAY_SELECT_WITH_VENUE_FILTERS: string = `*, play_cast(name, role, sort_order), venues!inner(type, city)`;
 
-export async function getTrending(venueType?: VenueType): Promise<Play[]> {
-  const select: string = venueType ? PLAY_SELECT_WITH_VENUE_TYPE : PLAY_SELECT;
+export type VenueFilters = { venueType?: VenueType; city?: string };
+
+function applyVenueFilters(query: any, filters?: VenueFilters) {
+  if (filters?.venueType) query = query.eq("venues.type", filters.venueType);
+  if (filters?.city) query = query.eq("venues.city", filters.city);
+  return query;
+}
+
+export async function getTrending(filters?: VenueFilters): Promise<Play[]> {
+  const needsJoin = !!(filters?.venueType || filters?.city);
+  const select: string = needsJoin ? PLAY_SELECT_WITH_VENUE_FILTERS : PLAY_SELECT;
   let query = supabase.from("plays").select(select).order("rating_overall", { ascending: false });
-  if (venueType) query = query.eq("venues.type", venueType);
+  query = applyVenueFilters(query, filters);
   const { data, error } = await query;
   if (error) throw error;
   return ((data ?? []) as unknown as PlayRow[]).map((r) => toPlay(r));
 }
 
-export async function getPremieres(venueType?: VenueType): Promise<Play[]> {
+export async function getPremieres(filters?: VenueFilters): Promise<Play[]> {
   const today = new Date().toISOString().slice(0, 10);
-  const select: string = venueType ? PLAY_SELECT_WITH_VENUE_TYPE : PLAY_SELECT;
+  const needsJoin = !!(filters?.venueType || filters?.city);
+  const select: string = needsJoin ? PLAY_SELECT_WITH_VENUE_FILTERS : PLAY_SELECT;
   let query = supabase.from("plays").select(select).gte("premiere_date", today).order("premiere_date", { ascending: true });
-  if (venueType) query = query.eq("venues.type", venueType);
+  query = applyVenueFilters(query, filters);
   const { data, error } = await query;
   if (error) throw error;
   return ((data ?? []) as unknown as PlayRow[]).map((r) => toPlay(r));
+}
+
+export async function getCities(): Promise<string[]> {
+  const { data, error } = await supabase.from("venues").select("city").order("city");
+  if (error) throw error;
+  return Array.from(new Set((data ?? []).map((r) => r.city as string)));
 }
 
 export async function getPlayById(id: string): Promise<Play | undefined> {

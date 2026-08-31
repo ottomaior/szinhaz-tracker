@@ -44,12 +44,13 @@ function mapRow(row: {
   };
 }
 
-export async function searchPlays(query: string, venueType?: VenueType): Promise<Play[]> {
+export async function searchPlays(query: string, venueType?: VenueType, city?: string): Promise<Play[]> {
   const trimmed = query.trim();
   if (!trimmed) return [];
   const { data, error } = await supabase.rpc("search_plays", {
     search_term: trimmed,
     venue_type_filter: venueType ?? null,
+    city_filter: city ?? null,
   });
   if (error) throw error;
   return (data ?? []).map((r: PlayRow) => mapRow(r));
