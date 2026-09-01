@@ -164,3 +164,9 @@ end;
 $$;
 
 grant execute on function public.recompute_play_status() to service_role;
+
+-- Seed the columns immediately. Without this the migration leaves every row
+-- at the 'unknown' default until the next sync run happens to fire, so the
+-- status badge silently does not appear and the schema looks broken when it
+-- is merely unpopulated.
+select public.recompute_play_status();

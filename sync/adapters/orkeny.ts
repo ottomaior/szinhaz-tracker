@@ -31,7 +31,7 @@
  *     A nagy füzet) that must not reach a date column.
  */
 import { fetchJson } from "../lib/http";
-import { parseHungarianDate } from "../lib/huDate";
+import { budapestLocalToUtcIso, parseHungarianDate } from "../lib/huDate";
 import { parseDurationHu } from "../lib/huDuration";
 import { VENUE_IDS } from "../venueMap";
 import type { SyncAdapter, SyncedPlay } from "../lib/types";
@@ -158,41 +158,6 @@ function genreOf(p: RawPerformance): string {
   const tags = tagTexts(p.tags);
   if (tags.some((t) => /felolvasószínház/i.test(t))) return "felolvasószínház";
   return DEFAULT_GENRE;
-}
-
-/**
- * `start`/`end` come back as naive Budapest local time ("YYYY-MM-DD
- * HH:MM:SS", no offset). Passing them through as if they were UTC — which
- * this adapter used to do — shifts every showtime by one or two hours
- * depending on daylight saving. This resolves the real offset for that
- * instant and emits a proper UTC instant.
- */
-function budapestLocalToUtcIso(naive: string): string {
-  const normalized = naive.replace(" ", "T");
-  const pretendUtc = new Date(`${normalized}Z`);
-  if (Number.isNaN(pretendUtc.getTime())) return normalized;
-
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    timeZone: "Europe/Budapest",
-    hour12: false,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-  const parts = Object.fromEntries(formatter.formatToParts(pretendUtc).map((p) => [p.type, p.value]));
-  const asIfUtc = Date.UTC(
-    Number(parts.year),
-    Number(parts.month) - 1,
-    Number(parts.day),
-    Number(parts.hour) % 24,
-    Number(parts.minute),
-    Number(parts.second)
-  );
-  const offsetMs = asIfUtc - pretendUtc.getTime();
-  return new Date(pretendUtc.getTime() - offsetMs).toISOString();
 }
 
 async function run(): Promise<SyncedPlay[]> {
