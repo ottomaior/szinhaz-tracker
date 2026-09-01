@@ -129,10 +129,23 @@ relevant if your database still has them from before this fix).
 
 The real catalog now comes entirely from `sync/`, a recurring job (GitHub
 Actions, daily) that pulls **current** listings directly from theaters'
-own ticketing platforms — see the adapters in `sync/adapters/` for
-source-by-source notes, including sources that were deliberately excluded
-(`jegyx1.hu`, `port.hu`) because their `robots.txt` disallows automated
-access.
+own sites — see the adapters in `sync/adapters/` for source-by-source notes.
+
+On the aggregators, re-checked live rather than assumed (an earlier version
+of this file lumped all three together as "robots.txt disallows automated
+access", which is true of only one of them):
+
+- `jegyx1.hu` — `User-agent: *` is `Disallow: /`. Fully off limits. Correct
+  to exclude.
+- `port.hu` — `User-agent: *` disallows only `/jegymester/`, `/site/`,
+  `/ticketlist/` and `/galeria/`; programme and company pages are not
+  disallowed. `GPTBot` and `Kantar` are blocked outright, but this job is
+  neither. So robots.txt is **not** the reason to avoid it — the reason is
+  the EU *sui generis* database right over a compiled listings database,
+  which is a legal question, not a technical one.
+- `jegy.hu` — `User-agent: *` disallows only `/ticket/` and `/invoice/`,
+  with `Crawl-delay: 20`. Listings are crawlable; the crawl delay is what
+  makes a full pass slow.
 
 Three adapters are live and enabled by default, together supplying roughly
 290 productions — about 145 currently playing or announced, and about 145
