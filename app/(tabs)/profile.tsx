@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { View, Text, ScrollView, StyleSheet, Pressable } from "react-native";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
 import { bodyFont, displayFont } from "@/theme/typography";
@@ -9,7 +9,6 @@ import { getCurrentUser, getDiaryPlaysForUser } from "@/services/playsService";
 import { signOut } from "@/services/authService";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Play, User } from "@/data/types";
-import { SettingsIcon } from "@/components/icons/Icons";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
@@ -24,19 +23,50 @@ export default function ProfileScreen() {
   const { session, loading } = useAuth();
   const [user, setUser] = useState<User>();
   const [diary, setDiary] = useState<Play[]>([]);
+  const [diaryLoaded, setDiaryLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>(strings.profile.tabDiary);
+  const [confirmingSignOut, setConfirmingSignOut] = useState(false);
+  const [signOutError, setSignOutError] = useState<string>();
 
-  useEffect(() => {
-    if (!session) {
-      setUser(undefined);
-      setDiary([]);
-      return;
+  // Refreshed on focus so a performance logged in the check-in modal shows up
+  // in the diary as soon as the user lands back here.
+  useFocusEffect(
+    useCallback(() => {
+      if (!session) {
+        setUser(undefined);
+        setDiary([]);
+        setDiaryLoaded(false);
+        return;
+      }
+      let active = true;
+      getCurrentUser()
+        .then((u) => {
+          if (!active) return;
+          setUser(u);
+          if (!u) return;
+          return getDiaryPlaysForUser(u.id).then((plays) => {
+            if (active) setDiary(plays);
+          });
+        })
+        .catch(() => undefined)
+        .finally(() => {
+          if (active) setDiaryLoaded(true);
+        });
+      return () => {
+        active = false;
+      };
+    }, [session])
+  );
+
+  async function handleSignOut() {
+    setSignOutError(undefined);
+    try {
+      await signOut();
+      setConfirmingSignOut(false);
+    } catch (e) {
+      setSignOutError(e instanceof Error ? e.message : strings.auth.genericError);
     }
-    getCurrentUser().then((u) => {
-      setUser(u);
-      if (u) getDiaryPlaysForUser(u.id).then(setDiary);
-    });
-  }, [session]);
+  }
 
   if (loading) return null;
 
@@ -56,24 +86,49 @@ export default function ProfileScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
-        <View style={[styles.cover, { paddingTop: insets.top + 16 }]}>
-          <Pressable style={styles.settingsBtn} onPress={() => signOut()}>
-            <SettingsIcon />
-          </Pressable>
-        </View>
+        <View style={[styles.cover, { paddingTop: insets.top + 16 }]} />
 
         <View style={{ paddingHorizontal: 20 }}>
           <View style={styles.profileRow}>
             <Avatar initials={user.initials} size={78} serif />
-            <Pressable style={styles.editBtn}>
-              <Text style={{ fontFamily: bodyFont(fontsLoaded, "semibold"), fontSize: 12, color: colors.text }}>{strings.profile.editProfile}</Text>
+            {/* This used to be a "Profil szerkesztése" pill with no press
+                handler, next to a settings gear that signed the user out on a
+                single tap with no confirmation. One real, clearly labelled,
+                confirmed control replaces both. */}
+            <Pressable
+              style={styles.signOutBtn}
+              onPress={() => setConfirmingSignOut((s) => !s)}
+              accessibilityRole="button"
+              accessibilityState={{ expanded: confirmingSignOut }}
+            >
+              <Text style={{ fontFamily: bodyFont(fontsLoaded, "semibold"), fontSize: 12, color: colors.text }}>{strings.auth.signOut}</Text>
             </Pressable>
           </View>
+
+          {confirmingSignOut && (
+            <View style={styles.confirmCard}>
+              <Text style={{ fontFamily: bodyFont(fontsLoaded, "semibold"), fontSize: 13, color: colors.text }}>
+                {strings.auth.signOutConfirmTitle}
+              </Text>
+              <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12, color: colors.textFaint, lineHeight: 17 }}>
+                {strings.auth.signOutConfirmBody}
+              </Text>
+              {!!signOutError && (
+                <Text accessibilityRole="alert" style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12, color: colors.gold }}>
+                  {signOutError}
+                </Text>
+              )}
+              <View style={{ flexDirection: "row", gap: 10 }}>
+                <Button label={strings.common.cancel} variant="outline" style={{ flex: 1 }} onPress={() => setConfirmingSignOut(false)} />
+                <Button label={strings.auth.signOut} style={{ flex: 1 }} onPress={handleSignOut} />
+              </View>
+            </View>
+          )}
 
           <View style={{ marginTop: 12, gap: 2 }}>
             <Text style={{ fontFamily: displayFont(fontsLoaded, "semibold"), fontSize: 21, color: colors.text }}>{user.name}</Text>
             <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12.5, color: colors.textFaint }}>
-              @{user.handle} · {user.city}
+              {[`@${user.handle}`, user.city].filter(Boolean).join(" · ")}
             </Text>
           </View>
 
@@ -89,7 +144,13 @@ export default function ProfileScreen() {
 
           <View style={styles.tabsRow}>
             {TABS.map((t) => (
-              <Pressable key={t} onPress={() => setActiveTab(t)} style={[styles.tabItem, activeTab === t && styles.tabItemActive]}>
+              <Pressable
+                key={t}
+                onPress={() => setActiveTab(t)}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: activeTab === t }}
+                style={[styles.tabItem, activeTab === t && styles.tabItemActive]}
+              >
                 <Text
                   style={{
                     fontFamily: bodyFont(fontsLoaded, activeTab === t ? "bold" : "semibold"),
@@ -104,13 +165,28 @@ export default function ProfileScreen() {
           </View>
 
           {activeTab === strings.profile.tabDiary && (
-            <View style={styles.grid}>
-              {diary.map((p) => (
-                <Pressable key={p.id} style={styles.gridItem} onPress={() => router.push(`/play/${p.id}`)}>
-                  <PosterPlaceholder uri={p.posterUrl} height="100%" radius={6} />
-                </Pressable>
-              ))}
-            </View>
+            <>
+              <View style={styles.grid}>
+                {diary.map((p) => (
+                  <Pressable
+                    key={p.id}
+                    style={styles.gridItem}
+                    onPress={() => router.push(`/play/${p.id}`)}
+                    accessibilityRole="button"
+                    accessibilityLabel={p.title}
+                  >
+                    <PosterPlaceholder uri={p.posterUrl} height="100%" radius={6} />
+                  </Pressable>
+                ))}
+              </View>
+              {diaryLoaded && diary.length === 0 && (
+                <View style={styles.emptyState}>
+                  <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12.5, color: colors.textFaint }}>
+                    {strings.profile.diaryEmpty}
+                  </Text>
+                </View>
+              )}
+            </>
           )}
           {activeTab !== strings.profile.tabDiary && (
             <View style={styles.emptyState}>
@@ -132,7 +208,7 @@ function Stat({ value, label, gold = false }: { value: number; label: string; go
       <Text style={{ fontFamily: displayFont(fontsLoaded, "semibold"), fontSize: 19, fontWeight: "700", color: gold ? colors.gold : colors.text }}>
         {value}
       </Text>
-      <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 10.5, color: colors.textFaint }}>{label}</Text>
+      <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 10.5, color: colors.textFaint, textAlign: "center" }}>{label}</Text>
     </View>
   );
 }
@@ -144,20 +220,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     alignItems: "flex-end",
   },
-  settingsBtn: { padding: 4 },
   profileRow: {
     flexDirection: "row",
     alignItems: "flex-end",
     justifyContent: "space-between",
     marginTop: -40,
   },
-  editBtn: {
+  signOutBtn: {
     borderWidth: 1,
     borderColor: colors.hairline,
     borderRadius: 999,
     paddingVertical: 7,
     paddingHorizontal: 16,
     marginBottom: 6,
+  },
+  confirmCard: {
+    marginTop: 12,
+    gap: 10,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    borderRadius: 14,
+    padding: 14,
   },
   statsRow: {
     flexDirection: "row",

@@ -40,6 +40,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   const renderTab = (route: (typeof routes)[number], index: number) => {
     const isFocused = state.index === index;
     const color = isFocused ? colors.gold : colors.textFaint;
+    const label = TAB_LABELS[route.name] ?? route.name;
     const onPress = () => {
       const event = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
       if (!isFocused && !event.defaultPrevented) {
@@ -47,10 +48,17 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
       }
     };
     return (
-      <Pressable key={route.key} onPress={onPress} style={styles.tab}>
+      <Pressable
+        key={route.key}
+        onPress={onPress}
+        accessibilityRole="tab"
+        accessibilityLabel={label}
+        accessibilityState={{ selected: isFocused }}
+        style={styles.tab}
+      >
         {TAB_ICONS[route.name]?.(color)}
         <Text style={{ fontFamily: bodyFont(fontsLoaded, "semibold"), fontSize: 10, letterSpacing: 0.02, color }}>
-          {TAB_LABELS[route.name] ?? route.name}
+          {label}
         </Text>
       </Pressable>
     );
@@ -60,7 +68,12 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
     <View style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, 14) }]}>
       {left.map((r, i) => renderTab(r, i))}
 
-      <Pressable style={styles.centerBtn} onPress={() => router.push("/checkin")}>
+      <Pressable
+        style={styles.centerBtn}
+        onPress={() => router.push("/checkin")}
+        accessibilityRole="button"
+        accessibilityLabel={strings.checkin.headerTitle}
+      >
         <PlusIcon />
       </Pressable>
 

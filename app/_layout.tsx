@@ -3,20 +3,36 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { useAppFonts } from "@/hooks/useAppFonts";
+import { useAppFontsSettled } from "@/hooks/useAppFonts";
 import { colors } from "@/theme/colors";
 import { AuthProvider } from "@/contexts/AuthContext";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
+/**
+ * Hard ceiling on how long the splash screen may stay up. Font loading can
+ * hang indefinitely on a flaky connection without ever resolving or
+ * rejecting, and every screen already renders correctly with the system
+ * fallback faces — so a stuck download must never be able to hold the app
+ * hostage behind the splash.
+ */
+const SPLASH_TIMEOUT_MS = 4000;
+
 export default function RootLayout() {
-  const fontsLoaded = useAppFonts();
+  const fontsSettled = useAppFontsSettled();
 
   useEffect(() => {
-    if (fontsLoaded) {
+    if (fontsSettled) {
       SplashScreen.hideAsync().catch(() => {});
     }
-  }, [fontsLoaded]);
+  }, [fontsSettled]);
+
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      SplashScreen.hideAsync().catch(() => {});
+    }, SPLASH_TIMEOUT_MS);
+    return () => clearTimeout(handle);
+  }, []);
 
   return (
     <AuthProvider>

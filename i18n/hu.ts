@@ -6,6 +6,14 @@
 export const strings = {
   appName: "Színház Tracker",
 
+  common: {
+    cancel: "Mégsem",
+    close: "Bezárás",
+    retry: "Újrapróbálom",
+    loadError: "Nem sikerült betölteni. Ellenőrizd a kapcsolatot.",
+    noRating: "—",
+  },
+
   tabs: {
     feed: "Hírfolyam",
     discover: "Felfedezés",
@@ -18,6 +26,9 @@ export const strings = {
     wantsToSee: "szeretné megnézni",
     addedToWatchlist: "hozzáadva a kívánságlistához",
     premiereLabel: "Bemutató",
+    emptyTitle: "Még üres a hírfolyam",
+    emptyBody: "Amint valaki naplóz egy előadást, itt fog megjelenni.",
+    emptyAction: "Nézz körül a darabok között",
   },
 
   time: {
@@ -34,13 +45,21 @@ export const strings = {
     filterKoszinhaz: "Kőszínház",
     filterFuggetlen: "Független",
     filterSzabadteri: "Szabadtéri",
-    premieresTitle: "E heti bemutatók",
+    premieresTitle: "Közelgő bemutatók",
     seeAll: "Összes",
-    trendingTitle: "Népszerű Budapesten",
+    seeLess: "Kevesebb",
+    trendingTitle: "Népszerű",
+    // Hungarian case suffixes are irregular per place name (Budapest*en* but
+    // Debrecen*ben*), so this uses a suffix-free construction that is correct
+    // for any city the venue table happens to contain.
+    trendingTitleInCity: (city: string) => `Népszerű itt: ${city}`,
     searchResultsTitle: (n: number) => `${n} találat`,
+    searching: "Keresés…",
     noResultsTitle: "Nincs találat",
     noResultsAction: "Nem található? Add hozzá magad",
     addPlayFab: "Darab hozzáadása",
+    emptyTitle: "Ehhez a szűréshez még nincs darab",
+    emptyBody: "Próbálj másik várost vagy színháztípust, vagy vedd fel a darabot magad.",
   },
 
   auth: {
@@ -57,12 +76,18 @@ export const strings = {
     switchToSignIn: "Bejelentkezem",
     signInPrompt: "Jelentkezz be, hogy folytathasd",
     signOut: "Kijelentkezés",
+    signOutConfirmTitle: "Kijelentkezel?",
+    signOutConfirmBody: "Újra be kell majd jelentkezned a naplózáshoz.",
     genericError: "Hiba történt. Próbáld újra.",
+    emailRequired: "Add meg az e-mail címed.",
+    passwordRequired: "Add meg a jelszavad.",
+    nameRequired: "Add meg a neved.",
   },
 
   addPlay: {
     headerTitle: "Darab hozzáadása",
     save: "Mentés",
+    saving: "Mentés…",
     titleLabel: "Cím",
     authorLabel: "Szerző",
     directorLabel: "Rendező",
@@ -81,30 +106,49 @@ export const strings = {
     castRolePlaceholder: "Szerep",
     addCastMember: "Szereplő hozzáadása",
     removeCastMember: "Eltávolítás",
+    clearVenue: "Másik játszóhely választása",
+    errorTitleRequired: "A darab címe kötelező.",
+    errorVenueRequired: "Válassz játszóhelyet a mentés előtt.",
+    errorVenueNameRequired: "Add meg a játszóhely nevét és városát.",
+    errorPremiereDate: "A bemutató dátuma ÉÉÉÉ-HH-NN formátumú legyen.",
   },
 
   watchlist: {
     title: "Kívánságlista",
-    subtitle: (n: number) => `${n} darabot szeretne megnézni a köröd`,
+    subtitle: (n: number) => (n === 1 ? "1 darab a listádon" : `${n} darab a listádon`),
     premiereLabel: "Bemutató",
+    emptyTitle: "Üres a kívánságlistád",
+    emptyBody: "A darab oldalán a könyvjelző gombbal tehetsz ide előadásokat.",
+    emptyAction: "Felfedezés",
+    signInPrompt: "Jelentkezz be, hogy lásd a kívánságlistád",
   },
 
   playDetail: {
     logButton: "Előadás naplózása",
     castCrew: "Szereposztás és alkotók",
-    fromFollowing: "Akiket követsz",
+    fromFollowing: "Vélemények",
     reviewsCount: (n: number) => `${n} vélemény`,
     ratingsCount: (n: number) => `${n} értékelés`,
+    noRatingsYet: "Még nincs értékelés",
+    noReviewsYet: "Erről az előadásról még senki nem írt.",
     acting: "Színészi játék",
     directing: "Rendezés",
     setDesign: "Díszlet",
     hours: "óra",
     minutes: "perc",
+    back: "Vissza",
+    share: "Megosztás",
+    shareFailed: "A megosztás nem sikerült.",
+    linkCopied: "A link a vágólapra másolva.",
+    addToWatchlist: "Kívánságlistához adom",
+    removeFromWatchlist: "Törlés a kívánságlistáról",
+    watchlistError: "Nem sikerült frissíteni a kívánságlistát.",
   },
 
   checkin: {
     headerTitle: "Előadás naplózása",
     save: "Mentés",
+    saving: "Mentés…",
     overallRating: "Összesített értékelés",
     acting: "Színészi játék",
     directing: "Rendezés",
@@ -115,13 +159,17 @@ export const strings = {
     tagRecommend: "Ajánlom",
     reviewLabel: "Vélemény",
     reviewPlaceholder: "Oszd meg a gondolataidat az előadásról…",
-    addPhoto: "Fénykép hozzáadása",
     playNotFound: "Nem található az előadás.",
     close: "Bezárás",
+    saveError: "Nem sikerült menteni a naplóbejegyzést. Próbáld újra.",
+    pickPlayTitle: "Melyik előadást naplózod?",
+    pickPlayPlaceholder: "Keress egy darabot…",
+    pickPlayHint: "Kezdj el gépelni a darab, a színház vagy egy színész nevével.",
+    pickPlayNoResults: "Nincs találat. Vedd fel a darabot a Felfedezés fülön.",
+    changePlay: "Másik előadás",
   },
 
   profile: {
-    editProfile: "Profil szerkesztése",
     playsSeen: "Megnézett darab",
     thisYear: "Idén",
     followers: "Követő",
@@ -130,6 +178,7 @@ export const strings = {
     tabWatchlists: "Kívánságlisták",
     tabReviews: "Vélemények",
     comingSoon: (tab: string) => `${tab} hamarosan.`,
+    diaryEmpty: "Még nincs naplózott előadásod.",
     signInPrompt: "Jelentkezz be, hogy lásd a profilod",
     signInButton: "Bejelentkezés",
   },

@@ -129,6 +129,9 @@ export async function getFeed(): Promise<FeedItem[]> {
 
 const PLAY_SELECT_WITH_VENUE_FILTERS: string = `*, play_cast(name, role, sort_order), venues!inner(type, city)`;
 
+/** Discover renders these as a grid, so an unbounded fetch was pure waste. */
+const TRENDING_LIMIT = 40;
+
 export type VenueFilters = { venueType?: VenueType; city?: string };
 
 function applyVenueFilters(query: any, filters?: VenueFilters) {
@@ -140,7 +143,7 @@ function applyVenueFilters(query: any, filters?: VenueFilters) {
 export async function getTrending(filters?: VenueFilters): Promise<Play[]> {
   const needsJoin = !!(filters?.venueType || filters?.city);
   const select: string = needsJoin ? PLAY_SELECT_WITH_VENUE_FILTERS : PLAY_SELECT;
-  let query = supabase.from("plays").select(select).order("rating_overall", { ascending: false });
+  let query = supabase.from("plays").select(select).order("rating_overall", { ascending: false }).limit(TRENDING_LIMIT);
   query = applyVenueFilters(query, filters);
   const { data, error } = await query;
   if (error) throw error;

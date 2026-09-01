@@ -1,4 +1,4 @@
-import Svg, { Path, Circle, Rect, Ellipse } from "react-native-svg";
+import Svg, { Path, Circle, Rect } from "react-native-svg";
 
 type IconProps = { size?: number; color?: string; strokeWidth?: number };
 
@@ -18,10 +18,17 @@ export function HomeIcon({ size = 21, color = "#80716d", strokeWidth = 1.8 }: Ic
 }
 
 export function CompassIcon({ size = 21, color = "#80716d", strokeWidth = 1.8 }: IconProps) {
+  // A real compass rose, not a second magnifier — the Discover tab and the
+  // search field inside it used to share the exact same glyph.
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Circle cx={11} cy={11} r={7} stroke={color} strokeWidth={strokeWidth} />
-      <Path d="m21 21-4.3-4.3" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
+      <Circle cx={12} cy={12} r={8.5} stroke={color} strokeWidth={strokeWidth} />
+      <Path
+        d="M15.6 8.4 13.9 13.9 8.4 15.6 10.1 10.1z"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinejoin="round"
+      />
     </Svg>
   );
 }

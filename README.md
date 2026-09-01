@@ -17,9 +17,9 @@ npx expo install --fix
 ```
 
 Then create a [Supabase](https://supabase.com) project (free tier is
-enough), run the three files in `supabase/migrations/` **in order**
-(`0001_init.sql`, `0002_seed.sql`, `0003_drop_fabricated_seed_plays.sql`)
-in its SQL editor, and copy `.env.example` to `.env`, filling in the
+enough), run every file in `supabase/migrations/` **in order**
+(`0001_init.sql`, `0002_seed.sql`, `0003_drop_fabricated_seed_plays.sql`,
+`0004_search_city_filter.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
 URL/anon key from the project's Settings → API page:
 
 ```bash

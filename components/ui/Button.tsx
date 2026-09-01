@@ -1,4 +1,4 @@
-import { Pressable, Text, StyleSheet, View } from "react-native";
+import { Pressable, Text, StyleSheet, View, ActivityIndicator } from "react-native";
 import { colors } from "@/theme/colors";
 import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
@@ -9,26 +9,39 @@ export function Button({
   variant = "primary",
   icon,
   style,
+  disabled = false,
+  loading = false,
+  accessibilityLabel,
 }: {
   label: string;
   onPress?: () => void;
   variant?: "primary" | "outline";
   icon?: React.ReactNode;
   style?: object;
+  /** Blocks presses and dims the button — use for "already submitting". */
+  disabled?: boolean;
+  loading?: boolean;
+  accessibilityLabel?: string;
 }) {
   const fontsLoaded = useAppFonts();
   const isPrimary = variant === "primary";
+  const isBlocked = disabled || loading;
+  const labelColor = isPrimary ? colors.bg : colors.text;
   return (
     <Pressable
       onPress={onPress}
-      style={[styles.base, isPrimary ? styles.primary : styles.outline, style]}
+      disabled={isBlocked}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityState={{ disabled: isBlocked, busy: loading }}
+      style={[styles.base, isPrimary ? styles.primary : styles.outline, isBlocked && styles.blocked, style]}
     >
-      {icon}
+      {loading ? <ActivityIndicator size="small" color={labelColor} /> : icon}
       <Text
         style={{
           fontFamily: bodyFont(fontsLoaded, "bold"),
           fontSize: 13.5,
-          color: isPrimary ? colors.bg : colors.text,
+          color: labelColor,
         }}
       >
         {label}
@@ -43,19 +56,29 @@ export function IconButton({
   children,
   translucent = false,
   active = false,
+  disabled = false,
+  accessibilityLabel,
 }: {
   onPress?: () => void;
   children: React.ReactNode;
   translucent?: boolean;
   active?: boolean;
+  disabled?: boolean;
+  accessibilityLabel: string;
 }) {
   return (
     <Pressable
       onPress={onPress}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ disabled, selected: active }}
+      hitSlop={6}
       style={[
         styles.iconBtn,
         translucent ? styles.iconBtnTranslucent : styles.iconBtnSolid,
         active && styles.iconBtnActive,
+        disabled && styles.blocked,
       ]}
     >
       <View>{children}</View>
@@ -79,6 +102,9 @@ const styles = StyleSheet.create({
   outline: {
     borderWidth: 1,
     borderColor: colors.hairline,
+  },
+  blocked: {
+    opacity: 0.55,
   },
   iconBtn: {
     width: 36,

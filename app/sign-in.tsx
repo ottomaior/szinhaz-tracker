@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { View, Text, StyleSheet, Pressable, TextInput } from "react-native";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
 import { bodyFont, displayFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
@@ -12,6 +13,7 @@ import { closeModal } from "@/utils/navigation";
 
 export default function SignInScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const fontsLoaded = useAppFonts();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,6 +21,15 @@ export default function SignInScreen() {
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit() {
+    if (submitting) return;
+    if (!email.trim()) {
+      setError(strings.auth.emailRequired);
+      return;
+    }
+    if (!password) {
+      setError(strings.auth.passwordRequired);
+      return;
+    }
     setError(undefined);
     setSubmitting(true);
     try {
@@ -33,8 +44,8 @@ export default function SignInScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View style={styles.topBar}>
-        <Pressable onPress={() => closeModal(router)} hitSlop={8}>
+      <View style={[styles.topBar, { paddingTop: insets.top }]}>
+        <Pressable onPress={() => closeModal(router)} hitSlop={8} accessibilityRole="button" accessibilityLabel={strings.common.close}>
           <CloseIcon />
         </Pressable>
         <Text style={{ fontFamily: bodyFont(fontsLoaded, "bold"), fontSize: 14.5, color: colors.text }}>{strings.auth.signInTitle}</Text>
@@ -49,7 +60,9 @@ export default function SignInScreen() {
           onChangeText={setEmail}
           placeholder={strings.auth.emailLabel}
           placeholderTextColor={colors.textFaint}
+          accessibilityLabel={strings.auth.emailLabel}
           autoCapitalize="none"
+          autoComplete="email"
           keyboardType="email-address"
           style={[styles.input, { fontFamily: bodyFont(fontsLoaded) }]}
         />
@@ -58,15 +71,26 @@ export default function SignInScreen() {
           onChangeText={setPassword}
           placeholder={strings.auth.passwordLabel}
           placeholderTextColor={colors.textFaint}
+          accessibilityLabel={strings.auth.passwordLabel}
+          autoCapitalize="none"
+          autoComplete="current-password"
           secureTextEntry
+          onSubmitEditing={handleSubmit}
+          returnKeyType="go"
           style={[styles.input, { fontFamily: bodyFont(fontsLoaded) }]}
         />
 
-        {error && <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12, color: colors.gold }}>{error}</Text>}
+        {error && (
+          <Text accessibilityRole="alert" style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12, color: colors.gold }}>
+            {error}
+          </Text>
+        )}
 
-        <Button label={strings.auth.signInButton} onPress={handleSubmit} style={submitting ? { opacity: 0.6 } : undefined} />
+        {/* The button used to only dim while submitting, so a second tap fired
+            a second sign-in request. */}
+        <Button label={strings.auth.signInButton} onPress={handleSubmit} loading={submitting} disabled={submitting} />
 
-        <Pressable onPress={() => router.replace("/sign-up")} style={{ alignItems: "center", marginTop: 8 }}>
+        <Pressable onPress={() => router.replace("/sign-up")} style={{ alignItems: "center", marginTop: 8 }} accessibilityRole="button">
           <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12.5, color: colors.textFaint }}>
             {strings.auth.noAccount} <Text style={{ color: colors.gold }}>{strings.auth.switchToSignUp}</Text>
           </Text>

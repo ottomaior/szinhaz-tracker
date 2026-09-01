@@ -57,10 +57,21 @@ export function MaskRatingRow({
 }) {
   const filled = Math.round(rating);
   return (
-    <View style={{ flexDirection: "row", gap }}>
+    <View
+      style={{ flexDirection: "row", gap }}
+      accessibilityRole={onPressMask ? "radiogroup" : "image"}
+      accessibilityLabel={onPressMask ? undefined : `${filled}/5`}
+    >
       {Array.from({ length: 5 }).map((_, i) =>
         onPressMask ? (
-          <Pressable key={i} onPress={() => onPressMask(i + 1)} hitSlop={6}>
+          <Pressable
+            key={i}
+            onPress={() => onPressMask(i + 1)}
+            hitSlop={6}
+            accessibilityRole="radio"
+            accessibilityLabel={`${i + 1}/5`}
+            accessibilityState={{ checked: filled === i + 1 }}
+          >
             <MaskIcon state={i < filled ? "on" : "off"} size={size} />
           </Pressable>
         ) : (

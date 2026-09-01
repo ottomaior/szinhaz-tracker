@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { View, Text, StyleSheet, Pressable, TextInput } from "react-native";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
 import { bodyFont, displayFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
@@ -12,6 +13,7 @@ import { closeModal } from "@/utils/navigation";
 
 export default function SignUpScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const fontsLoaded = useAppFonts();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -20,6 +22,19 @@ export default function SignUpScreen() {
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit() {
+    if (submitting) return;
+    if (!name.trim()) {
+      setError(strings.auth.nameRequired);
+      return;
+    }
+    if (!email.trim()) {
+      setError(strings.auth.emailRequired);
+      return;
+    }
+    if (!password) {
+      setError(strings.auth.passwordRequired);
+      return;
+    }
     setError(undefined);
     setSubmitting(true);
     try {
@@ -34,8 +49,8 @@ export default function SignUpScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View style={styles.topBar}>
-        <Pressable onPress={() => closeModal(router)} hitSlop={8}>
+      <View style={[styles.topBar, { paddingTop: insets.top }]}>
+        <Pressable onPress={() => closeModal(router)} hitSlop={8} accessibilityRole="button" accessibilityLabel={strings.common.close}>
           <CloseIcon />
         </Pressable>
         <Text style={{ fontFamily: bodyFont(fontsLoaded, "bold"), fontSize: 14.5, color: colors.text }}>{strings.auth.signUpTitle}</Text>
@@ -50,6 +65,8 @@ export default function SignUpScreen() {
           onChangeText={setName}
           placeholder={strings.auth.nameLabel}
           placeholderTextColor={colors.textFaint}
+          accessibilityLabel={strings.auth.nameLabel}
+          autoComplete="name"
           style={[styles.input, { fontFamily: bodyFont(fontsLoaded) }]}
         />
         <TextInput
@@ -57,7 +74,9 @@ export default function SignUpScreen() {
           onChangeText={setEmail}
           placeholder={strings.auth.emailLabel}
           placeholderTextColor={colors.textFaint}
+          accessibilityLabel={strings.auth.emailLabel}
           autoCapitalize="none"
+          autoComplete="email"
           keyboardType="email-address"
           style={[styles.input, { fontFamily: bodyFont(fontsLoaded) }]}
         />
@@ -66,15 +85,24 @@ export default function SignUpScreen() {
           onChangeText={setPassword}
           placeholder={strings.auth.passwordLabel}
           placeholderTextColor={colors.textFaint}
+          accessibilityLabel={strings.auth.passwordLabel}
+          autoCapitalize="none"
+          autoComplete="new-password"
           secureTextEntry
+          onSubmitEditing={handleSubmit}
+          returnKeyType="go"
           style={[styles.input, { fontFamily: bodyFont(fontsLoaded) }]}
         />
 
-        {error && <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12, color: colors.gold }}>{error}</Text>}
+        {error && (
+          <Text accessibilityRole="alert" style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12, color: colors.gold }}>
+            {error}
+          </Text>
+        )}
 
-        <Button label={strings.auth.signUpButton} onPress={handleSubmit} style={submitting ? { opacity: 0.6 } : undefined} />
+        <Button label={strings.auth.signUpButton} onPress={handleSubmit} loading={submitting} disabled={submitting} />
 
-        <Pressable onPress={() => router.replace("/sign-in")} style={{ alignItems: "center", marginTop: 8 }}>
+        <Pressable onPress={() => router.replace("/sign-in")} style={{ alignItems: "center", marginTop: 8 }} accessibilityRole="button">
           <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12.5, color: colors.textFaint }}>
             {strings.auth.haveAccount} <Text style={{ color: colors.gold }}>{strings.auth.switchToSignIn}</Text>
           </Text>
