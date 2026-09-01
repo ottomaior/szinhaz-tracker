@@ -24,6 +24,7 @@ type PlayRow = {
   rating_directing: number;
   rating_set_design: number;
   rating_count: number;
+  is_archived: boolean;
   play_cast?: { name: string; role: string; sort_order: number }[];
 };
 
@@ -61,6 +62,7 @@ function toPlay(row: PlayRow): Play {
     premiereDate: row.premiere_date ?? undefined,
     synopsis: row.synopsis ?? undefined,
     posterUrl: row.poster_url ?? undefined,
+    isArchived: row.is_archived ?? false,
     cast: (row.play_cast ?? [])
       .slice()
       .sort((a, b) => a.sort_order - b.sort_order)
@@ -143,7 +145,14 @@ function applyVenueFilters(query: any, filters?: VenueFilters) {
 export async function getTrending(filters?: VenueFilters): Promise<Play[]> {
   const needsJoin = !!(filters?.venueType || filters?.city);
   const select: string = needsJoin ? PLAY_SELECT_WITH_VENUE_FILTERS : PLAY_SELECT;
-  let query = supabase.from("plays").select(select).order("rating_overall", { ascending: false }).limit(TRENDING_LIMIT);
+  // Browse rails show only current work — the catalog also carries the
+  // theaters' own archives so old productions stay loggable and searchable.
+  let query = supabase
+    .from("plays")
+    .select(select)
+    .eq("is_archived", false)
+    .order("rating_overall", { ascending: false })
+    .limit(TRENDING_LIMIT);
   query = applyVenueFilters(query, filters);
   const { data, error } = await query;
   if (error) throw error;
@@ -154,7 +163,12 @@ export async function getPremieres(filters?: VenueFilters): Promise<Play[]> {
   const today = new Date().toISOString().slice(0, 10);
   const needsJoin = !!(filters?.venueType || filters?.city);
   const select: string = needsJoin ? PLAY_SELECT_WITH_VENUE_FILTERS : PLAY_SELECT;
-  let query = supabase.from("plays").select(select).gte("premiere_date", today).order("premiere_date", { ascending: true });
+  let query = supabase
+    .from("plays")
+    .select(select)
+    .eq("is_archived", false)
+    .gte("premiere_date", today)
+    .order("premiere_date", { ascending: true });
   query = applyVenueFilters(query, filters);
   const { data, error } = await query;
   if (error) throw error;

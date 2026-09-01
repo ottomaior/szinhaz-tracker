@@ -17,9 +17,8 @@ npx expo install --fix
 ```
 
 Then create a [Supabase](https://supabase.com) project (free tier is
-enough), run every file in `supabase/migrations/` **in order**
-(`0001_init.sql`, `0002_seed.sql`, `0003_drop_fabricated_seed_plays.sql`,
-`0004_search_city_filter.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
+enough), run every file in `supabase/migrations/` **in order** (`0001_init.sql`
+through `0005_archive_and_reconcile.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
 URL/anon key from the project's Settings → API page:
 
 ```bash
@@ -75,9 +74,6 @@ theme/                    design tokens (colors.ts, typography.ts) —
 contexts/AuthContext.tsx  Supabase session state, wraps the whole app
 
 data/types.ts             domain types (Play, Venue, Review, User, …)
-data/mockData.ts          original hand-written sample data — no longer
-                          imported by the app, kept as the source for the
-                          Supabase seed migration
 services/supabase.ts      the Supabase client (reads EXPO_PUBLIC_SUPABASE_*)
 services/playsService.ts  the ONLY thing screens import play/venue/user
                           data from — queries Supabase
@@ -87,7 +83,9 @@ services/authService.ts   sign up / sign in / sign out
 supabase/migrations/      schema, RLS policies, triggers, and RPCs (run
                           manually in the Supabase SQL editor)
 
-sync/                     standalone Node script (`npm run sync`), run on a
+sync/                     standalone Node script (`npm run sync`; add
+                          `-- --dry-run` to check an adapter against the
+                          live sources without a database), run on a
                           schedule by .github/workflows/sync-plays.yml, that
                           pulls current listings from theaters' own ticketing
                           platforms and upserts them into Supabase using the
@@ -117,10 +115,11 @@ for the schema and `services/` for how the app talks to it.
 
 `supabase/migrations/0002_seed.sql` seeds a handful of real Budapest/Debrecen
 venues so there's somewhere for add-play/sync to point `venue_id` at from
-the start. It used to also seed 7 sample plays (transcribed from
-`data/mockData.ts`) as placeholder content, but that data — real titles,
-venues, and directors, combined in ways that were never fact-checked —
-mostly didn't match any real production once checked (e.g. the seeded
+the start. It used to also seed 7 sample plays (transcribed from a
+hand-written `data/mockData.ts`, since deleted) as placeholder content, but
+that data — real titles, venues, and directors, combined in ways that were
+never fact-checked — mostly didn't match any real production once checked
+(e.g. the seeded
 "Csongor és Tünde" was attributed to Vígszínház, but director Zsótér
 Sándor's real production of it was staged at Katona József Színház's
 Kamra). Attaching real photos to that fabricated data would have made it
@@ -135,7 +134,20 @@ source-by-source notes, including sources that were deliberately excluded
 (`jegyx1.hu`, `port.hu`) because their `robots.txt` disallows automated
 access.
 
-Two adapters are live and enabled by default: **Örkény István Színház**
+Three adapters are live and enabled by default, together supplying roughly
+290 productions — about 145 currently playing or announced, and about 145
+that the theatres themselves file under their archives. Archived rows carry
+`plays.is_archived`, which keeps them out of Discover's premieres/trending
+rails while leaving them searchable and loggable, so you can still record a
+play you saw years ago (see `0005_archive_and_reconcile.sql`).
+
+**Katona József Színház** (Budapest) is scraped from the theatre's own Joomla
+site, whose `/eloadasok/{bemutatok,repertoar,archivum}` sections map exactly
+onto that split. This is what finally routes around the Jegymester
+access-token wall described below — no token needed, because the site renders
+everything server-side.
+
+Also live: **Örkény István Színház**
 (Budapest, via their own JSON API) and **Csokonai Nemzeti Színház**
 (Debrecen, scraped from their own WordPress site's calendar and per-show
 pages — both selectors and edge cases like ancillary "series" listings and
@@ -149,8 +161,22 @@ adapter now reads Csokonai's own site instead, the same way Katona's
 eventually will need to once a token workaround exists (or once a
 Jegy.hu-based fallback is built for it, Phase 3).
 
-Not yet built: followers/following, and the Phase 3 Jegy.hu-based theaters
-(Nemzeti, Vígszínház, Madách, Centrál, Radnóti, Pesti Magyar, Vojtina) and
-Katona (blocked on that access-token issue). Watchlist add/remove is done —
-`services/playsService.ts` has `addToWatchlist`/`removeFromWatchlist`,
-wired to a toggle button on Play Detail.
+Not yet built, with what was actually found when each was checked live:
+
+- **Vígszínház** — feasible but unfinished. `/hu/eloadasok` server-renders
+  56 production links (`/hu/produkciok/{slug}`) with real artwork, but the
+  per-production metadata lives in the Next.js RSC flight payload, where the
+  cast is a list of numeric member ids needing a second directory lookup —
+  the same shape Örkény's API uses. Structure mapped, adapter not written.
+- **Radnóti** and **Trafó** — not reachable by plain HTTP at all. Both render
+  their listings client-side: a plain fetch of Radnóti's `/repertoar/`,
+  `/bemutatok-20262027/` and `/archivum/` returns three byte-identical
+  navigation shells, and `trafo.hu/programok` yields a single link in 168KB
+  of markup. These would need a headless browser in the sync job, a much
+  heavier dependency for a scheduled GitHub Action than cheerio.
+
+Also not yet built: followers/following, and the remaining Jegy.hu-based
+theaters (Nemzeti, Madách, Centrál, Pesti Magyar, Vojtina). Watchlist
+add/remove is done — `services/playsService.ts` has
+`addToWatchlist`/`removeFromWatchlist`, wired to a toggle button on Play
+Detail.

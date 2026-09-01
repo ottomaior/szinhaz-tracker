@@ -1,31 +1,50 @@
 /**
  * Örkény István Színház — first-party JSON API the theater's own site calls.
- * Confirmed live and unrestricted by robots.txt. Field names below were
- * verified against real responses from `/api/month` and `/api/contributors`
- * (not guessed) — see the implementation notes in the PR/commit that added
- * this file if the shape ever needs re-checking.
+ * Confirmed live and unrestricted by robots.txt.
  *
- * Two real quirks discovered while verifying, that a first pass at this
- * adapter (based only on a qualitative description) got wrong:
- *  1. `contributors`/`creators` on a performance are a JSON-encoded STRING
- *     of `{role, contributor: "<id>"}` pairs — the id refers to a separate
- *     `/api/contributors` directory, not an inline name. This adapter
- *     fetches that directory once and resolves names locally.
- *  2. There's no dedicated runtime/intermission field — both are embedded
- *     in a free-text Hungarian tag like "Időtartam: 2h 50min egy
- *     szünettel" ("Runtime: 2h 50min with one intermission"), parsed below.
+ * Driven by `/api/performances?lang=hu&limit=500`, which returns the whole
+ * repertoire — 216 productions, including the theater's own archive going
+ * back to 2002. An earlier version of this adapter walked `/api/month` and
+ * treated whatever happened to be scheduled in the next three months as the
+ * catalog, which found roughly a dozen. `/api/month` is still used, but only
+ * for showtimes.
  *
- * Known simplification: `start`/`end` come back as naive local time
- * ("YYYY-MM-DD HH:MM:SS", no offset). This adapter passes them through as
- * if they were UTC, which is off by Budapest's UTC+1/+2 offset — fine for
- * "what's playing this month" but not exact-hour-accurate. Worth fixing
- * with a proper Europe/Budapest conversion before relying on showtimes.
+ * `category_id` is what separates current work from history (labels read off
+ * the `category` object on live rows):
+ *   1 Bemutatók (8)          upcoming premieres
+ *   2 Repertoár (39)         currently playing
+ *   3 Kategorizálatlan (42)  uncategorised, treated as current
+ *   4 Stream (6)             recordings, not stage productions — skipped
+ *   5 Archívum (121)         past productions — synced with isArchived
+ *
+ * Three quirks verified against real responses, each of which a naive read
+ * of the API gets wrong:
+ *  1. `contributors`/`creators` are a JSON-encoded STRING of
+ *     `{role, contributor: "<id>"}` pairs — the id refers to the separate
+ *     `/api/contributors` directory, not an inline name.
+ *  2. There is no runtime/intermission field; both are embedded in a
+ *     free-text Hungarian tag ("Időtartam: 2h 50min egy szünettel").
+ *  3. `premiere` is ISO on `/api/month` but Hungarian prose
+ *     ("2020. szeptember 18.") on `/api/performances`. Switching endpoints
+ *     without parsing that would null out every premiere date — and the
+ *     archive contains at least one corrupt value ("0002. december 06." for
+ *     A nagy füzet) that must not reach a date column.
  */
 import { fetchJson } from "../lib/http";
+import { parseHungarianDate } from "../lib/huDate";
+import { parseDurationHu } from "../lib/huDuration";
 import { VENUE_IDS } from "../venueMap";
 import type { SyncAdapter, SyncedPlay } from "../lib/types";
 
 const SITE_URL = "https://orkenyszinhaz.hu";
+const PERFORMANCE_MONTHS = 3;
+const REPERTOIRE_LIMIT = 500; // comfortably above the 216 that exist today
+
+const CATEGORY_STREAM = 4;
+const CATEGORY_ARCHIVE = 5;
+
+/** Örkény is a prose theater; nothing in the API carries a genre field. */
+const DEFAULT_GENRE = "próza";
 
 type Localized = { hu?: string | null; en?: string | null };
 
@@ -33,6 +52,7 @@ type RawContributor = { id: number; name: Localized };
 
 type RawPerformance = {
   id: number;
+  category_id?: number | null;
   title: Localized;
   author: Localized;
   director: Localized;
@@ -77,13 +97,12 @@ const HTML_ENTITIES: Record<string, string> = {
 };
 
 function decodeHtmlEntities(text: string): string {
-  return text
-    .replace(/&(#(\d+)|#x([0-9a-fA-F]+)|[a-zA-Z]+);/g, (match, _entity, dec, hex) => {
-      if (dec) return String.fromCharCode(Number(dec));
-      if (hex) return String.fromCharCode(parseInt(hex, 16));
-      const name = match.slice(1, -1);
-      return HTML_ENTITIES[name] ?? match;
-    });
+  return text.replace(/&(#(\d+)|#x([0-9a-fA-F]+)|[a-zA-Z]+);/g, (match, _entity, dec, hex) => {
+    if (dec) return String.fromCharCode(Number(dec));
+    if (hex) return String.fromCharCode(parseInt(hex, 16));
+    const name = match.slice(1, -1);
+    return HTML_ENTITIES[name] ?? match;
+  });
 }
 
 function stripHtml(html?: string | null): string | undefined {
@@ -104,89 +123,131 @@ function parseRoleList(field?: Localized): { role: string; contributorId: number
   }
 }
 
-function parseDurationTag(tags?: { text?: string }[]): { runtimeMinutes?: number; intermissions?: number } {
-  const tag = tags?.map((t) => t.text ?? "").find((t) => /időtartam/i.test(t));
-  if (!tag) return {};
-
-  const hourMatch = tag.match(/(\d+)\s*h/);
-  const minMatch = tag.match(/(\d+)\s*min/);
-  const hours = hourMatch ? Number(hourMatch[1]) : 0;
-  const minutes = minMatch ? Number(minMatch[1]) : 0;
-  const runtimeMinutes = hours * 60 + minutes || undefined;
-
-  let intermissions: number | undefined;
-  if (/szünet nélkül/i.test(tag)) intermissions = 0;
-  else if (/egy szünettel/i.test(tag)) intermissions = 1;
-  else {
-    const countMatch = tag.match(/(\d+)\s*szünettel/i);
-    if (countMatch) intermissions = Number(countMatch[1]);
-  }
-
-  return { runtimeMinutes, intermissions };
+function tagTexts(tags?: { text?: string }[]): string[] {
+  return (tags ?? []).map((t) => t.text ?? "").filter(Boolean);
 }
 
-// "Művészetközvetítő program" ("Art Mediation Programme") entries are open
-// rehearsals and pre-show intro talks tied to a real production, not
-// productions themselves — confirmed by inspecting live data: they always
-// have null author/director and share one generic branding graphic instead
-// of a real photo (titles like "Nyílt próba: X" / "Intró: X"). Syncing them
-// as separate plays cluttered the catalog with duplicate, photo-less
-// listings for the same show. Filtered out here rather than synced and
-// hidden later, since there's nothing about them worth keeping as a play.
-function isAncillaryEvent(tags?: { text?: string }[]): boolean {
-  return (tags ?? []).some((t) => (t.text ?? "").includes("Művészetközvetítő program"));
+function parseDurationTag(tags?: { text?: string }[]) {
+  return parseDurationHu(tagTexts(tags).find((t) => /időtartam/i.test(t)));
+}
+
+/**
+ * Entries that aren't stage productions and shouldn't become plays:
+ *  - "Művészetközvetítő program" — open rehearsals and pre-show intro talks
+ *    tied to a real production ("Nyílt próba: X" / "Intró: X"). They always
+ *    have null author/director and share one branding graphic.
+ *  - "Várostörténeti séta" — guided city-history walks.
+ *  - Stream recordings, which carry category 4 but also announce themselves
+ *    in the title ("- stream", "(bármikor elérhető)").
+ *
+ * The tag alone is not enough. Archived intro talks and open rehearsals
+ * ("Intró: Országkórus", "Nyílt próba: Trójában nem lesz háború") predate the
+ * "Művészetközvetítő program" tag and carry no tags at all, so five of them
+ * survived a tag-only filter — hence the title pattern as well.
+ */
+const ANCILLARY_TITLE = /^(Intró:|Nyílt próba)|-\s*stream\s*$|\(bármikor elérhető\)/i;
+
+function isNotAProduction(p: RawPerformance): boolean {
+  if (p.category_id === CATEGORY_STREAM) return true;
+  const tags = tagTexts(p.tags);
+  if (tags.some((t) => t.includes("Művészetközvetítő program") || t.includes("Várostörténeti séta"))) return true;
+  return ANCILLARY_TITLE.test(p.title.hu ?? p.title.en ?? "");
+}
+
+function genreOf(p: RawPerformance): string {
+  const tags = tagTexts(p.tags);
+  if (tags.some((t) => /felolvasószínház/i.test(t))) return "felolvasószínház";
+  return DEFAULT_GENRE;
+}
+
+/**
+ * `start`/`end` come back as naive Budapest local time ("YYYY-MM-DD
+ * HH:MM:SS", no offset). Passing them through as if they were UTC — which
+ * this adapter used to do — shifts every showtime by one or two hours
+ * depending on daylight saving. This resolves the real offset for that
+ * instant and emits a proper UTC instant.
+ */
+function budapestLocalToUtcIso(naive: string): string {
+  const normalized = naive.replace(" ", "T");
+  const pretendUtc = new Date(`${normalized}Z`);
+  if (Number.isNaN(pretendUtc.getTime())) return normalized;
+
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Europe/Budapest",
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+  const parts = Object.fromEntries(formatter.formatToParts(pretendUtc).map((p) => [p.type, p.value]));
+  const asIfUtc = Date.UTC(
+    Number(parts.year),
+    Number(parts.month) - 1,
+    Number(parts.day),
+    Number(parts.hour) % 24,
+    Number(parts.minute),
+    Number(parts.second)
+  );
+  const offsetMs = asIfUtc - pretendUtc.getTime();
+  return new Date(pretendUtc.getTime() - offsetMs).toISOString();
 }
 
 async function run(): Promise<SyncedPlay[]> {
   const contributors = await fetchJson<RawContributor[]>(`${SITE_URL}/api/contributors`);
   const nameById = new Map(contributors.map((c) => [c.id, c.name.hu ?? c.name.en ?? ""]));
 
-  const byId = new Map<string, SyncedPlay>();
+  const repertoire = await fetchJson<RawPerformance[]>(`${SITE_URL}/api/performances?lang=hu&limit=${REPERTOIRE_LIMIT}`);
 
-  for (const month of monthsAhead(3)) {
+  const byId = new Map<string, SyncedPlay>();
+  for (const p of repertoire) {
+    if (isNotAProduction(p)) continue;
+
+    const { runtimeMinutes, intermissions } = parseDurationTag(p.tags);
+    const synopsis = [p.content_one?.hu, p.content_two?.hu, p.content_three?.hu].map(stripHtml).filter(Boolean).join("\n\n");
+    const cast = [...parseRoleList(p.contributors), ...parseRoleList(p.creators)]
+      .map((c) => ({ name: nameById.get(c.contributorId) ?? "", role: c.role }))
+      .filter((c) => c.name);
+
+    byId.set(String(p.id), {
+      sourceKey: String(p.id),
+      title: p.title.hu ?? p.title.en ?? "Ismeretlen cím",
+      author: stripHtml(p.author.hu ?? p.author.en) ?? "",
+      director: stripHtml(p.director.hu ?? p.director.en) ?? "",
+      venueId: VENUE_IDS.orkeny,
+      genre: genreOf(p),
+      runtimeMinutes,
+      intermissions,
+      premiereDate: parseHungarianDate(p.premiere),
+      synopsis: synopsis || undefined,
+      posterUrl: p.image ? `${SITE_URL}/${p.image}` : undefined,
+      isArchived: p.category_id === CATEGORY_ARCHIVE,
+      cast,
+      performances: [],
+    });
+  }
+
+  // Showtimes for whatever is actually scheduled. A production playing this
+  // month is by definition not archived, whatever the API's category says.
+  for (const month of monthsAhead(PERFORMANCE_MONTHS)) {
     const url = `${SITE_URL}/api/month?lang=hu&limit=99&month=${encodeURIComponent(month)}`;
     const occurrences = await fetchJson<RawOccurrence[]>(url);
 
     for (const occ of occurrences) {
-      const p = occ.performance;
-      if (isAncillaryEvent(p.tags)) continue;
-      const sourceKey = String(p.id);
-
-      let play = byId.get(sourceKey);
-      if (!play) {
-        const { runtimeMinutes, intermissions } = parseDurationTag(p.tags);
-        const synopsis = [p.content_one?.hu, p.content_two?.hu, p.content_three?.hu].map(stripHtml).filter(Boolean).join("\n\n");
-        const cast = [...parseRoleList(p.contributors), ...parseRoleList(p.creators)]
-          .map((c) => ({ name: nameById.get(c.contributorId) ?? "", role: c.role }))
-          .filter((c) => c.name);
-
-        play = {
-          sourceKey,
-          title: p.title.hu ?? p.title.en ?? "Ismeretlen cím",
-          author: p.author.hu ?? p.author.en ?? "",
-          director: p.director.hu ?? p.director.en ?? "",
-          venueId: VENUE_IDS.orkeny,
-          genre: "dráma", // Örkény's API doesn't expose a clean genre field
-          runtimeMinutes,
-          intermissions,
-          premiereDate: p.premiere ?? undefined,
-          synopsis: synopsis || undefined,
-          posterUrl: p.image ? `${SITE_URL}/${p.image}` : undefined,
-          cast,
-          performances: [],
-        };
-        byId.set(sourceKey, play);
-      }
-
+      const play = byId.get(String(occ.performance_id));
+      if (!play) continue; // filtered out above (stream, intro talk, walk)
+      play.isArchived = false;
       play.performances.push({
-        sourceKey: `${sourceKey}:${occ.start}`,
-        startsAt: occ.start.replace(" ", "T"), // see file header re: timezone
+        sourceKey: `${occ.performance_id}:${occ.start}`,
+        startsAt: budapestLocalToUtcIso(occ.start),
         room: occ.location?.title?.hu ?? undefined,
       });
     }
   }
 
-  return Array.from(byId.values());
+  return [...byId.values()];
 }
 
 export const orkenyAdapter: SyncAdapter = { name: "orkeny", run };

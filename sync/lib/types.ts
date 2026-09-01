@@ -11,6 +11,13 @@ export type SyncedPlay = {
   premiereDate?: string; // YYYY-MM-DD
   synopsis?: string;
   posterUrl?: string;
+  /**
+   * A production the theater itself files under its archive — no longer in
+   * the repertoire. Kept in the catalog so people can log something they saw
+   * years ago, but hidden from Discover's browse rails. See
+   * supabase/migrations/0005_archive_and_reconcile.sql.
+   */
+  isArchived?: boolean;
   cast: { name: string; role: string }[];
   performances: { sourceKey: string; startsAt: string; room?: string }[]; // ISO datetime
 };

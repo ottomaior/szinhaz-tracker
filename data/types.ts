@@ -40,6 +40,8 @@ export interface Play {
   posterUrl?: string;
   cast: CastMember[];
   rating: RatingBreakdown;
+  /** Filed under the theater’s own archive: still searchable and loggable, but kept out of Discover’s browse rails. */
+  isArchived: boolean;
 }
 
 export interface Performance {

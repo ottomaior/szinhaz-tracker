@@ -143,6 +143,8 @@ export const strings = {
     addToWatchlist: "Kívánságlistához adom",
     removeFromWatchlist: "Törlés a kívánságlistáról",
     watchlistError: "Nem sikerült frissíteni a kívánságlistát.",
+    archivedBadge: "Archív",
+    archivedNote: "Ez a produkció már nincs műsoron, de naplózhatod, ha láttad.",
   },
 
   checkin: {

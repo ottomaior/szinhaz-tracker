@@ -5,15 +5,19 @@
  * run into `sync_runs` for observability.
  *
  * Usage:
- *   npm run sync                  # run every enabled adapter
+ *   npm run sync                      # run every enabled adapter
  *   npm run sync -- --source=orkeny   # run just one, by SyncAdapter.name
+ *   npm run sync -- --dry-run         # fetch and report, touch no database
  */
 import "dotenv/config";
-import { supabaseAdmin } from "./lib/supabaseAdmin";
+import { getSupabaseAdmin } from "./lib/supabaseAdmin";
 import { orkenyAdapter } from "./adapters/orkeny";
 import { katonaAdapter, csokonaiAdapter as csokonaiJegymesterAdapter } from "./adapters/jegymester";
 import { csokonaiAdapter } from "./adapters/csokonai";
+import { katonaAdapter as katonaSiteAdapter } from "./adapters/katona";
 import type { SyncAdapter, SyncedPlay } from "./lib/types";
+
+const DRY_RUN = process.argv.includes("--dry-run");
 
 function errorMessageOf(e: unknown): string {
   if (e instanceof Error) return e.message;
@@ -22,22 +26,22 @@ function errorMessageOf(e: unknown): string {
 }
 
 // Every adapter that exists, reachable via `--source=<name>` for manual runs.
-const ALL_ADAPTERS: SyncAdapter[] = [orkenyAdapter, csokonaiAdapter, katonaAdapter, csokonaiJegymesterAdapter];
+const ALL_ADAPTERS: SyncAdapter[] = [orkenyAdapter, csokonaiAdapter, katonaSiteAdapter, katonaAdapter, csokonaiJegymesterAdapter];
 
 // Run automatically by the scheduled workflow: Örkény's own API, and
 // Csokonai (Debrecen) scraped from their own site (see
 // sync/adapters/csokonai.ts — Csokonai's Jegymester ticketing site has the
 // same access-token wall as Katona's, so this reads their WordPress site's
-// calendar + production pages directly instead).
+// repertoire index + production pages directly instead).
 //
 // katonaAdapter/csokonaiJegymesterAdapter stay excluded — verified against
 // the live site, that endpoint returns 403 "requires access token" (see
 // the warning header in sync/adapters/jegymester.ts), so they'd fail on
-// every scheduled run. Re-enable if that's ever resolved. Add Jegy.hu-based
-// adapters here once they exist (Phase 3), respecting their 20s crawl-delay.
-const DEFAULT_ADAPTERS: SyncAdapter[] = [orkenyAdapter, csokonaiAdapter];
+// every scheduled run.
+const DEFAULT_ADAPTERS: SyncAdapter[] = [orkenyAdapter, csokonaiAdapter, katonaSiteAdapter];
 
 async function upsertPlay(sourceName: string, synced: SyncedPlay) {
+  const supabaseAdmin = getSupabaseAdmin();
   const { data: playRow, error: playError } = await supabaseAdmin
     .from("plays")
     .upsert(
@@ -52,6 +56,7 @@ async function upsertPlay(sourceName: string, synced: SyncedPlay) {
         premiere_date: synced.premiereDate ?? null,
         synopsis: synced.synopsis ?? null,
         poster_url: synced.posterUrl ?? null,
+        is_archived: synced.isArchived ?? false,
         source: "sync",
         source_key: `${sourceName}:${synced.sourceKey}`,
         last_synced_at: new Date().toISOString(),
@@ -95,7 +100,109 @@ async function upsertPlay(sourceName: string, synced: SyncedPlay) {
   return performancesUpserted;
 }
 
+/**
+ * Removes plays this source used to produce but no longer does.
+ *
+ * Without this, sync is upsert-only and nothing ever leaves the catalog: the
+ * "Intró:"/"Nyílt próba:" ancillary events that an earlier version of the
+ * Örkény adapter synced before it learned to filter them stayed live in
+ * Discover indefinitely.
+ *
+ * Two safety rules, because `plays` cascades to `reviews` and
+ * `watchlist_entries` and a scraper hiccup must never take user data with it:
+ *  1. A play someone has reviewed or watchlisted is archived, never deleted.
+ *  2. The whole pass is skipped if the run looks implausible (no plays at
+ *     all, or more than half the source's catalog suddenly missing) — that
+ *     is the signature of changed markup, not of a closed production.
+ */
+async function reconcile(sourceName: string, seenSourceKeys: Set<string>) {
+  const supabaseAdmin = getSupabaseAdmin();
+  const prefix = `${sourceName}:`;
+
+  const { data: existing, error } = await supabaseAdmin
+    .from("plays")
+    .select("id, source_key, title")
+    .eq("source", "sync")
+    .like("source_key", `${prefix}%`);
+  if (error) throw error;
+
+  const rows = existing ?? [];
+  const stale = rows.filter((r) => !seenSourceKeys.has(String(r.source_key)));
+  if (!stale.length) return { deleted: 0, archived: 0 };
+
+  if (!seenSourceKeys.size || stale.length > rows.length / 2) {
+    console.warn(
+      `[${sourceName}] skipping reconciliation: ${stale.length}/${rows.length} rows would be removed, which looks like a broken scrape rather than a shrunken repertoire.`
+    );
+    return { deleted: 0, archived: 0 };
+  }
+
+  const staleIds = stale.map((r) => r.id as string);
+  const [{ data: reviewed }, { data: watchlisted }] = await Promise.all([
+    supabaseAdmin.from("reviews").select("play_id").in("play_id", staleIds),
+    supabaseAdmin.from("watchlist_entries").select("play_id").in("play_id", staleIds),
+  ]);
+  const referenced = new Set([
+    ...(reviewed ?? []).map((r) => r.play_id as string),
+    ...(watchlisted ?? []).map((r) => r.play_id as string),
+  ]);
+
+  const deletable = staleIds.filter((id) => !referenced.has(id));
+  const archivable = staleIds.filter((id) => referenced.has(id));
+
+  if (deletable.length) {
+    const { error: deleteError } = await supabaseAdmin.from("plays").delete().in("id", deletable);
+    if (deleteError) throw deleteError;
+  }
+  if (archivable.length) {
+    const { error: archiveError } = await supabaseAdmin.from("plays").update({ is_archived: true }).in("id", archivable);
+    if (archiveError) throw archiveError;
+  }
+
+  console.log(`[${sourceName}] reconciled: deleted ${deletable.length}, archived ${archivable.length} (had user data)`);
+  return { deleted: deletable.length, archived: archivable.length };
+}
+
+function reportDryRun(adapter: SyncAdapter, plays: SyncedPlay[]) {
+  const withPoster = plays.filter((p) => p.posterUrl).length;
+  const withPremiere = plays.filter((p) => p.premiereDate).length;
+  const withSynopsis = plays.filter((p) => p.synopsis).length;
+  const withCast = plays.filter((p) => p.cast.length).length;
+  const withRuntime = plays.filter((p) => p.runtimeMinutes).length;
+  const archived = plays.filter((p) => p.isArchived).length;
+  const performances = plays.reduce((n, p) => n + p.performances.length, 0);
+  const genres = [...new Set(plays.map((p) => p.genre))].sort();
+
+  console.log(`\n[${adapter.name}] DRY RUN — ${plays.length} plays, ${performances} performances`);
+  console.log(`  archived:   ${archived}`);
+  console.log(`  poster:     ${withPoster}/${plays.length}`);
+  console.log(`  premiere:   ${withPremiere}/${plays.length}`);
+  console.log(`  synopsis:   ${withSynopsis}/${plays.length}`);
+  console.log(`  cast:       ${withCast}/${plays.length}`);
+  console.log(`  runtime:    ${withRuntime}/${plays.length}`);
+  console.log(`  genres:     ${genres.join(", ")}`);
+
+  const missingPoster = plays.filter((p) => !p.posterUrl).map((p) => p.title);
+  if (missingPoster.length) console.log(`  no poster:  ${missingPoster.join(" | ")}`);
+
+  console.log("  sample:");
+  for (const p of plays.slice(0, 5)) {
+    console.log(
+      `    ${p.isArchived ? "[archív] " : ""}${p.title} — ${p.author || "?"} / rend. ${p.director || "?"} — ${p.genre} — ${
+        p.premiereDate ?? "no premiere"
+      } — ${p.cast.length} cast — ${p.performances.length} perf`
+    );
+  }
+}
+
 async function runAdapter(adapter: SyncAdapter) {
+  if (DRY_RUN) {
+    const plays = await adapter.run();
+    reportDryRun(adapter, plays);
+    return;
+  }
+
+  const supabaseAdmin = getSupabaseAdmin();
   let syncRun: { id: string } | undefined;
   try {
     const { data, error: startError } = await supabaseAdmin.from("sync_runs").insert({ source: adapter.name }).select("id").single();
@@ -112,11 +219,14 @@ async function runAdapter(adapter: SyncAdapter) {
 
   try {
     const plays = await adapter.run();
+    const seenSourceKeys = new Set<string>();
     for (const play of plays) {
       performancesUpserted += await upsertPlay(adapter.name, play);
+      seenSourceKeys.add(`${adapter.name}:${play.sourceKey}`);
       playsUpserted++;
     }
     console.log(`[${adapter.name}] upserted ${playsUpserted} plays, ${performancesUpserted} performances`);
+    await reconcile(adapter.name, seenSourceKeys);
   } catch (e) {
     errorMessage = errorMessageOf(e);
     console.error(`[${adapter.name}] failed:`, errorMessage);
@@ -146,6 +256,9 @@ async function main() {
 
   const results = await Promise.allSettled(adapters.map(runAdapter));
   const failures = results.filter((r) => r.status === "rejected");
+  for (const f of failures) {
+    if (f.status === "rejected") console.error(errorMessageOf(f.reason));
+  }
   if (failures.length) {
     console.error(`${failures.length}/${adapters.length} adapter(s) failed.`);
     process.exit(1);

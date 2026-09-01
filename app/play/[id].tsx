@@ -172,7 +172,19 @@ export default function PlayDetailScreen() {
                   </Text>
                 </>
               )}
+              {play.isArchived && (
+                <View style={styles.archivedBadge}>
+                  <Text style={{ fontFamily: bodyFont(fontsLoaded, "bold"), fontSize: 10, color: colors.textDim, letterSpacing: 0.06 }}>
+                    {strings.playDetail.archivedBadge}
+                  </Text>
+                </View>
+              )}
             </View>
+            {play.isArchived && (
+              <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 11.5, color: colors.textFaint, lineHeight: 16, marginTop: 2 }}>
+                {strings.playDetail.archivedNote}
+              </Text>
+            )}
           </View>
 
           <View style={styles.ratingCard}>
@@ -320,6 +332,14 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   metaRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 2, flexWrap: "wrap" },
+  archivedBadge: {
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    backgroundColor: colors.surface,
+    borderRadius: 999,
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+  },
   dot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: colors.textFaint },
   ratingCard: {
     flexDirection: "row",

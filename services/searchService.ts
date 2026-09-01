@@ -20,6 +20,7 @@ function mapRow(row: {
   rating_directing: number;
   rating_set_design: number;
   rating_count: number;
+  is_archived: boolean;
 }): Play {
   return {
     id: row.id,
@@ -34,6 +35,7 @@ function mapRow(row: {
     synopsis: row.synopsis ?? undefined,
     posterUrl: row.poster_url ?? undefined,
     cast: [], // search_plays returns bare `plays` rows — full cast comes from getPlayById
+    isArchived: row.is_archived ?? false,
     rating: {
       overall: row.rating_overall,
       acting: row.rating_acting,
@@ -44,13 +46,25 @@ function mapRow(row: {
   };
 }
 
-export async function searchPlays(query: string, venueType?: VenueType, city?: string): Promise<Play[]> {
+/**
+ * Search deliberately reaches archived productions by default: this is what
+ * the check-in play picker uses, and logging a play you saw years ago is the
+ * whole point of keeping the theaters' archives in the catalog. Discover's
+ * browse rails are the place that hides them (see getTrending/getPremieres).
+ */
+export async function searchPlays(
+  query: string,
+  venueType?: VenueType,
+  city?: string,
+  includeArchived = true
+): Promise<Play[]> {
   const trimmed = query.trim();
   if (!trimmed) return [];
   const { data, error } = await supabase.rpc("search_plays", {
     search_term: trimmed,
     venue_type_filter: venueType ?? null,
     city_filter: city ?? null,
+    include_archived: includeArchived,
   });
   if (error) throw error;
   return (data ?? []).map((r: PlayRow) => mapRow(r));
