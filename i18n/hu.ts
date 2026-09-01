@@ -6,6 +6,18 @@
 export const strings = {
   appName: "Színház Tracker",
 
+  /** Derived "is it still on?" state — see supabase/migrations/0006_play_status.sql. */
+  status: {
+    announced: "Bemutató előtt",
+    running: "Műsoron",
+    dormant: "Szünetel",
+    ended: "Levették a műsorról",
+    nextPerformance: "Következő előadás",
+    lastPerformance: "Utolsó előadás",
+    noUpcoming: "Nincs meghirdetett időpont",
+    remaining: (n: number) => (n === 1 ? "1 hátralévő előadás" : n + " hátralévő előadás"),
+  },
+
   common: {
     cancel: "Mégsem",
     close: "Bezárás",

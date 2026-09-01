@@ -11,6 +11,7 @@ import type { Play, Venue, VenueType } from "@/data/types";
 import { SearchIcon, PlusIcon } from "@/components/icons/Icons";
 import { MaskIcon } from "@/components/icons/MaskIcon";
 import { Chip } from "@/components/ui/Chip";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { strings } from "@/i18n/hu";
@@ -283,6 +284,7 @@ function TrendingCard({ play, onPress }: { play: Play; onPress: () => void }) {
       <Text numberOfLines={2} style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 10.5, color: colors.textFaint }}>
         {venue?.name}
       </Text>
+      <StatusBadge status={play.status} size="sm" />
     </Pressable>
   );
 }

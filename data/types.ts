@@ -4,6 +4,13 @@
  * Date, Genre, Runtime, Intermission count).
  */
 
+/**
+ * Derived 'is this still playing?' state. Computed by
+ * public.recompute_play_status() from the source's own repertoire/archive
+ * split, the premiere date, and the performances table — never scraped.
+ */
+export type PlayStatus = "announced" | "running" | "dormant" | "ended" | "unknown";
+
 export type VenueType = "kőszínház" | "független" | "befogadó tér" | "szabadtéri";
 
 export interface Venue {
@@ -42,6 +49,12 @@ export interface Play {
   rating: RatingBreakdown;
   /** Filed under the theater’s own archive: still searchable and loggable, but kept out of Discover’s browse rails. */
   isArchived: boolean;
+  status: PlayStatus;
+  /** Human-readable explanation of why status is what it is, for debugging and the correction flow. */
+  statusReason?: string;
+  nextPerformanceAt?: string; // ISO datetime
+  lastPerformanceAt?: string; // ISO datetime
+  performanceCount: number;
 }
 
 export interface Performance {

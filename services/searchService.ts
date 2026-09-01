@@ -21,6 +21,11 @@ function mapRow(row: {
   rating_set_design: number;
   rating_count: number;
   is_archived: boolean;
+  status: Play["status"];
+  status_reason: string | null;
+  next_perf_at: string | null;
+  last_perf_at: string | null;
+  perf_count_total: number;
 }): Play {
   return {
     id: row.id,
@@ -36,6 +41,11 @@ function mapRow(row: {
     posterUrl: row.poster_url ?? undefined,
     cast: [], // search_plays returns bare `plays` rows — full cast comes from getPlayById
     isArchived: row.is_archived ?? false,
+    status: row.status ?? "unknown",
+    statusReason: row.status_reason ?? undefined,
+    nextPerformanceAt: row.next_perf_at ?? undefined,
+    lastPerformanceAt: row.last_perf_at ?? undefined,
+    performanceCount: row.perf_count_total ?? 0,
     rating: {
       overall: row.rating_overall,
       acting: row.rating_acting,

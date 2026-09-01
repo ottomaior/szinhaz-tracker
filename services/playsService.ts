@@ -1,5 +1,5 @@
 import { supabase } from "@/services/supabase";
-import type { CastMember, FeedItem, Performance, Play, Review, User, Venue, VenueType, WatchlistEntry } from "@/data/types";
+import type { CastMember, FeedItem, Performance, Play, PlayStatus, Review, User, Venue, VenueType, WatchlistEntry } from "@/data/types";
 
 /**
  * Data-access boundary. Screens only ever import from this file, never
@@ -25,6 +25,11 @@ type PlayRow = {
   rating_set_design: number;
   rating_count: number;
   is_archived: boolean;
+  status: PlayStatus;
+  status_reason: string | null;
+  next_perf_at: string | null;
+  last_perf_at: string | null;
+  perf_count_total: number;
   play_cast?: { name: string; role: string; sort_order: number }[];
 };
 
@@ -63,6 +68,11 @@ function toPlay(row: PlayRow): Play {
     synopsis: row.synopsis ?? undefined,
     posterUrl: row.poster_url ?? undefined,
     isArchived: row.is_archived ?? false,
+    status: row.status ?? "unknown",
+    statusReason: row.status_reason ?? undefined,
+    nextPerformanceAt: row.next_perf_at ?? undefined,
+    lastPerformanceAt: row.last_perf_at ?? undefined,
+    performanceCount: row.perf_count_total ?? 0,
     cast: (row.play_cast ?? [])
       .slice()
       .sort((a, b) => a.sort_order - b.sort_order)

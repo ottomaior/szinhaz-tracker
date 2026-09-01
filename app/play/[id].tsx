@@ -13,6 +13,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { MaskRatingRow } from "@/components/icons/MaskIcon";
 import { ChevronLeftIcon, ShareIcon, TicketIcon, PlusIcon } from "@/components/icons/Icons";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { strings } from "@/i18n/hu";
 import { closeModal } from "@/utils/navigation";
 
@@ -172,16 +173,17 @@ export default function PlayDetailScreen() {
                   </Text>
                 </>
               )}
-              {play.isArchived && (
-                <View style={styles.archivedBadge}>
-                  <Text style={{ fontFamily: bodyFont(fontsLoaded, "bold"), fontSize: 10, color: colors.textDim, letterSpacing: 0.06 }}>
-                    {strings.playDetail.archivedBadge}
-                  </Text>
-                </View>
-              )}
             </View>
+
+            <View style={styles.statusRow}>
+              <StatusBadge status={play.status} />
+              <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12, color: colors.textDim, flexShrink: 1 }}>
+                {schedulingLine(play)}
+              </Text>
+            </View>
+
             {play.isArchived && (
-              <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 11.5, color: colors.textFaint, lineHeight: 16, marginTop: 2 }}>
+              <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 11.5, color: colors.textFaint, lineHeight: 16 }}>
                 {strings.playDetail.archivedNote}
               </Text>
             )}
@@ -276,6 +278,25 @@ export default function PlayDetailScreen() {
   );
 }
 
+/**
+ * The one line a reader actually wants under the title: when can I see this,
+ * or when was the last chance. Falls back to silence rather than filler when
+ * neither date is known.
+ */
+function schedulingLine(play: Play): string {
+  if (play.nextPerformanceAt) {
+    const when = new Date(play.nextPerformanceAt).toLocaleString("hu-HU", {
+      month: "short", day: "numeric", weekday: "short", hour: "2-digit", minute: "2-digit",
+    });
+    return strings.status.nextPerformance + ": " + when;
+  }
+  if (play.lastPerformanceAt) {
+    const when = new Date(play.lastPerformanceAt).toLocaleDateString("hu-HU", { year: "numeric", month: "long", day: "numeric" });
+    return strings.status.lastPerformance + ": " + when;
+  }
+  return play.status === "running" || play.status === "announced" ? strings.status.noUpcoming : "";
+}
+
 function formatRuntime(minutes: number) {
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
@@ -332,14 +353,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   metaRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 2, flexWrap: "wrap" },
-  archivedBadge: {
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    backgroundColor: colors.surface,
-    borderRadius: 999,
-    paddingVertical: 2,
-    paddingHorizontal: 8,
-  },
+  statusRow: { flexDirection: "row", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 4 },
   dot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: colors.textFaint },
   ratingCard: {
     flexDirection: "row",

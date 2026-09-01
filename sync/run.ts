@@ -287,9 +287,33 @@ async function main() {
   for (const f of failures) {
     if (f.status === "rejected") console.error(errorMessageOf(f.reason));
   }
+
+  // Runs even when an adapter failed: the sources that did succeed still
+  // moved dates around, and a partially refreshed catalog with correct
+  // statuses beats a fully refreshed one with stale ones.
+  await recomputeStatuses();
+
   if (failures.length) {
     console.error(`${failures.length}/${adapters.length} adapter(s) failed.`);
     process.exit(1);
+  }
+}
+
+/**
+ * "Currently playing" is derived, not scraped — see
+ * supabase/migrations/0006_play_status.sql. It has to be recomputed after
+ * every run because it also decays with time: a production stops being
+ * `running` once its last known date passes, with nothing re-scraped.
+ */
+async function recomputeStatuses() {
+  try {
+    const { error } = await getSupabaseAdmin().rpc("recompute_play_status");
+    if (error) throw error;
+    console.log("[status] recomputed play statuses");
+  } catch (e) {
+    // Never fail the whole job over this: the catalog rows are already
+    // written and correct, and the next run recomputes anyway.
+    console.error("[status] recompute failed (catalog rows are still up to date):", errorMessageOf(e));
   }
 }
 
