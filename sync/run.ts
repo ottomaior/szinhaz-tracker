@@ -40,6 +40,33 @@ const ALL_ADAPTERS: SyncAdapter[] = [orkenyAdapter, csokonaiAdapter, katonaSiteA
 // every scheduled run.
 const DEFAULT_ADAPTERS: SyncAdapter[] = [orkenyAdapter, csokonaiAdapter, katonaSiteAdapter];
 
+/**
+ * Collapses cast entries that repeat the same performer in the same role.
+ *
+ * `play_cast` is uniquely keyed on (play_id, name, role), and sources really
+ * do list a person twice under one role — Örkény's API returns overlapping
+ * `contributors` and `creators` lists, which made three of its 197
+ * productions (A szecsuáni jó ember, Az átváltozás, Üvöltő szelek) fail the
+ * whole adapter run with "duplicate key value violates unique constraint
+ * play_cast_play_id_name_role_key".
+ *
+ * Deduped here rather than in any one adapter because the constraint belongs
+ * to the table: every current and future source has to satisfy it, and a
+ * generic field scraper like Katona's can collide the same way. First
+ * occurrence wins, so `sort_order` still follows the source's own ordering.
+ */
+function dedupeCast(cast: SyncedPlay["cast"]): SyncedPlay["cast"] {
+  const seen = new Set<string>();
+  return cast.filter((member) => {
+    // NUL separator so a name/role pair can never be confused with a
+    // different split of the same characters ("A B"/"C" vs "A"/"B C").
+    const key = `${member.name}\u0000${member.role}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 async function upsertPlay(sourceName: string, synced: SyncedPlay) {
   const supabaseAdmin = getSupabaseAdmin();
   const { data: playRow, error: playError } = await supabaseAdmin
@@ -73,10 +100,11 @@ async function upsertPlay(sourceName: string, synced: SyncedPlay) {
   // to diff — cast lists are short, and this keeps stale members from
   // lingering after a show's cast changes).
   await supabaseAdmin.from("play_cast").delete().eq("play_id", playId);
-  if (synced.cast.length) {
+  const cast = dedupeCast(synced.cast);
+  if (cast.length) {
     const { error: castError } = await supabaseAdmin
       .from("play_cast")
-      .insert(synced.cast.map((c, i) => ({ play_id: playId, name: c.name, role: c.role, sort_order: i })));
+      .insert(cast.map((c, i) => ({ play_id: playId, name: c.name, role: c.role, sort_order: i })));
     if (castError) throw castError;
   }
 
