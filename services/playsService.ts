@@ -229,11 +229,14 @@ const PLAY_SELECT_WITH_VENUE_FILTERS: string = `*, play_cast(name, role, sort_or
 /** Discover renders these as a grid, so an unbounded fetch was pure waste. */
 const TRENDING_LIMIT = 40;
 
-export type VenueFilters = { venueType?: VenueType; city?: string };
+export type VenueFilters = { venueType?: VenueType; city?: string; venueId?: string };
 
 function applyVenueFilters(query: any, filters?: VenueFilters) {
   if (filters?.venueType) query = query.eq("venues.type", filters.venueType);
   if (filters?.city) query = query.eq("venues.city", filters.city);
+  // Read off the play's own column rather than the joined venue: same answer,
+  // and it does not need the `venues!inner` join the other two force.
+  if (filters?.venueId) query = query.eq("venue_id", filters.venueId);
   return query;
 }
 
@@ -313,10 +316,49 @@ export async function getPremieres(filters?: VenueFilters): Promise<Play[]> {
   return ((data ?? []) as unknown as PlayRow[]).map((r) => toPlay(r));
 }
 
-export async function getCities(): Promise<string[]> {
-  const { data, error } = await supabase.from("venues").select("city").order("city");
+/**
+ * Venues worth offering as a filter, newest-first by how much they hold.
+ *
+ * Only venues that actually have something to show. `venues` still carries the
+ * seed rows for Vígszínház, Radnóti, Nemzeti and Trafó, which no adapter feeds
+ * — four of the seven. Listing them would rebuild the exact problem the
+ * venue-type chips were hidden for: a filter whose only outcome is an empty
+ * screen, which reads as broken rather than as "nothing here yet".
+ *
+ * Archived-only venues are excluded for the same reason: the browse rails show
+ * current work, so a chip that empties them is not a filter worth offering.
+ */
+export async function getFilterVenues(city?: string): Promise<Venue[]> {
+  let query = supabase
+    .from("plays")
+    .select("venue_id, venues!inner (*)")
+    .eq("is_archived", false)
+    .in("status", BROWSABLE_STATUSES);
+  if (city) query = query.eq("venues.city", city);
+  const { data, error } = await query;
   if (error) throw error;
-  return Array.from(new Set((data ?? []).map((r) => r.city as string)));
+
+  const byId = new Map<string, Venue>();
+  for (const row of data ?? []) {
+    const venueRow = Array.isArray(row.venues) ? row.venues[0] : row.venues;
+    if (venueRow) byId.set((venueRow as VenueRow).id, toVenue(venueRow as VenueRow));
+  }
+  return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name, "hu"));
+}
+
+/** Cities that have something to browse — same reasoning as `getFilterVenues`. */
+export async function getCities(): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("plays")
+    .select("venues!inner (city)")
+    .eq("is_archived", false)
+    .in("status", BROWSABLE_STATUSES);
+  if (error) throw error;
+  const cities = (data ?? [])
+    .map((r) => (Array.isArray(r.venues) ? r.venues[0] : r.venues))
+    .map((v) => (v as { city?: string } | null)?.city)
+    .filter((c): c is string => !!c);
+  return Array.from(new Set(cities)).sort((a, b) => a.localeCompare(b, "hu"));
 }
 
 export async function getPlayById(id: string): Promise<Play | undefined> {

@@ -8,7 +8,7 @@ import { gutter, minTouchTarget, radius, space } from "@/theme/tokens";
 import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
 import { useRecentSearches } from "@/hooks/useRecentSearches";
-import { getCities, getNowPlaying, getPremieres, getTrending, getVenueById } from "@/services/playsService";
+import { getCities, getFilterVenues, getNowPlaying, getPremieres, getTrending, getVenueById } from "@/services/playsService";
 import { searchPlays } from "@/services/searchService";
 import type { Play, Venue, VenueType } from "@/data/types";
 import { SearchIcon, PlusIcon, CloseIcon } from "@/components/icons/Icons";
@@ -63,6 +63,8 @@ export default function DiscoverScreen() {
   const [activeFilter, setActiveFilter] = useState(strings.discover.filterAll);
   const [cities, setCities] = useState<string[]>([]);
   const [activeCity, setActiveCity] = useState(strings.discover.filterAll);
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [activeVenueId, setActiveVenueId] = useState<string>();
   const [query, setQuery] = useState("");
   const [nowPlaying, setNowPlaying] = useState<Play[]>([]);
   const [premieres, setPremieres] = useState<Play[]>([]);
@@ -77,6 +79,7 @@ export default function DiscoverScreen() {
 
   const venueType = FILTER_TO_VENUE_TYPE[activeFilter];
   const city = activeCity === strings.discover.filterAll ? undefined : activeCity;
+  const venueId = activeVenueId;
   const isSearching = query.trim().length > 0;
 
   useEffect(() => {
@@ -85,14 +88,35 @@ export default function DiscoverScreen() {
       .catch(() => setCities([]));
   }, []);
 
+  // Scoped to the selected city, so picking Debrecen offers Debrecen's
+  // theatres rather than all of them.
+  useEffect(() => {
+    let active = true;
+    getFilterVenues(city)
+      .then((next) => {
+        if (!active) return;
+        setVenues(next);
+        // A venue selected under the previous city is not in this list any
+        // more; leaving it set would filter every rail down to nothing with
+        // no visibly active chip to explain why.
+        setActiveVenueId((current) => (current && next.some((v) => v.id === current) ? current : undefined));
+      })
+      .catch(() => {
+        if (active) setVenues([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [city]);
+
   const loadBrowse = useCallback(async () => {
     setBrowseFailed(false);
     setBrowseLoading(true);
     try {
       const [nextNowPlaying, nextPremieres, nextTrending] = await Promise.all([
-        getNowPlaying({ venueType, city }),
-        getPremieres({ venueType, city }),
-        getTrending({ venueType, city }),
+        getNowPlaying({ venueType, city, venueId }),
+        getPremieres({ venueType, city, venueId }),
+        getTrending({ venueType, city, venueId }),
       ]);
       setNowPlaying(nextNowPlaying);
       setPremieres(nextPremieres);
@@ -106,7 +130,7 @@ export default function DiscoverScreen() {
     } finally {
       setBrowseLoading(false);
     }
-  }, [venueType, city]);
+  }, [venueType, city, venueId]);
 
   useEffect(() => {
     loadBrowse();
@@ -116,7 +140,7 @@ export default function DiscoverScreen() {
   // "see all" toggle can never be left claiming to show a list it no longer has.
   useEffect(() => {
     setShowAllPremieres(false);
-  }, [venueType, city]);
+  }, [venueType, city, venueId]);
 
   useEffect(() => {
     if (!isSearching) {
@@ -126,13 +150,13 @@ export default function DiscoverScreen() {
     }
     setSearching(true);
     const handle = setTimeout(() => {
-      searchPlays(query, venueType, city)
+      searchPlays(query, venueType, city, true, venueId)
         .then(setSearchResults)
         .catch(() => setSearchResults([]))
         .finally(() => setSearching(false));
     }, 300);
     return () => clearTimeout(handle);
-  }, [query, venueType, city, isSearching]);
+  }, [query, venueType, city, venueId, isSearching]);
 
   const hasBrowseContent = nowPlaying.length > 0 || premieres.length > 0 || trending.length > 0;
   const archivedCount = searchResults.filter((p) => p.isArchived || p.status === "ended").length;
@@ -210,6 +234,30 @@ export default function DiscoverScreen() {
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
               {[strings.discover.filterAll, ...cities].map((c) => (
                 <Chip key={c} label={c} active={activeCity === c} onPress={() => setActiveCity(c)} />
+              ))}
+            </ScrollView>
+          )}
+
+          {/* Which theatre, within whatever city is selected. Only shown when
+              there is a choice to make: with one venue in scope the row is a
+              single chip that cannot change the result, and Debrecen is
+              exactly that today — Csokonai is the only Debrecen venue the
+              adapters feed. It appears there by itself the moment a second one
+              does. */}
+          {venues.length > 1 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+              <Chip
+                label={strings.discover.filterAll}
+                active={!activeVenueId}
+                onPress={() => setActiveVenueId(undefined)}
+              />
+              {venues.map((v) => (
+                <Chip
+                  key={v.id}
+                  label={v.name}
+                  active={activeVenueId === v.id}
+                  onPress={() => setActiveVenueId(activeVenueId === v.id ? undefined : v.id)}
+                />
               ))}
             </ScrollView>
           )}

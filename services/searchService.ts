@@ -75,7 +75,8 @@ export async function searchPlays(
   query: string,
   venueType?: VenueType,
   city?: string,
-  includeArchived = true
+  includeArchived = true,
+  venueId?: string
 ): Promise<Play[]> {
   const trimmed = query.trim();
   if (!trimmed) return [];
@@ -84,6 +85,9 @@ export async function searchPlays(
     venue_type_filter: venueType ?? null,
     city_filter: city ?? null,
     include_archived: includeArchived,
+    // Added in 0015. Without it the venue chip filtered the browse rails and
+    // silently did nothing to the search results under the same chip.
+    venue_id_filter: venueId ?? null,
   });
   if (error) throw error;
   return (data ?? []).map((r: PlayRow) => mapRow(r));
