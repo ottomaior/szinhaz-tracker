@@ -225,6 +225,33 @@ function applyVenueFilters(query: any, filters?: VenueFilters) {
  */
 const BROWSABLE_STATUSES = ["running", "announced", "dormant", "unknown"];
 
+/**
+ * Productions with a confirmed date coming up, soonest first.
+ *
+ * This is the one rail that answers "what can I actually go and see this
+ * week", which is the question Discover opens on. It is deliberately stricter
+ * than `BROWSABLE_STATUSES`: a play qualifies only by holding a real future
+ * performance in `next_perf_at`, so nothing reaches it on the strength of a
+ * repertoire listing alone. That excludes the sources which publish no
+ * showtimes at all — correctly, since we cannot tell a visitor when to turn up.
+ */
+export async function getNowPlaying(filters?: VenueFilters): Promise<Play[]> {
+  const needsJoin = !!(filters?.venueType || filters?.city);
+  const select: string = needsJoin ? PLAY_SELECT_WITH_VENUE_FILTERS : PLAY_SELECT;
+  let query = supabase
+    .from("plays")
+    .select(select)
+    .eq("is_archived", false)
+    .eq("status", "running")
+    .not("next_perf_at", "is", null)
+    .order("next_perf_at", { ascending: true })
+    .limit(TRENDING_LIMIT);
+  query = applyVenueFilters(query, filters);
+  const { data, error } = await query;
+  if (error) throw error;
+  return ((data ?? []) as unknown as PlayRow[]).map((r) => toPlay(r));
+}
+
 export async function getTrending(filters?: VenueFilters): Promise<Play[]> {
   const needsJoin = !!(filters?.venueType || filters?.city);
   const select: string = needsJoin ? PLAY_SELECT_WITH_VENUE_FILTERS : PLAY_SELECT;
@@ -476,6 +503,36 @@ async function findVenueByNameAndCity(name: string, city: string): Promise<Venue
   return data ? toVenue(data as VenueRow) : undefined;
 }
 
+/**
+ * Uploads a poster a user picked for a play they are adding by hand.
+ *
+ * The path is `user/<uid>/<random>.<ext>`, which is the shape the storage
+ * policy from `0011_poster_storage.sql` allows a signed-in user to write —
+ * their own folder and nowhere else, so nobody can overwrite a theatre poster
+ * the sync job mirrored. The returned path is what `createPlay` stores in
+ * `poster_path`; the caller never has to know the bucket layout.
+ */
+export async function uploadUserPoster(uri: string): Promise<string> {
+  const { data: auth } = await supabase.auth.getUser();
+  const uid = auth.user?.id;
+  if (!uid) throw new Error("not signed in");
+
+  // `fetch` on a local file:// or content:// URI is how Expo hands us the
+  // bytes on every platform; on web the picker already gives a blob: URI.
+  const res = await fetch(uri);
+  const blob = await res.blob();
+
+  const ext = (blob.type.split("/")[1] || "jpg").replace(/[^a-z0-9]/gi, "").toLowerCase();
+  const path = `user/${uid}/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
+
+  const { error } = await supabase.storage.from("posters").upload(path, blob, {
+    contentType: blob.type || "image/jpeg",
+    upsert: false,
+  });
+  if (error) throw error;
+  return path;
+}
+
 export async function createPlay(input: {
   title: string;
   author: string;
@@ -486,6 +543,8 @@ export async function createPlay(input: {
   intermissions: number;
   premiereDate?: string;
   synopsis?: string;
+  posterPath?: string;
+  posterCredit?: string;
   cast: CastMember[];
 }): Promise<Play> {
   const { data, error } = await supabase.rpc("create_play_with_cast", {
@@ -499,6 +558,8 @@ export async function createPlay(input: {
       intermissions: input.intermissions,
       premiereDate: input.premiereDate ?? null,
       synopsis: input.synopsis ?? null,
+      posterPath: input.posterPath ?? null,
+      posterCredit: input.posterCredit ?? null,
     },
     cast_members: input.cast,
   });

@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { View, ScrollView, StyleSheet, Pressable, TextInput } from "react-native";
+import { Image } from "expo-image";
+import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
 import { inputFontSize } from "@/theme/type";
@@ -7,7 +9,7 @@ import { gutter, radius, space } from "@/theme/tokens";
 import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
 import { useAuth } from "@/contexts/AuthContext";
-import { createPlay, createVenue, searchVenues } from "@/services/playsService";
+import { createPlay, createVenue, searchVenues, uploadUserPoster } from "@/services/playsService";
 import type { CastMember, Venue, VenueType } from "@/data/types";
 import { CloseIcon } from "@/components/icons/Icons";
 import { Button } from "@/components/ui/Button";
@@ -42,6 +44,14 @@ export default function AddPlayScreen() {
   const [newVenueCity, setNewVenueCity] = useState("");
   const [newVenueType, setNewVenueType] = useState<VenueType>("kőszínház");
   const [creatingVenue, setCreatingVenue] = useState(false);
+
+  // The picked image is held as a local URI for the preview and uploaded
+  // straight away, so `handleSave` only ever has a bucket path to pass on and
+  // a slow upload never sits between the save button and the new play.
+  const [posterUri, setPosterUri] = useState<string>();
+  const [posterPath, setPosterPath] = useState<string>();
+  const [posterCredit, setPosterCredit] = useState("");
+  const [uploadingPoster, setUploadingPoster] = useState(false);
 
   const [error, setError] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
@@ -96,6 +106,45 @@ export default function AddPlayScreen() {
     }
   }
 
+  async function handlePickPoster() {
+    if (uploadingPoster) return;
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      setError(strings.addPlay.errorPosterPermission);
+      return;
+    }
+    const picked = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.85,
+      // Deliberately no fixed aspect: sources return landscape production
+      // photography as often as portrait artwork, and the play screen already
+      // picks its treatment from the image's own dimensions.
+      allowsEditing: false,
+    });
+    if (picked.canceled || !picked.assets?.[0]) return;
+
+    const asset = picked.assets[0];
+    setPosterUri(asset.uri);
+    setError(undefined);
+    setUploadingPoster(true);
+    try {
+      setPosterPath(await uploadUserPoster(asset.uri));
+    } catch {
+      // Drop the preview too — leaving it up would imply the image was saved.
+      setPosterUri(undefined);
+      setPosterPath(undefined);
+      setError(strings.addPlay.errorPosterUpload);
+    } finally {
+      setUploadingPoster(false);
+    }
+  }
+
+  function handleRemovePoster() {
+    setPosterUri(undefined);
+    setPosterPath(undefined);
+    setPosterCredit("");
+  }
+
   async function handleSave() {
     if (submitting) return;
     // These used to fall through to the database (or, for the venue, set the
@@ -125,6 +174,8 @@ export default function AddPlayScreen() {
         runtimeMinutes: runtimeMinutes.trim() ? Number(runtimeMinutes) : undefined,
         intermissions: intermissions.trim() ? Number(intermissions) : 0,
         premiereDate: premiereDate.trim() || undefined,
+        posterPath,
+        posterCredit: posterCredit.trim() || undefined,
         cast: cast.filter((c) => c.name.trim() && c.role.trim()),
       });
       router.replace(`/play/${play.id}`);
@@ -171,6 +222,49 @@ export default function AddPlayScreen() {
           </View>
         </View>
         <LabeledInput label={strings.addPlay.premiereDateLabel} value={premiereDate} onChangeText={setPremiereDate} placeholder="2026-09-01" />
+
+        <View style={{ gap: 8 }}>
+          <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.addPlay.posterLabel}</Text>
+          {posterUri && (
+            <Image
+              source={{ uri: posterUri }}
+              style={styles.posterPreview}
+              contentFit="cover"
+              accessibilityIgnoresInvertColors
+            />
+          )}
+          <View style={{ flexDirection: "row", gap: space.md, alignItems: "center" }}>
+            <Pressable
+              onPress={handlePickPoster}
+              disabled={uploadingPoster}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: uploadingPoster, busy: uploadingPoster }}
+            >
+              <Text variant="label" tone="accent" style={{ opacity: uploadingPoster ? 0.55 : 1 }}>
+                {uploadingPoster
+                  ? strings.addPlay.posterUploading
+                  : posterUri
+                    ? strings.addPlay.posterReplace
+                    : strings.addPlay.posterAdd}
+              </Text>
+            </Pressable>
+            {posterUri && !uploadingPoster && (
+              <Pressable onPress={handleRemovePoster} hitSlop={8} accessibilityRole="button">
+                <Text variant="label" tone="dim">{strings.addPlay.posterRemove}</Text>
+              </Pressable>
+            )}
+          </View>
+          {posterPath && (
+            <LabeledInput
+              label={strings.addPlay.posterCreditLabel}
+              value={posterCredit}
+              onChangeText={setPosterCredit}
+              placeholder={strings.addPlay.posterCreditPlaceholder}
+            />
+          )}
+          <Text variant="caption" tone="dim">{strings.addPlay.posterHint}</Text>
+        </View>
 
         <View style={{ gap: 8 }}>
           <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.addPlay.venueLabel}</Text>
@@ -313,6 +407,15 @@ const styles = StyleSheet.create({
   // this style used to pin itself to "System" and skip Sora entirely.
   sectionLabel: {
     letterSpacing: 0.2,
+  },
+  // 3:2 rather than the 2:3 poster slot: what people photograph and upload is
+  // usually a landscape production still, and the play screen sizes the real
+  // hero from the image's own dimensions anyway.
+  posterPreview: {
+    width: "100%",
+    aspectRatio: 3 / 2,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
   },
   input: {
     backgroundColor: colors.surface,

@@ -7,7 +7,7 @@ import { inputFontSize } from "@/theme/type";
 import { gutter, minTouchTarget, radius, space } from "@/theme/tokens";
 import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
-import { getCities, getPremieres, getTrending, getVenueById } from "@/services/playsService";
+import { getCities, getNowPlaying, getPremieres, getTrending, getVenueById } from "@/services/playsService";
 import { searchPlays } from "@/services/searchService";
 import type { Play, Venue, VenueType } from "@/data/types";
 import { SearchIcon, PlusIcon, CloseIcon } from "@/components/icons/Icons";
@@ -51,6 +51,7 @@ export default function DiscoverScreen() {
   const [cities, setCities] = useState<string[]>([]);
   const [activeCity, setActiveCity] = useState(strings.discover.filterAll);
   const [query, setQuery] = useState("");
+  const [nowPlaying, setNowPlaying] = useState<Play[]>([]);
   const [premieres, setPremieres] = useState<Play[]>([]);
   const [trending, setTrending] = useState<Play[]>([]);
   const [searchResults, setSearchResults] = useState<Play[]>([]);
@@ -73,7 +74,12 @@ export default function DiscoverScreen() {
     setBrowseFailed(false);
     setBrowseLoading(true);
     try {
-      const [nextPremieres, nextTrending] = await Promise.all([getPremieres({ venueType, city }), getTrending({ venueType, city })]);
+      const [nextNowPlaying, nextPremieres, nextTrending] = await Promise.all([
+        getNowPlaying({ venueType, city }),
+        getPremieres({ venueType, city }),
+        getTrending({ venueType, city }),
+      ]);
+      setNowPlaying(nextNowPlaying);
       setPremieres(nextPremieres);
       setTrending(nextTrending);
     } catch {
@@ -113,7 +119,7 @@ export default function DiscoverScreen() {
     return () => clearTimeout(handle);
   }, [query, venueType, city, isSearching]);
 
-  const hasBrowseContent = premieres.length > 0 || trending.length > 0;
+  const hasBrowseContent = nowPlaying.length > 0 || premieres.length > 0 || trending.length > 0;
   const archivedCount = searchResults.filter((p) => p.isArchived || p.status === "ended").length;
 
   return (
@@ -229,6 +235,21 @@ export default function DiscoverScreen() {
                     ))}
                   </Grid>
                 </View>
+              </View>
+            )}
+
+            {/* First rail, and the one the screen is really for: what is on
+                in the next few days, soonest first. */}
+            {!browseLoading && nowPlaying.length > 0 && (
+              <View style={{ gap: space.md }}>
+                <View style={{ paddingHorizontal: gutter }}>
+                  <Text variant="subheading">{strings.discover.nowPlayingTitle}</Text>
+                </View>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
+                  {nowPlaying.map((p) => (
+                    <PremiereCard key={p.id} play={p} onPress={() => router.push(`/play/${p.id}`)} />
+                  ))}
+                </ScrollView>
               </View>
             )}
 
