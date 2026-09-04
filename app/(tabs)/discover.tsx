@@ -15,6 +15,7 @@ import { MaskIcon } from "@/components/icons/MaskIcon";
 import { Chip } from "@/components/ui/Chip";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { PosterCardSkeleton, SkeletonRail } from "@/components/ui/Skeleton";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { Screen } from "@/components/ui/Screen";
 import { Grid } from "@/components/ui/Grid";
@@ -113,6 +114,7 @@ export default function DiscoverScreen() {
   }, [query, venueType, city, isSearching]);
 
   const hasBrowseContent = premieres.length > 0 || trending.length > 0;
+  const archivedCount = searchResults.filter((p) => p.isArchived || p.status === "ended").length;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -167,14 +169,33 @@ export default function DiscoverScreen() {
 
         {isSearching ? (
           <ScrollView contentContainerStyle={styles.scrollBody} keyboardShouldPersistTaps="handled">
-            <Text variant="subheading">
-              {searching ? strings.discover.searching : strings.discover.searchResultsTitle(searchResults.length)}
-            </Text>
-            <Grid>
-              {searchResults.map((p) => (
-                <TrendingCard key={p.id} play={p} onPress={() => router.push(`/play/${p.id}`)} />
-              ))}
-            </Grid>
+            <View style={{ gap: space.xs }}>
+              <Text variant="subheading">
+                {searching ? strings.discover.searching : strings.discover.searchResultsTitle(searchResults.length)}
+              </Text>
+              {/* Search covers the theatres' archives as well as what is on
+                  now — that is the point, since the app is for logging plays
+                  you have already seen — but a run of "ended" badges reads as
+                  a bug unless the list says so first. */}
+              {!searching && archivedCount > 0 && (
+                <Text variant="caption" tone="faint">
+                  {strings.discover.includesArchived(archivedCount)}
+                </Text>
+              )}
+            </View>
+            {searching ? (
+              <Grid>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <PosterCardSkeleton key={i} />
+                ))}
+              </Grid>
+            ) : (
+              <Grid>
+                {searchResults.map((p) => (
+                  <TrendingCard key={p.id} play={p} onPress={() => router.push(`/play/${p.id}`)} />
+                ))}
+              </Grid>
+            )}
             {!searching && searchResults.length === 0 && (
               <View style={styles.noResults}>
                 <Text variant="body" tone="dim">
@@ -190,7 +211,28 @@ export default function DiscoverScreen() {
           </ScrollView>
         ) : (
           <ScrollView contentContainerStyle={{ paddingBottom: 100, gap: space["2xl"] }}>
-            {premieres.length > 0 && (
+            {browseLoading && (
+              <View style={{ gap: space["2xl"] }}>
+                <View style={{ gap: space.md }}>
+                  <View style={{ paddingHorizontal: gutter }}>
+                    <Text variant="subheading">{strings.discover.premieresTitle}</Text>
+                  </View>
+                  <View style={{ paddingHorizontal: gutter }}>
+                    <SkeletonRail />
+                  </View>
+                </View>
+                <View style={{ gap: space.md, paddingHorizontal: gutter }}>
+                  <Text variant="subheading">{strings.discover.trendingTitle}</Text>
+                  <Grid>
+                    {Array.from({ length: 10 }).map((_, i) => (
+                      <PosterCardSkeleton key={i} />
+                    ))}
+                  </Grid>
+                </View>
+              </View>
+            )}
+
+            {!browseLoading && premieres.length > 0 && (
               <View style={{ gap: space.md }}>
                 <View style={[styles.rowBetween, { paddingHorizontal: gutter }]}>
                   <Text variant="subheading">{strings.discover.premieresTitle}</Text>
@@ -217,7 +259,7 @@ export default function DiscoverScreen() {
               </View>
             )}
 
-            {trending.length > 0 && (
+            {!browseLoading && trending.length > 0 && (
               <View style={{ gap: space.md, paddingHorizontal: gutter }}>
                 <Text variant="subheading">
                   {/* Was hardcoded to Budapest even with Debrecen selected. */}

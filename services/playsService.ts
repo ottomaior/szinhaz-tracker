@@ -211,6 +211,20 @@ function applyVenueFilters(query: any, filters?: VenueFilters) {
   return query;
 }
 
+/**
+ * Statuses a browse rail will show.
+ *
+ * The derived status used to be display-only: the rails filtered on
+ * `is_archived` alone, so a production that had closed months ago still sat
+ * in "Népszerű" with an "ended" badge beside it — the app computing the right
+ * answer and then recommending against it anyway. A production nobody can buy
+ * a ticket for does not belong in a list of things to go and see.
+ *
+ * `unknown` is included deliberately: it means the data is thin, not that the
+ * production is over, and excluding it would hide every hand-added play.
+ */
+const BROWSABLE_STATUSES = ["running", "announced", "dormant", "unknown"];
+
 export async function getTrending(filters?: VenueFilters): Promise<Play[]> {
   const needsJoin = !!(filters?.venueType || filters?.city);
   const select: string = needsJoin ? PLAY_SELECT_WITH_VENUE_FILTERS : PLAY_SELECT;
@@ -220,6 +234,7 @@ export async function getTrending(filters?: VenueFilters): Promise<Play[]> {
     .from("plays")
     .select(select)
     .eq("is_archived", false)
+    .in("status", BROWSABLE_STATUSES)
     .order("rating_overall", { ascending: false })
     .limit(TRENDING_LIMIT);
   query = applyVenueFilters(query, filters);
@@ -236,6 +251,7 @@ export async function getPremieres(filters?: VenueFilters): Promise<Play[]> {
     .from("plays")
     .select(select)
     .eq("is_archived", false)
+    .in("status", BROWSABLE_STATUSES)
     .gte("premiere_date", today)
     .order("premiere_date", { ascending: true });
   query = applyVenueFilters(query, filters);

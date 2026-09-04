@@ -69,6 +69,8 @@ export const strings = {
     searching: "Keresés…",
     noResultsTitle: "Nincs találat",
     noResultsAction: "Nem található? Add hozzá magad",
+    /** Search deliberately includes the theatres' archives, which is worth saying. */
+    includesArchived: (n: number) => `Ebből ${n} már nincs műsoron`,
     addPlayFab: "Darab hozzáadása",
     emptyTitle: "Ehhez a szűréshez még nincs darab",
     emptyBody: "Próbálj másik várost vagy színháztípust, vagy vedd fel a darabot magad.",
