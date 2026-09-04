@@ -1,19 +1,21 @@
 import { useState } from "react";
-import { View, Text, StyleSheet, Pressable, TextInput } from "react-native";
+import { View, StyleSheet, Pressable, TextInput } from "react-native";
 import { useRouter } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
-import { bodyFont, displayFont } from "@/theme/typography";
+import { inputFontSize } from "@/theme/type";
+import { gutter, radius, space } from "@/theme/tokens";
+import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
 import { signIn } from "@/services/authService";
-import { CloseIcon } from "@/components/icons/Icons";
+import { ModalHeader } from "@/components/ui/ModalHeader";
+import { ContentColumn } from "@/components/ui/Screen";
+import { Text } from "@/components/ui/Text";
 import { Button } from "@/components/ui/Button";
 import { strings } from "@/i18n/hu";
 import { closeModal } from "@/utils/navigation";
 
 export default function SignInScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const fontsLoaded = useAppFonts();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -44,16 +46,9 @@ export default function SignInScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View style={[styles.topBar, { paddingTop: insets.top }]}>
-        <Pressable onPress={() => closeModal(router)} hitSlop={8} accessibilityRole="button" accessibilityLabel={strings.common.close}>
-          <CloseIcon />
-        </Pressable>
-        <Text style={{ fontFamily: bodyFont(fontsLoaded, "bold"), fontSize: 14.5, color: colors.text }}>{strings.auth.signInTitle}</Text>
-        <View style={{ width: 18 }} />
-      </View>
+      <ModalHeader title={strings.auth.signInTitle} />
 
-      <View style={{ padding: 20, gap: 14 }}>
-        <Text style={{ fontFamily: displayFont(fontsLoaded, "semibold"), fontSize: 22, color: colors.text }}>{strings.auth.signInTitle}</Text>
+      <ContentColumn style={{ padding: gutter, gap: space.lg }}>
 
         <TextInput
           value={email}
@@ -81,7 +76,7 @@ export default function SignInScreen() {
         />
 
         {error && (
-          <Text accessibilityRole="alert" style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12, color: colors.gold }}>
+          <Text accessibilityRole="alert" variant="bodySmall" tone="accent">
             {error}
           </Text>
         )}
@@ -91,32 +86,23 @@ export default function SignInScreen() {
         <Button label={strings.auth.signInButton} onPress={handleSubmit} loading={submitting} disabled={submitting} />
 
         <Pressable onPress={() => router.replace("/sign-up")} style={{ alignItems: "center", marginTop: 8 }} accessibilityRole="button">
-          <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12.5, color: colors.textFaint }}>
+          <Text variant="bodySmall" tone="faint">
             {strings.auth.noAccount} <Text style={{ color: colors.gold }}>{strings.auth.switchToSignUp}</Text>
           </Text>
         </Pressable>
-      </View>
+      </ContentColumn>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  topBar: {
-    height: 56,
-    paddingHorizontal: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderBottomWidth: 1,
-    borderBottomColor: colors.hairlineSoft,
-  },
   input: {
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.hairline,
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 13,
+    borderRadius: radius.md,
+    padding: space.lg,
+    fontSize: inputFontSize,
     color: colors.text,
   },
 });

@@ -1,17 +1,22 @@
 import { useEffect, useState } from "react";
-import { View, Text, ScrollView, StyleSheet, Pressable, TextInput } from "react-native";
+import { View, ScrollView, StyleSheet, Pressable, TextInput } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
-import { bodyFont, displayFont } from "@/theme/typography";
+import { inputFontSize } from "@/theme/type";
+import { gutter, radius, space } from "@/theme/tokens";
+import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
 import { getPlayById, getVenueById, submitReview } from "@/services/playsService";
 import { searchPlays } from "@/services/searchService";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Play, Venue } from "@/data/types";
-import { CloseIcon, CalendarIcon, PinIcon, SearchIcon } from "@/components/icons/Icons";
+import { CalendarIcon, PinIcon, SearchIcon } from "@/components/icons/Icons";
 import { MaskRatingRow } from "@/components/icons/MaskIcon";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
+import { ModalHeader } from "@/components/ui/ModalHeader";
+import { ContentColumn } from "@/components/ui/Screen";
+import { Text } from "@/components/ui/Text";
 import { Chip } from "@/components/ui/Chip";
 import { strings } from "@/i18n/hu";
 import { closeModal } from "@/utils/navigation";
@@ -102,11 +107,11 @@ export default function CheckInScreen() {
   if (playLoadFailed) {
     return (
       <View style={[styles.centered, { paddingTop: insets.top }]}>
-        <Text style={{ fontFamily: bodyFont(fontsLoaded, "medium"), fontSize: 13, color: colors.textFaint, textAlign: "center" }}>
+        <Text variant="body" tone="dim" style={{ textAlign: "center" }}>
           {strings.checkin.playNotFound}
         </Text>
         <Pressable onPress={() => closeModal(router)} accessibilityRole="button">
-          <Text style={{ fontFamily: bodyFont(fontsLoaded, "semibold"), fontSize: 12.5, color: colors.gold }}>{strings.checkin.close}</Text>
+          <Text variant="label" tone="accent">{strings.checkin.close}</Text>
         </Pressable>
       </View>
     );
@@ -118,33 +123,33 @@ export default function CheckInScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View style={[styles.topBar, { paddingTop: insets.top }]}>
-        <Pressable onPress={() => closeModal(router)} hitSlop={8} accessibilityRole="button" accessibilityLabel={strings.common.close}>
-          <CloseIcon />
-        </Pressable>
-        <Text style={{ fontFamily: bodyFont(fontsLoaded, "bold"), fontSize: 14.5, color: colors.text }}>{strings.checkin.headerTitle}</Text>
-        <Pressable
-          onPress={handleSave}
-          hitSlop={8}
-          disabled={saving}
-          accessibilityRole="button"
-          accessibilityState={{ disabled: saving, busy: saving }}
-        >
-          <Text style={{ fontFamily: bodyFont(fontsLoaded, "bold"), fontSize: 13, color: colors.gold, opacity: saving ? 0.55 : 1 }}>
-            {saving ? strings.checkin.saving : strings.checkin.save}
-          </Text>
-        </Pressable>
-      </View>
+      <ModalHeader
+        title={strings.checkin.headerTitle}
+        action={
+          <Pressable
+            onPress={handleSave}
+            hitSlop={12}
+            disabled={saving}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: saving, busy: saving }}
+          >
+            <Text variant="label" tone="accent" style={{ opacity: saving ? 0.55 : 1 }}>
+              {saving ? strings.checkin.saving : strings.checkin.save}
+            </Text>
+          </Pressable>
+        }
+      />
 
-      <ScrollView contentContainerStyle={{ padding: 20, gap: 18, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+      <ScrollView keyboardShouldPersistTaps="handled">
+        <ContentColumn style={{ padding: gutter, gap: space.xl, paddingBottom: space["4xl"] }}>
         <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
-          <PosterPlaceholder poster={play.poster} width={44} height={66} radius={6} preferThumb />
+          <PosterPlaceholder poster={play.poster} width={44} height={66} radius={radius.sm} preferThumb />
           <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: displayFont(fontsLoaded, "semibold"), fontSize: 17, color: colors.text }}>{play.title}</Text>
-            <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 11.5, color: colors.textFaint }}>{venue?.name ?? ""}</Text>
+            <Text variant="subheading">{play.title}</Text>
+            <Text variant="caption" tone="faint">{venue?.name ?? ""}</Text>
             {!playId && (
               <Pressable onPress={() => setPlay(undefined)} hitSlop={6} accessibilityRole="button">
-                <Text style={{ fontFamily: bodyFont(fontsLoaded, "medium"), fontSize: 11.5, color: colors.gold, marginTop: 4 }}>
+                <Text variant="caption" tone="accent" style={{ marginTop: 4 }}>
                   {strings.checkin.changePlay}
                 </Text>
               </Pressable>
@@ -155,7 +160,7 @@ export default function CheckInScreen() {
         <View style={{ flexDirection: "row", gap: 10 }}>
           <View style={styles.field}>
             <CalendarIcon />
-            <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 13, color: colors.text }}>
+            <Text variant="bodySmall">
               {new Date().toLocaleDateString("hu-HU", { month: "short", day: "numeric", year: "numeric" })}
             </Text>
           </View>
@@ -163,7 +168,7 @@ export default function CheckInScreen() {
             <PinIcon />
             {/* This was hardcoded to a single stage name for every play, no
                 matter where it actually runs. It shows the real venue now. */}
-            <Text numberOfLines={1} style={{ flex: 1, fontFamily: bodyFont(fontsLoaded), fontSize: 13, color: colors.text }}>
+            <Text numberOfLines={1} variant="bodySmall" style={{ flex: 1 }}>
               {venue?.name ?? strings.common.noRating}
             </Text>
           </View>
@@ -171,7 +176,7 @@ export default function CheckInScreen() {
 
         <View style={styles.ratingCard}>
           <View style={styles.overallBlock}>
-            <Text style={[styles.sectionLabel, { fontFamily: bodyFont(fontsLoaded, "semibold") }]}>{strings.checkin.overallRating}</Text>
+            <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.checkin.overallRating}</Text>
             <MaskRatingRow rating={overall} size={26} gap={6} onPressMask={setOverall} />
           </View>
 
@@ -181,7 +186,7 @@ export default function CheckInScreen() {
         </View>
 
         <View style={{ gap: 8 }}>
-          <Text style={[styles.sectionLabel, { fontFamily: bodyFont(fontsLoaded, "semibold") }]}>{strings.checkin.momentTags}</Text>
+          <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.checkin.momentTags}</Text>
           <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
             {MOMENT_TAGS.map((tag) => (
               <Chip key={tag} label={tag} active={selectedTags.includes(tag)} onPress={() => toggleTag(tag)} />
@@ -190,7 +195,7 @@ export default function CheckInScreen() {
         </View>
 
         <View style={{ gap: 8 }}>
-          <Text style={[styles.sectionLabel, { fontFamily: bodyFont(fontsLoaded, "semibold") }]}>{strings.checkin.reviewLabel}</Text>
+          <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.checkin.reviewLabel}</Text>
           <TextInput
             value={reviewText}
             onChangeText={setReviewText}
@@ -202,10 +207,11 @@ export default function CheckInScreen() {
         </View>
 
         {error && (
-          <Text style={{ fontFamily: bodyFont(fontsLoaded, "medium"), fontSize: 12, color: colors.gold }} accessibilityRole="alert">
+          <Text variant="bodySmall" tone="accent" accessibilityRole="alert">
             {error}
           </Text>
         )}
+        </ContentColumn>
       </ScrollView>
     </View>
   );
@@ -241,16 +247,11 @@ function PlayPicker({ insetTop, onCancel, onPick }: { insetTop: number; onCancel
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View style={[styles.topBar, { paddingTop: insetTop }]}>
-        <Pressable onPress={onCancel} hitSlop={8} accessibilityRole="button" accessibilityLabel={strings.common.close}>
-          <CloseIcon />
-        </Pressable>
-        <Text style={{ fontFamily: bodyFont(fontsLoaded, "bold"), fontSize: 14.5, color: colors.text }}>{strings.checkin.headerTitle}</Text>
-        <View style={{ width: 18 }} />
-      </View>
+      <ModalHeader title={strings.checkin.headerTitle} />
 
-      <ScrollView contentContainerStyle={{ padding: 20, gap: 14 }} keyboardShouldPersistTaps="handled">
-        <Text style={{ fontFamily: displayFont(fontsLoaded, "semibold"), fontSize: 20, color: colors.text }}>
+      <ScrollView keyboardShouldPersistTaps="handled">
+        <ContentColumn style={{ padding: gutter, gap: space.lg }}>
+        <Text variant="title">
           {strings.checkin.pickPlayTitle}
         </Text>
 
@@ -262,24 +263,24 @@ function PlayPicker({ insetTop, onCancel, onPick }: { insetTop: number; onCancel
             placeholder={strings.checkin.pickPlayPlaceholder}
             placeholderTextColor={colors.textFaint}
             autoFocus
-            style={{ flex: 1, fontFamily: bodyFont(fontsLoaded), fontSize: 13.5, color: colors.text }}
+            style={{ flex: 1, fontFamily: bodyFont(fontsLoaded), fontSize: inputFontSize, color: colors.text }}
           />
         </View>
 
         {!trimmed && (
-          <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12.5, color: colors.textFaint }}>
+          <Text variant="bodySmall" tone="faint">
             {strings.checkin.pickPlayHint}
           </Text>
         )}
 
         {results.map((p) => (
           <Pressable key={p.id} onPress={() => onPick(p)} style={styles.pickerRow} accessibilityRole="button">
-            <PosterPlaceholder poster={p.poster} width={40} height={60} radius={6} preferThumb />
+            <PosterPlaceholder poster={p.poster} width={40} height={60} radius={radius.sm} preferThumb />
             <View style={{ flex: 1, gap: 3 }}>
-              <Text numberOfLines={2} style={{ fontFamily: bodyFont(fontsLoaded, "semibold"), fontSize: 13, color: colors.text }}>
+              <Text numberOfLines={2} variant="label">
                 {p.title}
               </Text>
-              <Text numberOfLines={1} style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 11.5, color: colors.textFaint }}>
+              <Text numberOfLines={1} variant="caption" tone="faint">
                 {p.director ? `rend. ${p.director}` : p.author}
               </Text>
             </View>
@@ -287,20 +288,20 @@ function PlayPicker({ insetTop, onCancel, onPick }: { insetTop: number; onCancel
         ))}
 
         {!!trimmed && !searching && results.length === 0 && (
-          <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12.5, color: colors.textFaint }}>
+          <Text variant="bodySmall" tone="faint">
             {strings.checkin.pickPlayNoResults}
           </Text>
         )}
+        </ContentColumn>
       </ScrollView>
     </View>
   );
 }
 
 function SubRatingRow({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
-  const fontsLoaded = useAppFonts();
   return (
     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-      <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 13, color: colors.textDim }}>{label}</Text>
+      <Text variant="bodySmall" tone="dim">{label}</Text>
       <MaskRatingRow rating={value} size={16} onPressMask={onChange} />
     </View>
   );
@@ -312,26 +313,17 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg,
     alignItems: "center",
     justifyContent: "center",
-    gap: 14,
-    padding: 20,
-  },
-  topBar: {
-    paddingHorizontal: 20,
-    height: 56,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderBottomWidth: 1,
-    borderBottomColor: colors.hairlineSoft,
+    gap: space.lg,
+    padding: gutter,
   },
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: space.md,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.hairline,
-    borderRadius: 12,
+    borderRadius: radius.md,
     paddingVertical: 10,
     paddingHorizontal: 14,
   },
@@ -344,11 +336,11 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: space.md,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.hairline,
-    borderRadius: 12,
+    borderRadius: radius.md,
     paddingVertical: 12,
     paddingHorizontal: 14,
   },
@@ -357,7 +349,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.hairline,
-    borderRadius: 14,
+    borderRadius: radius.lg,
     padding: 16,
   },
   overallBlock: {
@@ -368,19 +360,16 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.hairlineSoft,
   },
   sectionLabel: {
-    fontSize: 11.5,
-    color: colors.textDim,
-    textTransform: "uppercase",
-    letterSpacing: 0.06,
+    letterSpacing: 0.2,
   },
   textArea: {
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.hairline,
-    borderRadius: 12,
+    borderRadius: radius.md,
     padding: 14,
     minHeight: 76,
-    fontSize: 13,
+    fontSize: inputFontSize,
     color: colors.text,
     textAlignVertical: "top",
   },

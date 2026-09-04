@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { View, Text, ScrollView, StyleSheet, Pressable, TextInput } from "react-native";
+import { View, ScrollView, StyleSheet, Pressable, TextInput } from "react-native";
 import { useRouter } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
+import { inputFontSize } from "@/theme/type";
+import { gutter, radius, space } from "@/theme/tokens";
 import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,16 +11,17 @@ import { createPlay, createVenue, searchVenues } from "@/services/playsService";
 import type { CastMember, Venue, VenueType } from "@/data/types";
 import { CloseIcon } from "@/components/icons/Icons";
 import { Button } from "@/components/ui/Button";
+import { ModalHeader } from "@/components/ui/ModalHeader";
+import { ContentColumn } from "@/components/ui/Screen";
+import { Text } from "@/components/ui/Text";
 import { Chip } from "@/components/ui/Chip";
 import { strings } from "@/i18n/hu";
-import { closeModal } from "@/utils/navigation";
 
 const VENUE_TYPES: VenueType[] = ["kőszínház", "független", "befogadó tér", "szabadtéri"];
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 export default function AddPlayScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const fontsLoaded = useAppFonts();
   const { session, loading } = useAuth();
 
@@ -137,25 +139,25 @@ export default function AddPlayScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View style={[styles.topBar, { paddingTop: insets.top }]}>
-        <Pressable onPress={() => closeModal(router)} hitSlop={8} accessibilityRole="button" accessibilityLabel={strings.common.close}>
-          <CloseIcon />
-        </Pressable>
-        <Text style={{ fontFamily: bodyFont(fontsLoaded, "bold"), fontSize: 14.5, color: colors.text }}>{strings.addPlay.headerTitle}</Text>
-        <Pressable
-          onPress={handleSave}
-          hitSlop={8}
-          disabled={submitting}
-          accessibilityRole="button"
-          accessibilityState={{ disabled: submitting, busy: submitting }}
-        >
-          <Text style={{ fontFamily: bodyFont(fontsLoaded, "bold"), fontSize: 13, color: colors.gold, opacity: submitting ? 0.55 : 1 }}>
-            {submitting ? strings.addPlay.saving : strings.addPlay.save}
-          </Text>
-        </Pressable>
-      </View>
+      <ModalHeader
+        title={strings.addPlay.headerTitle}
+        action={
+          <Pressable
+            onPress={handleSave}
+            hitSlop={12}
+            disabled={submitting}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: submitting, busy: submitting }}
+          >
+            <Text variant="label" tone="accent" style={{ opacity: submitting ? 0.55 : 1 }}>
+              {submitting ? strings.addPlay.saving : strings.addPlay.save}
+            </Text>
+          </Pressable>
+        }
+      />
 
-      <ScrollView contentContainerStyle={{ padding: 20, gap: 14, paddingBottom: 60 }} keyboardShouldPersistTaps="handled">
+      <ScrollView keyboardShouldPersistTaps="handled">
+        <ContentColumn style={{ padding: gutter, gap: space.lg, paddingBottom: space["5xl"] }}>
         <LabeledInput label={strings.addPlay.titleLabel} value={title} onChangeText={setTitle} />
         <LabeledInput label={strings.addPlay.authorLabel} value={author} onChangeText={setAuthor} />
         <LabeledInput label={strings.addPlay.directorLabel} value={director} onChangeText={setDirector} />
@@ -171,7 +173,7 @@ export default function AddPlayScreen() {
         <LabeledInput label={strings.addPlay.premiereDateLabel} value={premiereDate} onChangeText={setPremiereDate} placeholder="2026-09-01" />
 
         <View style={{ gap: 8 }}>
-          <Text style={[styles.sectionLabel, { fontFamily: bodyFont(fontsLoaded, "semibold") }]}>{strings.addPlay.venueLabel}</Text>
+          <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.addPlay.venueLabel}</Text>
           {selectedVenue ? (
             <Pressable
               style={styles.selectedVenue}
@@ -179,11 +181,11 @@ export default function AddPlayScreen() {
               accessibilityRole="button"
               accessibilityHint={strings.addPlay.clearVenue}
             >
-              <Text style={{ fontFamily: bodyFont(fontsLoaded, "semibold"), fontSize: 13, color: colors.text }}>{selectedVenue.name}</Text>
-              <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 11, color: colors.textFaint }}>{selectedVenue.city}</Text>
+              <Text variant="label">{selectedVenue.name}</Text>
+              <Text variant="caption" tone="faint">{selectedVenue.city}</Text>
               {/* Tapping the card cleared the selection with nothing on screen
                   saying so. */}
-              <Text style={{ fontFamily: bodyFont(fontsLoaded, "medium"), fontSize: 11, color: colors.gold, marginTop: 4 }}>
+              <Text variant="caption" tone="accent" style={{ marginTop: 4 }}>
                 {strings.addPlay.clearVenue}
               </Text>
             </Pressable>
@@ -199,12 +201,12 @@ export default function AddPlayScreen() {
               />
               {venueResults.map((v) => (
                 <Pressable key={v.id} style={styles.venueResultRow} onPress={() => setSelectedVenue(v)} accessibilityRole="button">
-                  <Text style={{ fontFamily: bodyFont(fontsLoaded, "medium"), fontSize: 13, color: colors.text }}>{v.name}</Text>
-                  <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 11, color: colors.textFaint }}>{v.city}</Text>
+                  <Text variant="bodySmall">{v.name}</Text>
+                  <Text variant="caption" tone="faint">{v.city}</Text>
                 </Pressable>
               ))}
               <Pressable onPress={() => setShowNewVenueForm((s) => !s)} accessibilityRole="button">
-                <Text style={{ fontFamily: bodyFont(fontsLoaded, "medium"), fontSize: 12, color: colors.gold }}>
+                <Text variant="label" tone="accent">
                   {strings.addPlay.venueNotFound} {strings.addPlay.createVenue}
                 </Text>
               </Pressable>
@@ -231,7 +233,7 @@ export default function AddPlayScreen() {
         </View>
 
         <View style={{ gap: 8 }}>
-          <Text style={[styles.sectionLabel, { fontFamily: bodyFont(fontsLoaded, "semibold") }]}>{strings.addPlay.castLabel}</Text>
+          <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.addPlay.castLabel}</Text>
           {cast.map((member, i) => (
             <View key={i} style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
               <TextInput
@@ -261,15 +263,16 @@ export default function AddPlayScreen() {
             </View>
           ))}
           <Pressable onPress={() => setCast((c) => [...c, { name: "", role: "" }])} accessibilityRole="button">
-            <Text style={{ fontFamily: bodyFont(fontsLoaded, "medium"), fontSize: 12, color: colors.gold }}>{strings.addPlay.addCastMember}</Text>
+            <Text variant="label" tone="accent">{strings.addPlay.addCastMember}</Text>
           </Pressable>
         </View>
 
         {error && (
-          <Text accessibilityRole="alert" style={{ fontFamily: bodyFont(fontsLoaded, "medium"), fontSize: 12, color: colors.gold }}>
+          <Text accessibilityRole="alert" variant="bodySmall" tone="accent">
             {error}
           </Text>
         )}
+        </ContentColumn>
       </ScrollView>
     </View>
   );
@@ -291,7 +294,7 @@ function LabeledInput({
   const fontsLoaded = useAppFonts();
   return (
     <View style={{ gap: 6 }}>
-      <Text style={[styles.sectionLabel, { fontFamily: bodyFont(fontsLoaded, "semibold") }]}>{label}</Text>
+      <Text variant="label" tone="dim" style={styles.sectionLabel}>{label}</Text>
       <TextInput
         value={value}
         onChangeText={onChangeText}
@@ -306,37 +309,25 @@ function LabeledInput({
 }
 
 const styles = StyleSheet.create({
-  topBar: {
-    height: 56,
-    paddingHorizontal: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderBottomWidth: 1,
-    borderBottomColor: colors.hairlineSoft,
-  },
   // The brand face is applied per-instance like everywhere else in the app;
   // this style used to pin itself to "System" and skip Sora entirely.
   sectionLabel: {
-    fontSize: 11.5,
-    color: colors.textDim,
-    textTransform: "uppercase",
-    letterSpacing: 0.06,
+    letterSpacing: 0.2,
   },
   input: {
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.hairline,
-    borderRadius: 12,
+    borderRadius: radius.md,
     padding: 14,
-    fontSize: 13,
+    fontSize: inputFontSize,
     color: colors.text,
   },
   selectedVenue: {
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.hairline,
-    borderRadius: 12,
+    borderRadius: radius.md,
     padding: 14,
     gap: 2,
   },
@@ -345,7 +336,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderWidth: 1,
     borderColor: colors.hairlineSoft,
-    borderRadius: 10,
+    borderRadius: radius.md,
     gap: 2,
   },
 });

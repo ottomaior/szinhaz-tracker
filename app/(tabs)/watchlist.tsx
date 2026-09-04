@@ -1,21 +1,21 @@
 import { useCallback, useEffect, useState } from "react";
-import { View, Text, ScrollView, StyleSheet, Pressable } from "react-native";
+import { View, ScrollView, StyleSheet, Pressable } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
-import { bodyFont, displayFont } from "@/theme/typography";
-import { useAppFonts } from "@/hooks/useAppFonts";
+import { gutter, radius, space } from "@/theme/tokens";
 import { getVenueById, getWatchlist } from "@/services/playsService";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Play, Venue } from "@/data/types";
 import { CalendarIcon, PinIcon } from "@/components/icons/Icons";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
-import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Screen } from "@/components/ui/Screen";
+import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 
 export default function WatchlistScreen() {
   const insets = useSafeAreaInsets();
-  const fontsLoaded = useAppFonts();
   const router = useRouter();
   const { session, loading: authLoading } = useAuth();
   const [items, setItems] = useState<{ play: Play; addedAt: string }[]>([]);
@@ -52,42 +52,34 @@ export default function WatchlistScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <Text style={{ fontFamily: displayFont(fontsLoaded, "semibold"), fontSize: 24, color: colors.text }}>{strings.watchlist.title}</Text>
-        <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12.5, color: colors.textFaint }}>
-          {strings.watchlist.subtitle(items.length)}
-        </Text>
-      </View>
+      <Screen width="reading">
+        <View style={[styles.header, { paddingTop: insets.top + space.md }]}>
+          <Text variant="title">{strings.watchlist.title}</Text>
+          <Text variant="bodySmall" tone="faint">
+            {strings.watchlist.subtitle(items.length)}
+          </Text>
+        </View>
 
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 100, gap: 14 }}>
-        {items.map(({ play }) => (
-          <WatchlistRow key={play.id} play={play} onPress={() => router.push(`/play/${play.id}`)} />
-        ))}
+        <ScrollView contentContainerStyle={styles.body}>
+          {items.map(({ play }) => (
+            <WatchlistRow key={play.id} play={play} onPress={() => router.push(`/play/${play.id}`)} />
+          ))}
 
-        {showEmpty && (
-          <View style={styles.empty}>
-            <Text style={{ fontFamily: displayFont(fontsLoaded, "semibold"), fontSize: 18, color: colors.text, textAlign: "center" }}>
-              {failed ? strings.common.loadError : !session ? strings.watchlist.signInPrompt : strings.watchlist.emptyTitle}
-            </Text>
-            {!failed && session && (
-              <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 13, color: colors.textFaint, textAlign: "center", lineHeight: 19 }}>
-                {strings.watchlist.emptyBody}
-              </Text>
-            )}
-            <Button
-              label={failed ? strings.common.retry : !session ? strings.auth.signInButton : strings.watchlist.emptyAction}
-              variant="outline"
-              onPress={failed ? load : !session ? () => router.push("/sign-in") : () => router.push("/(tabs)/discover")}
+          {showEmpty && (
+            <EmptyState
+              title={failed ? strings.common.loadError : !session ? strings.watchlist.signInPrompt : strings.watchlist.emptyTitle}
+              body={!failed && session ? strings.watchlist.emptyBody : undefined}
+              actionLabel={failed ? strings.common.retry : !session ? strings.auth.signInButton : strings.watchlist.emptyAction}
+              onAction={failed ? load : !session ? () => router.push("/sign-in") : () => router.push("/(tabs)/discover")}
             />
-          </View>
-        )}
-      </ScrollView>
+          )}
+        </ScrollView>
+      </Screen>
     </View>
   );
 }
 
 function WatchlistRow({ play, onPress }: { play: Play; onPress: () => void }) {
-  const fontsLoaded = useAppFonts();
   const [venue, setVenue] = useState<Venue>();
   useEffect(() => {
     getVenueById(play.venueId)
@@ -97,21 +89,21 @@ function WatchlistRow({ play, onPress }: { play: Play; onPress: () => void }) {
 
   return (
     <Pressable onPress={onPress} style={styles.row} accessibilityRole="button" accessibilityLabel={play.title}>
-      <PosterPlaceholder poster={play.poster} width={64} height={96} radius={8} preferThumb />
-      <View style={{ flex: 1, gap: 5 }}>
-        <Text numberOfLines={2} style={{ fontFamily: displayFont(fontsLoaded, "semibold"), fontSize: 16, color: colors.text }}>
+      <PosterPlaceholder poster={play.poster} width={64} height={96} radius={radius.sm} preferThumb />
+      <View style={{ flex: 1, gap: space.xs }}>
+        <Text variant="subheading" numberOfLines={2}>
           {play.title}
         </Text>
         <View style={styles.metaRow}>
           <PinIcon size={13} />
-          <Text numberOfLines={1} style={{ flex: 1, fontFamily: bodyFont(fontsLoaded), fontSize: 11.5, color: colors.textFaint }}>
+          <Text variant="caption" tone="faint" numberOfLines={1} style={{ flex: 1 }}>
             {venue?.name}
           </Text>
         </View>
         {play.premiereDate && (
           <View style={styles.metaRow}>
             <CalendarIcon size={13} />
-            <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 11.5, color: colors.textFaint }}>
+            <Text variant="caption" tone="faint">
               {strings.watchlist.premiereLabel}: {formatDate(play.premiereDate)}
             </Text>
           </View>
@@ -127,13 +119,13 @@ function formatDate(iso: string) {
 
 const styles = StyleSheet.create({
   header: {
-    paddingHorizontal: 20,
-    paddingBottom: 14,
-    gap: 4,
+    paddingHorizontal: gutter,
+    paddingBottom: space.lg,
+    gap: space.xs,
     borderBottomWidth: 1,
     borderBottomColor: colors.hairlineSoft,
   },
-  row: { flexDirection: "row", gap: 12 },
-  metaRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  empty: { alignItems: "center", gap: 12, paddingVertical: 48, paddingHorizontal: 10 },
+  body: { padding: gutter, paddingBottom: 100, gap: space.lg },
+  row: { flexDirection: "row", gap: space.md },
+  metaRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
 });

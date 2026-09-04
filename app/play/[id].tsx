@@ -1,27 +1,46 @@
 import { useEffect, useState } from "react";
-import { View, Text, ScrollView, StyleSheet, Pressable, Share, Platform } from "react-native";
+import { View, ScrollView, StyleSheet, Pressable, Share, Platform } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
-import { bodyFont, displayFont } from "@/theme/typography";
-import { useAppFonts } from "@/hooks/useAppFonts";
+import { gutter, radius, space } from "@/theme/tokens";
 import { addToWatchlist, getPlayById, getReviewsForPlay, getUserById, getVenueById, isInWatchlist, removeFromWatchlist } from "@/services/playsService";
 import { useAuth } from "@/contexts/AuthContext";
-import type { Play, Review, User, Venue } from "@/data/types";
+import type { Play, Poster, Review, User, Venue } from "@/data/types";
 import { IconButton, Button } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
+import { ContentColumn } from "@/components/ui/Screen";
+import { Text } from "@/components/ui/Text";
 import { MaskRatingRow } from "@/components/icons/MaskIcon";
 import { ChevronLeftIcon, ShareIcon, TicketIcon, PlusIcon } from "@/components/icons/Icons";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { strings } from "@/i18n/hu";
 import { closeModal } from "@/utils/navigation";
 
+/**
+ * The hero honours the poster's real proportions, within limits.
+ *
+ * There is one image here and room to show it, so unlike the browsing grids
+ * this does not force a single ratio — the catalogue is close to half
+ * landscape production stills and half portrait artwork, and cropping either
+ * into the other's shape loses the part worth looking at. The clamp keeps a
+ * panorama from becoming a letterbox slit and a tall poster from pushing the
+ * title off a phone screen entirely.
+ */
+const MIN_HERO_ASPECT = 4 / 5;
+const MAX_HERO_ASPECT = 16 / 9;
+const FALLBACK_HERO_ASPECT = 3 / 2;
+
+function heroAspect(poster?: Poster): number {
+  if (!poster?.width || !poster?.height) return FALLBACK_HERO_ASPECT;
+  return Math.min(MAX_HERO_ASPECT, Math.max(MIN_HERO_ASPECT, poster.width / poster.height));
+}
+
 export default function PlayDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const fontsLoaded = useAppFonts();
   const { session } = useAuth();
   const [play, setPlay] = useState<Play>();
   const [venue, setVenue] = useState<Venue>();
@@ -62,12 +81,11 @@ export default function PlayDetailScreen() {
   }, [id, session]);
 
   async function toggleWatchlist() {
-    if (!play || watchlistBusy) return;
+    if (!play) return;
     if (!session) {
       router.push("/sign-in");
       return;
     }
-    setNotice(undefined);
     setWatchlistBusy(true);
     try {
       if (inWatchlist) {
@@ -78,9 +96,7 @@ export default function PlayDetailScreen() {
         setInWatchlist(true);
       }
     } catch {
-      // A failed insert/delete used to leave the button silently out of sync
-      // with the database.
-      setNotice(strings.playDetail.watchlistError);
+      setNotice(strings.common.loadError);
     } finally {
       setWatchlistBusy(false);
     }
@@ -88,24 +104,9 @@ export default function PlayDetailScreen() {
 
   async function handleShare() {
     if (!play) return;
-    const message = venue?.name ? `${play.title} — ${venue.name}` : play.title;
-    setNotice(undefined);
     try {
-      // React Native's Share sheet does not exist on web; the Web Share API is
-      // only available in secure contexts, so fall back to the clipboard.
-      if (Platform.OS === "web") {
-        const nav = globalThis.navigator as Navigator | undefined;
-        if (nav?.share) {
-          await nav.share({ title: play.title, text: message });
-        } else if (nav?.clipboard) {
-          await nav.clipboard.writeText(message);
-          setNotice(strings.playDetail.linkCopied);
-        } else {
-          setNotice(strings.playDetail.shareFailed);
-        }
-        return;
-      }
-      await Share.share({ title: play.title, message });
+      const url = Platform.OS === "web" ? window.location.href : undefined;
+      await Share.share({ message: url ? `${play.title} — ${url}` : play.title, title: play.title });
     } catch {
       setNotice(strings.playDetail.shareFailed);
     }
@@ -113,12 +114,14 @@ export default function PlayDetailScreen() {
 
   if (loadFailed) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: "center", justifyContent: "center", gap: 14, padding: 20 }}>
-        <Text style={{ fontFamily: bodyFont(fontsLoaded, "medium"), fontSize: 13, color: colors.textFaint, textAlign: "center" }}>
+      <View style={styles.centered}>
+        <Text variant="body" tone="dim" style={{ textAlign: "center" }}>
           {strings.checkin.playNotFound}
         </Text>
-        <Pressable onPress={() => closeModal(router, "/(tabs)")} accessibilityRole="button">
-          <Text style={{ fontFamily: bodyFont(fontsLoaded, "semibold"), fontSize: 12.5, color: colors.gold }}>{strings.checkin.close}</Text>
+        <Pressable onPress={() => closeModal(router, "/(tabs)")} accessibilityRole="button" hitSlop={8}>
+          <Text variant="label" tone="accent">
+            {strings.checkin.close}
+          </Text>
         </Pressable>
       </View>
     );
@@ -130,10 +133,10 @@ export default function PlayDetailScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScrollView bounces={false}>
-        <View style={{ height: 300 }}>
-          <PosterPlaceholder poster={play.poster} height={300} radius={0} priority="high" />
-          <View style={[styles.heroTop, { top: insets.top + 18 }]}>
+      <ScrollView bounces={false} contentContainerStyle={{ paddingBottom: space["3xl"] }}>
+        <View style={{ aspectRatio: heroAspect(play.poster), maxHeight: 460 }}>
+          <PosterPlaceholder poster={play.poster} height="100%" radius={0} priority="high" />
+          <View style={[styles.heroTop, { top: insets.top + space.lg }]}>
             <IconButton translucent onPress={() => closeModal(router, "/(tabs)")} accessibilityLabel={strings.playDetail.back}>
               <ChevronLeftIcon />
             </IconButton>
@@ -143,24 +146,31 @@ export default function PlayDetailScreen() {
               <ShareIcon />
             </IconButton>
           </View>
+          {/* These are working photographers' production stills; the credit
+              belongs with the image wherever it is shown at size. */}
+          {!!play.poster?.credit && (
+            <Text variant="caption" style={styles.posterCredit}>
+              {play.poster.credit}
+            </Text>
+          )}
         </View>
 
-        <View style={{ paddingHorizontal: 20, gap: 16, marginTop: -8 }}>
-          <View style={{ gap: 6 }}>
-            <Text style={{ fontFamily: displayFont(fontsLoaded, "semibold"), fontSize: 30, color: colors.text, lineHeight: 33 }}>
-              {play.title}
-            </Text>
-            <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 13, color: colors.textDim }}>
+        <ContentColumn style={{ paddingHorizontal: gutter, gap: space.xl, marginTop: space.lg }}>
+          <View style={{ gap: space.sm }}>
+            <Text variant="display">{play.title}</Text>
+            <Text variant="body" tone="dim">
               {[play.author, play.director ? `rend. ${play.director}` : ""].filter(Boolean).join(" · ")}
             </Text>
             <View style={styles.metaRow}>
               {!!venue?.name && (
-                <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12, color: colors.textFaint }}>{venue.name}</Text>
+                <Text variant="caption" tone="faint">
+                  {venue.name}
+                </Text>
               )}
               {play.runtimeMinutes != null && (
                 <>
                   <View style={styles.dot} />
-                  <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12, color: colors.textFaint }}>
+                  <Text variant="caption" tone="faint">
                     {formatRuntime(play.runtimeMinutes)}
                   </Text>
                 </>
@@ -168,7 +178,7 @@ export default function PlayDetailScreen() {
               {!!play.genre && (
                 <>
                   <View style={styles.dot} />
-                  <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12, color: colors.textFaint }}>
+                  <Text variant="caption" tone="faint">
                     {strings.genres[play.genre] ?? play.genre}
                   </Text>
                 </>
@@ -177,13 +187,23 @@ export default function PlayDetailScreen() {
 
             <View style={styles.statusRow}>
               <StatusBadge status={play.status} />
-              <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12, color: colors.textDim, flexShrink: 1 }}>
+              <Text variant="bodySmall" tone="dim" style={{ flexShrink: 1 }}>
                 {schedulingLine(play)}
               </Text>
             </View>
 
+            {/* recompute_play_status() writes a plain-language sentence saying
+                exactly why a production reads as it does ("no future dates;
+                last performance 2025-06-14"). Nothing displayed it, which left
+                the badge as an assertion the reader had to take on trust. */}
+            {!!play.statusReason && (
+              <Text variant="caption" tone="faint">
+                {play.statusReason}
+              </Text>
+            )}
+
             {play.isArchived && (
-              <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 11.5, color: colors.textFaint, lineHeight: 16 }}>
+              <Text variant="caption" tone="faint">
                 {strings.playDetail.archivedNote}
               </Text>
             )}
@@ -193,22 +213,22 @@ export default function PlayDetailScreen() {
             <View style={styles.ratingSummary}>
               {/* A play with no reviews used to render a bold gold "0.0", which
                   reads as a terrible score rather than as "not rated yet". */}
-              <Text style={{ fontFamily: displayFont(fontsLoaded, "semibold"), fontSize: 32, fontWeight: "700", color: hasRatings ? colors.gold : colors.textFaint }}>
+              <Text variant="title" tone={hasRatings ? "accent" : "faint"}>
                 {hasRatings ? play.rating.overall.toFixed(1) : strings.common.noRating}
               </Text>
               {hasRatings && <MaskRatingRow rating={play.rating.overall} size={12} gap={2} />}
-              <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 10, color: colors.textFaint, textAlign: "center" }}>
+              <Text variant="caption" tone="faint" style={{ textAlign: "center" }}>
                 {hasRatings ? strings.playDetail.ratingsCount(play.rating.count) : strings.playDetail.noRatingsYet}
               </Text>
             </View>
-            <View style={{ flex: 1, gap: 7 }}>
+            <View style={{ flex: 1, gap: space.sm }}>
               <RatingBar label={strings.playDetail.acting} value={hasRatings ? play.rating.acting : 0} />
               <RatingBar label={strings.playDetail.directing} value={hasRatings ? play.rating.directing : 0} />
               <RatingBar label={strings.playDetail.setDesign} value={hasRatings ? play.rating.setDesign : 0} />
             </View>
           </View>
 
-          <View style={{ flexDirection: "row", gap: 10 }}>
+          <View style={{ flexDirection: "row", gap: space.md }}>
             <Button
               label={strings.playDetail.logButton}
               icon={<PlusIcon size={16} />}
@@ -226,53 +246,56 @@ export default function PlayDetailScreen() {
           </View>
 
           {!!notice && (
-            <Text
-              accessibilityRole="alert"
-              style={{ fontFamily: bodyFont(fontsLoaded, "medium"), fontSize: 12, color: colors.gold }}
-            >
+            <Text accessibilityRole="alert" variant="bodySmall" tone="accent">
               {notice}
             </Text>
           )}
 
+          {!!play.synopsis && (
+            <Text variant="body" tone="dim">
+              {play.synopsis}
+            </Text>
+          )}
+
           {play.cast.length > 0 && (
-            <View style={{ gap: 10 }}>
-              <Text style={{ fontFamily: bodyFont(fontsLoaded, "bold"), fontSize: 13.5, color: colors.text }}>{strings.playDetail.castCrew}</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 14 }}>
+            <View style={{ gap: space.md }}>
+              <Text variant="subheading">{strings.playDetail.castCrew}</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.lg }}>
                 {play.cast.map((c, i) => (
                   // Keyed by index: the same performer legitimately appears
                   // twice when they cover two roles in one production.
-                  <View key={`${c.name}-${i}`} style={{ width: 64, alignItems: "center", gap: 6 }}>
-                    <View style={styles.castAvatar} />
-                    <Text
-                      numberOfLines={2}
-                      style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 11, color: colors.text, textAlign: "center", lineHeight: 14 }}
-                    >
+                  <View key={`${c.name}-${i}`} style={styles.castMember}>
+                    <Avatar initials={initialsOf(c.name)} size={52} />
+                    <Text variant="caption" numberOfLines={2} style={{ textAlign: "center" }}>
                       {c.name}
                     </Text>
+                    {!!c.role && (
+                      <Text variant="caption" tone="faint" numberOfLines={1} style={{ textAlign: "center" }}>
+                        {c.role}
+                      </Text>
+                    )}
                   </View>
                 ))}
               </ScrollView>
             </View>
           )}
 
-          <View style={{ gap: 10, paddingBottom: 32 }}>
+          <View style={{ gap: space.md }}>
             <View style={styles.rowBetween}>
-              <Text style={{ fontFamily: bodyFont(fontsLoaded, "bold"), fontSize: 13.5, color: colors.text }}>
-                {strings.playDetail.fromFollowing}
-              </Text>
-              <Text style={{ fontFamily: bodyFont(fontsLoaded, "medium"), fontSize: 11.5, color: colors.gold }}>
+              <Text variant="subheading">{strings.playDetail.fromFollowing}</Text>
+              <Text variant="label" tone="accent">
                 {strings.playDetail.reviewsCount(reviews.length)}
               </Text>
             </View>
             {reviews.length === 0 ? (
-              <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12.5, color: colors.textFaint }}>
+              <Text variant="bodySmall" tone="faint">
                 {strings.playDetail.noReviewsYet}
               </Text>
             ) : (
               reviews.map((r) => <ReviewRow key={r.id} review={r} />)
             )}
           </View>
-        </View>
+        </ContentColumn>
       </ScrollView>
     </View>
   );
@@ -297,6 +320,16 @@ function schedulingLine(play: Play): string {
   return play.status === "running" || play.status === "announced" ? strings.status.noUpcoming : "";
 }
 
+/** Cast avatars were empty circles; initials at least identify the performer. */
+function initialsOf(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
 function formatRuntime(minutes: number) {
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
@@ -306,11 +339,12 @@ function formatRuntime(minutes: number) {
 }
 
 function RatingBar({ label, value }: { label: string; value: number }) {
-  const fontsLoaded = useAppFonts();
   const pct = Math.max(0, Math.min(1, value / 5)) * 100;
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-      <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 11, color: colors.textDim, width: 62 }}>{label}</Text>
+    <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
+      <Text variant="caption" tone="dim" style={{ width: 62 }}>
+        {label}
+      </Text>
       <View style={styles.barTrack}>
         <View style={[styles.barFill, { width: `${pct}%` }]} />
       </View>
@@ -319,7 +353,6 @@ function RatingBar({ label, value }: { label: string; value: number }) {
 }
 
 function ReviewRow({ review }: { review: Review }) {
-  const fontsLoaded = useAppFonts();
   const [user, setUser] = useState<User>();
   useEffect(() => {
     getUserById(review.userId)
@@ -329,15 +362,13 @@ function ReviewRow({ review }: { review: Review }) {
   if (!user) return null;
 
   return (
-    <View style={{ flexDirection: "row", gap: 10 }}>
+    <View style={{ flexDirection: "row", gap: space.md }}>
       <Avatar initials={user.initials} size={32} />
-      <View style={{ flex: 1, gap: 3 }}>
-        <Text style={{ fontFamily: bodyFont(fontsLoaded, "semibold"), fontSize: 12.5, color: colors.text }}>{user.name}</Text>
+      <View style={{ flex: 1, gap: space.xs }}>
+        <Text variant="label">{user.name}</Text>
         <MaskRatingRow rating={review.ratingOverall} size={11} gap={2} />
         {!!review.text && (
-          <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12.5, lineHeight: 18, color: colors.textDim }}>
-            {`„${review.text}”`}
-          </Text>
+          <Text variant="bodySmall" tone="dim">{`„${review.text}”`}</Text>
         )}
       </View>
     </View>
@@ -345,35 +376,49 @@ function ReviewRow({ review }: { review: Review }) {
 }
 
 const styles = StyleSheet.create({
+  centered: {
+    flex: 1,
+    backgroundColor: colors.bg,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: space.lg,
+    padding: gutter,
+  },
   heroTop: {
     position: "absolute",
-    left: 18,
-    right: 18,
+    left: space.lg,
+    right: space.lg,
     flexDirection: "row",
     justifyContent: "space-between",
   },
-  metaRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 2, flexWrap: "wrap" },
-  statusRow: { flexDirection: "row", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 4 },
+  posterCredit: {
+    position: "absolute",
+    right: space.md,
+    bottom: space.sm,
+    color: "rgba(245,237,228,0.62)",
+  },
+  metaRow: { flexDirection: "row", alignItems: "center", gap: space.sm, marginTop: 2, flexWrap: "wrap" },
+  statusRow: { flexDirection: "row", alignItems: "center", gap: space.md, flexWrap: "wrap", marginTop: space.xs },
   dot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: colors.textFaint },
   ratingCard: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
+    gap: space.lg,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.hairline,
-    borderRadius: 14,
-    padding: 16,
+    borderRadius: radius.lg,
+    padding: space.lg,
   },
   ratingSummary: {
     alignItems: "center",
-    gap: 6,
-    paddingRight: 16,
+    gap: space.sm,
+    paddingRight: space.lg,
     borderRightWidth: 1,
     borderRightColor: colors.hairline,
   },
+  castMember: { width: 64, alignItems: "center", gap: space.sm },
   barTrack: { flex: 1, height: 5, borderRadius: 3, backgroundColor: colors.surface2, overflow: "hidden" },
   barFill: { height: "100%", backgroundColor: colors.gold },
-  castAvatar: { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.surface2, borderWidth: 1, borderColor: colors.hairline },
   rowBetween: { flexDirection: "row", alignItems: "baseline", justifyContent: "space-between" },
 });

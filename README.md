@@ -66,10 +66,12 @@ components/
   icons/                  hand-drawn SVG icons, incl. the mask rating glyph
   ui/                     Button, Chip, Avatar, PosterPlaceholder, TabBar
 
-theme/                    design tokens (colors.ts, typography.ts) —
-                          the single source of truth for the "Velvet
-                          Curtain" visual system also used in the design
-                          canvas mockups
+theme/                    design tokens — the single source of truth for
+                          the "Velvet Curtain" visual system
+  colors.ts               palette, with the OKLCH value each hex came from
+  typography.ts           the two brand faces and their fallbacks
+  type.ts                 the type scale: eight named roles
+  tokens.ts               spacing, radii, elevation, breakpoints, max widths
 
 contexts/AuthContext.tsx  Supabase session state, wraps the whole app
 
@@ -114,6 +116,29 @@ would normally go.
 converted from, in case the palette needs adjusting later — React Native's
 style engine doesn't accept `oklch()`, so everything here is pre-converted
 sRGB hex.
+
+Two rules are worth knowing before adding a screen:
+
+- **Never set a font size by hand.** `components/ui/Text` takes a `variant`
+  (display / title / heading / subheading / body / bodySmall / label /
+  caption) and a `tone`. Sizes used to be typed at each call site, which is
+  how the app accumulated twenty of them. The one exception is `TextInput`,
+  which cannot use that component and takes `inputFontSize` — 16px, because
+  iOS Safari zooms the page whenever a focused field's text is smaller.
+- **Bodoni Moda is display type only, 19px and up.** It is a didone: the
+  thick/thin contrast that gives the app its playbill character at title size
+  collapses into mush at caption size, where the hairlines fall below a pixel.
+  `theme/type.ts` enforces this — every role below `heading` is Sora.
+
+`textFaint` was lifted from `#80716d` to `#8a7a75`. The original measured
+4.29:1 against the background, short of the 4.5:1 WCAG AA wants for body
+text, and it is the colour used for metadata at the smallest sizes in the app.
+
+Layout is responsive rather than phone-only, because the web export ships.
+`hooks/useBreakpoint.ts` reads the viewport at runtime (react-native-web has
+no media queries inside `StyleSheet.create`), `components/ui/Screen` caps and
+centres content, and `components/ui/Grid` computes tile widths from its own
+measured width rather than percentages.
 
 ## What's real now
 

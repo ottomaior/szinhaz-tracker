@@ -1,10 +1,9 @@
 import { useCallback, useState } from "react";
-import { View, Text, ScrollView, StyleSheet, Pressable } from "react-native";
+import { View, ScrollView, StyleSheet, Pressable } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
-import { bodyFont, displayFont } from "@/theme/typography";
-import { useAppFonts } from "@/hooks/useAppFonts";
+import { gutter, radius, space } from "@/theme/tokens";
 import { getCurrentUser, getDiaryPlaysForUser } from "@/services/playsService";
 import { signOut } from "@/services/authService";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,13 +11,15 @@ import type { Play, User } from "@/data/types";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
+import { Screen } from "@/components/ui/Screen";
+import { Grid } from "@/components/ui/Grid";
+import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 
 const TABS = [strings.profile.tabDiary, strings.profile.tabWatchlists, strings.profile.tabReviews] as const;
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
-  const fontsLoaded = useAppFonts();
   const router = useRouter();
   const { session, loading } = useAuth();
   const [user, setUser] = useState<User>();
@@ -73,7 +74,7 @@ export default function ProfileScreen() {
   if (!session) {
     return (
       <View style={[styles.emptyState, { flex: 1, justifyContent: "center", paddingTop: insets.top, backgroundColor: colors.bg }]}>
-        <Text style={{ fontFamily: bodyFont(fontsLoaded, "medium"), fontSize: 13, color: colors.textFaint, marginBottom: 14 }}>
+        <Text variant="body" tone="dim" style={{ marginBottom: space.lg }}>
           {strings.profile.signInPrompt}
         </Text>
         <Button label={strings.profile.signInButton} onPress={() => router.push("/sign-in")} />
@@ -85,10 +86,11 @@ export default function ProfileScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <Screen>
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
         <View style={[styles.cover, { paddingTop: insets.top + 16 }]} />
 
-        <View style={{ paddingHorizontal: 20 }}>
+        <View style={{ paddingHorizontal: gutter }}>
           <View style={styles.profileRow}>
             <Avatar initials={user.initials} size={78} serif />
             {/* This used to be a "Profil szerkesztése" pill with no press
@@ -101,20 +103,16 @@ export default function ProfileScreen() {
               accessibilityRole="button"
               accessibilityState={{ expanded: confirmingSignOut }}
             >
-              <Text style={{ fontFamily: bodyFont(fontsLoaded, "semibold"), fontSize: 12, color: colors.text }}>{strings.auth.signOut}</Text>
+              <Text variant="label">{strings.auth.signOut}</Text>
             </Pressable>
           </View>
 
           {confirmingSignOut && (
             <View style={styles.confirmCard}>
-              <Text style={{ fontFamily: bodyFont(fontsLoaded, "semibold"), fontSize: 13, color: colors.text }}>
-                {strings.auth.signOutConfirmTitle}
-              </Text>
-              <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12, color: colors.textFaint, lineHeight: 17 }}>
-                {strings.auth.signOutConfirmBody}
-              </Text>
+              <Text variant="subheading">{strings.auth.signOutConfirmTitle}</Text>
+              <Text variant="bodySmall" tone="dim">{strings.auth.signOutConfirmBody}</Text>
               {!!signOutError && (
-                <Text accessibilityRole="alert" style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12, color: colors.gold }}>
+                <Text accessibilityRole="alert" variant="bodySmall" tone="accent">
                   {signOutError}
                 </Text>
               )}
@@ -126,8 +124,8 @@ export default function ProfileScreen() {
           )}
 
           <View style={{ marginTop: 12, gap: 2 }}>
-            <Text style={{ fontFamily: displayFont(fontsLoaded, "semibold"), fontSize: 21, color: colors.text }}>{user.name}</Text>
-            <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12.5, color: colors.textFaint }}>
+            <Text variant="title">{user.name}</Text>
+            <Text variant="bodySmall" tone="faint">
               {[`@${user.handle}`, user.city].filter(Boolean).join(" · ")}
             </Text>
           </View>
@@ -151,13 +149,7 @@ export default function ProfileScreen() {
                 accessibilityState={{ selected: activeTab === t }}
                 style={[styles.tabItem, activeTab === t && styles.tabItemActive]}
               >
-                <Text
-                  style={{
-                    fontFamily: bodyFont(fontsLoaded, activeTab === t ? "bold" : "semibold"),
-                    fontSize: 12.5,
-                    color: activeTab === t ? colors.text : colors.textFaint,
-                  }}
-                >
+                <Text variant="label" tone={activeTab === t ? "default" : "faint"}>
                   {t}
                 </Text>
               </Pressable>
@@ -166,7 +158,7 @@ export default function ProfileScreen() {
 
           {activeTab === strings.profile.tabDiary && (
             <>
-              <View style={styles.grid}>
+              <Grid gap={space.sm} columns={{ compact: 4, medium: 5, expanded: 6, wide: 8 }} style={{ marginTop: space.lg }}>
                 {diary.map((p) => (
                   <Pressable
                     key={p.id}
@@ -175,40 +167,38 @@ export default function ProfileScreen() {
                     accessibilityRole="button"
                     accessibilityLabel={p.title}
                   >
-                    <PosterPlaceholder poster={p.poster} height="100%" radius={6} preferThumb />
+                    <PosterPlaceholder poster={p.poster} height="100%" radius={radius.sm} preferThumb />
                   </Pressable>
                 ))}
-              </View>
+              </Grid>
               {diaryLoaded && diary.length === 0 && (
                 <View style={styles.emptyState}>
-                  <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12.5, color: colors.textFaint }}>
-                    {strings.profile.diaryEmpty}
-                  </Text>
+                  <Text variant="bodySmall" tone="faint">{strings.profile.diaryEmpty}</Text>
                 </View>
               )}
             </>
           )}
           {activeTab !== strings.profile.tabDiary && (
             <View style={styles.emptyState}>
-              <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12.5, color: colors.textFaint }}>
-                {strings.profile.comingSoon(activeTab)}
-              </Text>
+              <Text variant="bodySmall" tone="faint">{strings.profile.comingSoon(activeTab)}</Text>
             </View>
           )}
         </View>
       </ScrollView>
+      </Screen>
     </View>
   );
 }
 
 function Stat({ value, label, gold = false }: { value: number; label: string; gold?: boolean }) {
-  const fontsLoaded = useAppFonts();
   return (
     <View style={styles.stat}>
-      <Text style={{ fontFamily: displayFont(fontsLoaded, "semibold"), fontSize: 19, fontWeight: "700", color: gold ? colors.gold : colors.text }}>
+      <Text variant="heading" tone={gold ? "accent" : "default"}>
         {value}
       </Text>
-      <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 10.5, color: colors.textFaint, textAlign: "center" }}>{label}</Text>
+      <Text variant="caption" tone="faint" style={{ textAlign: "center" }}>
+        {label}
+      </Text>
     </View>
   );
 }
@@ -263,7 +253,6 @@ const styles = StyleSheet.create({
   },
   tabItem: { paddingBottom: 10 },
   tabItemActive: { borderBottomWidth: 2, borderBottomColor: colors.gold },
-  grid: { marginTop: 14, flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  gridItem: { width: "23%", aspectRatio: 2 / 3 },
+  gridItem: { aspectRatio: 3 / 4 },
   emptyState: { marginTop: 24, alignItems: "center", paddingVertical: 30 },
 });

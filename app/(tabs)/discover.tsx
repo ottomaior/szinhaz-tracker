@@ -1,19 +1,24 @@
 import { useCallback, useEffect, useState } from "react";
-import { View, Text, ScrollView, StyleSheet, Pressable, TextInput } from "react-native";
+import { View, ScrollView, StyleSheet, Pressable, TextInput } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
-import { bodyFont, displayFont } from "@/theme/typography";
+import { inputFontSize } from "@/theme/type";
+import { gutter, minTouchTarget, radius, space } from "@/theme/tokens";
+import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
 import { getCities, getPremieres, getTrending, getVenueById } from "@/services/playsService";
 import { searchPlays } from "@/services/searchService";
 import type { Play, Venue, VenueType } from "@/data/types";
-import { SearchIcon, PlusIcon } from "@/components/icons/Icons";
+import { SearchIcon, PlusIcon, CloseIcon } from "@/components/icons/Icons";
 import { MaskIcon } from "@/components/icons/MaskIcon";
 import { Chip } from "@/components/ui/Chip";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
+import { Screen } from "@/components/ui/Screen";
+import { Grid } from "@/components/ui/Grid";
+import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 
 const FILTERS = [strings.discover.filterAll, strings.discover.filterKoszinhaz, strings.discover.filterFuggetlen, strings.discover.filterSzabadteri];
@@ -24,6 +29,18 @@ const FILTER_TO_VENUE_TYPE: Record<string, VenueType | undefined> = {
   [strings.discover.filterFuggetlen]: "független",
   [strings.discover.filterSzabadteri]: "szabadtéri",
 };
+
+/**
+ * Grid tiles are 3:4 rather than the 2:3 of a printed poster.
+ *
+ * The catalogue is very nearly half landscape production photography and half
+ * portrait artwork, so no single ratio flatters both. A grid still needs one
+ * rhythm — mixed heights read as broken rather than considered — and 3:4 is
+ * the compromise that holds a portrait poster comfortably while cropping far
+ * less out of a landscape still than 2:3 did. The play detail hero, where
+ * there is only one image and room to spare, honours the real ratio instead.
+ */
+const TILE_ASPECT = 3 / 4;
 
 export default function DiscoverScreen() {
   const insets = useSafeAreaInsets();
@@ -99,154 +116,159 @@ export default function DiscoverScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <View style={styles.titleRow}>
-          <Text style={{ fontFamily: displayFont(fontsLoaded, "semibold"), fontSize: 24, color: colors.text }}>{strings.discover.title}</Text>
-          <Pressable
-            style={styles.fab}
-            onPress={() => router.push("/add-play")}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel={strings.discover.addPlayFab}
-          >
-            <PlusIcon size={16} />
-          </Pressable>
-        </View>
+      <Screen>
+        <View style={[styles.header, { paddingTop: insets.top + space.md }]}>
+          <View style={styles.titleRow}>
+            <Text variant="title">{strings.discover.title}</Text>
+            <Pressable
+              style={styles.fab}
+              onPress={() => router.push("/add-play")}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={strings.discover.addPlayFab}
+            >
+              <PlusIcon size={16} />
+            </Pressable>
+          </View>
 
-        <View style={styles.searchBar}>
-          <SearchIcon />
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder={strings.discover.searchPlaceholder}
-            placeholderTextColor={colors.textFaint}
-            accessibilityLabel={strings.discover.searchPlaceholder}
-            style={{ flex: 1, fontFamily: bodyFont(fontsLoaded), fontSize: 13.5, color: colors.text }}
-          />
-        </View>
+          <View style={styles.searchBar}>
+            <SearchIcon />
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              placeholder={strings.discover.searchPlaceholder}
+              placeholderTextColor={colors.textFaint}
+              accessibilityLabel={strings.discover.searchPlaceholder}
+              style={{ flex: 1, fontFamily: bodyFont(fontsLoaded), fontSize: inputFontSize, color: colors.text }}
+            />
+            {/* Clearing a search by backspacing through it is tedious on a
+                phone, and there was no other way out of the results view. */}
+            {isSearching && (
+              <Pressable onPress={() => setQuery("")} hitSlop={10} accessibilityRole="button" accessibilityLabel={strings.common.close}>
+                <CloseIcon size={15} color={colors.textDim} />
+              </Pressable>
+            )}
+          </View>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingRight: 20 }}>
-          {FILTERS.map((f) => (
-            <Chip key={f} label={f} active={activeFilter === f} onPress={() => setActiveFilter(f)} />
-          ))}
-        </ScrollView>
-
-        {cities.length > 0 && (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingRight: 20 }}>
-            {[strings.discover.filterAll, ...cities].map((c) => (
-              <Chip key={c} label={c} active={activeCity === c} onPress={() => setActiveCity(c)} />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+            {FILTERS.map((f) => (
+              <Chip key={f} label={f} active={activeFilter === f} onPress={() => setActiveFilter(f)} />
             ))}
           </ScrollView>
-        )}
-      </View>
 
-      {isSearching ? (
-        <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 100, gap: 14 }} keyboardShouldPersistTaps="handled">
-          <Text style={{ fontFamily: bodyFont(fontsLoaded, "bold"), fontSize: 14, color: colors.text }}>
-            {searching ? strings.discover.searching : strings.discover.searchResultsTitle(searchResults.length)}
-          </Text>
-          <View style={styles.grid}>
-            {searchResults.map((p) => (
-              <TrendingCard key={p.id} play={p} onPress={() => router.push(`/play/${p.id}`)} />
-            ))}
-          </View>
-          {!searching && searchResults.length === 0 && (
-            <View style={{ alignItems: "center", gap: 10, paddingVertical: 30 }}>
-              <Text style={{ fontFamily: bodyFont(fontsLoaded, "semibold"), fontSize: 13, color: colors.textFaint }}>
-                {strings.discover.noResultsTitle}
-              </Text>
-              <Pressable onPress={() => router.push("/add-play")} accessibilityRole="button">
-                <Text style={{ fontFamily: bodyFont(fontsLoaded, "medium"), fontSize: 12.5, color: colors.gold }}>
-                  {strings.discover.noResultsAction}
-                </Text>
-              </Pressable>
-            </View>
+          {cities.length > 0 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+              {[strings.discover.filterAll, ...cities].map((c) => (
+                <Chip key={c} label={c} active={activeCity === c} onPress={() => setActiveCity(c)} />
+              ))}
+            </ScrollView>
           )}
-        </ScrollView>
-      ) : (
-        <ScrollView contentContainerStyle={{ paddingBottom: 100, gap: 20 }}>
-          {premieres.length > 0 && (
-            <View style={{ gap: 10 }}>
-              <View style={[styles.rowBetween, { paddingHorizontal: 20 }]}>
-                <Text style={{ fontFamily: bodyFont(fontsLoaded, "bold"), fontSize: 14, color: colors.text }}>
-                  {strings.discover.premieresTitle}
+        </View>
+
+        {isSearching ? (
+          <ScrollView contentContainerStyle={styles.scrollBody} keyboardShouldPersistTaps="handled">
+            <Text variant="subheading">
+              {searching ? strings.discover.searching : strings.discover.searchResultsTitle(searchResults.length)}
+            </Text>
+            <Grid>
+              {searchResults.map((p) => (
+                <TrendingCard key={p.id} play={p} onPress={() => router.push(`/play/${p.id}`)} />
+              ))}
+            </Grid>
+            {!searching && searchResults.length === 0 && (
+              <View style={styles.noResults}>
+                <Text variant="body" tone="dim">
+                  {strings.discover.noResultsTitle}
                 </Text>
-                {/* This label used to be plain text with nothing behind it. */}
-                <Pressable onPress={() => setShowAllPremieres((s) => !s)} hitSlop={8} accessibilityRole="button">
-                  <Text style={{ fontFamily: bodyFont(fontsLoaded, "medium"), fontSize: 12, color: colors.gold }}>
-                    {showAllPremieres ? strings.discover.seeLess : strings.discover.seeAll}
+                <Pressable onPress={() => router.push("/add-play")} accessibilityRole="button" hitSlop={8}>
+                  <Text variant="label" tone="accent">
+                    {strings.discover.noResultsAction}
                   </Text>
                 </Pressable>
               </View>
-              {showAllPremieres ? (
-                <View style={[styles.grid, { paddingHorizontal: 20 }]}>
-                  {premieres.map((p) => (
+            )}
+          </ScrollView>
+        ) : (
+          <ScrollView contentContainerStyle={{ paddingBottom: 100, gap: space["2xl"] }}>
+            {premieres.length > 0 && (
+              <View style={{ gap: space.md }}>
+                <View style={[styles.rowBetween, { paddingHorizontal: gutter }]}>
+                  <Text variant="subheading">{strings.discover.premieresTitle}</Text>
+                  {/* This label used to be plain text with nothing behind it. */}
+                  <Pressable onPress={() => setShowAllPremieres((s) => !s)} hitSlop={8} accessibilityRole="button">
+                    <Text variant="label" tone="accent">
+                      {showAllPremieres ? strings.discover.seeLess : strings.discover.seeAll}
+                    </Text>
+                  </Pressable>
+                </View>
+                {showAllPremieres ? (
+                  <Grid style={{ paddingHorizontal: gutter }}>
+                    {premieres.map((p) => (
+                      <TrendingCard key={p.id} play={p} onPress={() => router.push(`/play/${p.id}`)} />
+                    ))}
+                  </Grid>
+                ) : (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
+                    {premieres.map((p) => (
+                      <PremiereCard key={p.id} play={p} onPress={() => router.push(`/play/${p.id}`)} />
+                    ))}
+                  </ScrollView>
+                )}
+              </View>
+            )}
+
+            {trending.length > 0 && (
+              <View style={{ gap: space.md, paddingHorizontal: gutter }}>
+                <Text variant="subheading">
+                  {/* Was hardcoded to Budapest even with Debrecen selected. */}
+                  {city ? strings.discover.trendingTitleInCity(city) : strings.discover.trendingTitle}
+                </Text>
+                <Grid>
+                  {trending.map((p) => (
                     <TrendingCard key={p.id} play={p} onPress={() => router.push(`/play/${p.id}`)} />
                   ))}
-                </View>
-              ) : (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingHorizontal: 20 }}>
-                  {premieres.map((p) => (
-                    <PremiereCard key={p.id} play={p} onPress={() => router.push(`/play/${p.id}`)} />
-                  ))}
-                </ScrollView>
-              )}
-            </View>
-          )}
-
-          {trending.length > 0 && (
-            <View style={{ gap: 10, paddingHorizontal: 20 }}>
-              <Text style={{ fontFamily: bodyFont(fontsLoaded, "bold"), fontSize: 14, color: colors.text }}>
-                {/* Was hardcoded to Budapest even with Debrecen selected. */}
-                {city ? strings.discover.trendingTitleInCity(city) : strings.discover.trendingTitle}
-              </Text>
-              <View style={styles.grid}>
-                {trending.map((p) => (
-                  <TrendingCard key={p.id} play={p} onPress={() => router.push(`/play/${p.id}`)} />
-                ))}
+                </Grid>
               </View>
-            </View>
-          )}
+            )}
 
-          {!browseLoading && !hasBrowseContent && (
-            <View style={styles.empty}>
-              <Text style={{ fontFamily: displayFont(fontsLoaded, "semibold"), fontSize: 18, color: colors.text, textAlign: "center" }}>
-                {browseFailed ? strings.common.loadError : strings.discover.emptyTitle}
-              </Text>
-              {!browseFailed && (
-                <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 13, color: colors.textFaint, textAlign: "center", lineHeight: 19 }}>
-                  {strings.discover.emptyBody}
-                </Text>
-              )}
-              <Button
-                label={browseFailed ? strings.common.retry : strings.discover.addPlayFab}
-                variant="outline"
-                onPress={browseFailed ? loadBrowse : () => router.push("/add-play")}
+            {!browseLoading && !hasBrowseContent && (
+              <EmptyState
+                title={browseFailed ? strings.common.loadError : strings.discover.emptyTitle}
+                body={browseFailed ? undefined : strings.discover.emptyBody}
+                actionLabel={browseFailed ? strings.common.retry : strings.discover.addPlayFab}
+                onAction={browseFailed ? loadBrowse : () => router.push("/add-play")}
               />
-            </View>
-          )}
-        </ScrollView>
-      )}
+            )}
+          </ScrollView>
+        )}
+      </Screen>
     </View>
   );
 }
 
-function PremiereCard({ play, onPress }: { play: Play; onPress: () => void }) {
-  const fontsLoaded = useAppFonts();
+/** Shared by both cards: the venue name under the title. */
+function useVenue(venueId: string): Venue | undefined {
   const [venue, setVenue] = useState<Venue>();
   useEffect(() => {
-    getVenueById(play.venueId)
+    getVenueById(venueId)
       .then(setVenue)
       .catch(() => setVenue(undefined));
-  }, [play]);
+  }, [venueId]);
+  return venue;
+}
+
+function PremiereCard({ play, onPress }: { play: Play; onPress: () => void }) {
+  const venue = useVenue(play.venueId);
 
   return (
-    <Pressable onPress={onPress} style={{ width: 112, gap: 6 }} accessibilityRole="button" accessibilityLabel={play.title}>
-      <PosterPlaceholder poster={play.poster} height={168} radius={8} preferThumb />
-      <Text numberOfLines={2} style={{ fontFamily: bodyFont(fontsLoaded, "semibold"), fontSize: 12.5, color: colors.text, lineHeight: 16 }}>
+    <Pressable onPress={onPress} style={styles.railCard} accessibilityRole="button" accessibilityLabel={play.title}>
+      <View style={{ aspectRatio: TILE_ASPECT }}>
+        <PosterPlaceholder poster={play.poster} height="100%" radius={radius.md} preferThumb />
+      </View>
+      <Text variant="label" numberOfLines={2}>
         {play.title}
       </Text>
-      <Text numberOfLines={2} style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 10.5, color: colors.textFaint }}>
+      <Text variant="caption" tone="faint" numberOfLines={2}>
         {venue?.name}
       </Text>
     </Pressable>
@@ -254,34 +276,28 @@ function PremiereCard({ play, onPress }: { play: Play; onPress: () => void }) {
 }
 
 function TrendingCard({ play, onPress }: { play: Play; onPress: () => void }) {
-  const fontsLoaded = useAppFonts();
-  const [venue, setVenue] = useState<Venue>();
-  useEffect(() => {
-    getVenueById(play.venueId)
-      .then(setVenue)
-      .catch(() => setVenue(undefined));
-  }, [play]);
+  const venue = useVenue(play.venueId);
   const hasRatings = play.rating.count > 0;
 
   return (
-    <Pressable onPress={onPress} style={{ width: "47.5%", gap: 6 }} accessibilityRole="button" accessibilityLabel={play.title}>
-      <View style={{ aspectRatio: 2 / 3 }}>
-        <PosterPlaceholder poster={play.poster} height="100%" radius={8} preferThumb />
+    <Pressable onPress={onPress} style={{ gap: space.sm }} accessibilityRole="button" accessibilityLabel={play.title}>
+      <View style={{ aspectRatio: TILE_ASPECT }}>
+        <PosterPlaceholder poster={play.poster} height="100%" radius={radius.md} preferThumb />
         {/* Unrated plays used to show a gold "0.0" badge, which reads as a
             rock-bottom score rather than as "nobody has rated this yet". */}
         {hasRatings && (
           <View style={styles.ratingBadge}>
             <MaskIcon state="on" size={11} />
-            <Text style={{ fontFamily: bodyFont(fontsLoaded, "bold"), fontSize: 10.5, color: colors.gold }}>
+            <Text variant="caption" tone="accent">
               {play.rating.overall.toFixed(1)}
             </Text>
           </View>
         )}
       </View>
-      <Text numberOfLines={2} style={{ fontFamily: bodyFont(fontsLoaded, "semibold"), fontSize: 12.5, color: colors.text }}>
+      <Text variant="label" numberOfLines={2}>
         {play.title}
       </Text>
-      <Text numberOfLines={2} style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 10.5, color: colors.textFaint }}>
+      <Text variant="caption" tone="faint" numberOfLines={2}>
         {venue?.name}
       </Text>
       <StatusBadge status={play.status} size="sm" />
@@ -291,17 +307,17 @@ function TrendingCard({ play, onPress }: { play: Play; onPress: () => void }) {
 
 const styles = StyleSheet.create({
   header: {
-    paddingHorizontal: 20,
-    paddingBottom: 14,
-    gap: 14,
+    paddingHorizontal: gutter,
+    paddingBottom: space.lg,
+    gap: space.lg,
     borderBottomWidth: 1,
     borderBottomColor: colors.hairlineSoft,
   },
   titleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   fab: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: minTouchTarget,
+    height: minTouchTarget,
+    borderRadius: radius.pill,
     backgroundColor: colors.gold,
     alignItems: "center",
     justifyContent: "center",
@@ -309,25 +325,28 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: space.md,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.hairline,
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
+    borderRadius: radius.md,
+    paddingVertical: space.md,
+    paddingHorizontal: space.lg,
   },
+  chipRow: { gap: space.sm, paddingRight: gutter },
+  scrollBody: { padding: gutter, paddingBottom: 100, gap: space.lg },
+  rail: { gap: space.lg, paddingHorizontal: gutter },
+  railCard: { width: 132, gap: space.sm },
   rowBetween: { flexDirection: "row", alignItems: "baseline", justifyContent: "space-between" },
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
-  empty: { alignItems: "center", gap: 12, paddingVertical: 48, paddingHorizontal: 30 },
+  noResults: { alignItems: "center", gap: space.md, paddingVertical: space["3xl"] },
   ratingBadge: {
     position: "absolute",
-    top: 8,
-    right: 8,
+    top: space.sm,
+    right: space.sm,
     backgroundColor: "rgba(9,4,3,0.78)",
-    borderRadius: 999,
+    borderRadius: radius.pill,
     paddingVertical: 3,
-    paddingHorizontal: 8,
+    paddingHorizontal: space.sm,
     flexDirection: "row",
     alignItems: "center",
     gap: 3,

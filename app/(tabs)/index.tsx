@@ -1,22 +1,22 @@
 import { useCallback, useEffect, useState } from "react";
-import { View, Text, ScrollView, StyleSheet, Pressable, RefreshControl } from "react-native";
+import { View, ScrollView, StyleSheet, Pressable, RefreshControl } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
-import { bodyFont, displayFont } from "@/theme/typography";
-import { useAppFonts } from "@/hooks/useAppFonts";
+import { gutter, radius, space } from "@/theme/tokens";
 import { getFeed, getPlayById, getUserById, getVenueById } from "@/services/playsService";
 import type { FeedItem, Play, User, Venue, Review, WatchlistEntry } from "@/data/types";
 import { MaskIcon, MaskRatingRow } from "@/components/icons/MaskIcon";
 import { HeartIcon, CommentIcon } from "@/components/icons/Icons";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { Avatar } from "@/components/ui/Avatar";
-import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Screen } from "@/components/ui/Screen";
+import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 
 export default function FeedScreen() {
   const insets = useSafeAreaInsets();
-  const fontsLoaded = useAppFonts();
   const router = useRouter();
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,41 +48,32 @@ export default function FeedScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View style={[styles.topBar, { paddingTop: insets.top + 10 }]}>
-        <View style={styles.brand}>
-          <MaskIcon state="on" size={22} />
-          <Text style={{ fontFamily: displayFont(fontsLoaded, "semibold"), fontSize: 19, color: colors.text }}>
-            {strings.appName}
-          </Text>
-        </View>
-      </View>
-
-      <ScrollView
-        contentContainerStyle={{ padding: 20, paddingBottom: 100, gap: 18 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.gold} />}
-      >
-        {items.map((item) => (
-          <FeedCardRouter key={feedItemKey(item)} item={item} onOpenPlay={(id) => router.push(`/play/${id}`)} />
-        ))}
-
-        {!loading && items.length === 0 && (
-          <View style={styles.empty}>
-            <Text style={{ fontFamily: displayFont(fontsLoaded, "semibold"), fontSize: 18, color: colors.text, textAlign: "center" }}>
-              {failed ? strings.common.loadError : strings.feed.emptyTitle}
-            </Text>
-            {!failed && (
-              <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 13, color: colors.textFaint, textAlign: "center", lineHeight: 19 }}>
-                {strings.feed.emptyBody}
-              </Text>
-            )}
-            <Button
-              label={failed ? strings.common.retry : strings.feed.emptyAction}
-              variant="outline"
-              onPress={failed ? load : () => router.push("/(tabs)/discover")}
-            />
+      <Screen width="reading">
+        <View style={[styles.topBar, { paddingTop: insets.top + space.md }]}>
+          <View style={styles.brand}>
+            <MaskIcon state="on" size={22} />
+            <Text variant="heading">{strings.appName}</Text>
           </View>
-        )}
-      </ScrollView>
+        </View>
+
+        <ScrollView
+          contentContainerStyle={styles.body}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.gold} />}
+        >
+          {items.map((item) => (
+            <FeedCardRouter key={feedItemKey(item)} item={item} onOpenPlay={(id) => router.push(`/play/${id}`)} />
+          ))}
+
+          {!loading && items.length === 0 && (
+            <EmptyState
+              title={failed ? strings.common.loadError : strings.feed.emptyTitle}
+              body={failed ? undefined : strings.feed.emptyBody}
+              actionLabel={failed ? strings.common.retry : strings.feed.emptyAction}
+              onAction={failed ? load : () => router.push("/(tabs)/discover")}
+            />
+          )}
+        </ScrollView>
+      </Screen>
     </View>
   );
 }
@@ -101,8 +92,29 @@ function FeedCardRouter({ item, onOpenPlay }: { item: FeedItem; onOpenPlay: (id:
   return <WatchlistCard entry={item.entry} onOpenPlay={onOpenPlay} />;
 }
 
+/** The "who did what, when" line every feed card opens with. */
+function CardByline({ user, action, meta }: { user: User; action: string; meta: string }) {
+  return (
+    <View style={styles.byline}>
+      <Avatar initials={user.initials} size={36} />
+      <View style={{ flexShrink: 1 }}>
+        <Text variant="bodySmall">
+          <Text variant="bodySmall" style={styles.name}>
+            {user.name}
+          </Text>{" "}
+          <Text variant="bodySmall" tone="faint">
+            {action}
+          </Text>
+        </Text>
+        <Text variant="caption" tone="faint">
+          {meta}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
 function CheckinCard({ review, onOpenPlay }: { review: Review; onOpenPlay: (id: string) => void }) {
-  const fontsLoaded = useAppFonts();
   const [play, setPlay] = useState<Play>();
   const [user, setUser] = useState<User>();
   const [venue, setVenue] = useState<Venue>();
@@ -122,32 +134,19 @@ function CheckinCard({ review, onOpenPlay }: { review: Review; onOpenPlay: (id: 
   if (!play || !user) return null;
 
   return (
-    <View style={{ gap: 10 }}>
-      <View style={styles.rowGap10}>
-        <Avatar initials={user.initials} size={36} />
-        <View style={{ flexShrink: 1 }}>
-          <Text style={{ fontFamily: bodyFont(fontsLoaded, "semibold"), fontSize: 13.5, color: colors.text }}>
-            {user.name} <Text style={{ fontFamily: bodyFont(fontsLoaded), color: colors.textFaint }}>{strings.feed.checkedIn}</Text>
-          </Text>
-          <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 11.5, color: colors.textFaint }}>
-            {[timeAgo(review.createdAt), venue?.name].filter(Boolean).join(" · ")}
-          </Text>
-        </View>
-      </View>
+    <View style={{ gap: space.md }}>
+      <CardByline user={user} action={strings.feed.checkedIn} meta={[timeAgo(review.createdAt), venue?.name].filter(Boolean).join(" · ")} />
 
-      <Pressable onPress={() => onOpenPlay(play.id)} style={{ height: 180 }} accessibilityRole="button" accessibilityLabel={play.title}>
+      <Pressable onPress={() => onOpenPlay(play.id)} accessibilityRole="button" accessibilityLabel={play.title}>
         {/* `scrim` matters here: these are production photos, and bright ones
             left the white caption below completely unreadable. */}
-        <PosterPlaceholder poster={play.poster} height={180} scrim priority="high" />
+        <PosterPlaceholder poster={play.poster} height={200} radius={radius.md} scrim priority="high" />
         <View style={styles.posterCaption}>
-          <Text
-            numberOfLines={2}
-            style={{ fontFamily: displayFont(fontsLoaded, "semibold"), fontSize: 22, color: colors.text }}
-          >
+          <Text variant="title" numberOfLines={2}>
             {play.title}
           </Text>
           {!!play.director && (
-            <Text numberOfLines={1} style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 12, color: colors.textDim }}>
+            <Text variant="bodySmall" tone="dim" numberOfLines={1}>
               rend. {play.director}
             </Text>
           )}
@@ -156,22 +155,24 @@ function CheckinCard({ review, onOpenPlay }: { review: Review; onOpenPlay: (id: 
 
       <View style={styles.rowBetween}>
         <MaskRatingRow rating={review.ratingOverall} size={15} />
-        <View style={styles.rowGap14}>
-          <View style={styles.rowGap4}>
+        <View style={styles.counters}>
+          <View style={styles.counter}>
             <HeartIcon />
-            <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 11.5, color: colors.textFaint }}>{review.likeCount}</Text>
+            <Text variant="caption" tone="faint">
+              {review.likeCount}
+            </Text>
           </View>
-          <View style={styles.rowGap4}>
+          <View style={styles.counter}>
             <CommentIcon />
-            <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 11.5, color: colors.textFaint }}>{review.commentCount}</Text>
+            <Text variant="caption" tone="faint">
+              {review.commentCount}
+            </Text>
           </View>
         </View>
       </View>
 
       {!!review.text && (
-        <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 13, lineHeight: 19.5, color: colors.textDim }}>
-          {`„${review.text}”`}
-        </Text>
+        <Text variant="bodySmall" tone="dim">{`„${review.text}”`}</Text>
       )}
 
       <View style={styles.divider} />
@@ -180,7 +181,6 @@ function CheckinCard({ review, onOpenPlay }: { review: Review; onOpenPlay: (id: 
 }
 
 function WatchlistCard({ entry, onOpenPlay }: { entry: WatchlistEntry; onOpenPlay: (id: string) => void }) {
-  const fontsLoaded = useAppFonts();
   const [play, setPlay] = useState<Play>();
   const [user, setUser] = useState<User>();
   const [venue, setVenue] = useState<Venue>();
@@ -200,34 +200,25 @@ function WatchlistCard({ entry, onOpenPlay }: { entry: WatchlistEntry; onOpenPla
   if (!play || !user) return null;
 
   return (
-    <View style={{ gap: 10 }}>
-      <View style={styles.rowGap10}>
-        <Avatar initials={user.initials} size={36} />
-        <View style={{ flexShrink: 1 }}>
-          <Text style={{ fontFamily: bodyFont(fontsLoaded, "semibold"), fontSize: 13.5, color: colors.text }}>
-            {user.name} <Text style={{ fontFamily: bodyFont(fontsLoaded), color: colors.textFaint }}>{strings.feed.wantsToSee}</Text>
-          </Text>
-          <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 11.5, color: colors.textFaint }}>
-            {timeAgo(entry.addedAt)} · {strings.feed.addedToWatchlist}
-          </Text>
-        </View>
-      </View>
-      <Pressable onPress={() => onOpenPlay(play.id)} style={styles.rowGap12} accessibilityRole="button" accessibilityLabel={play.title}>
-        <PosterPlaceholder poster={play.poster} width={64} height={96} preferThumb />
-        <View style={{ flex: 1, gap: 3 }}>
-          <Text numberOfLines={2} style={{ fontFamily: displayFont(fontsLoaded, "semibold"), fontSize: 16, color: colors.text }}>
+    <View style={{ gap: space.md }}>
+      <CardByline user={user} action={strings.feed.wantsToSee} meta={`${timeAgo(entry.addedAt)} · ${strings.feed.addedToWatchlist}`} />
+      <Pressable onPress={() => onOpenPlay(play.id)} style={styles.watchlistRow} accessibilityRole="button" accessibilityLabel={play.title}>
+        <PosterPlaceholder poster={play.poster} width={64} height={96} radius={radius.sm} preferThumb />
+        <View style={{ flex: 1, gap: space.xs }}>
+          <Text variant="subheading" numberOfLines={2}>
             {play.title}
           </Text>
-          <Text numberOfLines={1} style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 11.5, color: colors.textDim }}>
+          <Text variant="caption" tone="dim" numberOfLines={1}>
             {venue?.name}
           </Text>
           {play.premiereDate && (
-            <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 11, color: colors.textFaint }}>
+            <Text variant="caption" tone="faint">
               {strings.feed.premiereLabel}: {formatDate(play.premiereDate)}
             </Text>
           )}
         </View>
       </Pressable>
+      <View style={styles.divider} />
     </View>
   );
 }
@@ -247,24 +238,24 @@ function formatDate(iso: string) {
 
 const styles = StyleSheet.create({
   topBar: {
-    height: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 12,
+    paddingHorizontal: gutter,
+    paddingBottom: space.md,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     borderBottomWidth: 1,
     borderBottomColor: colors.hairlineSoft,
   },
-  brand: { flexDirection: "row", alignItems: "center", gap: 8 },
-  rowGap10: { flexDirection: "row", alignItems: "center", gap: 10 },
-  rowGap12: { flexDirection: "row", alignItems: "center", gap: 12 },
-  rowGap14: { flexDirection: "row", alignItems: "center", gap: 14 },
-  rowGap4: { flexDirection: "row", alignItems: "center", gap: 4 },
+  brand: { flexDirection: "row", alignItems: "center", gap: space.sm },
+  body: { padding: gutter, paddingBottom: 100, gap: space["2xl"] },
+  byline: { flexDirection: "row", alignItems: "center", gap: space.md },
+  name: { color: colors.text },
+  watchlistRow: { flexDirection: "row", alignItems: "center", gap: space.md },
+  counters: { flexDirection: "row", alignItems: "center", gap: space.lg },
+  counter: { flexDirection: "row", alignItems: "center", gap: space.xs },
   rowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   // `right` was missing, so long titles ran off the poster and out past the
   // edge of the card.
-  posterCaption: { position: "absolute", left: 14, right: 14, bottom: 14, gap: 4 },
-  divider: { height: 1, backgroundColor: colors.hairlineSoft, marginTop: 4 },
-  empty: { alignItems: "center", gap: 12, paddingVertical: 48 },
+  posterCaption: { position: "absolute", left: space.lg, right: space.lg, bottom: space.lg, gap: space.xs },
+  divider: { height: 1, backgroundColor: colors.hairlineSoft, marginTop: space.xs },
 });
