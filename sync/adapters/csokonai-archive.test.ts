@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { archiveLinksIn } from "./csokonai-archive";
+import { archiveLinksIn, maskedSlugs, preferLatestRevival } from "./csokonai-archive";
 import { parseProductionDetails } from "./csokonai";
 
 const fixture = (name: string) => readFileSync(join(__dirname, "..", "__fixtures__", name), "utf8");
@@ -33,6 +33,49 @@ describe("archiveLinksIn", () => {
   it("returns each production once", () => {
     const links = archiveLinksIn(html);
     expect(new Set(links).size).toBe(links.length);
+  });
+});
+
+describe("revivals", () => {
+  it("masks the page a revival was derived from", () => {
+    // Debrecen revived Tündér Lala: the repertoire holds `…-tunder-lala-2`
+    // while the archive still lists `…-tunder-lala`. Both pages name Halasi
+    // Dániel and the same premiere date, so they are one production.
+    const masked = maskedSlugs(["szabo-magda-tunder-lala-2", "lehar-ferenc-a-vig-ozvegy-2"]);
+    expect(masked.has("szabo-magda-tunder-lala")).toBe(true);
+    expect(masked.has("lehar-ferenc-a-vig-ozvegy")).toBe(true);
+  });
+
+  it("does not treat a title ending in a number as a revival", () => {
+    // The counter is at most two digits. A year in the title is not one.
+    const masked = maskedSlugs(["orwell-1984", "katona-2031"]);
+    expect(masked.has("orwell")).toBe(false);
+    expect(masked.has("katona")).toBe(false);
+  });
+
+  it("only masks a base that the source actually publishes", () => {
+    // `-2` alone proves nothing; the plain page has to exist for the pair to
+    // be a revival rather than just a slug that happens to end in a digit.
+    expect(maskedSlugs(["a-kis-herceg-2"]).has("a-kis-herceg")).toBe(true);
+    expect(maskedSlugs(["valami-mas"]).size).toBe(1);
+  });
+
+  it("keeps the later page when both are archived", () => {
+    const kept = preferLatestRevival([
+      "https://csokonaiszinhaz.hu/eloadasok/presser-a-padlas",
+      "https://csokonaiszinhaz.hu/eloadasok/presser-a-padlas-3",
+    ]);
+    expect(kept).toEqual(["https://csokonaiszinhaz.hu/eloadasok/presser-a-padlas-3"]);
+  });
+
+  it("leaves genuinely different works alone", () => {
+    // Two "A kis herceg" pages exist: Saint-Exupéry's play and the
+    // Portman/Wright opera. Different stems, so both survive.
+    const kept = preferLatestRevival([
+      "https://csokonaiszinhaz.hu/eloadasok/antoine-de-saint-exupery-a-kis-herceg",
+      "https://csokonaiszinhaz.hu/eloadasok/rachel-portman-nicholas-wright-a-kis-herceg",
+    ]);
+    expect(kept).toHaveLength(2);
   });
 });
 

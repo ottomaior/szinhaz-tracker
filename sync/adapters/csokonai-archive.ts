@@ -46,6 +46,45 @@ export function archiveLinksIn(html: string): string[] {
   return productionLinksIn(html);
 }
 
+/**
+ * Slugs the archive pass must not claim, given what the repertoire index holds.
+ *
+ * A straight slug comparison is not enough. When Debrecen revives a production
+ * WordPress will not reuse the old page — it creates a second one and appends a
+ * counter, so the repertoire holds `…-tunder-lala-2` while the archive still
+ * lists `…-tunder-lala`. Those are one production: the two pages agree on the
+ * director and on the premiere date, 2024-12-10. Subtracting only exact matches
+ * left four of them in the catalogue twice, once as running and once as ended.
+ *
+ * So a current slug also masks the slug it was derived from. The rule is
+ * deliberately narrow — the base has to exist as a page in its own right, and
+ * only a trailing `-N` is stripped — because titles ending in a number are
+ * real: `orwell-1984` must never be read as a revival of `orwell`.
+ */
+export function maskedSlugs(currentSlugs: string[]): Set<string> {
+  const masked = new Set(currentSlugs);
+  for (const slug of currentSlugs) {
+    const base = slug.replace(/-\d{1,2}$/, "");
+    if (base !== slug) masked.add(base);
+  }
+  return masked;
+}
+
+/**
+ * Collapses `X` and `X-3` within the archive itself — the same revival pattern,
+ * where both pages ended up in the back catalogue ("A padlás" is listed twice).
+ * The later page wins: it is the one the theatre kept filling in, and carries
+ * the director where the older one is blank.
+ */
+export function preferLatestRevival(urls: string[]): string[] {
+  const bySlug = new Map(urls.map((u) => [slugOf(u), u]));
+  for (const slug of [...bySlug.keys()]) {
+    const base = slug.replace(/-\d{1,2}$/, "");
+    if (base !== slug && bySlug.has(base)) bySlug.delete(base);
+  }
+  return [...bySlug.values()];
+}
+
 async function run(): Promise<SyncedPlay[]> {
   const [archiveHtml, currentUrls] = await Promise.all([
     fetchText(ARCHIVE_URL, { crawlDelayMs: CRAWL_DELAY_MS }),
@@ -58,8 +97,8 @@ async function run(): Promise<SyncedPlay[]> {
     fetchProductionIndex(),
   ]);
 
-  const current = new Set(currentUrls.map(slugOf));
-  const archived = archiveLinksIn(archiveHtml).filter((url) => !current.has(slugOf(url)));
+  const masked = maskedSlugs(currentUrls.map(slugOf));
+  const archived = preferLatestRevival(archiveLinksIn(archiveHtml)).filter((url) => !masked.has(slugOf(url)));
 
   const plays: SyncedPlay[] = [];
   for (const detailUrl of archived) {
