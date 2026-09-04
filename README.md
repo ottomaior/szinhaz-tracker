@@ -1,13 +1,11 @@
+**English** · [Magyarul](README.hu.md)
+
 # Színház Tracker
 
 A mobile app for Hungarian theatregoers to log, rate, and review the plays
 they've seen — built with Expo + React Native + TypeScript, using
 [expo-router](https://docs.expo.dev/router/introduction/) for file-based
 navigation.
-
-This project was written by hand in a sandbox with no package-registry
-access, so it has **not** been installed or run yet. Do this once, on a
-machine with normal internet access:
 
 ## Setup
 
@@ -45,6 +43,9 @@ npx expo start --web    # opens in your browser — fastest way to iterate
 npx expo start           # then press i / a for iOS simulator / Android emulator,
                           # or scan the QR code with Expo Go on your phone
 ```
+
+The web export is production-ready: the `Dockerfile` builds the static site
+with `expo export`, and nginx (`nginx.conf`) serves it.
 
 ## Project structure
 
