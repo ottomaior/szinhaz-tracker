@@ -1,0 +1,34 @@
+name: CI
+
+# Typecheck and lint every push and pull request.
+#
+# This exists because a missing export in sync/adapters/orkeny.ts silently
+# broke the whole nightly listings sync: `sync/run.ts` imports every adapter
+# eagerly, so one bad import took all three theatres offline, and nothing
+# reported it. The web build could not have caught it either — `expo export`
+# bundles only the app, never sync/, and Metro strips types without checking
+# them. A standalone `tsc --noEmit` is what actually covers this code.
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Matches the sync job and the Dockerfile: @supabase/supabase-js
+          # initializes a realtime client that needs Node 22's native WebSocket.
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint

@@ -14,7 +14,8 @@ import { getSupabaseAdmin } from "./lib/supabaseAdmin";
 import { orkenyAdapter } from "./adapters/orkeny";
 import { katonaAdapter, csokonaiAdapter as csokonaiJegymesterAdapter } from "./adapters/jegymester";
 import { csokonaiAdapter } from "./adapters/csokonai";
-import { katonaAdapter as katonaSiteAdapter } from "./adapters/katona";
+import { katonaAdapter as katonaArchiveAdapter } from "./adapters/katona";
+import { katonaWpAdapter } from "./adapters/katona-wp";
 import type { SyncAdapter, SyncedPlay } from "./lib/types";
 
 const DRY_RUN = process.argv.includes("--dry-run");
@@ -26,19 +27,26 @@ function errorMessageOf(e: unknown): string {
 }
 
 // Every adapter that exists, reachable via `--source=<name>` for manual runs.
-const ALL_ADAPTERS: SyncAdapter[] = [orkenyAdapter, csokonaiAdapter, katonaSiteAdapter, katonaAdapter, csokonaiJegymesterAdapter];
+const ALL_ADAPTERS: SyncAdapter[] = [
+  orkenyAdapter,
+  csokonaiAdapter,
+  katonaWpAdapter,
+  katonaArchiveAdapter,
+  katonaAdapter,
+  csokonaiJegymesterAdapter,
+];
 
-// Run automatically by the scheduled workflow: Örkény's own API, and
-// Csokonai (Debrecen) scraped from their own site (see
-// sync/adapters/csokonai.ts — Csokonai's Jegymester ticketing site has the
-// same access-token wall as Katona's, so this reads their WordPress site's
-// repertoire index + production pages directly instead).
+// Run automatically by the scheduled workflow: Örkény's own API, plus
+// Csokonai (Debrecen) and Katona (Budapest), both scraped from their own
+// WordPress sites, plus Katona's frozen Joomla install for its back
+// catalogue (see sync/adapters/katona.ts — the theatre relaunched, and the
+// old domain now serves only the archive).
 //
 // katonaAdapter/csokonaiJegymesterAdapter stay excluded — verified against
 // the live site, that endpoint returns 403 "requires access token" (see
 // the warning header in sync/adapters/jegymester.ts), so they'd fail on
 // every scheduled run.
-const DEFAULT_ADAPTERS: SyncAdapter[] = [orkenyAdapter, csokonaiAdapter, katonaSiteAdapter];
+const DEFAULT_ADAPTERS: SyncAdapter[] = [orkenyAdapter, csokonaiAdapter, katonaWpAdapter, katonaArchiveAdapter];
 
 /**
  * Collapses cast entries that repeat the same performer in the same role.

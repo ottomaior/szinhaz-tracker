@@ -31,7 +31,7 @@
  */
 import * as cheerio from "cheerio";
 import { fetchText } from "../lib/http";
-import { parseHungarianDate } from "../lib/huDate";
+import { budapestLocalToUtcIso, parseHungarianDate } from "../lib/huDate";
 import { parseDurationHu } from "../lib/huDuration";
 import { VENUE_IDS } from "../venueMap";
 import type { SyncAdapter, SyncedPlay } from "../lib/types";
@@ -367,8 +367,12 @@ async function run(): Promise<SyncedPlay[]> {
       isArchived: false,
       cast: details.cast,
       performances: occurrences.map((occ) => {
-        const startsAt = `${occ.year}-${String(occ.month).padStart(2, "0")}-${String(occ.day).padStart(2, "0")}T${occ.time}:00`;
-        return { sourceKey: `${slug}:${startsAt}`, startsAt, room: occ.room };
+        // The calendar renders Budapest wall-clock time with no offset. The
+        // source key stays on that local string — it is stable across DST and
+        // keeps matching rows written before this was converted, so those get
+        // their time corrected in place rather than orphaned under a new key.
+        const local = `${occ.year}-${String(occ.month).padStart(2, "0")}-${String(occ.day).padStart(2, "0")}T${occ.time}:00`;
+        return { sourceKey: `${slug}:${local}`, startsAt: budapestLocalToUtcIso(local), room: occ.room };
       }),
     });
   }

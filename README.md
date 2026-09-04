@@ -18,7 +18,7 @@ npx expo install --fix
 
 Then create a [Supabase](https://supabase.com) project (free tier is
 enough), run every file in `supabase/migrations/` **in order** (`0001_init.sql`
-through `0005_archive_and_reconcile.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
+through `0007_katona_relaunch.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
 URL/anon key from the project's Settings → API page:
 
 ```bash
@@ -91,6 +91,12 @@ sync/                     standalone Node script (`npm run sync`; add
                           platforms and upserts them into Supabase using the
                           service-role key — see sync/adapters/ and the
                           implementation plan for source-by-source notes
+
+.github/workflows/
+  ci.yml                  typecheck + lint on every push and PR — the web
+                          build never covers sync/, so this is what catches
+                          a broken adapter before the nightly job does
+  sync-plays.yml          the daily listings sync
 ```
 
 ## Design system
@@ -147,18 +153,35 @@ access", which is true of only one of them):
   with `Crawl-delay: 20`. Listings are crawlable; the crawl delay is what
   makes a full pass slow.
 
-Three adapters are live and enabled by default, together supplying roughly
-290 productions — about 145 currently playing or announced, and about 145
-that the theatres themselves file under their archives. Archived rows carry
-`plays.is_archived`, which keeps them out of Discover's premieres/trending
-rails while leaving them searchable and loggable, so you can still record a
-play you saw years ago (see `0005_archive_and_reconcile.sql`).
+Four adapters are live and enabled by default, together supplying about 314
+productions — roughly 161 currently playing or announced, and 153 that the
+theatres themselves file under their archives — along with 155 showtimes.
+Archived rows carry `plays.is_archived`, which keeps them out of Discover's
+premieres/trending rails while leaving them searchable and loggable, so you
+can still record a play you saw years ago (see
+`0005_archive_and_reconcile.sql`).
 
-**Katona József Színház** (Budapest) is scraped from the theatre's own Joomla
-site, whose `/eloadasok/{bemutatok,repertoar,archivum}` sections map exactly
-onto that split. This is what finally routes around the Jegymester
-access-token wall described below — no token needed, because the site renders
-everything server-side.
+**Katona József Színház** (Budapest) takes two adapters, because the theatre
+relaunched its website on WordPress (uploads dated 2026-06/07) and the old
+Joomla scrape broke outright: `/eloadasok/{bemutatok,repertoar}` now 301 to
+`/eloadasok/` and `/eloadasok/archivum` is a 404.
+
+- `sync/adapters/katona-wp.ts` (`katona-wp`) reads the current repertoire from
+  the new site. It is a clear upgrade on what it replaced — the pages carry
+  **showtimes** (Katona previously synced none at all, which is why
+  `0006_play_status.sql` still has a special case for a source that publishes
+  no dates), the stage each production plays on (Nagyszínpad vs Kamra), and
+  production photography with a named photographer credit.
+- `sync/adapters/katona.ts` (`katona-archive`) reads the theatre's back
+  catalogue from the frozen Joomla install, which survives verbatim at
+  `archive.katonajozsefszinhaz.hu`, so the original custom-field selectors
+  still work there. Only `/eloadasok/archivum` is read: that site's
+  `repertoar`/`bemutatok` sections are a stale snapshot of what was on when it
+  was retired, and anything still running comes from the WordPress adapter
+  instead.
+
+Both routes around the Jegymester access-token wall described below — no token
+needed, because both sites render everything server-side.
 
 Also live: **Örkény István Színház**
 (Budapest, via their own JSON API) and **Csokonai Nemzeti Színház**
@@ -170,9 +193,7 @@ platform's endpoint returns `403 requires access token` on a live check,
 contrary to what the robots.txt-only research suggested; see the warning
 header in `sync/adapters/jegymester.ts` for what would be needed to fix
 that. Csokonai used to be on that same broken platform too — its working
-adapter now reads Csokonai's own site instead, the same way Katona's
-eventually will need to once a token workaround exists (or once a
-Jegy.hu-based fallback is built for it, Phase 3).
+adapter now reads Csokonai's own site instead.
 
 Not yet built, with what was actually found when each was checked live:
 
