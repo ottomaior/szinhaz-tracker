@@ -181,8 +181,8 @@ access", which is true of only one of them):
   with `Crawl-delay: 20`. Listings are crawlable; the crawl delay is what
   makes a full pass slow.
 
-Four adapters are live and enabled by default, together supplying about 314
-productions — roughly 161 currently playing or announced, and 153 that the
+Five adapters are live and enabled by default, together supplying about 490
+productions — roughly 165 currently playing or announced, and 325 that the
 theatres themselves file under their archives — along with 155 showtimes.
 Archived rows carry `plays.is_archived`, which keeps them out of Discover's
 premieres/trending rails while leaving them searchable and loggable, so you
@@ -211,11 +211,23 @@ Joomla scrape broke outright: `/eloadasok/{bemutatok,repertoar}` now 301 to
 Both routes around the Jegymester access-token wall described below — no token
 needed, because both sites render everything server-side.
 
-Also live: **Örkény István Színház**
-(Budapest, via their own JSON API) and **Csokonai Nemzeti Színház**
-(Debrecen, scraped from their own WordPress site's calendar and per-show
-pages — both selectors and edge cases like ancillary "series" listings and
-duplicate detail-page links were checked against live data, not assumed).
+**Csokonai Nemzeti Színház** (Debrecen) also takes two adapters, for a reason
+that has nothing to do with the site breaking:
+
+- `sync/adapters/csokonai.ts` (`csokonai`) reads the current repertoire from
+  the paginated index and the calendar. Selectors and edge cases — ancillary
+  "series" listings, duplicate detail-page links — were checked against live
+  data, not assumed.
+- `sync/adapters/csokonai-archive.ts` (`csokonai-archive`) reads `/archivum/`,
+  a single page listing roughly 190 past productions, about 172 of which
+  appear nowhere in the repertoire index. It cannot share the live adapter's
+  run: archived pages carry no genre taxonomy term, and the live pass uses
+  exactly that to separate real productions from the theatre's talks and
+  building tours, so the same rule would discard every one of them. The
+  archive listing is its own filter. Productions still in the repertoire are
+  subtracted so the two adapters cannot both claim one.
+
+Also live: **Örkény István Színház** (Budapest, via their own JSON API).
 Katona's Jegymester-based adapter exists but is **not enabled** — that
 platform's endpoint returns `403 requires access token` on a live check,
 contrary to what the robots.txt-only research suggested; see the warning

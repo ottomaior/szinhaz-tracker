@@ -15,6 +15,7 @@ import { getSupabaseAdmin } from "./lib/supabaseAdmin";
 import { orkenyAdapter } from "./adapters/orkeny";
 import { katonaAdapter, csokonaiAdapter as csokonaiJegymesterAdapter } from "./adapters/jegymester";
 import { csokonaiAdapter } from "./adapters/csokonai";
+import { csokonaiArchiveAdapter } from "./adapters/csokonai-archive";
 import { katonaAdapter as katonaArchiveAdapter } from "./adapters/katona";
 import { katonaWpAdapter } from "./adapters/katona-wp";
 import { mirrorPoster } from "./lib/posters";
@@ -47,6 +48,7 @@ function errorMessageOf(e: unknown): string {
 const ALL_ADAPTERS: SyncAdapter[] = [
   orkenyAdapter,
   csokonaiAdapter,
+  csokonaiArchiveAdapter,
   katonaWpAdapter,
   katonaArchiveAdapter,
   katonaAdapter,
@@ -63,7 +65,13 @@ const ALL_ADAPTERS: SyncAdapter[] = [
 // the live site, that endpoint returns 403 "requires access token" (see
 // the warning header in sync/adapters/jegymester.ts), so they'd fail on
 // every scheduled run.
-const DEFAULT_ADAPTERS: SyncAdapter[] = [orkenyAdapter, csokonaiAdapter, katonaWpAdapter, katonaArchiveAdapter];
+const DEFAULT_ADAPTERS: SyncAdapter[] = [
+  orkenyAdapter,
+  csokonaiAdapter,
+  csokonaiArchiveAdapter,
+  katonaWpAdapter,
+  katonaArchiveAdapter,
+];
 
 /**
  * Collapses cast entries that repeat the same performer in the same role.

@@ -87,12 +87,12 @@ function monthsAhead(count: number): { yyyymm: string; year: number; month: numb
   return out;
 }
 
-function slugOf(detailUrl: string): string {
+export function slugOf(detailUrl: string): string {
   return detailUrl.replace(/\/+$/, "").split("/").pop() ?? detailUrl;
 }
 
 /** Every production detail URL on the paginated repertoire index. */
-async function fetchProductionIndex(): Promise<string[]> {
+export async function fetchProductionIndex(): Promise<string[]> {
   const urls = new Set<string>();
 
   for (let page = 1; page <= MAX_INDEX_PAGES; page++) {
@@ -169,7 +169,7 @@ async function fetchGenreBySlug(): Promise<Map<string, string>> {
   return genreBySlug;
 }
 
-function productionLinksIn(html: string): string[] {
+export function productionLinksIn(html: string): string[] {
   const $ = cheerio.load(html);
   const out = new Set<string>();
   $('a[href*="/eloadasok/"]').each((_, el) => {
@@ -390,8 +390,10 @@ async function run(): Promise<SyncedPlay[]> {
       premiereDate: details.premiereDate,
       synopsis: details.synopsis,
       posterUrl: details.posterUrl,
-      // Csokonai's site publishes only the current repertoire — there is no
-      // archive section to mirror, unlike Örkény's.
+      // Everything this adapter returns is current repertoire. The claim that
+      // used to stand here — that Csokonai has no archive to mirror — was
+      // wrong: /archivum/ lists roughly 190 past productions, and
+      // sync/adapters/csokonai-archive.ts now mirrors them.
       isArchived: false,
       cast: details.cast,
       performances: occurrences.map((occ) => {
