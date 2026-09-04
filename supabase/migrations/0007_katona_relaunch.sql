@@ -97,17 +97,19 @@ where p.source = 'sync'
 -- had already written, which means the catalogue holds two rows for one
 -- production. Left in place deliberately rather than deleted: the duplicate may
 -- carry someone's review, and merging is a judgement call, not a migration.
-do $$
-declare leftover int;
-begin
-  select count(*) into leftover
-  from public.plays
-  where source = 'sync' and source_key like 'katona-site:%';
-
-  if leftover > 0 then
-    raise warning 'Katona relaunch: % row(s) kept the old source_key because a new-adapter row already claimed the target key. Review them by hand.', leftover;
-  end if;
-end
-$$;
+--
+-- Reported as a result row rather than a RAISE WARNING, for two reasons: the
+-- SQL editor shows results and tends to bury warnings, and a plain SELECT
+-- keeps this file free of dollar-quoted blocks — which is what makes it
+-- survive being pasted into an editor in one piece.
+--
+-- Expect 0 rows here. Any row returned names a production to merge by hand.
+select
+  id,
+  title,
+  source_key as still_on_old_key
+from public.plays
+where source = 'sync'
+  and source_key like 'katona-site:%';
 
 commit;
