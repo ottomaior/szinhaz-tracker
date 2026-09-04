@@ -138,7 +138,7 @@ export default function CheckInScreen() {
 
       <ScrollView contentContainerStyle={{ padding: 20, gap: 18, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
         <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
-          <PosterPlaceholder uri={play.posterUrl} width={44} height={66} radius={6} />
+          <PosterPlaceholder poster={play.poster} width={44} height={66} radius={6} preferThumb />
           <View style={{ flex: 1 }}>
             <Text style={{ fontFamily: displayFont(fontsLoaded, "semibold"), fontSize: 17, color: colors.text }}>{play.title}</Text>
             <Text style={{ fontFamily: bodyFont(fontsLoaded), fontSize: 11.5, color: colors.textFaint }}>{venue?.name ?? ""}</Text>
@@ -274,7 +274,7 @@ function PlayPicker({ insetTop, onCancel, onPick }: { insetTop: number; onCancel
 
         {results.map((p) => (
           <Pressable key={p.id} onPress={() => onPick(p)} style={styles.pickerRow} accessibilityRole="button">
-            <PosterPlaceholder uri={p.posterUrl} width={40} height={60} radius={6} />
+            <PosterPlaceholder poster={p.poster} width={40} height={60} radius={6} preferThumb />
             <View style={{ flex: 1, gap: 3 }}>
               <Text numberOfLines={2} style={{ fontFamily: bodyFont(fontsLoaded, "semibold"), fontSize: 13, color: colors.text }}>
                 {p.title}

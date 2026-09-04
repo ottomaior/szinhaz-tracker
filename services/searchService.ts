@@ -1,4 +1,5 @@
 import { supabase } from "@/services/supabase";
+import { toPoster } from "@/services/playsService";
 import type { Play, VenueType } from "@/data/types";
 
 type PlayRow = Parameters<typeof mapRow>[0];
@@ -15,6 +16,12 @@ function mapRow(row: {
   premiere_date: string | null;
   synopsis: string | null;
   poster_url: string | null;
+  poster_path: string | null;
+  poster_thumb_path: string | null;
+  poster_credit: string | null;
+  poster_blurhash: string | null;
+  poster_width: number | null;
+  poster_height: number | null;
   rating_overall: number;
   rating_acting: number;
   rating_directing: number;
@@ -38,7 +45,9 @@ function mapRow(row: {
     intermissions: row.intermissions,
     premiereDate: row.premiere_date ?? undefined,
     synopsis: row.synopsis ?? undefined,
-    posterUrl: row.poster_url ?? undefined,
+    // search_plays returns bare `plays` rows, so the mirrored poster columns
+    // come through too and this stays consistent with playsService.
+    poster: toPoster(row),
     cast: [], // search_plays returns bare `plays` rows — full cast comes from getPlayById
     isArchived: row.is_archived ?? false,
     status: row.status ?? "unknown",

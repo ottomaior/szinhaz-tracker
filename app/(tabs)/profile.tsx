@@ -175,7 +175,7 @@ export default function ProfileScreen() {
                     accessibilityRole="button"
                     accessibilityLabel={p.title}
                   >
-                    <PosterPlaceholder uri={p.posterUrl} height="100%" radius={6} />
+                    <PosterPlaceholder poster={p.poster} height="100%" radius={6} preferThumb />
                   </Pressable>
                 ))}
               </View>

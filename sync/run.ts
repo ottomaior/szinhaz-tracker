@@ -8,6 +8,7 @@
  *   npm run sync                      # run every enabled adapter
  *   npm run sync -- --source=orkeny   # run just one, by SyncAdapter.name
  *   npm run sync -- --dry-run         # fetch and report, touch no database
+ *   npm run sync -- --no-posters      # skip mirroring cover art (much faster)
  */
 import "dotenv/config";
 import { getSupabaseAdmin } from "./lib/supabaseAdmin";
@@ -16,6 +17,7 @@ import { katonaAdapter, csokonaiAdapter as csokonaiJegymesterAdapter } from "./a
 import { csokonaiAdapter } from "./adapters/csokonai";
 import { katonaAdapter as katonaArchiveAdapter } from "./adapters/katona";
 import { katonaWpAdapter } from "./adapters/katona-wp";
+import { mirrorPoster } from "./lib/posters";
 import type { SyncAdapter, SyncedPlay } from "./lib/types";
 
 const DRY_RUN = process.argv.includes("--dry-run");
@@ -26,6 +28,14 @@ const DRY_RUN = process.argv.includes("--dry-run");
  * on a partial view of the source.
  */
 const MAX_FAILURE_RATE_FOR_RECONCILE = 0.1;
+
+/**
+ * Mirroring cover art into Supabase Storage is on by default, and skippable
+ * with --no-posters when only the catalogue metadata matters — it is the
+ * slowest part of a cold run, since every poster has to be downloaded and
+ * re-encoded once.
+ */
+const MIRROR_POSTERS = !DRY_RUN && !process.argv.includes("--no-posters");
 
 function errorMessageOf(e: unknown): string {
   if (e instanceof Error) return e.message;
@@ -82,6 +92,60 @@ function dedupeCast(cast: SyncedPlay["cast"]): SyncedPlay["cast"] {
   });
 }
 
+/**
+ * Stores a local copy of the production's cover art, if there is one to store.
+ *
+ * Deliberately never throws: artwork is the least important thing a sync run
+ * produces, and a theatre serving a broken image must not cost that production
+ * its listing. Failures are logged and the play keeps whatever poster it had.
+ */
+async function mirrorPosterFor(
+  playId: string,
+  synced: SyncedPlay,
+  existing: { poster_path?: string | null; poster_checksum?: string | null; poster_etag?: string | null }
+): Promise<boolean> {
+  if (!synced.posterUrl) return false;
+
+  const supabaseAdmin = getSupabaseAdmin();
+
+  try {
+    const outcome = await mirrorPoster(supabaseAdmin as never, playId, synced.posterUrl, synced.posterCredit ?? null, {
+      posterPath: existing.poster_path ?? null,
+      posterChecksum: existing.poster_checksum ?? null,
+      posterEtag: existing.poster_etag ?? null,
+    });
+
+    if (outcome.status === "skipped") {
+      console.warn(`[poster] ${synced.title}: ${outcome.reason}`);
+      return false;
+    }
+    if (outcome.status === "unchanged") return false;
+
+    const { state } = outcome;
+    const { error } = await supabaseAdmin
+      .from("plays")
+      .update({
+        poster_path: state.posterPath,
+        poster_thumb_path: state.posterThumbPath,
+        poster_source_url: state.posterSourceUrl,
+        poster_credit: state.posterCredit,
+        poster_checksum: state.posterChecksum,
+        poster_etag: state.posterEtag,
+        poster_fetched_at: new Date().toISOString(),
+        poster_width: state.posterWidth,
+        poster_height: state.posterHeight,
+        poster_blurhash: state.posterBlurhash,
+      })
+      .eq("id", playId);
+    if (error) throw error;
+
+    return true;
+  } catch (e) {
+    console.warn(`[poster] ${synced.title}: ${errorMessageOf(e)}`);
+    return false;
+  }
+}
+
 async function upsertPlay(sourceName: string, synced: SyncedPlay) {
   const supabaseAdmin = getSupabaseAdmin();
   const { data: playRow, error: playError } = await supabaseAdmin
@@ -110,11 +174,16 @@ async function upsertPlay(sourceName: string, synced: SyncedPlay) {
       },
       { onConflict: "source,source_key" }
     )
-    .select("id")
+    // The poster columns come back as they were before this upsert, since the
+    // upsert does not write them — which is exactly the state mirrorPoster
+    // needs to decide whether anything has to be downloaded at all.
+    .select("id, poster_path, poster_checksum, poster_etag")
     .single();
   if (playError) throw playError;
 
   const playId = playRow.id as string;
+
+  const posterMirrored = MIRROR_POSTERS ? await mirrorPosterFor(playId, synced, playRow) : false;
 
   // Full refresh of cast rows for this play (simpler and safer than trying
   // to diff — cast lists are short, and this keeps stale members from
@@ -146,7 +215,7 @@ async function upsertPlay(sourceName: string, synced: SyncedPlay) {
     performanceKeys.push(sourceKey);
   }
 
-  return performanceKeys;
+  return { performanceKeys, posterMirrored };
 }
 
 /**
@@ -315,6 +384,7 @@ async function runAdapter(adapter: SyncAdapter) {
   let playsUpserted = 0;
   let performancesUpserted = 0;
   let performancesDeleted = 0;
+  let postersMirrored = 0;
   let errorMessage: string | undefined;
   const warnings: string[] = [];
 
@@ -329,10 +399,12 @@ async function runAdapter(adapter: SyncAdapter) {
       // aborted this loop AND skipped reconciliation, so one malformed entry
       // froze that theatre's entire refresh until someone noticed.
       try {
-        for (const key of await upsertPlay(adapter.name, play)) {
+        const { performanceKeys, posterMirrored } = await upsertPlay(adapter.name, play);
+        for (const key of performanceKeys) {
           seenPerformanceKeys.add(key);
           performancesUpserted++;
         }
+        if (posterMirrored) postersMirrored++;
         seenSourceKeys.add(`${adapter.name}:${play.sourceKey}`);
         playsUpserted++;
       } catch (e) {
@@ -342,7 +414,10 @@ async function runAdapter(adapter: SyncAdapter) {
       }
     }
 
-    console.log(`[${adapter.name}] upserted ${playsUpserted} plays, ${performancesUpserted} performances`);
+    console.log(
+      `[${adapter.name}] upserted ${playsUpserted} plays, ${performancesUpserted} performances` +
+        (postersMirrored ? `, mirrored ${postersMirrored} poster(s)` : "")
+    );
 
     // Reconciliation deletes whatever it did not see, so it is only safe when
     // the "seen" set is a faithful snapshot of the source. After a run where a
@@ -369,6 +444,7 @@ async function runAdapter(adapter: SyncAdapter) {
       performances_upserted: performancesUpserted,
       plays_failed: warnings.length,
       performances_deleted: performancesDeleted,
+      posters_mirrored: postersMirrored,
       warnings: warnings.length ? warnings : null,
       error: errorMessage ?? null,
     })

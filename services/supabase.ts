@@ -13,6 +13,14 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
+/**
+ * The project URL, for building public Storage URLs by hand.
+ *
+ * Poster paths are stored in the database rather than full URLs, so the CDN
+ * origin can change without rewriting every row.
+ */
+export const SUPABASE_URL = supabaseUrl;
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: Platform.OS === "web" ? undefined : AsyncStorage,

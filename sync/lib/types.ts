@@ -12,6 +12,12 @@ export type SyncedPlay = {
   synopsis?: string;
   posterUrl?: string;
   /**
+   * Photographer credit, when the source names one ("Fotók © Wertán Botond").
+   * These are working photographers' production stills, so the credit travels
+   * with the image and is shown wherever it is displayed at size.
+   */
+  posterCredit?: string;
+  /**
    * A production the theater itself files under its archive — no longer in
    * the repertoire. Kept in the catalog so people can log something they saw
    * years ago, but hidden from Discover's browse rails. See

@@ -242,7 +242,7 @@ function PremiereCard({ play, onPress }: { play: Play; onPress: () => void }) {
 
   return (
     <Pressable onPress={onPress} style={{ width: 112, gap: 6 }} accessibilityRole="button" accessibilityLabel={play.title}>
-      <PosterPlaceholder uri={play.posterUrl} height={168} radius={8} />
+      <PosterPlaceholder poster={play.poster} height={168} radius={8} preferThumb />
       <Text numberOfLines={2} style={{ fontFamily: bodyFont(fontsLoaded, "semibold"), fontSize: 12.5, color: colors.text, lineHeight: 16 }}>
         {play.title}
       </Text>
@@ -266,7 +266,7 @@ function TrendingCard({ play, onPress }: { play: Play; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} style={{ width: "47.5%", gap: 6 }} accessibilityRole="button" accessibilityLabel={play.title}>
       <View style={{ aspectRatio: 2 / 3 }}>
-        <PosterPlaceholder uri={play.posterUrl} height="100%" radius={8} />
+        <PosterPlaceholder poster={play.poster} height="100%" radius={8} preferThumb />
         {/* Unrated plays used to show a gold "0.0" badge, which reads as a
             rock-bottom score rather than as "nobody has rated this yet". */}
         {hasRatings && (

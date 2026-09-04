@@ -25,6 +25,32 @@ export interface CastMember {
   role: string;
 }
 
+/**
+ * A production's cover art.
+ *
+ * `url` is what to render. It points at this app's own stored copy once the
+ * sync job has mirrored the image (see sync/lib/posters.ts); until then it
+ * falls back to the theatre's own URL, which is outside our control and can
+ * disappear whenever a site is reorganised.
+ *
+ * `width`/`height` matter more than they look: the theatres publish landscape
+ * production photography far more often than portrait artwork, so a layout
+ * that assumes a 2:3 poster crops the faces out of the middle of the frame.
+ */
+export interface Poster {
+  url: string;
+  /** Smaller rendition for grids and list rows; falls back to `url`. */
+  thumbUrl?: string;
+  /** Blurred placeholder shown while the real image loads. */
+  blurhash?: string;
+  width?: number;
+  height?: number;
+  /** Photographer credit, shown wherever the image appears at size. */
+  credit?: string;
+  /** True when this is our stored copy rather than a hotlink to the theatre. */
+  mirrored: boolean;
+}
+
 export interface RatingBreakdown {
   overall: number;
   acting: number;
@@ -44,7 +70,7 @@ export interface Play {
   intermissions: number;
   premiereDate?: string; // ISO date
   synopsis?: string;
-  posterUrl?: string;
+  poster?: Poster;
   cast: CastMember[];
   rating: RatingBreakdown;
   /** Filed under the theater’s own archive: still searchable and loggable, but kept out of Discover’s browse rails. */

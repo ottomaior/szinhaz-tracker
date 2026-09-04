@@ -1,5 +1,17 @@
-import { supabase } from "@/services/supabase";
-import type { CastMember, FeedItem, Performance, Play, PlayStatus, Review, User, Venue, VenueType, WatchlistEntry } from "@/data/types";
+import { supabase, SUPABASE_URL } from "@/services/supabase";
+import type {
+  CastMember,
+  FeedItem,
+  Performance,
+  Play,
+  PlayStatus,
+  Poster,
+  Review,
+  User,
+  Venue,
+  VenueType,
+  WatchlistEntry,
+} from "@/data/types";
 
 /**
  * Data-access boundary. Screens only ever import from this file, never
@@ -19,6 +31,12 @@ type PlayRow = {
   premiere_date: string | null;
   synopsis: string | null;
   poster_url: string | null;
+  poster_path: string | null;
+  poster_thumb_path: string | null;
+  poster_credit: string | null;
+  poster_blurhash: string | null;
+  poster_width: number | null;
+  poster_height: number | null;
   rating_overall: number;
   rating_acting: number;
   rating_directing: number;
@@ -54,6 +72,47 @@ type ReviewRow = {
 
 type PerformanceRow = { id: string; play_id: string; venue_id: string; room: string | null; starts_at: string };
 
+/** The poster columns, as both this file and searchService read them. */
+export type PosterColumns = {
+  poster_url: string | null;
+  poster_path: string | null;
+  poster_thumb_path: string | null;
+  poster_credit: string | null;
+  poster_blurhash: string | null;
+  poster_width: number | null;
+  poster_height: number | null;
+};
+
+/** Public CDN URL for a path inside the `posters` bucket. */
+function posterUrl(path: string): string {
+  return `${SUPABASE_URL.replace(/\/+$/, "")}/storage/v1/object/public/posters/${path}`;
+}
+
+/**
+ * The cover art to render, preferring our own stored copy.
+ *
+ * Falls back to the theatre's own URL when the sync job has not mirrored the
+ * image yet, so the catalogue never looks empty mid-rollout — but that URL is
+ * a hotlink and can break without warning, which is why `mirrored` says which
+ * one this is.
+ */
+export function toPoster(row: PosterColumns): Poster | undefined {
+  if (row.poster_path) {
+    return {
+      url: posterUrl(row.poster_path),
+      thumbUrl: row.poster_thumb_path ? posterUrl(row.poster_thumb_path) : undefined,
+      blurhash: row.poster_blurhash ?? undefined,
+      width: row.poster_width ?? undefined,
+      height: row.poster_height ?? undefined,
+      credit: row.poster_credit ?? undefined,
+      mirrored: true,
+    };
+  }
+
+  if (row.poster_url) return { url: row.poster_url, mirrored: false };
+  return undefined;
+}
+
 function toPlay(row: PlayRow): Play {
   return {
     id: row.id,
@@ -66,7 +125,7 @@ function toPlay(row: PlayRow): Play {
     intermissions: row.intermissions,
     premiereDate: row.premiere_date ?? undefined,
     synopsis: row.synopsis ?? undefined,
-    posterUrl: row.poster_url ?? undefined,
+    poster: toPoster(row),
     isArchived: row.is_archived ?? false,
     status: row.status ?? "unknown",
     statusReason: row.status_reason ?? undefined,

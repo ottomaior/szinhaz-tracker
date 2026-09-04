@@ -139,6 +139,27 @@ function showtimes(
   return performances;
 }
 
+/**
+ * The photographer credit printed above the gallery ("Fotók © Wertán Botond").
+ *
+ * Katona is the only one of the four sources that names its photographers, and
+ * a production still is someone's work — worth carrying through to the app
+ * rather than dropping on the floor.
+ */
+function photoCredit($: cheerio.CheerioAPI): string | undefined {
+  let credit: string | undefined;
+
+  $("div.performance-gallery, section.performance-gallery, div.gallery")
+    .find("*")
+    .each((_, el) => {
+      if (credit) return;
+      const text = clean($(el).text());
+      if (/^Fot[óo]k?\s*©/i.test(text) && text.length < 120) credit = text;
+    });
+
+  return credit;
+}
+
 function heroPoster($: cheerio.CheerioAPI): string | undefined {
   const hero = $("section.performance-hero img");
   // The desktop variant is the full artwork; the mobile one is a crop.
@@ -224,6 +245,7 @@ export function parseProduction(html: string, slug: string): SyncedPlay | undefi
     premiereDate,
     synopsis,
     posterUrl: heroPoster($),
+    posterCredit: photoCredit($),
     isArchived: false,
     cast,
     performances: showtimes($, slug, room),

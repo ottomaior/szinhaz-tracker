@@ -138,7 +138,7 @@ function CheckinCard({ review, onOpenPlay }: { review: Review; onOpenPlay: (id: 
       <Pressable onPress={() => onOpenPlay(play.id)} style={{ height: 180 }} accessibilityRole="button" accessibilityLabel={play.title}>
         {/* `scrim` matters here: these are production photos, and bright ones
             left the white caption below completely unreadable. */}
-        <PosterPlaceholder uri={play.posterUrl} height={180} scrim />
+        <PosterPlaceholder poster={play.poster} height={180} scrim priority="high" />
         <View style={styles.posterCaption}>
           <Text
             numberOfLines={2}
@@ -213,7 +213,7 @@ function WatchlistCard({ entry, onOpenPlay }: { entry: WatchlistEntry; onOpenPla
         </View>
       </View>
       <Pressable onPress={() => onOpenPlay(play.id)} style={styles.rowGap12} accessibilityRole="button" accessibilityLabel={play.title}>
-        <PosterPlaceholder uri={play.posterUrl} width={64} height={96} />
+        <PosterPlaceholder poster={play.poster} width={64} height={96} preferThumb />
         <View style={{ flex: 1, gap: 3 }}>
           <Text numberOfLines={2} style={{ fontFamily: displayFont(fontsLoaded, "semibold"), fontSize: 16, color: colors.text }}>
             {play.title}
