@@ -18,6 +18,13 @@ ENV EXPO_PUBLIC_SUPABASE_ANON_KEY=$EXPO_PUBLIC_SUPABASE_ANON_KEY
 
 RUN npm run build
 
+# expo export names a dynamic route's pre-rendered shell after the route file —
+# literally "[id].html". nginx can serve a path with brackets in it, but that is
+# an avoidable thing to get subtly wrong in a config file, so give each shell a
+# plain name here and let nginx reference that instead.
+RUN cp "dist/play/[id].html" dist/play/_shell.html \
+ && cp "dist/user/[id].html" dist/user/_shell.html
+
 FROM nginx:1.27-alpine
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
