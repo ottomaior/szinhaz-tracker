@@ -17,62 +17,66 @@
 -- '43201-kali-holtak' is WordPress's 'kali-holtak'. The list below is the
 -- repertoire as published at the time of writing; it only has to be right for
 -- this one-time rename, since from here on the adapters own their own keys.
+--
+-- The slug list is inlined into each statement as a CTE rather than held in a
+-- temporary table. A temp table does not reliably survive from one statement
+-- to the next in the Supabase SQL editor, which is how this migration is meant
+-- to be run — it fails with 'relation "katona_current" does not exist'.
 
 begin;
 
-create temporary table katona_current (slug text primary key) on commit drop;
-
-insert into katona_current (slug) values
-    ('2031'),
-    ('a-halal-kilovagolt-perzsiabol'),
-    ('a-merenylok-fenykora'),
-    ('az-uveghaz'),
-    ('changes'),
-    ('chicago'),
-    ('dante-pokol'),
-    ('dante-purgatorium-paradicsom'),
-    ('egy-komcsi-nyanya-vagyok'),
-    ('embtrag'),
-    ('extazis'),
-    ('freud-elete-boswelltol'),
-    ('gepnarancs'),
-    ('hotel-casanova'),
-    ('isten-haza-csalad'),
-    ('kali-holtak'),
-    ('kasimir-es-karoline'),
-    ('kiegya%d0%b7es-kiegyezes'),
-    ('komolyan-rohejes-vagyok'),
-    ('maganyos-emberek'),
-    ('megrag-kikop'),
-    ('mester-es-margarita'),
-    ('nemacsend'),
-    ('nyilt-targyalas'),
-    ('octogon'),
-    ('oz'),
-    ('parallax'),
-    ('peer-gynt'),
-    ('pekingi-osz'),
-    ('queenland'),
-    ('rekviem'),
-    ('sajat-szoba'),
-    ('sarszeg'),
-    ('sorstalansag'),
-    ('status-quo');
-
 -- 1. Productions still in the repertoire move to the WordPress adapter, keeping
 --    their id — and with it their reviews, watchlist entries and rating.
+with katona_current (slug) as (
+  values
+      ('2031'),
+      ('a-halal-kilovagolt-perzsiabol'),
+      ('a-merenylok-fenykora'),
+      ('az-uveghaz'),
+      ('changes'),
+      ('chicago'),
+      ('dante-pokol'),
+      ('dante-purgatorium-paradicsom'),
+      ('egy-komcsi-nyanya-vagyok'),
+      ('embtrag'),
+      ('extazis'),
+      ('freud-elete-boswelltol'),
+      ('gepnarancs'),
+      ('hotel-casanova'),
+      ('isten-haza-csalad'),
+      ('kali-holtak'),
+      ('kasimir-es-karoline'),
+      ('kiegya%d0%b7es-kiegyezes'),
+      ('komolyan-rohejes-vagyok'),
+      ('maganyos-emberek'),
+      ('megrag-kikop'),
+      ('mester-es-margarita'),
+      ('nemacsend'),
+      ('nyilt-targyalas'),
+      ('octogon'),
+      ('oz'),
+      ('parallax'),
+      ('peer-gynt'),
+      ('pekingi-osz'),
+      ('queenland'),
+      ('rekviem'),
+      ('sajat-szoba'),
+      ('sarszeg'),
+      ('sorstalansag'),
+      ('status-quo')
+)
 update public.plays p
-set source_key = 'katona-wp:' || katona_current.slug,
+set source_key = 'katona-wp:' || kc.slug,
     is_archived = false
-from katona_current
+from katona_current kc
 where p.source = 'sync'
   and p.source_key like 'katona-site:%'
-  and regexp_replace(p.source_key, '^katona-site:[0-9]+-', '') = katona_current.slug
+  and regexp_replace(p.source_key, '^katona-site:[0-9]+-', '') = kc.slug
   -- Never collide with a row the new adapter has already created.
   and not exists (
     select 1 from public.plays existing
     where existing.source = 'sync'
-      and existing.source_key = 'katona-wp:' || katona_current.slug
+      and existing.source_key = 'katona-wp:' || kc.slug
       and existing.id <> p.id
   );
 
