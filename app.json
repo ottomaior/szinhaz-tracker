@@ -30,7 +30,15 @@
       "bundler": "metro",
       "output": "static"
     },
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "A Színház Tracker a fotóidhoz kér hozzáférést, hogy borítóképet tölthess fel az általad hozzáadott darabokhoz."
+        }
+      ]
+    ],
     "experiments": {
       "typedRoutes": true
     }
