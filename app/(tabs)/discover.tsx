@@ -25,6 +25,18 @@ import { strings } from "@/i18n/hu";
 
 const FILTERS = [strings.discover.filterAll, strings.discover.filterKoszinhaz, strings.discover.filterFuggetlen, strings.discover.filterSzabadteri];
 
+/**
+ * Whether to offer the venue-type chips.
+ *
+ * Off for now: all four sources currently in the catalogue are kőszínház, so
+ * every chip but "Mind" returns an empty screen, which reads as a broken
+ * filter rather than an honest "we have none of those yet". The filter itself
+ * works and stays wired up end to end — `activeFilter` still feeds
+ * `venueType` into every query — so turning this back on once there is a
+ * független or szabadtéri source is a one-line change and nothing else.
+ */
+const SHOW_VENUE_TYPE_FILTER = false;
+
 const FILTER_TO_VENUE_TYPE: Record<string, VenueType | undefined> = {
   [strings.discover.filterAll]: undefined,
   [strings.discover.filterKoszinhaz]: "kőszínház",
@@ -186,11 +198,13 @@ export default function DiscoverScreen() {
             </View>
           )}
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-            {FILTERS.map((f) => (
-              <Chip key={f} label={f} active={activeFilter === f} onPress={() => setActiveFilter(f)} />
-            ))}
-          </ScrollView>
+          {SHOW_VENUE_TYPE_FILTER && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+              {FILTERS.map((f) => (
+                <Chip key={f} label={f} active={activeFilter === f} onPress={() => setActiveFilter(f)} />
+              ))}
+            </ScrollView>
+          )}
 
           {cities.length > 0 && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
@@ -364,7 +378,7 @@ function PremiereCard({ play, onPress }: { play: Play; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} style={styles.railCard} accessibilityRole="button" accessibilityLabel={play.title}>
       <View style={{ aspectRatio: TILE_ASPECT }}>
-        <PosterPlaceholder poster={play.poster} height="100%" radius={radius.md} preferThumb />
+        <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} height="100%" radius={radius.md} preferThumb />
       </View>
       <Text variant="label" numberOfLines={2}>
         {play.title}
@@ -383,7 +397,7 @@ function TrendingCard({ play, onPress }: { play: Play; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} style={{ gap: space.sm }} accessibilityRole="button" accessibilityLabel={play.title}>
       <View style={{ aspectRatio: TILE_ASPECT }}>
-        <PosterPlaceholder poster={play.poster} height="100%" radius={radius.md} preferThumb />
+        <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} height="100%" radius={radius.md} preferThumb />
         {/* Unrated plays used to show a gold "0.0" badge, which reads as a
             rock-bottom score rather than as "nobody has rated this yet". */}
         {hasRatings && (

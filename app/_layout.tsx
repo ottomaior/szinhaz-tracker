@@ -46,6 +46,8 @@ export default function RootLayout() {
         >
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="play/[id]" options={{ animation: "slide_from_right" }} />
+          <Stack.Screen name="user/[id]" options={{ animation: "slide_from_right" }} />
+          <Stack.Screen name="people" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
           <Stack.Screen name="checkin" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
           <Stack.Screen name="add-play" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
           <Stack.Screen name="sign-in" options={{ presentation: "modal", animation: "slide_from_bottom" }} />

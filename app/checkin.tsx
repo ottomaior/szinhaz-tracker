@@ -143,7 +143,7 @@ export default function CheckInScreen() {
       <ScrollView keyboardShouldPersistTaps="handled">
         <ContentColumn style={{ padding: gutter, gap: space.xl, paddingBottom: space["4xl"] }}>
         <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
-          <PosterPlaceholder poster={play.poster} width={44} height={66} radius={radius.sm} preferThumb />
+          <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} width={44} height={66} radius={radius.sm} preferThumb />
           <View style={{ flex: 1 }}>
             <Text variant="subheading">{play.title}</Text>
             <Text variant="caption" tone="faint">{venue?.name ?? ""}</Text>
@@ -275,7 +275,7 @@ function PlayPicker({ insetTop, onCancel, onPick }: { insetTop: number; onCancel
 
         {results.map((p) => (
           <Pressable key={p.id} onPress={() => onPick(p)} style={styles.pickerRow} accessibilityRole="button">
-            <PosterPlaceholder poster={p.poster} width={40} height={60} radius={radius.sm} preferThumb />
+            <PosterPlaceholder poster={p.poster} title={p.title} seed={p.id} width={40} height={60} radius={radius.sm} preferThumb />
             <View style={{ flex: 1, gap: 3 }}>
               <Text numberOfLines={2} variant="label">
                 {p.title}

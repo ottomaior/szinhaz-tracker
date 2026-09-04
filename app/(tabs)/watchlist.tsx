@@ -89,7 +89,7 @@ function WatchlistRow({ play, onPress }: { play: Play; onPress: () => void }) {
 
   return (
     <Pressable onPress={onPress} style={styles.row} accessibilityRole="button" accessibilityLabel={play.title}>
-      <PosterPlaceholder poster={play.poster} width={64} height={96} radius={radius.sm} preferThumb />
+      <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} width={64} height={96} radius={radius.sm} preferThumb />
       <View style={{ flex: 1, gap: space.xs }}>
         <Text variant="subheading" numberOfLines={2}>
           {play.title}

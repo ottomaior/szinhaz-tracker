@@ -4,8 +4,10 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
 import { gutter, radius, space } from "@/theme/tokens";
-import { getFeed, getPlayById, getUserById, getVenueById } from "@/services/playsService";
+import { getFeed, getPlayById, getUserById, getVenueById, type FeedScope } from "@/services/playsService";
 import type { FeedItem, Play, User, Venue, Review, WatchlistEntry } from "@/data/types";
+import { useAuth } from "@/contexts/AuthContext";
+import { Chip } from "@/components/ui/Chip";
 import { MaskIcon, MaskRatingRow } from "@/components/icons/MaskIcon";
 import { HeartIcon, CommentIcon } from "@/components/icons/Icons";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
@@ -22,11 +24,13 @@ export default function FeedScreen() {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const { session } = useAuth();
+  const [scope, setScope] = useState<FeedScope>("everyone");
 
   const load = useCallback(async () => {
     setFailed(false);
     try {
-      setItems(await getFeed());
+      setItems(await getFeed(scope));
     } catch {
       // A network/RLS failure used to reject silently, leaving a blank screen
       // that was indistinguishable from an empty feed.
@@ -34,7 +38,7 @@ export default function FeedScreen() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [scope]);
 
   useEffect(() => {
     load();
@@ -54,7 +58,27 @@ export default function FeedScreen() {
             <MaskIcon state="on" size={22} />
             <Text variant="heading">{strings.appName}</Text>
           </View>
+          <Pressable onPress={() => router.push("/people")} hitSlop={8} accessibilityRole="button">
+            <Text variant="label" tone="accent">{strings.feed.findPeople}</Text>
+          </Pressable>
         </View>
+
+        {/* Only offered when signed in: "Követettek" for a signed-out visitor
+            could only ever be empty, and the scope is per account anyway. */}
+        {!!session && (
+          <View style={styles.scopeRow}>
+            <Chip
+              label={strings.feed.scopeEveryone}
+              active={scope === "everyone"}
+              onPress={() => setScope("everyone")}
+            />
+            <Chip
+              label={strings.feed.scopeFollowing}
+              active={scope === "following"}
+              onPress={() => setScope("following")}
+            />
+          </View>
+        )}
 
         <ScrollView
           contentContainerStyle={styles.body}
@@ -64,7 +88,19 @@ export default function FeedScreen() {
             <FeedCardRouter key={feedItemKey(item)} item={item} onOpenPlay={(id) => router.push(`/play/${id}`)} />
           ))}
 
-          {!loading && items.length === 0 && (
+          {/* An empty "Követettek" feed means "follow someone", not "nobody has
+              used the app yet", and pointing it at Discover would be advice for
+              the wrong problem. */}
+          {!loading && items.length === 0 && !failed && scope === "following" && (
+            <EmptyState
+              title={strings.feed.followingEmptyTitle}
+              body={strings.feed.followingEmptyBody}
+              actionLabel={strings.feed.followingEmptyAction}
+              onAction={() => router.push("/people")}
+            />
+          )}
+
+          {!loading && items.length === 0 && (failed || scope === "everyone") && (
             <EmptyState
               title={failed ? strings.common.loadError : strings.feed.emptyTitle}
               body={failed ? undefined : strings.feed.emptyBody}
@@ -92,10 +128,22 @@ function FeedCardRouter({ item, onOpenPlay }: { item: FeedItem; onOpenPlay: (id:
   return <WatchlistCard entry={item.entry} onOpenPlay={onOpenPlay} />;
 }
 
-/** The "who did what, when" line every feed card opens with. */
+/**
+ * The "who did what, when" line every feed card opens with.
+ *
+ * The byline is the natural way to get from "this person keeps seeing things I
+ * like" to following them, so the whole avatar-and-name block opens their
+ * profile.
+ */
 function CardByline({ user, action, meta }: { user: User; action: string; meta: string }) {
+  const router = useRouter();
   return (
-    <View style={styles.byline}>
+    <Pressable
+      style={styles.byline}
+      onPress={() => router.push(`/user/${user.id}`)}
+      accessibilityRole="button"
+      accessibilityLabel={user.name}
+    >
       <Avatar initials={user.initials} size={36} />
       <View style={{ flexShrink: 1 }}>
         <Text variant="bodySmall">
@@ -110,7 +158,7 @@ function CardByline({ user, action, meta }: { user: User; action: string; meta: 
           {meta}
         </Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -140,7 +188,7 @@ function CheckinCard({ review, onOpenPlay }: { review: Review; onOpenPlay: (id: 
       <Pressable onPress={() => onOpenPlay(play.id)} accessibilityRole="button" accessibilityLabel={play.title}>
         {/* `scrim` matters here: these are production photos, and bright ones
             left the white caption below completely unreadable. */}
-        <PosterPlaceholder poster={play.poster} height={200} radius={radius.md} scrim priority="high" />
+        <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} height={200} radius={radius.md} scrim priority="high" />
         <View style={styles.posterCaption}>
           <Text variant="title" numberOfLines={2}>
             {play.title}
@@ -203,7 +251,7 @@ function WatchlistCard({ entry, onOpenPlay }: { entry: WatchlistEntry; onOpenPla
     <View style={{ gap: space.md }}>
       <CardByline user={user} action={strings.feed.wantsToSee} meta={`${timeAgo(entry.addedAt)} · ${strings.feed.addedToWatchlist}`} />
       <Pressable onPress={() => onOpenPlay(play.id)} style={styles.watchlistRow} accessibilityRole="button" accessibilityLabel={play.title}>
-        <PosterPlaceholder poster={play.poster} width={64} height={96} radius={radius.sm} preferThumb />
+        <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} width={64} height={96} radius={radius.sm} preferThumb />
         <View style={{ flex: 1, gap: space.xs }}>
           <Text variant="subheading" numberOfLines={2}>
             {play.title}
@@ -245,6 +293,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     borderBottomWidth: 1,
     borderBottomColor: colors.hairlineSoft,
+  },
+  scopeRow: {
+    flexDirection: "row",
+    gap: space.sm,
+    paddingHorizontal: gutter,
+    paddingTop: space.md,
   },
   brand: { flexDirection: "row", alignItems: "center", gap: space.sm },
   body: { padding: gutter, paddingBottom: 100, gap: space["2xl"] },

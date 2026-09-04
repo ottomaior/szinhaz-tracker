@@ -41,6 +41,12 @@ export const strings = {
     emptyTitle: "Még üres a hírfolyam",
     emptyBody: "Amint valaki naplóz egy előadást, itt fog megjelenni.",
     emptyAction: "Nézz körül a darabok között",
+    scopeEveryone: "Mindenki",
+    scopeFollowing: "Követettek",
+    followingEmptyTitle: "Csendes a hírfolyamod",
+    followingEmptyBody: "Kövess másokat, és itt látod majd, mit néznek meg.",
+    followingEmptyAction: "Színházbarátok keresése",
+    findPeople: "Színházbarátok",
   },
 
   time: {
@@ -208,8 +214,25 @@ export const strings = {
     tabReviews: "Vélemények",
     comingSoon: (tab: string) => `${tab} hamarosan.`,
     diaryEmpty: "Még nincs naplózott előadásod.",
+    watchlistEmpty: "Még nincs semmi a kívánságlistádon.",
     signInPrompt: "Jelentkezz be, hogy lásd a profilod",
     signInButton: "Bejelentkezés",
+  },
+
+  people: {
+    follow: "Követés",
+    unfollow: "Követés visszavonása",
+    followingLabel: "Követed",
+    searchTitle: "Színházbarátok",
+    searchPlaceholder: "Keresés név vagy @felhasználónév alapján",
+    searchEmpty: "Nincs ilyen felhasználó.",
+    followersTitle: "Követők",
+    followingTitle: "Követettek",
+    followersEmpty: "Még senki nem követi.",
+    followingEmpty: "Még senkit nem követ.",
+    signInToFollow: "Jelentkezz be a követéshez",
+    diaryTitle: "Napló",
+    diaryEmpty: "Még nincs naplózott előadása.",
   },
 
   genres: {

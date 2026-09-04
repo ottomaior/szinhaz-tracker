@@ -1,4 +1,5 @@
 import { supabase, SUPABASE_URL } from "@/services/supabase";
+import { getFollowingIds } from "@/services/followService";
 import type {
   CastMember,
   FeedItem,
@@ -173,10 +174,35 @@ function toPerformance(row: PerformanceRow): Performance {
 
 const PLAY_SELECT = "*, play_cast(name, role, sort_order)";
 
-export async function getFeed(): Promise<FeedItem[]> {
+/**
+ * "everyone" is the whole database, which is how the feed has always worked
+ * and remains the only way to find people to follow. "following" narrows to
+ * the accounts you follow plus your own activity.
+ */
+export type FeedScope = "everyone" | "following";
+
+export async function getFeed(scope: FeedScope = "everyone"): Promise<FeedItem[]> {
+  let authorIds: string[] | undefined;
+  if (scope === "following") {
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+    if (!authUser) return [];
+    // Your own activity belongs in your feed: a diary you cannot see yourself
+    // in reads as though the check-in failed.
+    authorIds = [...(await getFollowingIds(authUser.id)), authUser.id];
+  }
+
+  let reviewQuery = supabase.from("reviews").select("*").order("created_at", { ascending: false }).limit(20);
+  let watchlistQuery = supabase.from("watchlist_entries").select("*").order("added_at", { ascending: false }).limit(20);
+  if (authorIds) {
+    reviewQuery = reviewQuery.in("user_id", authorIds);
+    watchlistQuery = watchlistQuery.in("user_id", authorIds);
+  }
+
   const [{ data: reviewRows, error: reviewsError }, { data: watchlistRows, error: watchlistError }] = await Promise.all([
-    supabase.from("reviews").select("*").order("created_at", { ascending: false }).limit(20),
-    supabase.from("watchlist_entries").select("*").order("added_at", { ascending: false }).limit(20),
+    reviewQuery,
+    watchlistQuery,
   ]);
   if (reviewsError) throw reviewsError;
   if (watchlistError) throw watchlistError;
@@ -325,11 +351,20 @@ export async function getUpcomingPerformances(playId: string): Promise<Performan
 async function statsForUser(userId: string) {
   const now = new Date();
   const yearStart = `${now.getFullYear()}-01-01`;
-  const [{ count: playsSeen }, { count: thisYear }] = await Promise.all([
+  // The follower and following counters were hardcoded to 0 while the profile
+  // screen rendered them as though they meant something.
+  const [{ count: playsSeen }, { count: thisYear }, { count: followers }, { count: following }] = await Promise.all([
     supabase.from("reviews").select("id", { count: "exact", head: true }).eq("user_id", userId),
     supabase.from("reviews").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("created_at", yearStart),
+    supabase.from("follows").select("follower_id", { count: "exact", head: true }).eq("followee_id", userId),
+    supabase.from("follows").select("followee_id", { count: "exact", head: true }).eq("follower_id", userId),
   ]);
-  return { playsSeen: playsSeen ?? 0, thisYear: thisYear ?? 0, followers: 0, following: 0 };
+  return {
+    playsSeen: playsSeen ?? 0,
+    thisYear: thisYear ?? 0,
+    followers: followers ?? 0,
+    following: following ?? 0,
+  };
 }
 
 function toUser(row: ProfileRow, stats: User["stats"]): User {

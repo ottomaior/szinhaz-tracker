@@ -4,7 +4,7 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
 import { gutter, radius, space } from "@/theme/tokens";
-import { getCurrentUser, getDiaryPlaysForUser } from "@/services/playsService";
+import { getCurrentUser, getDiaryPlaysForUser, getWatchlist } from "@/services/playsService";
 import { signOut } from "@/services/authService";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Play, User } from "@/data/types";
@@ -24,6 +24,7 @@ export default function ProfileScreen() {
   const { session, loading } = useAuth();
   const [user, setUser] = useState<User>();
   const [diary, setDiary] = useState<Play[]>([]);
+  const [watchlist, setWatchlist] = useState<Play[]>([]);
   const [diaryLoaded, setDiaryLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>(strings.profile.tabDiary);
   const [confirmingSignOut, setConfirmingSignOut] = useState(false);
@@ -36,6 +37,7 @@ export default function ProfileScreen() {
       if (!session) {
         setUser(undefined);
         setDiary([]);
+        setWatchlist([]);
         setDiaryLoaded(false);
         return;
       }
@@ -45,9 +47,14 @@ export default function ProfileScreen() {
           if (!active) return;
           setUser(u);
           if (!u) return;
-          return getDiaryPlaysForUser(u.id).then((plays) => {
-            if (active) setDiary(plays);
-          });
+          return Promise.all([
+            getDiaryPlaysForUser(u.id).then((plays) => {
+              if (active) setDiary(plays);
+            }),
+            getWatchlist().then((entries) => {
+              if (active) setWatchlist(entries.map((e) => e.play));
+            }),
+          ]);
         })
         .catch(() => undefined)
         .finally(() => {
@@ -157,28 +164,25 @@ export default function ProfileScreen() {
           </View>
 
           {activeTab === strings.profile.tabDiary && (
-            <>
-              <Grid gap={space.sm} columns={{ compact: 4, medium: 5, expanded: 6, wide: 8 }} style={{ marginTop: space.lg }}>
-                {diary.map((p) => (
-                  <Pressable
-                    key={p.id}
-                    style={styles.gridItem}
-                    onPress={() => router.push(`/play/${p.id}`)}
-                    accessibilityRole="button"
-                    accessibilityLabel={p.title}
-                  >
-                    <PosterPlaceholder poster={p.poster} height="100%" radius={radius.sm} preferThumb />
-                  </Pressable>
-                ))}
-              </Grid>
-              {diaryLoaded && diary.length === 0 && (
-                <View style={styles.emptyState}>
-                  <Text variant="bodySmall" tone="faint">{strings.profile.diaryEmpty}</Text>
-                </View>
-              )}
-            </>
+            <PosterGrid
+              plays={diary}
+              loaded={diaryLoaded}
+              emptyLabel={strings.profile.diaryEmpty}
+              onOpen={(id) => router.push(`/play/${id}`)}
+            />
           )}
-          {activeTab !== strings.profile.tabDiary && (
+          {/* The watchlist tab used to say "hamarosan" while the Kívánságlista
+              tab in the nav bar showed the very same entries — so adding a play
+              appeared in the feed and then seemed to vanish from the profile. */}
+          {activeTab === strings.profile.tabWatchlists && (
+            <PosterGrid
+              plays={watchlist}
+              loaded={diaryLoaded}
+              emptyLabel={strings.profile.watchlistEmpty}
+              onOpen={(id) => router.push(`/play/${id}`)}
+            />
+          )}
+          {activeTab === strings.profile.tabReviews && (
             <View style={styles.emptyState}>
               <Text variant="bodySmall" tone="faint">{strings.profile.comingSoon(activeTab)}</Text>
             </View>
@@ -187,6 +191,42 @@ export default function ProfileScreen() {
       </ScrollView>
       </Screen>
     </View>
+  );
+}
+
+/** The poster grid both the diary and the watchlist tab render. */
+function PosterGrid({
+  plays,
+  loaded,
+  emptyLabel,
+  onOpen,
+}: {
+  plays: Play[];
+  loaded: boolean;
+  emptyLabel: string;
+  onOpen: (id: string) => void;
+}) {
+  if (loaded && plays.length === 0) {
+    return (
+      <View style={styles.emptyState}>
+        <Text variant="bodySmall" tone="faint">{emptyLabel}</Text>
+      </View>
+    );
+  }
+  return (
+    <Grid gap={space.sm} columns={{ compact: 4, medium: 5, expanded: 6, wide: 8 }} style={{ marginTop: space.lg }}>
+      {plays.map((p) => (
+        <Pressable
+          key={p.id}
+          style={styles.gridItem}
+          onPress={() => onOpen(p.id)}
+          accessibilityRole="button"
+          accessibilityLabel={p.title}
+        >
+          <PosterPlaceholder poster={p.poster} title={p.title} seed={p.id} height="100%" radius={radius.sm} preferThumb />
+        </Pressable>
+      ))}
+    </Grid>
   );
 }
 
