@@ -188,14 +188,16 @@ async function upsertPlay(sourceName: string, synced: SyncedPlay) {
   // Full refresh of cast rows for this play (simpler and safer than trying
   // to diff — cast lists are short, and this keeps stale members from
   // lingering after a show's cast changes).
-  await supabaseAdmin.from("play_cast").delete().eq("play_id", playId);
-  const cast = dedupeCast(synced.cast);
-  if (cast.length) {
-    const { error: castError } = await supabaseAdmin
-      .from("play_cast")
-      .insert(cast.map((c, i) => ({ play_id: playId, name: c.name, role: c.role, sort_order: i })));
-    if (castError) throw castError;
-  }
+  //
+  // Done in one RPC rather than a delete followed by an insert: those were two
+  // separate requests, so anything failing between them left the production
+  // with no cast at all until a later run repaired it. See
+  // supabase/migrations/0012_replace_play_cast.sql.
+  const { error: castError } = await supabaseAdmin.rpc("replace_play_cast", {
+    target_play_id: playId,
+    members: dedupeCast(synced.cast),
+  });
+  if (castError) throw castError;
 
   const performanceKeys: string[] = [];
   for (const perf of synced.performances) {

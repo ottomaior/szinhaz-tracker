@@ -18,7 +18,7 @@ npx expo install --fix
 
 Then create a [Supabase](https://supabase.com) project (free tier is
 enough), run every file in `supabase/migrations/` **in order** (`0001_init.sql`
-through `0011_poster_storage.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
+through `0012_replace_play_cast.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
 URL/anon key from the project's Settings → API page:
 
 ```bash
