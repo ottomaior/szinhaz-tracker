@@ -441,13 +441,49 @@ export async function removeFromWatchlist(playId: string): Promise<void> {
   if (error) throw error;
 }
 
-export async function getDiaryPlaysForUser(userId: string): Promise<Play[]> {
-  const { data, error } = await supabase.from("reviews").select(`play_id, plays (${PLAY_SELECT})`).eq("user_id", userId);
+/** One logged performance: the production, and what the user said about it. */
+export type DiaryEntry = { play: Play; review: Review };
+
+/**
+ * Everything a user has logged, newest first.
+ *
+ * Carries the review as well as the play, because the diary list shows when
+ * they saw it and how they rated it, and the reviews tab is the same rows
+ * filtered to the ones they actually wrote something about — the check-in flow
+ * makes the text optional, so most entries have none.
+ */
+export async function getDiaryEntriesForUser(userId: string): Promise<DiaryEntry[]> {
+  const { data, error } = await supabase
+    .from("reviews")
+    .select(`*, plays (${PLAY_SELECT})`)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
   if (error) throw error;
   return (data ?? [])
-    .map((row) => (Array.isArray(row.plays) ? row.plays[0] : row.plays))
-    .filter((p): p is PlayRow => !!p)
-    .map((p) => toPlay(p));
+    .map((row) => {
+      const playRow = Array.isArray(row.plays) ? row.plays[0] : row.plays;
+      if (!playRow) return undefined;
+      return { play: toPlay(playRow as PlayRow), review: toReview(row as ReviewRow) };
+    })
+    .filter((e): e is DiaryEntry => !!e);
+}
+
+export async function getDiaryPlaysForUser(userId: string): Promise<Play[]> {
+  return (await getDiaryEntriesForUser(userId)).map((e) => e.play);
+}
+
+/**
+ * Venue lookup for a list of plays, in one query.
+ *
+ * The list rows show which theatre each production is at, and calling
+ * `getVenueById` per row would be one request per item on screen.
+ */
+export async function getVenuesByIds(ids: string[]): Promise<Map<string, Venue>> {
+  const unique = [...new Set(ids)];
+  if (unique.length === 0) return new Map();
+  const { data, error } = await supabase.from("venues").select("*").in("id", unique);
+  if (error) throw error;
+  return new Map((data ?? []).map((r) => [r.id as string, toVenue(r as VenueRow)]));
 }
 
 export async function submitReview(input: {

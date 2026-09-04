@@ -3,16 +3,16 @@ import { View, ScrollView, StyleSheet, Pressable } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
-import { gutter, radius, space } from "@/theme/tokens";
-import { getCurrentUser, getDiaryPlaysForUser, getWatchlist } from "@/services/playsService";
+import { gutter, space } from "@/theme/tokens";
+import { getCurrentUser, getDiaryEntriesForUser, getVenuesByIds, getWatchlist, type DiaryEntry } from "@/services/playsService";
 import { signOut } from "@/services/authService";
 import { useAuth } from "@/contexts/AuthContext";
-import type { Play, User } from "@/data/types";
+import type { Play, User, Venue } from "@/data/types";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
-import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
+import { PlayRow } from "@/components/ui/PlayRow";
+import { MaskRatingRow } from "@/components/icons/MaskIcon";
 import { Screen } from "@/components/ui/Screen";
-import { Grid } from "@/components/ui/Grid";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 
@@ -23,8 +23,9 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { session, loading } = useAuth();
   const [user, setUser] = useState<User>();
-  const [diary, setDiary] = useState<Play[]>([]);
+  const [diary, setDiary] = useState<DiaryEntry[]>([]);
   const [watchlist, setWatchlist] = useState<Play[]>([]);
+  const [venues, setVenues] = useState<Map<string, Venue>>(new Map());
   const [diaryLoaded, setDiaryLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>(strings.profile.tabDiary);
   const [confirmingSignOut, setConfirmingSignOut] = useState(false);
@@ -47,14 +48,18 @@ export default function ProfileScreen() {
           if (!active) return;
           setUser(u);
           if (!u) return;
-          return Promise.all([
-            getDiaryPlaysForUser(u.id).then((plays) => {
-              if (active) setDiary(plays);
-            }),
-            getWatchlist().then((entries) => {
-              if (active) setWatchlist(entries.map((e) => e.play));
-            }),
-          ]);
+          return Promise.all([getDiaryEntriesForUser(u.id), getWatchlist()]).then(async ([entries, wl]) => {
+            if (!active) return;
+            const watchlistPlays = wl.map((e) => e.play);
+            setDiary(entries);
+            setWatchlist(watchlistPlays);
+            // One lookup for every venue on the screen rather than one per row.
+            const venueMap = await getVenuesByIds([
+              ...entries.map((e) => e.play.venueId),
+              ...watchlistPlays.map((p) => p.venueId),
+            ]);
+            if (active) setVenues(venueMap);
+          });
         })
         .catch(() => undefined)
         .finally(() => {
@@ -90,6 +95,8 @@ export default function ProfileScreen() {
   }
 
   if (!user) return null;
+
+  const written = diary.filter((e) => e.review.text.trim().length > 0);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -163,29 +170,78 @@ export default function ProfileScreen() {
             ))}
           </View>
 
+          {/* All three tabs are lists rather than poster grids. A grid of cover
+              art is unreadable the moment a production has no poster, and half
+              the catalogue's stand-ins carry only a monogram — a diary you
+              cannot read the titles of is not a diary. */}
           {activeTab === strings.profile.tabDiary && (
-            <PosterGrid
-              plays={diary}
-              loaded={diaryLoaded}
-              emptyLabel={strings.profile.diaryEmpty}
-              onOpen={(id) => router.push(`/play/${id}`)}
-            />
+            <TabBody loaded={diaryLoaded} isEmpty={diary.length === 0} emptyLabel={strings.profile.diaryEmpty}>
+              {diary.map((entry) => (
+                <PlayRow
+                  key={entry.review.id}
+                  play={entry.play}
+                  onPress={() => router.push(`/play/${entry.play.id}`)}
+                  meta={
+                    <>
+                      <Text variant="caption" tone="faint" numberOfLines={1}>
+                        {venues.get(entry.play.venueId)?.name ?? entry.play.author}
+                      </Text>
+                      <Text variant="caption" tone="faint">
+                        {strings.profile.seenOn(formatDate(entry.review.createdAt))}
+                      </Text>
+                    </>
+                  }
+                  trailing={<MaskRatingRow rating={entry.review.ratingOverall} size={13} />}
+                />
+              ))}
+            </TabBody>
           )}
+
           {/* The watchlist tab used to say "hamarosan" while the Kívánságlista
               tab in the nav bar showed the very same entries — so adding a play
               appeared in the feed and then seemed to vanish from the profile. */}
           {activeTab === strings.profile.tabWatchlists && (
-            <PosterGrid
-              plays={watchlist}
-              loaded={diaryLoaded}
-              emptyLabel={strings.profile.watchlistEmpty}
-              onOpen={(id) => router.push(`/play/${id}`)}
-            />
+            <TabBody loaded={diaryLoaded} isEmpty={watchlist.length === 0} emptyLabel={strings.profile.watchlistEmpty}>
+              {watchlist.map((play) => (
+                <PlayRow
+                  key={play.id}
+                  play={play}
+                  onPress={() => router.push(`/play/${play.id}`)}
+                  meta={
+                    <Text variant="caption" tone="faint" numberOfLines={1}>
+                      {venues.get(play.venueId)?.name ?? play.author}
+                    </Text>
+                  }
+                />
+              ))}
+            </TabBody>
           )}
+          {/* The written ones only. Check-in makes the text optional, so most
+              diary entries carry a rating and nothing else; listing those here
+              too would make this tab a duplicate of the diary. */}
           {activeTab === strings.profile.tabReviews && (
-            <View style={styles.emptyState}>
-              <Text variant="bodySmall" tone="faint">{strings.profile.comingSoon(activeTab)}</Text>
-            </View>
+            <TabBody loaded={diaryLoaded} isEmpty={written.length === 0} emptyLabel={strings.profile.reviewsEmpty}>
+              {written.map((entry) => (
+                <PlayRow
+                  key={entry.review.id}
+                  play={entry.play}
+                  onPress={() => router.push(`/play/${entry.play.id}`)}
+                  meta={
+                    <>
+                      <View style={styles.reviewMeta}>
+                        <MaskRatingRow rating={entry.review.ratingOverall} size={13} />
+                        <Text variant="caption" tone="faint">
+                          {formatDate(entry.review.createdAt)}
+                        </Text>
+                      </View>
+                      <Text variant="bodySmall" tone="dim">
+                        {entry.review.text}
+                      </Text>
+                    </>
+                  }
+                />
+              ))}
+            </TabBody>
           )}
         </View>
       </ScrollView>
@@ -194,40 +250,35 @@ export default function ProfileScreen() {
   );
 }
 
-/** The poster grid both the diary and the watchlist tab render. */
-function PosterGrid({
-  plays,
+/**
+ * A tab's list, or its empty line once loading has settled.
+ *
+ * Kept as one component so the three tabs cannot drift into disagreeing about
+ * what "empty" looks like.
+ */
+function TabBody({
   loaded,
+  isEmpty,
   emptyLabel,
-  onOpen,
+  children,
 }: {
-  plays: Play[];
   loaded: boolean;
+  isEmpty: boolean;
   emptyLabel: string;
-  onOpen: (id: string) => void;
+  children: React.ReactNode;
 }) {
-  if (loaded && plays.length === 0) {
+  if (loaded && isEmpty) {
     return (
       <View style={styles.emptyState}>
         <Text variant="bodySmall" tone="faint">{emptyLabel}</Text>
       </View>
     );
   }
-  return (
-    <Grid gap={space.sm} columns={{ compact: 4, medium: 5, expanded: 6, wide: 8 }} style={{ marginTop: space.lg }}>
-      {plays.map((p) => (
-        <Pressable
-          key={p.id}
-          style={styles.gridItem}
-          onPress={() => onOpen(p.id)}
-          accessibilityRole="button"
-          accessibilityLabel={p.title}
-        >
-          <PosterPlaceholder poster={p.poster} title={p.title} seed={p.id} height="100%" radius={radius.sm} preferThumb />
-        </Pressable>
-      ))}
-    </Grid>
-  );
+  return <View style={styles.tabList}>{children}</View>;
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("hu-HU", { year: "numeric", month: "short", day: "numeric" });
 }
 
 function Stat({ value, label, gold = false }: { value: number; label: string; gold?: boolean }) {
@@ -293,6 +344,7 @@ const styles = StyleSheet.create({
   },
   tabItem: { paddingBottom: 10 },
   tabItemActive: { borderBottomWidth: 2, borderBottomColor: colors.gold },
-  gridItem: { aspectRatio: 3 / 4 },
+  tabList: { marginTop: space.lg, gap: space.lg },
+  reviewMeta: { flexDirection: "row", alignItems: "center", gap: space.sm },
   emptyState: { marginTop: 24, alignItems: "center", paddingVertical: 30 },
 });

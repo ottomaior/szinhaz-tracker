@@ -1,18 +1,18 @@
 import { useCallback, useState } from "react";
-import { View, ScrollView, StyleSheet, Pressable } from "react-native";
+import { View, ScrollView, StyleSheet } from "react-native";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
 import { gutter, radius, space } from "@/theme/tokens";
-import { getDiaryPlaysForUser, getUserById } from "@/services/playsService";
+import { getDiaryEntriesForUser, getUserById, getVenuesByIds, type DiaryEntry } from "@/services/playsService";
 import { followUser, isFollowing, unfollowUser } from "@/services/followService";
 import { useAuth } from "@/contexts/AuthContext";
-import type { Play, User } from "@/data/types";
+import type { User, Venue } from "@/data/types";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { ModalHeader } from "@/components/ui/ModalHeader";
-import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
+import { PlayRow } from "@/components/ui/PlayRow";
+import { MaskRatingRow } from "@/components/icons/MaskIcon";
 import { ContentColumn } from "@/components/ui/Screen";
-import { Grid } from "@/components/ui/Grid";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 
@@ -29,7 +29,8 @@ export default function UserProfileScreen() {
   const { session } = useAuth();
 
   const [user, setUser] = useState<User>();
-  const [diary, setDiary] = useState<Play[]>([]);
+  const [diary, setDiary] = useState<DiaryEntry[]>([]);
+  const [venues, setVenues] = useState<Map<string, Venue>>(new Map());
   const [loaded, setLoaded] = useState(false);
   const [following, setFollowing] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -43,8 +44,11 @@ export default function UserProfileScreen() {
         getUserById(id).then((u) => {
           if (active) setUser(u);
         }),
-        getDiaryPlaysForUser(id).then((plays) => {
-          if (active) setDiary(plays);
+        getDiaryEntriesForUser(id).then(async (entries) => {
+          if (!active) return;
+          setDiary(entries);
+          const venueMap = await getVenuesByIds(entries.map((e) => e.play.venueId));
+          if (active) setVenues(venueMap);
         }),
         // Signed-out visitors can read a profile; only the follow state is
         // meaningless for them.
@@ -126,22 +130,26 @@ export default function UserProfileScreen() {
 
           <View style={{ gap: space.sm }}>
             <Text variant="subheading">{strings.people.diaryTitle}</Text>
+            {/* A list, like the profile's own diary: a column of poster
+                stand-ins tells you nothing about what someone has seen. */}
             {loaded && diary.length === 0 ? (
               <Text variant="bodySmall" tone="faint">{strings.people.diaryEmpty}</Text>
             ) : (
-              <Grid gap={space.sm} columns={{ compact: 4, medium: 5, expanded: 6, wide: 8 }}>
-                {diary.map((p) => (
-                  <Pressable
-                    key={p.id}
-                    style={styles.gridItem}
-                    onPress={() => router.push(`/play/${p.id}`)}
-                    accessibilityRole="button"
-                    accessibilityLabel={p.title}
-                  >
-                    <PosterPlaceholder poster={p.poster} title={p.title} seed={p.id} height="100%" radius={radius.sm} preferThumb />
-                  </Pressable>
+              <View style={{ gap: space.lg }}>
+                {diary.map((entry) => (
+                  <PlayRow
+                    key={entry.review.id}
+                    play={entry.play}
+                    onPress={() => router.push(`/play/${entry.play.id}`)}
+                    meta={
+                      <Text variant="caption" tone="faint" numberOfLines={1}>
+                        {venues.get(entry.play.venueId)?.name ?? entry.play.author}
+                      </Text>
+                    }
+                    trailing={<MaskRatingRow rating={entry.review.ratingOverall} size={13} />}
+                  />
                 ))}
-              </Grid>
+              </View>
             )}
           </View>
         </ContentColumn>
@@ -169,5 +177,4 @@ const styles = StyleSheet.create({
     paddingVertical: space.md,
   },
   statDivider: { width: 1, height: 28, backgroundColor: colors.hairline },
-  gridItem: { aspectRatio: 3 / 4 },
 });

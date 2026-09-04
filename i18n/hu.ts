@@ -215,6 +215,8 @@ export const strings = {
     comingSoon: (tab: string) => `${tab} hamarosan.`,
     diaryEmpty: "Még nincs naplózott előadásod.",
     watchlistEmpty: "Még nincs semmi a kívánságlistádon.",
+    reviewsEmpty: "Még nem írtál véleményt. Naplózáskor a szöveg opcionális — itt azok jelennek meg, amikhez írtál is valamit.",
+    seenOn: (date: string) => `Megnézve: ${date}`,
     signInPrompt: "Jelentkezz be, hogy lásd a profilod",
     signInButton: "Bejelentkezés",
   },
