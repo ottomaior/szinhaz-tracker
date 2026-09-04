@@ -58,6 +58,8 @@ export const strings = {
     filterFuggetlen: "Független",
     filterSzabadteri: "Szabadtéri",
     nowPlayingTitle: "Műsoron most",
+    recentTitle: "Korábbi keresések",
+    recentClear: "Törlés",
     premieresTitle: "Közelgő bemutatók",
     seeAll: "Összes",
     seeLess: "Kevesebb",

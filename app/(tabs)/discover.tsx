@@ -7,6 +7,7 @@ import { inputFontSize } from "@/theme/type";
 import { gutter, minTouchTarget, radius, space } from "@/theme/tokens";
 import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
+import { useRecentSearches } from "@/hooks/useRecentSearches";
 import { getCities, getNowPlaying, getPremieres, getTrending, getVenueById } from "@/services/playsService";
 import { searchPlays } from "@/services/searchService";
 import type { Play, Venue, VenueType } from "@/data/types";
@@ -56,6 +57,8 @@ export default function DiscoverScreen() {
   const [trending, setTrending] = useState<Play[]>([]);
   const [searchResults, setSearchResults] = useState<Play[]>([]);
   const [searching, setSearching] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const { recent, remember, clear: clearRecent } = useRecentSearches();
   const [browseLoading, setBrowseLoading] = useState(true);
   const [browseFailed, setBrowseFailed] = useState(false);
   const [showAllPremieres, setShowAllPremieres] = useState(false);
@@ -144,6 +147,12 @@ export default function DiscoverScreen() {
             <TextInput
               value={query}
               onChangeText={setQuery}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
+              // Recorded on submit rather than on every keystroke, so the list
+              // holds "Katona" and not "K", "Ka", "Kat".
+              onSubmitEditing={() => remember(query)}
+              returnKeyType="search"
               placeholder={strings.discover.searchPlaceholder}
               placeholderTextColor={colors.textFaint}
               accessibilityLabel={strings.discover.searchPlaceholder}
@@ -157,6 +166,25 @@ export default function DiscoverScreen() {
               </Pressable>
             )}
           </View>
+
+          {/* Only while the field is focused and empty: once there is a query
+              the results themselves are the better answer, and the row would
+              otherwise sit above the rails permanently. */}
+          {searchFocused && !isSearching && recent.length > 0 && (
+            <View style={{ gap: space.xs }}>
+              <View style={styles.rowBetween}>
+                <Text variant="caption" tone="faint">{strings.discover.recentTitle}</Text>
+                <Pressable onPress={clearRecent} hitSlop={8} accessibilityRole="button">
+                  <Text variant="caption" tone="dim">{strings.discover.recentClear}</Text>
+                </Pressable>
+              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+                {recent.map((term) => (
+                  <Chip key={term} label={term} active={false} onPress={() => setQuery(term)} />
+                ))}
+              </ScrollView>
+            </View>
+          )}
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
             {FILTERS.map((f) => (
@@ -198,7 +226,17 @@ export default function DiscoverScreen() {
             ) : (
               <Grid>
                 {searchResults.map((p) => (
-                  <TrendingCard key={p.id} play={p} onPress={() => router.push(`/play/${p.id}`)} />
+                  <TrendingCard
+                    key={p.id}
+                    play={p}
+                    // Opening a result is the signal that this search was worth
+                    // keeping. Pressing Enter is not: on web the results appear
+                    // as you type, so most searches never submit at all.
+                    onPress={() => {
+                      remember(query);
+                      router.push(`/play/${p.id}`);
+                    }}
+                  />
                 ))}
               </Grid>
             )}
