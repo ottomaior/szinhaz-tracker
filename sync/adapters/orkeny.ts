@@ -33,12 +33,17 @@
 import { fetchJson } from "../lib/http";
 import { budapestLocalToUtcIso, parseHungarianDate } from "../lib/huDate";
 import { parseDurationHu } from "../lib/huDuration";
+import { normalizeText, stripHtml } from "../lib/normalize";
 import { VENUE_IDS } from "../venueMap";
 import type { SyncAdapter, SyncedPlay } from "../lib/types";
 
 const SITE_URL = "https://orkenyszinhaz.hu";
 const PERFORMANCE_MONTHS = 3;
 const REPERTOIRE_LIMIT = 500; // comfortably above the 216 that exist today
+
+// Örkény publishes no Crawl-delay and this adapter makes only a handful of
+// calls, but pacing them costs nothing and keeps every source treated alike.
+const CRAWL_DELAY_MS = 300;
 
 const CATEGORY_STREAM = 4;
 const CATEGORY_ARCHIVE = 5;
@@ -81,33 +86,6 @@ function monthsAhead(count: number): string[] {
     out.push(`${d.getFullYear()}. ${String(d.getMonth() + 1).padStart(2, "0")}. 01.`);
   }
   return out;
-}
-
-// Node has no built-in HTML entity decoder; the site's content fields come
-// back as HTML-encoded Hungarian text (e.g. "&eacute;" for "é"), so this
-// covers what actually shows up rather than pulling in a full HTML parser
-// dependency for one field.
-// ő/ű (Hungarian double-acute vowels) aren't in this table on purpose —
-// they're outside Latin-1 so the source doesn't HTML-entity-encode them;
-// they come through as plain UTF-8 already.
-const HTML_ENTITIES: Record<string, string> = {
-  aacute: "á", eacute: "é", iacute: "í", oacute: "ó", ouml: "ö", uacute: "ú", uuml: "ü",
-  Aacute: "Á", Eacute: "É", Iacute: "Í", Oacute: "Ó", Ouml: "Ö", Uacute: "Ú", Uuml: "Ü",
-  amp: "&", quot: '"', apos: "'", lt: "<", gt: ">", nbsp: " ",
-};
-
-function decodeHtmlEntities(text: string): string {
-  return text.replace(/&(#(\d+)|#x([0-9a-fA-F]+)|[a-zA-Z]+);/g, (match, _entity, dec, hex) => {
-    if (dec) return String.fromCharCode(Number(dec));
-    if (hex) return String.fromCharCode(parseInt(hex, 16));
-    const name = match.slice(1, -1);
-    return HTML_ENTITIES[name] ?? match;
-  });
-}
-
-function stripHtml(html?: string | null): string | undefined {
-  if (!html) return undefined;
-  return decodeHtmlEntities(html.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim() || undefined;
 }
 
 function parseRoleList(field?: Localized): { role: string; contributorId: number }[] {
@@ -161,10 +139,12 @@ function genreOf(p: RawPerformance): string {
 }
 
 async function run(): Promise<SyncedPlay[]> {
-  const contributors = await fetchJson<RawContributor[]>(`${SITE_URL}/api/contributors`);
+  const contributors = await fetchJson<RawContributor[]>(`${SITE_URL}/api/contributors`, { crawlDelayMs: CRAWL_DELAY_MS });
   const nameById = new Map(contributors.map((c) => [c.id, c.name.hu ?? c.name.en ?? ""]));
 
-  const repertoire = await fetchJson<RawPerformance[]>(`${SITE_URL}/api/performances?lang=hu&limit=${REPERTOIRE_LIMIT}`);
+  const repertoire = await fetchJson<RawPerformance[]>(`${SITE_URL}/api/performances?lang=hu&limit=${REPERTOIRE_LIMIT}`, {
+    crawlDelayMs: CRAWL_DELAY_MS,
+  });
 
   const byId = new Map<string, SyncedPlay>();
   for (const p of repertoire) {
@@ -178,7 +158,9 @@ async function run(): Promise<SyncedPlay[]> {
 
     byId.set(String(p.id), {
       sourceKey: String(p.id),
-      title: p.title.hu ?? p.title.en ?? "Ismeretlen cím",
+      // Normalized like every other text field. This was the one field
+      // that skipped it, so entity-encoded titles reached the database.
+      title: normalizeText(p.title.hu ?? p.title.en) ?? "Ismeretlen cím",
       author: stripHtml(p.author.hu ?? p.author.en) ?? "",
       director: stripHtml(p.director.hu ?? p.director.en) ?? "",
       venueId: VENUE_IDS.orkeny,
@@ -198,7 +180,7 @@ async function run(): Promise<SyncedPlay[]> {
   // month is by definition not archived, whatever the API's category says.
   for (const month of monthsAhead(PERFORMANCE_MONTHS)) {
     const url = `${SITE_URL}/api/month?lang=hu&limit=99&month=${encodeURIComponent(month)}`;
-    const occurrences = await fetchJson<RawOccurrence[]>(url);
+    const occurrences = await fetchJson<RawOccurrence[]>(url, { crawlDelayMs: CRAWL_DELAY_MS });
 
     for (const occ of occurrences) {
       const play = byId.get(String(occ.performance_id));

@@ -18,7 +18,7 @@ npx expo install --fix
 
 Then create a [Supabase](https://supabase.com) project (free tier is
 enough), run every file in `supabase/migrations/` **in order** (`0001_init.sql`
-through `0007_katona_relaunch.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
+through `0010_search_hardening.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
 URL/anon key from the project's Settings → API page:
 
 ```bash
@@ -91,11 +91,14 @@ sync/                     standalone Node script (`npm run sync`; add
                           platforms and upserts them into Supabase using the
                           service-role key — see sync/adapters/ and the
                           implementation plan for source-by-source notes
+  __fixtures__/           recorded pages from each scraped site, so the
+                          adapter tests (`npm test`) catch a theatre changing
+                          its markup rather than the catalogue going quiet
 
 .github/workflows/
-  ci.yml                  typecheck + lint on every push and PR — the web
-                          build never covers sync/, so this is what catches
-                          a broken adapter before the nightly job does
+  ci.yml                  typecheck + lint + tests on every push and PR —
+                          the web build never covers sync/, so this is what
+                          catches a broken adapter before the nightly job does
   sync-plays.yml          the daily listings sync
 ```
 

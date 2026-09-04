@@ -172,8 +172,15 @@ export async function fetchCurrentSlugs(): Promise<Set<string>> {
   return slugs;
 }
 
-async function fetchProduction(slug: string): Promise<SyncedPlay | undefined> {
-  const html = await fetchText(`${BASE_URL}/eloadasok/${slug}/`, { crawlDelayMs: CRAWL_DELAY_MS });
+/**
+ * Turns one production page into a SyncedPlay.
+ *
+ * Kept separate from fetching so it can be exercised against a recorded page
+ * in sync/adapters/katona-wp.test.ts — this theatre silently replaced its
+ * whole website once already, and a fixture test is what turns that from a
+ * quiet catalogue freeze into a failing build.
+ */
+export function parseProduction(html: string, slug: string): SyncedPlay | undefined {
   const $ = cheerio.load(html);
 
   const title = clean($("h3.performance-title").first().text());
@@ -227,7 +234,8 @@ async function run(): Promise<SyncedPlay[]> {
   const plays: SyncedPlay[] = [];
 
   for (const slug of await fetchCurrentSlugs()) {
-    const play = await fetchProduction(slug);
+    const html = await fetchText(`${BASE_URL}/eloadasok/${slug}/`, { crawlDelayMs: CRAWL_DELAY_MS });
+    const play = parseProduction(html, slug);
     if (play) plays.push(play);
   }
 

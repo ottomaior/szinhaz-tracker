@@ -32,3 +32,9 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      # Fixture-based: the adapter parsers run against recorded pages, so a
+      # theatre changing its markup fails the build instead of quietly
+      # emptying the catalogue.
+      - name: Test
+        run: npm test

@@ -32,6 +32,7 @@
 import * as cheerio from "cheerio";
 import { fetchText } from "../lib/http";
 import { budapestLocalToUtcIso, parseHungarianDate } from "../lib/huDate";
+import { titleKey } from "../lib/normalize";
 import { parseDurationHu } from "../lib/huDuration";
 import { VENUE_IDS } from "../venueMap";
 import type { SyncAdapter, SyncedPlay } from "../lib/types";
@@ -186,6 +187,17 @@ function productionLinksIn(html: string): string[] {
 
 async function fetchProductionDetails(url: string): Promise<ProductionDetails> {
   const html = await fetchText(url, { crawlDelayMs: CRAWL_DELAY_MS });
+  return parseProductionDetails(html);
+}
+
+/**
+ * Turns one production page into its details.
+ *
+ * Separated from fetching so it can be run against a recorded page in
+ * sync/adapters/csokonai.test.ts — the selectors here were derived from live
+ * markup, and a fixture is what will catch the site changing under them.
+ */
+export function parseProductionDetails(html: string): ProductionDetails {
   const $ = cheerio.load(html);
 
   const rawTitle = $("title").first().text().replace(/\s*[–-]\s*Csokonai Nemzeti Színház Debrecen\s*$/i, "").trim();
@@ -305,26 +317,42 @@ function dropSharedPosters(plays: SyncedPlay[]): void {
  * newer, fuller one). Merged by normalized title, keeping the richer record
  * and combining both sets of performances.
  */
-function mergeDuplicateTitles(plays: SyncedPlay[]): SyncedPlay[] {
+export function mergeDuplicateTitles(plays: SyncedPlay[]): SyncedPlay[] {
   const byTitle = new Map<string, SyncedPlay>();
+
   for (const play of plays) {
-    const key = play.title.trim().toLowerCase();
+    // titleKey folds case, accents and punctuation, so "Dante: Pokol" and
+    // "Dante – Pokol" are recognised as one production. The previous key was a
+    // plain lowercase trim, which treated them as two.
+    const key = titleKey(play.title);
     const existing = byTitle.get(key);
     if (!existing) {
       byTitle.set(key, play);
       continue;
     }
+
     const score = (p: SyncedPlay) => (p.director ? 2 : 0) + (p.premiereDate ? 1 : 0) + (p.cast.length ? 1 : 0);
     const keepNew = score(play) > score(existing);
     const primary = keepNew ? play : existing;
     const secondary = keepNew ? existing : play;
+
     byTitle.set(key, {
       ...primary,
+      // Identity is deliberately NOT the winner's key. Scores are computed
+      // from scraped metadata, so a director appearing on one of the two pages
+      // one day was enough to flip the winner — and with it the source key.
+      // The old row then looked stale to reconcile() and was deleted or
+      // archived while a fresh one appeared under a new id, stranding any
+      // review on the discarded copy. Taking the lexicographically smaller key
+      // makes identity depend only on which pages exist, not on how complete
+      // they happen to be today.
+      sourceKey: primary.sourceKey < secondary.sourceKey ? primary.sourceKey : secondary.sourceKey,
       posterUrl: primary.posterUrl ?? secondary.posterUrl,
       premiereDate: primary.premiereDate ?? secondary.premiereDate,
       performances: [...primary.performances, ...secondary.performances],
     });
   }
+
   return [...byTitle.values()];
 }
 

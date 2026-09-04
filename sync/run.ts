@@ -20,6 +20,13 @@ import type { SyncAdapter, SyncedPlay } from "./lib/types";
 
 const DRY_RUN = process.argv.includes("--dry-run");
 
+/**
+ * Above this share of failed rows, the run is treated as an unreliable
+ * snapshot and reconciliation is skipped rather than risking deletions based
+ * on a partial view of the source.
+ */
+const MAX_FAILURE_RATE_FOR_RECONCILE = 0.1;
+
 function errorMessageOf(e: unknown): string {
   if (e instanceof Error) return e.message;
   if (e && typeof e === "object" && "message" in e) return String((e as { message: unknown }).message);
@@ -92,6 +99,11 @@ async function upsertPlay(sourceName: string, synced: SyncedPlay) {
         synopsis: synced.synopsis ?? null,
         poster_url: synced.posterUrl ?? null,
         is_archived: synced.isArchived ?? false,
+        // Distinguishes "the theatre files this under its own archive" from
+        // "the source stopped listing it", which reconcile() below records
+        // separately. Both end up archived; only one is the theatre's own
+        // statement about the production. See 0009_status_rules.sql.
+        archived_reason: synced.isArchived ? "source_archive" : null,
         source: "sync",
         source_key: `${sourceName}:${synced.sourceKey}`,
         last_synced_at: new Date().toISOString(),
@@ -116,8 +128,9 @@ async function upsertPlay(sourceName: string, synced: SyncedPlay) {
     if (castError) throw castError;
   }
 
-  let performancesUpserted = 0;
+  const performanceKeys: string[] = [];
   for (const perf of synced.performances) {
+    const sourceKey = `${sourceName}:${perf.sourceKey}`;
     const { error: perfError } = await supabaseAdmin.from("performances").upsert(
       {
         play_id: playId,
@@ -125,15 +138,15 @@ async function upsertPlay(sourceName: string, synced: SyncedPlay) {
         room: perf.room ?? null,
         starts_at: perf.startsAt,
         source: "sync",
-        source_key: `${sourceName}:${perf.sourceKey}`,
+        source_key: sourceKey,
       },
       { onConflict: "source,source_key" }
     );
     if (perfError) throw perfError;
-    performancesUpserted++;
+    performanceKeys.push(sourceKey);
   }
 
-  return performancesUpserted;
+  return performanceKeys;
 }
 
 /**
@@ -191,12 +204,62 @@ async function reconcile(sourceName: string, seenSourceKeys: Set<string>) {
     if (deleteError) throw deleteError;
   }
   if (archivable.length) {
-    const { error: archiveError } = await supabaseAdmin.from("plays").update({ is_archived: true }).in("id", archivable);
+    const { error: archiveError } = await supabaseAdmin
+      .from("plays")
+      // Not the theatre's own archive — the source simply stopped listing it.
+      // Recording which is which keeps the status reason honest.
+      .update({ is_archived: true, archived_reason: "source_dropped" })
+      .in("id", archivable);
     if (archiveError) throw archiveError;
   }
 
   console.log(`[${sourceName}] reconciled: deleted ${deletable.length}, archived ${archivable.length} (had user data)`);
   return { deleted: deletable.length, archived: archivable.length };
+}
+
+/**
+ * Drops future showtimes the source has stopped advertising.
+ *
+ * Reconciliation used to cover `plays` only, so a cancelled or rescheduled
+ * performance stayed in the table indefinitely. That is not a cosmetic
+ * problem: `recompute_play_status()` reads the earliest future performance
+ * into `next_perf_at`, so one dead date is enough to keep a finished
+ * production reading as `running` forever.
+ *
+ * Only future rows are considered. Past performances are the historical record
+ * — a source that trims its calendar to the next three months, as Örkény's
+ * does, must not take the archive with it.
+ */
+async function reconcilePerformances(sourceName: string, seenSourceKeys: Set<string>) {
+  // An adapter that legitimately publishes no dates (katona-archive) has
+  // nothing to reconcile, and an adapter that suddenly returns none is far
+  // more likely to be broken than to have had every date cancelled.
+  if (!seenSourceKeys.size) return { deleted: 0 };
+
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const { data: existing, error } = await supabaseAdmin
+    .from("performances")
+    .select("id, source_key")
+    .eq("source", "sync")
+    .like("source_key", `${sourceName}:%`)
+    .gte("starts_at", new Date().toISOString());
+  if (error) throw error;
+
+  const stale = (existing ?? []).filter((r) => !seenSourceKeys.has(String(r.source_key)));
+  if (!stale.length) return { deleted: 0 };
+
+  const { error: deleteError } = await supabaseAdmin
+    .from("performances")
+    .delete()
+    .in(
+      "id",
+      stale.map((r) => r.id as string)
+    );
+  if (deleteError) throw deleteError;
+
+  console.log(`[${sourceName}] dropped ${stale.length} future performance(s) no longer advertised`);
+  return { deleted: stale.length };
 }
 
 function reportDryRun(adapter: SyncAdapter, plays: SyncedPlay[]) {
@@ -251,18 +314,48 @@ async function runAdapter(adapter: SyncAdapter) {
 
   let playsUpserted = 0;
   let performancesUpserted = 0;
+  let performancesDeleted = 0;
   let errorMessage: string | undefined;
+  const warnings: string[] = [];
 
   try {
     const plays = await adapter.run();
     const seenSourceKeys = new Set<string>();
+    const seenPerformanceKeys = new Set<string>();
+
     for (const play of plays) {
-      performancesUpserted += await upsertPlay(adapter.name, play);
-      seenSourceKeys.add(`${adapter.name}:${play.sourceKey}`);
-      playsUpserted++;
+      // One bad row must not cost the rest of the catalogue. Previously an
+      // upsert failure — a constraint violation on a single production, say —
+      // aborted this loop AND skipped reconciliation, so one malformed entry
+      // froze that theatre's entire refresh until someone noticed.
+      try {
+        for (const key of await upsertPlay(adapter.name, play)) {
+          seenPerformanceKeys.add(key);
+          performancesUpserted++;
+        }
+        seenSourceKeys.add(`${adapter.name}:${play.sourceKey}`);
+        playsUpserted++;
+      } catch (e) {
+        const message = errorMessageOf(e);
+        warnings.push(`${play.title}: ${message}`);
+        console.error(`[${adapter.name}] skipped "${play.title}": ${message}`);
+      }
     }
+
     console.log(`[${adapter.name}] upserted ${playsUpserted} plays, ${performancesUpserted} performances`);
-    await reconcile(adapter.name, seenSourceKeys);
+
+    // Reconciliation deletes whatever it did not see, so it is only safe when
+    // the "seen" set is a faithful snapshot of the source. After a run where a
+    // meaningful share of rows failed, it is not.
+    const failureRate = plays.length ? warnings.length / plays.length : 0;
+    if (failureRate > MAX_FAILURE_RATE_FOR_RECONCILE) {
+      console.warn(
+        `[${adapter.name}] skipping reconciliation: ${warnings.length}/${plays.length} rows failed to upsert, so the catalogue snapshot cannot be trusted.`
+      );
+    } else {
+      await reconcile(adapter.name, seenSourceKeys);
+      performancesDeleted = (await reconcilePerformances(adapter.name, seenPerformanceKeys)).deleted;
+    }
   } catch (e) {
     errorMessage = errorMessageOf(e);
     console.error(`[${adapter.name}] failed:`, errorMessage);
@@ -274,11 +367,20 @@ async function runAdapter(adapter: SyncAdapter) {
       finished_at: new Date().toISOString(),
       plays_upserted: playsUpserted,
       performances_upserted: performancesUpserted,
+      plays_failed: warnings.length,
+      performances_deleted: performancesDeleted,
+      warnings: warnings.length ? warnings : null,
       error: errorMessage ?? null,
     })
     .eq("id", syncRun!.id);
 
   if (errorMessage) throw new Error(`${adapter.name}: ${errorMessage}`);
+
+  // A source that returns nothing is indistinguishable from a successful run
+  // in the numbers alone, and that is exactly the shape of every failure this
+  // pipeline has actually had — a renamed section, a relaunched site. Fail
+  // loudly so the scheduled job goes red instead of quietly reporting success.
+  if (!playsUpserted) throw new Error(`${adapter.name}: produced no plays at all, which is almost certainly a broken scrape`);
 }
 
 async function main() {

@@ -358,13 +358,47 @@ export async function createVenue(input: { name: string; type: Venue["type"]; ci
   } = await supabase.auth.getUser();
   if (!authUser) throw new Error("Sign in required");
 
+  const name = input.name.trim();
+  const city = input.city.trim();
+
+  // Reuse an existing venue rather than creating a second one. Two people
+  // adding "Katona József Színház" by hand used to produce two rows — and a
+  // play attached to one of them was invisible under the other's filters.
+  // 0008_sync_hardening.sql now enforces this with a unique index, so an
+  // unchecked insert would fail outright.
+  const existing = await findVenueByNameAndCity(name, city);
+  if (existing) return existing;
+
   const { data, error } = await supabase
     .from("venues")
-    .insert({ name: input.name, type: input.type, city: input.city, created_by: authUser.id })
+    .insert({ name, type: input.type, city, created_by: authUser.id })
     .select("*")
     .single();
-  if (error) throw error;
+
+  if (error) {
+    // Someone else created the same venue between the lookup and the insert.
+    // Unique violation; the row we wanted now exists, so use theirs.
+    if (error.code === "23505") {
+      const raced = await findVenueByNameAndCity(name, city);
+      if (raced) return raced;
+    }
+    throw error;
+  }
+
   return toVenue(data as VenueRow);
+}
+
+/** Case- and whitespace-insensitive lookup, matching the venues unique index. */
+async function findVenueByNameAndCity(name: string, city: string): Promise<Venue | undefined> {
+  const { data, error } = await supabase
+    .from("venues")
+    .select("*")
+    .ilike("name", name)
+    .ilike("city", city)
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? toVenue(data as VenueRow) : undefined;
 }
 
 export async function createPlay(input: {
