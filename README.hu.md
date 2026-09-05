@@ -18,7 +18,7 @@ npx expo install --fix
 
 Ezután hozz létre egy [Supabase](https://supabase.com) projektet (az ingyenes
 csomag bőven elég), futtasd le a `supabase/migrations/` **összes** fájlját
-**sorrendben** (`0001_init.sql`-től a `0023_source_url.sql`-ig) a projekt
+**sorrendben** (`0001_init.sql`-től a `0024_people.sql`-ig) a projekt
 SQL-szerkesztőjében, majd másold a `.env.example`-t `.env`-re, és töltsd ki a
 projekt Settings → API oldaláról az URL-t és az anon kulcsot:
 
@@ -64,6 +64,7 @@ app/                     expo-router képernyők (fájlalapú útvonalak)
     watchlist.tsx             Figyelőlista
     profile.tsx                Profil
   play/[id].tsx           Előadás részletei
+  person/[slug].tsx       Egy alkotó, és minden, amiben szerepel
   checkin.tsx             Előadás rögzítése — dátum, értékelés, vélemény (modál)
   add-play.tsx            Előadás kézi felvitele (modál, belépés kell hozzá)
   sign-in.tsx / sign-up.tsx  Auth modálok
@@ -84,6 +85,8 @@ theme/                    tervezési tokenek — a „Velvet Curtain" vizuális
 
 contexts/AuthContext.tsx  Supabase munkamenet-állapot, az egész appot körbeveszi
 
+utils/people.ts           névkanonizálás és slug-képzés — a person_slug()
+                          adatbázisfüggvény kliensoldali fele
 utils/calendar.ts         a dátumválasztó hónaprács-számításai, a komponensen
                           kívül tartva, hogy tesztelhető legyen
 utils/datetime.ts         magyar dátum- és időformázás, Europe/Budapest
@@ -93,6 +96,8 @@ data/types.ts             domain típusok (Play, Venue, Review, User, …)
 services/supabase.ts      a Supabase kliens (az EXPO_PUBLIC_SUPABASE_*-ot olvassa)
 services/playsService.ts  a képernyők KIZÁRÓLAG innen kapnak előadás/helyszín/
                           felhasználó adatot — Supabase lekérdezésekkel
+services/peopleService.ts egy alkotó közreműködései, a play_cast és a
+                          plays.director táblát együtt olvasva
 services/searchService.ts rangsorolt, ékezetfüggetlen keresés elgépelés-tűréssel,
                           előadásokban/helyszínekben/szereplők közt
                           (Postgres RPC)
@@ -321,6 +326,88 @@ tizenegy ötös és két egyes-e. A `play_rating_histogram()` maszksávonként e
 ad vissza, mindig mind az ötöt, hogy a tengely teljes legyen, és az Előadás
 részletei oldal a naplózó gomb fölé rajzolja, amint egynél többen értékelték —
 egyetlen értékelésnek nincs szórása.
+
+## Miben játszik még?
+
+A `play_cast` eddig az adatbázis legnagyobb táblája volt — 6 397 közreműködés
+2 424 emberrel —, és az egyetlen, amire semmilyen képernyő nem mutatott. A
+keresés rangsorolja a szereposztásban talált egyezést, tehát egy színész nevére
+rákeresve megjelentek az előadásai, aztán minden találat egy produkcióra vitt. A
+kérdésre, amiért a szereposztás egyáltalán ott van, nem volt válasz.
+
+A `0024_people.sql` és az `app/person/[slug].tsx` ez a válasz. Az oldalra az
+Előadás részletei képernyő szereposztás-sávjából és rendezősorából lehet eljutni
+— ez az a két hely, ahol az ember már úgyis egy nevet néz, és épp ezt kérdezi.
+
+Ehhez három dolognak kellett igaznak lennie, és egyik sem volt az.
+
+### A névmező nem mindig csak nevet tartalmaz
+
+A magyar színházak a kitüntetéseket és a vendégstátuszt is a névbe írják, és nem
+egyformán. Ha ezt békén hagyjuk, egy ember több oldalra esik szét — és pont ezt
+az egy hibát nem éli túl egy alkotói oldal, hiszen a teljes értéke abból jön,
+hogy egy helyre gyűjti a közreműködéseket.
+
+A legnagyobb tettes az **m.v.** — *mint vendég* — nagyjából 230 szereposztássoron.
+Pontosan a lehető legrosszabb névhalmaz ehhez a hibához: a vendég értelemszerűen
+olyan színházban lép fel, ami nem a sajátja, tehát épp a vendégek fordulnak elő a
+legnagyobb eséllyel két háznál — a "Mészáros Béla m.v." és a "Mészáros Béla" pedig
+két idegen lett volna. Utána jönnek az állami díjak: "Szikora János Jászai-díjas,
+Érdemes Művész", vagy "Rátkai Erzsébet Ferenczy Noémi- és Jászai Mari-díjas,
+Érdemes Művész, a Magyar Művészeti Akadémia rendes tagja".
+
+A `person_canonical_name()` az első ilyen jelölőtől a sztring végéig vág, ami
+azért működik, mert a magyar előbb írja a nevet és utána a titulusokat — ebben a
+katalógusban kivétel nélkül. A díjakat névről soroljuk fel, nem "bármely
+`-díjas`-ra végződő szó" mintával, mert az általános szabály nem tudja eldönteni,
+hogy a toldalék előtti szó a díjhoz vagy az emberhez tartozik: a "Szikora János
+Jászai-díjas" esetben a keresztneve, a "Létay Kiss Gabriella Liszt Ferenc-díjas"
+esetben a díj nevének a fele. Az opcionális `- és` ág azt a magyar
+szerkezetet kezeli, amikor két díj osztozik egy toldalékon.
+
+A hatás látszik: Molnár Levente négy írásmódja egyetlen, kilenc közreműködést
+tartalmazó oldallá válik, Ágoston Péter pedig összeolvad a CSUPA NAGYBETŰS
+írásmóddal, amit egy másik ház használ.
+
+### A rendezői munka fele nincs benne a szereposztástáblában
+
+945 produkció nevez meg rendezőt, és ezek közül csak 122 rendező szerepel a
+`play_cast` táblában is. Egy csak a szereposztástáblára épülő alkotói oldal a
+katalógus rendezői munkájának hét nyolcadát elveszítené — Bodó Viktor oldala üres
+lett volna a most látható, három színházban játszott nyolc előadás helyett.
+
+Ezért a `person_credits()` egyesíti a szereposztássorokat a `plays.director`
+mezővel. Azt a mezőt szét kell bontani: tíz sorban társrendezők vannak, vagy
+nagykötőjellel (ez a Vígszínház szokása), vagy vesszővel elválasztva. Ha csak
+vessző mentén bontunk, embereket találunk ki, mert ugyanez az elválasztó vezeti
+be a kitüntetéseket is — a "Juronics Tamás Kossuth-díjas, érdemes művész" egyetlen
+rendező, és a naiv bontás a titulusa felét kollégaként iktatja be "érdemes
+művész" néven. Ha előbb bontunk és utána kanonizáljuk a darabokat, mindkét eset
+megoldódik, a nagybetű-ellenőrzés pedig kiszűri, ami maradt és nem név.
+
+### Van, ami szerepnek látszik, de nem az
+
+Több oldal listafejlécet ír a szerep oszlopba — "továbbá", "valamint",
+"játsszák" —, a scraperek pedig ugyanúgy név/szerep párként olvassák, mint
+mindent. Az `is_listing_artifact()` ezeket elnyomja, mert értelmetlen egy
+oldalon a "továbbá" valakinek a feladataként. A "Szereplő" szándékosan nincs
+ezen a listán: általános, de igaz állítás, és egy olyan oldalon, aminek épp a
+játszás és az alkotás elkülönítése a lényege, az általános és a haszontalan két
+különböző dolog.
+
+### A slug szándékosan kétszer van megírva
+
+Az URL `/person/<slug>`, és a slug két helyen készül: a `person_slug()` az
+adatbázisban, a `personSlug()` az `utils/people.ts`-ben. Az appnak azért kell,
+hogy a szereposztásból hálózati kérés nélkül tudjon linket építeni; az
+adatbázisnak azért, hogy minden tárolt névvel össze tudja vetni.
+
+Karakterre egyezniük kell, és csúnya a hiba, ha nem: az oldal nem hibázik, hanem
+**üresen** jön vissza, ami megkülönböztethetetlen attól, hogy valakinek nincs
+közreműködése. Az `utils/people.test.ts` a TypeScript oldalt a katalógus valódi
+neveinek táblájához köti, és ugyanez a tábla átmegy az SQL függvényen is, így a
+bármelyik oldalon bekövetkező elcsúszás kiderül, nem pedig feltételezzük, hogy
+nincs.
 
 ## Kijárat a jegypénztárhoz
 

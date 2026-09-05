@@ -425,6 +425,24 @@ export async function getPlayById(id: string): Promise<Play | undefined> {
   return data ? toPlay(data as PlayRow) : undefined;
 }
 
+/**
+ * A set of productions in one query, mapped the same way as everywhere else.
+ *
+ * Exists so a caller that has worked out *which* plays it wants by some other
+ * route — a person's credits, a list's entries — does not have to restate the
+ * play columns or re-implement `toPlay`. Keeping that in one place is what lets
+ * a column added to `plays` reach every screen at once.
+ *
+ * Order is not preserved: Postgres returns what it likes for an `in`, and the
+ * callers here all sort by something of their own afterwards.
+ */
+export async function getPlaysByIds(ids: string[]): Promise<Play[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase.from("plays").select(PLAY_SELECT).in("id", ids);
+  if (error) throw error;
+  return (data ?? []).map((r) => toPlay(r as PlayRow));
+}
+
 export async function getVenueById(id: string): Promise<Venue | undefined> {
   const { data, error } = await supabase.from("venues").select("*").eq("id", id).maybeSingle();
   if (error) throw error;

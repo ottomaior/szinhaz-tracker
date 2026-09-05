@@ -27,6 +27,7 @@ import { ChevronLeftIcon, ExternalLinkIcon, ShareIcon, TicketIcon, PlusIcon } fr
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { ShowtimeList } from "@/components/ui/ShowtimeList";
 import { formatLongDate, formatShowtime } from "@/utils/datetime";
+import { personSlug } from "@/utils/people";
 import { strings } from "@/i18n/hu";
 import { closeModal } from "@/utils/navigation";
 
@@ -126,6 +127,19 @@ export default function PlayDetailScreen() {
     }
   }
 
+  /**
+   * Open a performer's or director's page.
+   *
+   * The slug is built here rather than fetched, using the same rule the
+   * database applies — see `utils/people.ts` for why the two have to agree.
+   * A name that slugs to nothing (a stray separator the scraper kept) has no
+   * page to open, so the tap does nothing rather than navigating to /person/.
+   */
+  function openPerson(name: string) {
+    const slug = personSlug(name);
+    if (slug) router.push(`/person/${slug}`);
+  }
+
   async function openTickets(url: string) {
     try {
       await Linking.openURL(url);
@@ -192,8 +206,27 @@ export default function PlayDetailScreen() {
         <ContentColumn style={{ paddingHorizontal: gutter, gap: space.xl, marginTop: space.lg }}>
           <View style={{ gap: space.sm }}>
             <Text variant="display">{play.title}</Text>
+            {/* The director's name is a link; the author's is not. That is not
+                an oversight — `play_cast` and `plays.director` are what a
+                person page is built from, and nothing in the catalogue indexes
+                the playwright, so a Shakespeare link would open an empty page.
+                The credit line stays one sentence either way. */}
             <Text variant="body" tone="dim">
-              {[play.author, play.director ? `rend. ${play.director}` : ""].filter(Boolean).join(" · ")}
+              {play.author}
+              {!!play.author && !!play.director && " · "}
+              {!!play.director && (
+                <>
+                  {"rend. "}
+                  <Text
+                    variant="body"
+                    tone="accent"
+                    accessibilityRole="link"
+                    onPress={() => openPerson(play.director)}
+                  >
+                    {play.director}
+                  </Text>
+                </>
+              )}
             </Text>
             <View style={styles.metaRow}>
               {!!venue?.name && (
@@ -338,7 +371,17 @@ export default function PlayDetailScreen() {
                 {play.cast.map((c, i) => (
                   // Keyed by index: the same performer legitimately appears
                   // twice when they cover two roles in one production.
-                  <View key={`${c.name}-${i}`} style={styles.castMember}>
+                  //
+                  // Pressable since 0024: a cast list exists to provoke "what
+                  // else is she in", and until there was a person page to send
+                  // this to, the answer was nowhere.
+                  <Pressable
+                    key={`${c.name}-${i}`}
+                    style={styles.castMember}
+                    onPress={() => openPerson(c.name)}
+                    accessibilityRole="button"
+                    accessibilityLabel={c.name}
+                  >
                     <Avatar initials={initialsOf(c.name)} size={52} />
                     <Text variant="caption" numberOfLines={2} style={{ textAlign: "center" }}>
                       {c.name}
@@ -348,7 +391,7 @@ export default function PlayDetailScreen() {
                         {c.role}
                       </Text>
                     )}
-                  </View>
+                  </Pressable>
                 ))}
               </ScrollView>
             </View>

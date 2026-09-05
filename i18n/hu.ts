@@ -269,6 +269,21 @@ export const strings = {
       count === 1 ? "Ezt már láttad egyszer — ez a második alkalom." : `Ezt már ${count}-szer láttad.`,
   },
 
+  /** One performer or director, and everything the catalogue credits them on. */
+  person: {
+    headerFallback: "Alkotó",
+    creditsHeading: "Előadások",
+    credits: "Közreműködés",
+    venues: "Színház",
+    directed: "Rendezés",
+    seenByYou: "Ebből láttad",
+    seenBadge: "Láttad",
+    director: "Rendező",
+    venueCount: (n: number) => `${n} színház`,
+    notFoundTitle: "Nem találjuk ezt az alkotót.",
+    notFoundBody: "Lehet, hogy elgépelt a cím, vagy a katalógusban más néven szerepel.",
+  },
+
   profile: {
     playsSeen: "Megnézett darab",
     thisYear: "Idén",

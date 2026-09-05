@@ -16,7 +16,7 @@ npx expo install --fix
 
 Then create a [Supabase](https://supabase.com) project (free tier is
 enough), run every file in `supabase/migrations/` **in order** (`0001_init.sql`
-through `0023_source_url.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
+through `0024_people.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
 URL/anon key from the project's Settings → API page:
 
 ```bash
@@ -60,6 +60,7 @@ app/                     expo-router screens (file-based routing)
     watchlist.tsx             Watchlist
     profile.tsx                Profile
   play/[id].tsx           Play Detail
+  person/[slug].tsx       One performer or director, and everything they are on
   checkin.tsx             Log a Performance — date, rating, review (modal)
   add-play.tsx            Add a play manually (modal, requires sign-in)
   sign-in.tsx / sign-up.tsx  Auth modals
@@ -78,6 +79,8 @@ theme/                    design tokens — the single source of truth for
 
 contexts/AuthContext.tsx  Supabase session state, wraps the whole app
 
+utils/people.ts           name canonicalisation and slugging — the client half
+                          of person_slug() in the database
 utils/calendar.ts         month-grid arithmetic for the date picker, kept out
                           of the component so it can be tested
 utils/datetime.ts         Hungarian date/time formatting, pinned to
@@ -87,6 +90,8 @@ data/types.ts             domain types (Play, Venue, Review, User, …)
 services/supabase.ts      the Supabase client (reads EXPO_PUBLIC_SUPABASE_*)
 services/playsService.ts  the ONLY thing screens import play/venue/user
                           data from — queries Supabase
+services/peopleService.ts one performer's credits, over play_cast and
+                          plays.director together
 services/searchService.ts ranked, accent-insensitive search with a typo
                           fallback, over plays/venues/cast (Postgres RPC)
 services/authService.ts   sign up / sign in / sign out
@@ -302,6 +307,87 @@ A production could say 4.2 with no way to show whether that was eleven fives and
 two ones. `play_rating_histogram()` returns one row per whole-mask band, always
 all five so the axis is complete, and Play Detail draws it above the log button
 whenever more than one person has rated — a single rating has no spread.
+
+## What else is she in
+
+`play_cast` has been the largest table in the database — 6,397 credits over
+2,424 people — and the only one with no screen pointing at it. Search ranks a
+cast match, so typing a performer's name found their productions, and then every
+result navigated to a production. The question a cast list exists to provoke had
+no answer.
+
+`0024_people.sql` and `app/person/[slug].tsx` are that answer. The page is
+reached from the cast strip and the director line on Play Detail, which are the
+two places somebody is already looking at a name and wondering.
+
+Three things had to be true first, and none of them was.
+
+### A name field does not always hold only a name
+
+Hungarian theatres print honours and guest status inside the name, and they do
+not agree on how. Left alone this splits one person across several pages, which
+is the one failure a person page cannot survive — its entire value is gathering
+credits together.
+
+The biggest offender is **m.v.** — *mint vendég*, "as guest" — on roughly 230
+cast rows. That is exactly the wrong set of names to get wrong: a guest is by
+definition appearing at a theatre that is not their own, so guests are the
+people most likely to turn up under two houses, and "Mészáros Béla m.v." and
+"Mészáros Béla" would have been two strangers. Then the state prizes: "Szikora
+János Jászai-díjas, Érdemes Művész", or "Rátkai Erzsébet Ferenczy Noémi- és
+Jászai Mari-díjas, Érdemes Művész, a Magyar Művészeti Akadémia rendes tagja".
+
+`person_canonical_name()` cuts from the first such marker to the end of the
+string, which works because Hungarian prints the name first and the titles
+after, without exception in this catalogue. The awards are listed by name rather
+than matched as "any word ending in `-díjas`", because the generic rule cannot
+tell whether the word before the suffix belongs to the award or to the person —
+in "Szikora János Jászai-díjas" it is his forename, and in "Létay Kiss Gabriella
+Liszt Ferenc-díjas" it is half the award. The optional `- és` branch handles the
+suspended compound Hungarian writes when two prizes share one suffix.
+
+The effect is visible: Molnár Levente's four spellings become one page of nine
+credits, and Ágoston Péter merges with the ALL CAPS spelling another house uses.
+
+### Half the directing work is not in the cast table
+
+945 productions name a director and only 122 of those directors also appear in
+`play_cast`. A person page built on the cast table alone would miss seven
+eighths of the directing in the catalogue — Bodó Viktor's page would have been
+empty rather than the eight productions across three theatres it now shows.
+
+So `person_credits()` unions the cast rows with `plays.director`. That column
+needs splitting: ten rows hold co-directors, joined either with an en dash
+(Vígszínház's convention) or a comma. Splitting on the comma alone invents
+people, because the same separator introduces honorifics — "Juronics Tamás
+Kossuth-díjas, érdemes művész" is one director, and a naive split files half his
+title as a colleague called "meritorious artist". Splitting first and
+canonicalising each fragment afterwards handles both, and a capital-letter guard
+drops whatever is left that is not a name.
+
+### Some roles are not roles
+
+Several sites print list headings in the role column — "továbbá" (furthermore),
+"valamint" (as well as), "játsszák" (played by) — and the scrapers read them as
+name/role pairs like everything else. `is_listing_artifact()` suppresses them,
+because a page listing "továbbá" as somebody's function is nonsense. "Szereplő"
+is deliberately not on that list: it is generic, but it is a true claim, and on
+a page whose whole purpose is separating performing from designing, generic and
+useless are different things.
+
+### The slug is written twice, on purpose
+
+The URL is `/person/<slug>`, and the slug is built in two places: `person_slug()`
+in the database, and `personSlug()` in `utils/people.ts`. The app needs it to
+make the link from a cast list without a round trip; the database needs it to
+match against every name it holds.
+
+They have to agree character for character, and the failure when they do not is
+nasty — the page does not error, it comes back **empty**, which is
+indistinguishable from a performer nobody has credited. `utils/people.test.ts`
+pins the TypeScript side against a table of real names from this catalogue, and
+the same table is run through the SQL function, so a drift on either side is
+caught rather than assumed away.
 
 ## The exit to the box office
 
