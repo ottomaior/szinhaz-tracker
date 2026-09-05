@@ -18,7 +18,7 @@ npx expo install --fix
 
 Ezután hozz létre egy [Supabase](https://supabase.com) projektet (az ingyenes
 csomag bőven elég), futtasd le a `supabase/migrations/` **összes** fájlját
-**sorrendben** (`0001_init.sql`-től a `0024_people.sql`-ig) a projekt
+**sorrendben** (`0001_init.sql`-től a `0025_lists.sql`-ig) a projekt
 SQL-szerkesztőjében, majd másold a `.env.example`-t `.env`-re, és töltsd ki a
 projekt Settings → API oldaláról az URL-t és az anon kulcsot:
 
@@ -65,6 +65,8 @@ app/                     expo-router képernyők (fájlalapú útvonalak)
     profile.tsx                Profil
   play/[id].tsx           Előadás részletei
   person/[slug].tsx       Egy alkotó, és minden, amiben szerepel
+  list/[id].tsx           Egy lista és a tartalma
+  lists.tsx               Szerkesztői listák és a sajátjaid (modál)
   checkin.tsx             Előadás rögzítése — dátum, értékelés, vélemény (modál)
   add-play.tsx            Előadás kézi felvitele (modál, belépés kell hozzá)
   sign-in.tsx / sign-up.tsx  Auth modálok
@@ -98,6 +100,8 @@ services/playsService.ts  a képernyők KIZÁRÓLAG innen kapnak előadás/helys
                           felhasználó adatot — Supabase lekérdezésekkel
 services/peopleService.ts egy alkotó közreműködései, a play_cast és a
                           plays.director táblát együtt olvasva
+services/listsService.ts  listák és a bejegyzéseik, felhasználói és
+                          szerkesztői egyaránt
 services/searchService.ts rangsorolt, ékezetfüggetlen keresés elgépelés-tűréssel,
                           előadásokban/helyszínekben/szereplők közt
                           (Postgres RPC)
@@ -408,6 +412,63 @@ közreműködése. Az `utils/people.test.ts` a TypeScript oldalt a katalógus va
 neveinek táblájához köti, és ugyanez a tábla átmegy az SQL függvényen is, így a
 bármelyik oldalon bekövetkező elcsúszás kiderül, nem pedig feltételezzük, hogy
 nincs.
+
+## Listák, és hogy mire jók valójában
+
+A lista a filmnaplózás legtöbbet másolt ötlete, itt viszont van egy második
+feladata is, amire a filmes appoknak nincs szükségük: ez az egyetlen mód, hogy
+egy vadonatúj fiók elé valami olvasnivalót tegyünk.
+
+A Felfedezés böngészősávjai a `plays.rating_overall` szerint rangsorolnak, ami
+négy értékelésből számolt átlag 1 214 produkción. Ez nem népszerűségi jelzés,
+hanem tizedesponttal ellátott zaj. Tíz kézzel készített lista ugyanezen a
+katalóguson jobb első képernyő — és a népszerűségi jelzéssel ellentétben nem kell
+hozzá, hogy előbb legyenek felhasználók.
+
+Ezért a `0025_lists.sql` mindkét fajtát ugyanazon a két táblán tartja: a saját
+magának készített listát, és az SQL-szerkesztőből írt, `is_featured` jelzésű
+szerkesztői listát.
+
+Három sémadöntés érdemel figyelmet.
+
+**Az `is_ranked` rögzített, nem kikövetkeztetett.** "A 2025/26-os évad
+legjobbjai" rangsor, a "Shakespeare Budapesten" nem, és a részletek képernyő csak
+az elsőt számozza. Ha egy listát megszámozunk, amit a készítője nem rangsorolt,
+olyan ítéletet teszünk közzé, amit ő nem mondott ki.
+
+**A "szerkesztői" jelzésnek jelentenie kell valamit.** Őrzés nélkül az
+`is_featured` csak egy oszlop egy soron, amit a tulajdonosa módosíthat, tehát
+bárki a Felfedezés élére tehetné a saját listáját. A `lists_guard_featured` a
+korábbi értékére szögezi a jelzőt, hacsak az utasítás nem `postgres` vagy
+`service_role` néven fut.
+
+A trigger első változata `security definer` volt, és csendben nem csinált semmit
+— ezt érdemes feljegyezni, mert helyesnek látszik: egy `security definer`
+függvényen belül a `current_user` a függvény *tulajdonosa*, így az őr minden
+híváskor `postgres`-t látott, és mindig az engedélyező ágra futott. Úgy derült
+ki, hogy egy valódi bejelentkezett felhasználót utánoztunk — `set local role
+authenticated` plusz egy `request.jwt.claims` beállítás, pontosan ahogy a
+PostgREST teszi egy alkalmazáskérésnél —, és a lista szerkesztőiként szúrta be
+magát. A soha nem is szükséges emelt jogosultság nélkül ugyanez a teszt már
+`is_featured = false` értéket ad vissza, miközben az ugyanabban az utasításban
+lévő átnevezés átmegy: az őr sebészi, nem takarópokróc.
+
+**Az elsődleges kulcs a `(list_id, play_id)`.** Egy produkció nem szerepelhet
+kétszer ugyanazon a listán; rangsorolt vagy sem, a második bejegyzés hiba lenne,
+nem vélemény.
+
+A `list_summaries()` egyetlen hívásban adja vissza minden listához a méretét és
+legfeljebb négy borítóazonosítót, a képernyő pedig egyetlen `getPlaysByIds`
+hívással oldja fel mindet — kártyánként négy bélyegkép, egy képernyőnyi kártyával
+megszorozva pontosan az az elemenkénti kérés, ami ellen a `getVenuesByIds`
+létezik. A borítók átfedik egymást a kártyán, nem egymás mellett sorakoznak, mert
+a lista egyetlen objektum több dologgal benne — négy különálló csempe négy
+különálló sornak látszana.
+
+Egy produkció listára vétele szándékosan más vezérlő, mint a kívánságlista. A
+kívánságlista arra válaszol, hogy "elmegyek-e erre" — egy kérdés, egy válasz —,
+a lista pedig arra, hogy "mivel tartozik ez össze", ami nyitott, és egyszerre
+több is lehet.
 
 ## Kijárat a jegypénztárhoz
 

@@ -3,7 +3,7 @@ import { View, ScrollView, StyleSheet, Pressable } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
-import { gutter, space } from "@/theme/tokens";
+import { gutter, radius, space } from "@/theme/tokens";
 import { getCurrentUser, getDiaryEntriesForUser, getVenuesByIds, getWatchlist, type DiaryEntry } from "@/services/playsService";
 import { signOut } from "@/services/authService";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,6 +12,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { PlayRow } from "@/components/ui/PlayRow";
 import { MaskRatingRow } from "@/components/icons/MaskIcon";
+import { ChevronRightIcon } from "@/components/icons/Icons";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
@@ -153,6 +154,19 @@ export default function ProfileScreen() {
             <View style={styles.statDivider} />
             <Stat value={user.stats.following} label={strings.profile.following} />
           </View>
+
+          {/* Lists are a screen of their own rather than a fourth tab here.
+              The three tabs are all "productions, filtered" and read as one
+              control; a list is a different kind of object, and burying it as a
+              fourth option would make it look like another view of the diary. */}
+          <Pressable
+            onPress={() => router.push("/lists")}
+            accessibilityRole="button"
+            style={styles.listsLink}
+          >
+            <Text variant="label">{strings.lists.headerTitle}</Text>
+            <ChevronRightIcon size={15} color={colors.textFaint} />
+          </Pressable>
 
           <View style={styles.tabsRow}>
             {TABS.map((t) => (
@@ -347,6 +361,16 @@ const styles = StyleSheet.create({
   },
   stat: { flex: 1, alignItems: "center", gap: 2 },
   statDivider: { width: 1, backgroundColor: colors.hairlineSoft },
+  listsLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: space.lg,
+    paddingVertical: space.md,
+    paddingHorizontal: space.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+  },
   tabsRow: {
     flexDirection: "row",
     gap: 22,

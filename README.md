@@ -16,7 +16,7 @@ npx expo install --fix
 
 Then create a [Supabase](https://supabase.com) project (free tier is
 enough), run every file in `supabase/migrations/` **in order** (`0001_init.sql`
-through `0024_people.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
+through `0025_lists.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
 URL/anon key from the project's Settings → API page:
 
 ```bash
@@ -61,6 +61,8 @@ app/                     expo-router screens (file-based routing)
     profile.tsx                Profile
   play/[id].tsx           Play Detail
   person/[slug].tsx       One performer or director, and everything they are on
+  list/[id].tsx           One list and what is on it
+  lists.tsx               Editorial lists, and yours (modal)
   checkin.tsx             Log a Performance — date, rating, review (modal)
   add-play.tsx            Add a play manually (modal, requires sign-in)
   sign-in.tsx / sign-up.tsx  Auth modals
@@ -92,6 +94,7 @@ services/playsService.ts  the ONLY thing screens import play/venue/user
                           data from — queries Supabase
 services/peopleService.ts one performer's credits, over play_cast and
                           plays.director together
+services/listsService.ts  lists and their entries, user-made and editorial
 services/searchService.ts ranked, accent-insensitive search with a typo
                           fallback, over plays/venues/cast (Postgres RPC)
 services/authService.ts   sign up / sign in / sign out
@@ -388,6 +391,60 @@ indistinguishable from a performer nobody has credited. `utils/people.test.ts`
 pins the TypeScript side against a table of real names from this catalogue, and
 the same table is run through the SQL function, so a drift on either side is
 caught rather than assumed away.
+
+## Lists, and what they are really for
+
+Lists are the most-copied idea in film logging, and here they do a second job
+the film apps do not need them for: they are the only way to put something worth
+reading in front of a brand-new account.
+
+Discover's browse rails rank by `plays.rating_overall`, an average computed from
+four reviews across 1,214 productions. That is not a popularity signal, it is
+noise with a decimal point. Ten hand-made lists over the same catalogue is a
+better first screen, and unlike a popularity signal it needs no users to exist
+first.
+
+So `0025_lists.sql` gives both kinds the same two tables. A list somebody makes
+for themselves, and a list written from the SQL editor and marked `is_featured`.
+
+Three decisions in the schema are worth knowing about.
+
+**`is_ranked` is recorded, not inferred.** "A 2025/26-os évad legjobbjai" is a
+ranking and "Shakespeare Budapesten" is not, and the detail screen numbers the
+entries only for the first. Numbering a list its author never ranked publishes a
+judgement they did not make.
+
+**"Featured" has to mean something.** Without a guard, `is_featured` is just a
+column on a row its owner can update, so anyone could put their own list on the
+front of Discover. `lists_guard_featured` pins the flag to whatever it already
+was unless the statement runs as `postgres` or `service_role`.
+
+The first version of that trigger was `security definer` and silently did
+nothing, which is worth recording because it looks correct: inside a `security
+definer` function `current_user` is the function's *owner*, so the guard saw
+`postgres` on every call and took the allow branch every time. It was caught by
+impersonating a real signed-in user — `set local role authenticated` plus a
+`request.jwt.claims` setting, which is what PostgREST does for an app request —
+and watching a list insert itself as featured. Without the elevated rights it
+never needed, the same test now returns `is_featured = false` while the rename in
+the same statement still goes through, so the guard is surgical rather than a
+blanket block.
+
+**The primary key is `(list_id, play_id)`.** A production cannot appear twice on
+one list; ranked or not, the second entry would be a mistake rather than an
+opinion.
+
+`list_summaries()` returns each list with its size and up to four cover ids in
+one call, and the screen resolves all of them in a single `getPlaysByIds` —
+four thumbnails per card times a screen of cards is exactly the request-per-item
+pattern `getVenuesByIds` exists to avoid. The covers overlap on the card rather
+than sitting in a row, because a list is one object containing several things
+and four separate tiles read as four separate rows.
+
+Adding a production to a list is deliberately a different control from the
+watchlist. The watchlist answers "am I going to this", which is one question
+with one answer; a list answers "what does this belong with", which is
+open-ended and can be several at once.
 
 ## The exit to the box office
 

@@ -202,6 +202,9 @@ export const strings = {
     shareFailed: "A megosztás nem sikerült.",
     linkCopied: "A link a vágólapra másolva.",
     addToWatchlist: "Kívánságlistához adom",
+    /* Distinct from the watchlist: that answers "am I going", this answers
+       "what does this belong with", and the second can be several at once. */
+    addToList: "Felvétel egy listára",
     removeFromWatchlist: "Törlés a kívánságlistáról",
     watchlistError: "Nem sikerült frissíteni a kívánságlistát.",
     archivedBadge: "Archív",
@@ -267,6 +270,53 @@ export const strings = {
      */
     rewatchNotice: (count: number) =>
       count === 1 ? "Ezt már láttad egyszer — ez a második alkalom." : `Ezt már ${count}-szer láttad.`,
+  },
+
+  /** Productions gathered under a title — user-made and editorial alike. */
+  lists: {
+    headerTitle: "Listák",
+    headerFallback: "Lista",
+    featuredHeading: "Szerkesztői listák",
+    mineHeading: "A listáim",
+    newList: "Új lista",
+    create: "Létrehozás",
+    creating: "Létrehozás…",
+    createError: "Nem sikerült létrehozni a listát. Próbáld újra.",
+    titlePlaceholder: "A lista címe",
+    descriptionPlaceholder: "Miről szól ez a lista? (nem kötelező)",
+    rankedLabel: "Sorrendezett lista",
+    rankedHint: "A sorrend számít, és a lista sorszámozva jelenik meg.",
+    itemCount: (n: number) => `${n} előadás`,
+    rankedBadge: "sorrendezett",
+    privateBadge: "privát",
+    featuredBadge: "szerkesztői",
+
+    emptyTitle: "Még nincs listád.",
+    emptyBody: "A lista arra jó, hogy egy témába rendezd az előadásokat — évadösszegzés, Shakespeare Budapesten, amit egy első színházlátogatónak ajánlanál.",
+    signInTitle: "Jelentkezz be a saját listáidhoz.",
+    signInBody: "A szerkesztői listákat bejelentkezés nélkül is olvashatod.",
+
+    emptyListTitle: "Ez a lista még üres.",
+    emptyListBody: "A készítője még nem tett bele előadást.",
+    emptyListBodyOwner: "Keress egy előadást, és a részletek oldalán vedd fel erre a listára.",
+    browseToAdd: "Felfedezés",
+
+    notFoundTitle: "Nem találjuk ezt a listát.",
+    notFoundBody: "Lehet, hogy törölték, vagy a készítője privátra állította.",
+
+    addToListTitle: "Melyik listára?",
+    noListsYet: "Még nincs listád. Hozz létre egyet, és ide kerül.",
+    addError: "Nem sikerült felvenni a listára.",
+    removeError: "Nem sikerült levenni a listáról.",
+    removeEntry: "Levesz",
+
+    deleteList: "Lista törlése",
+    deleteConfirmTitle: "Törlöd ezt a listát?",
+    deleteConfirmBody: (n: number) =>
+      n === 0
+        ? "A lista üres, a törlés nem érint egyetlen előadást sem."
+        : `A listán ${n} előadás van. Maguk az előadások megmaradnak, csak ez a gyűjtemény szűnik meg.`,
+    deleteError: "Nem sikerült törölni a listát.",
   },
 
   /** One performer or director, and everything the catalogue credits them on. */

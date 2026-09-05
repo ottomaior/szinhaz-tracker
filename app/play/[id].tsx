@@ -26,6 +26,7 @@ import { MaskRatingRow } from "@/components/icons/MaskIcon";
 import { ChevronLeftIcon, ExternalLinkIcon, ShareIcon, TicketIcon, PlusIcon } from "@/components/icons/Icons";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { ShowtimeList } from "@/components/ui/ShowtimeList";
+import { AddToListSheet } from "@/components/ui/AddToListSheet";
 import { formatLongDate, formatShowtime } from "@/utils/datetime";
 import { personSlug } from "@/utils/people";
 import { strings } from "@/i18n/hu";
@@ -64,6 +65,7 @@ export default function PlayDetailScreen() {
   const [watchlistBusy, setWatchlistBusy] = useState(false);
   const [notice, setNotice] = useState<string>();
   const [histogram, setHistogram] = useState<number[]>([0, 0, 0, 0, 0]);
+  const [listSheetOpen, setListSheetOpen] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -137,7 +139,7 @@ export default function PlayDetailScreen() {
    */
   function openPerson(name: string) {
     const slug = personSlug(name);
-    if (slug) router.push(`/person/${slug}`);
+    if (slug) router.push({ pathname: "/person/[slug]", params: { slug } });
   }
 
   async function openTickets(url: string) {
@@ -349,6 +351,29 @@ export default function PlayDetailScreen() {
               <Text variant="label" tone="accent">{strings.playDetail.tickets}</Text>
             </Pressable>
           )}
+
+          {/* Separate from the watchlist on purpose. The watchlist answers
+              "am I going to this", which is one question with one answer; a
+              list answers "what does this belong with", which is open-ended
+              and can be several at once. */}
+          <Pressable
+            onPress={() => (session ? setListSheetOpen(true) : router.push("/sign-in"))}
+            accessibilityRole="button"
+            accessibilityLabel={strings.playDetail.addToList}
+            style={styles.ticketLink}
+          >
+            <Text variant="label" tone="accent">{strings.playDetail.addToList}</Text>
+          </Pressable>
+
+          <AddToListSheet
+            playId={play.id}
+            visible={listSheetOpen}
+            onClose={() => setListSheetOpen(false)}
+            onCreateList={() => {
+              setListSheetOpen(false);
+              router.push("/lists");
+            }}
+          />
 
           {!!notice && (
             <Text accessibilityRole="alert" variant="bodySmall" tone="accent">

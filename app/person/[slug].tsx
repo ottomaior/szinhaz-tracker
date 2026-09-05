@@ -91,7 +91,7 @@ export default function PersonScreen() {
           {!loaded && <PersonSkeleton />}
 
           {loaded && failed && (
-            <EmptyState title={strings.common.loadError} actionLabel={strings.common.retry} onAction={() => router.replace(`/person/${slug}`)} />
+            <EmptyState title={strings.common.loadError} actionLabel={strings.common.retry} onAction={() => router.replace({ pathname: "/person/[slug]", params: { slug } })} />
           )}
 
           {/* A slug nobody matches. Reachable by typing a URL, and — more
