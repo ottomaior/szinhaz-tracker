@@ -272,6 +272,25 @@ export const strings = {
       count === 1 ? "Ezt már láttad egyszer — ez a második alkalom." : `Ezt már ${count}-szer láttad.`,
   },
 
+  /**
+   * The first-run flow: tick what you have already seen, so the diary does not
+   * start empty. Entries created here carry no date and no rating — see
+   * 0026_seen_without_a_date.sql for why inventing either would be worse than
+   * omitting it.
+   */
+  onboarding: {
+    headerTitle: "Mit láttál már?",
+    lede: "Jelöld be, amit láttál — így nem üres naplóval indulsz. A dátumot és az értékelést később bármikor hozzáadhatod.",
+    skip: "Kihagyom",
+    save: (n: number) => (n === 0 ? "Válassz előadást" : n === 1 ? "1 előadás mentése" : `${n} előadás mentése`),
+    saving: "Mentés…",
+    saveError: "Nem sikerült menteni. Próbáld újra.",
+    nothingLeftTitle: "Mindent bejelöltél már.",
+    nothingLeftBody: "Ebben a városban nincs több olyan előadás, amit ne naplóztál volna.",
+    /** On the profile, when the diary is empty. */
+    prompt: "Láttál már előadásokat? Jelöld be őket.",
+  },
+
   /** Productions gathered under a title — user-made and editorial alike. */
   lists: {
     headerTitle: "Listák",
@@ -344,6 +363,8 @@ export const strings = {
     tabReviews: "Vélemények",
     comingSoon: (tab: string) => `${tab} hamarosan.`,
     diaryEmpty: "Még nincs naplózott előadásod.",
+    /* An entry ticked during onboarding: seen, but the date is not known. */
+    seenUndated: "dátum nélkül",
     watchlistEmpty: "Még nincs semmi a kívánságlistádon.",
     reviewsEmpty: "Még nem írtál véleményt. Naplózáskor a szöveg opcionális — itt azok jelennek meg, amikhez írtál is valamit.",
     seenOn: (date: string) => `Megnézve: ${date}`,

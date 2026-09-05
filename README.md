@@ -16,7 +16,7 @@ npx expo install --fix
 
 Then create a [Supabase](https://supabase.com) project (free tier is
 enough), run every file in `supabase/migrations/` **in order** (`0001_init.sql`
-through `0025_lists.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
+through `0026_seen_without_a_date.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
 URL/anon key from the project's Settings → API page:
 
 ```bash
@@ -64,6 +64,8 @@ app/                     expo-router screens (file-based routing)
   list/[id].tsx           One list and what is on it
   lists.tsx               Editorial lists, and yours (modal)
   checkin.tsx             Log a Performance — date, rating, review (modal)
+  onboarding.tsx          "Which of these have you seen?" — a first-run grid
+                          over the theatres' archives (modal)
   add-play.tsx            Add a play manually (modal, requires sign-in)
   sign-in.tsx / sign-up.tsx  Auth modals
 
@@ -391,6 +393,88 @@ indistinguishable from a performer nobody has credited. `utils/people.test.ts`
 pins the TypeScript side against a table of real names from this catalogue, and
 the same table is run through the SQL function, so a drift on either side is
 caught rather than assumed away.
+
+## A diary that does not start empty
+
+A new account's diary is blank, and a blank diary is a form. The theatres' own
+archives are what make the alternative possible: `0005_archive_and_reconcile.sql`
+has kept hundreds of closed productions searchable and loggable since it was
+written, and until now nothing in the app ever offered them to anybody.
+
+`app/onboarding.tsx` asks one question — *which of these have you seen?* — over a
+grid of cover art, one tap each.
+
+### Ticking is not rating, and it is not dating
+
+The obvious implementation writes today's date and some default rating. Both
+would have undone the two things this schema had just fixed.
+
+Today's date is precisely the bug `0022_diary_dates.sql` exists to correct. And a
+fabricated rating does not stay private: `plays.rating_overall` is computed from
+these rows and printed on Play Detail, so fifteen invented fours from one pass
+through onboarding would move the public score of fifteen real productions.
+
+So `0026_seen_without_a_date.sql` makes both columns nullable, and the
+distinction Letterboxd draws between *watched* and a *diary entry* becomes
+expressible here too:
+
+| | means |
+|---|---|
+| `seen_at` null | seen it, cannot say when |
+| `rating_overall` null | seen it, not putting a number on it |
+
+Check-in still fills in both — it defaults the date to today and the rating to
+four — so ordinary logging is unchanged.
+
+One line of `recompute_play_rating()` changed with it. `avg()` already skipped
+nulls, so an unrated tick never moved an average on its own; `rating_count` was
+the part that would have lied, because it counted *people with any row*. Fifteen
+ticks would have made fifteen productions each claim "1 értékelés" while showing
+no score. It now counts people who actually rated.
+
+`statsForUser` moved off `created_at` too. "Idén" counted rows by when they were
+written, which was the same thing only while the app could not say when you were
+there — an onboarding pass would have reported fifteen productions seen this
+year. It counts `seen_at` now, and undated entries sit out rather than being
+guessed into it.
+
+### Dealing the tiles fairly
+
+Ordering candidates by premiere date looked obvious and was wrong. The first
+sixty came out as 20 Örkény and 16 Vojtina against 3 Katona and 1 Centrál —
+which is not what those theatres stage, but how densely their adapters publish
+premiere dates. Örkény's JSON API gives an exact date for everything; a scraped
+page often gives none. A first screen that is a third Örkény and a quarter puppet
+theatre asks the wrong questions of most people.
+
+`onboarding_candidates()` deals them round-robin instead: each theatre's most
+recent first, then each theatre's second. That evens the seven houses to 8–9
+tiles each, and recency still decides the order within a house.
+
+Two things the ranking deliberately is not. It is not `perf_count_total` — "it
+ran a lot, so more people saw it" is a good instinct and the column is populated
+on only 161 of 1,214 rows, all current productions with scraped showtimes, so
+ranking by it would bury the archive this screen exists to surface. And it is not
+filtered for workshops and talks, because **the catalogue cannot currently tell
+those from productions at these venues**: both come back as `próza` from
+`venue_default`, and `runtime_minutes` is null for plenty of real productions
+too. A stray "Workshop: …" tile costs a skipped tap; a title-matching heuristic
+would quietly hide real work, which costs more.
+
+### One accessibility note worth keeping
+
+The tiles are checkboxes, and getting that to say so on the web took two
+attempts. `accessibilityState={{ checked }}` — the convention the rest of the app
+uses — renders nothing with this version of react-native-web: the DOM came out as
+`role="checkbox"` with no checked state, so the only thing marking a ticked tile
+was the gold overlay, which a screen reader cannot see. Adding `aria-checked`
+beside the existing `accessibility*` props was worse: this version accepts one
+convention or the other, and the mixture made it drop the role and the label as
+well, leaving sixty unlabelled divs.
+
+The tiles now use `role` / `aria-checked` / `aria-label` throughout. React Native
+0.71+ accepts those natively, so one set of props serves both platforms — but the
+two conventions must not be mixed on one element.
 
 ## Lists, and what they are really for
 

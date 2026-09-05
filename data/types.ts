@@ -203,8 +203,12 @@ export interface Review {
    * A date rather than a datetime: the curtain time belongs to the performance,
    * which `performanceId` points at when it is known. This is what the diary
    * sorts and groups by, and what the season stats count.
+   *
+   * **Undefined means seen, date unknown** — what onboarding writes when
+   * somebody ticks a production from the theatres' archives. Inventing today's
+   * date there would be the exact mistake 0022_diary_dates.sql exists to undo.
    */
-  seenAt: string;
+  seenAt?: string;
   /**
    * Which showtime it was, when the catalogue holds one for that day.
    *
@@ -214,7 +218,14 @@ export interface Review {
   performanceId?: string;
   /** Not the first time they saw this production. */
   isRewatch: boolean;
-  ratingOverall: number;
+  /**
+   * **Undefined means seen and deliberately unrated.**
+   *
+   * A fabricated rating would not stay private: it feeds `plays.rating_overall`,
+   * the number Play Detail publishes. Fifteen invented fours from one pass
+   * through onboarding would move the public score of fifteen real productions.
+   */
+  ratingOverall?: number;
   ratingActing?: number;
   ratingDirecting?: number;
   ratingSetDesign?: number;

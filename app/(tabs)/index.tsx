@@ -224,7 +224,9 @@ function CheckinCard({ review, onOpenPlay }: { review: Review; onOpenPlay: (id: 
           permanent zero beside an icon that did nothing when tapped — which
           teaches a first-time visitor that the app is a mockup. They come back
           when liking and commenting exist. */}
-      <MaskRatingRow rating={review.ratingOverall} size={15} />
+      {/* Absent for a "seen it, not rating it" entry. Rendering a zero-mask row
+          would read as one star out of five rather than as no opinion. */}
+      {review.ratingOverall !== undefined && <MaskRatingRow rating={review.ratingOverall} size={15} />}
 
       {!!review.text && (
         <Text variant="bodySmall" tone="dim">{`„${review.text}”`}</Text>

@@ -18,7 +18,7 @@ npx expo install --fix
 
 Ezután hozz létre egy [Supabase](https://supabase.com) projektet (az ingyenes
 csomag bőven elég), futtasd le a `supabase/migrations/` **összes** fájlját
-**sorrendben** (`0001_init.sql`-től a `0025_lists.sql`-ig) a projekt
+**sorrendben** (`0001_init.sql`-től a `0026_seen_without_a_date.sql`-ig) a projekt
 SQL-szerkesztőjében, majd másold a `.env.example`-t `.env`-re, és töltsd ki a
 projekt Settings → API oldaláról az URL-t és az anon kulcsot:
 
@@ -68,6 +68,8 @@ app/                     expo-router képernyők (fájlalapú útvonalak)
   list/[id].tsx           Egy lista és a tartalma
   lists.tsx               Szerkesztői listák és a sajátjaid (modál)
   checkin.tsx             Előadás rögzítése — dátum, értékelés, vélemény (modál)
+  onboarding.tsx          "Mit láttál már?" — első indítás rácsa a színházak
+                          archívuma fölött (modál)
   add-play.tsx            Előadás kézi felvitele (modál, belépés kell hozzá)
   sign-in.tsx / sign-up.tsx  Auth modálok
 
@@ -412,6 +414,92 @@ közreműködése. Az `utils/people.test.ts` a TypeScript oldalt a katalógus va
 neveinek táblájához köti, és ugyanez a tábla átmegy az SQL függvényen is, így a
 bármelyik oldalon bekövetkező elcsúszás kiderül, nem pedig feltételezzük, hogy
 nincs.
+
+## Napló, ami nem üresen indul
+
+Egy új fiók naplója üres, az üres napló pedig űrlap. A színházak saját archívuma
+teszi lehetővé a másik utat: a `0005_archive_and_reconcile.sql` megírása óta több
+száz levett produkció maradt kereshető és naplózható, és eddig soha semmi nem
+kínálta fel őket senkinek.
+
+Az `app/onboarding.tsx` egyetlen kérdést tesz fel — *mit láttál már ezek közül?*
+— borítóképek rácsán, darabonként egy koppintással.
+
+### A bejelölés nem értékelés, és nem is dátum
+
+A kézenfekvő megvalósítás a mai dátumot és valamilyen alapértelmezett értékelést
+ír be. Mindkettő pont azt rontaná el, amit ez a séma épp most javított meg.
+
+A mai dátum pontosan az a hiba, amiért a `0022_diary_dates.sql` létezik. A
+kitalált értékelés pedig nem marad magánügy: a `plays.rating_overall` ezekből a
+sorokból számolódik, és az Előadás részletei oldalon jelenik meg — vagyis egyetlen
+onboarding-menetben kitalált tizenöt négyes tizenöt valódi produkció nyilvános
+pontszámát mozdítaná el.
+
+Ezért a `0026_seen_without_a_date.sql` mindkét oszlopot nullozhatóvá teszi, és
+így itt is kifejezhetővé válik a különbség, amit a Letterboxd a *megnézett* és a
+*naplóbejegyzés* között tesz:
+
+| | jelentése |
+|---|---|
+| `seen_at` null | láttam, de nem tudom, mikor |
+| `rating_overall` null | láttam, de nem teszek rá számot |
+
+A naplózó űrlap továbbra is kitölti mindkettőt — a dátum alapból a mai nap, az
+értékelés négy —, tehát a szokásos naplózás változatlan.
+
+Ezzel együtt a `recompute_play_rating()` egy sora módosult. Az `avg()` eddig is
+kihagyta a nullokat, tehát egy értékelés nélküli bejelölés önmagában sosem
+mozdított átlagot; a `rating_count` volt az, ami hazudott volna, mert *minden
+sorral rendelkező embert* számolt. Tizenöt bejelölés után tizenöt produkció
+állította volna, hogy "1 értékelés", pontszám nélkül. Mostantól azokat számolja,
+akik tényleg értékeltek.
+
+A `statsForUser` is lekerült a `created_at`-ről. Az "Idén" a sorokat a beírásuk
+ideje szerint számolta, ami csak addig volt ugyanaz, amíg az app nem tudta
+megmondani, mikor voltál ott — egy onboarding-menet tizenöt idén látott előadást
+jelentett volna. Most a `seen_at`-et számolja, a dátum nélküli bejegyzések pedig
+kimaradnak belőle, nem pedig belekerülnek találgatásból.
+
+### A csempék igazságos osztása
+
+A jelöltek bemutató szerinti sorrendje kézenfekvőnek látszott, és rossz volt. Az
+első hatvanból 20 lett örkényes és 16 vojtinás, szemben 3 katonással és 1
+centrálossal — ez nem azt tükrözi, mit játszanak ezek a színházak, hanem azt,
+milyen sűrűn közlik az adaptereik a bemutatók dátumát. Az Örkény JSON API-ja
+mindenhez pontos dátumot ad, egy lekapart oldal gyakran semmit. Az a nyitóképernyő,
+ami harmadrészt Örkény és negyedrészt bábszínház, a legtöbb embertől rossz
+kérdéseket kérdez.
+
+Az `onboarding_candidates()` ehelyett körbeoszt: előbb minden színház
+legfrissebbje, aztán mindegyik második darabja. Így a hét ház 8–9 csempével
+egyenlítődik ki, a frissesség pedig a házon belül továbbra is dönt.
+
+Két dolog, ami a rangsor szándékosan nem. Nem a `perf_count_total` — a "sokat
+ment, tehát többen látták" jó megérzés, csakhogy az oszlop 1 214 sorból mindössze
+161-en van kitöltve, és mind jelenlegi, lekapart időpontokkal rendelkező
+produkció, tehát pont az archívumot temetné el, amiért ez a képernyő létezik. És
+nincs workshopokra és beszélgetésekre szűrve sem, mert **a katalógus jelenleg nem
+tudja megkülönböztetni azokat a produkcióktól ezeknél a színházaknál**: mindkettő
+`próza` a `venue_default` alapján, és a `runtime_minutes` rengeteg valódi
+produkciónál is null. Egy eltévedt "Workshop: …" csempe egy kihagyott koppintásba
+kerül; egy címre illesztő heurisztika csendben valódi munkát rejtene el, ami
+többe.
+
+### Egy akadálymentességi tanulság
+
+A csempék jelölőnégyzetek, és két nekifutás kellett, hogy a weben ezt ki is
+mondják. Az `accessibilityState={{ checked }}` — az a konvenció, amit az app
+többi része használ — semmit nem renderel a react-native-web ezen verziójával: a
+DOM-ban `role="checkbox"` jelent meg mindenféle bejelölt állapot nélkül, tehát a
+bejelölt csempét egyedül az arany fedőréteg jelezte, amit a képernyőolvasó nem
+lát. Az `aria-checked` hozzáadása a meglévő `accessibility*` propok mellé még
+rosszabb volt: ez a verzió az egyik vagy a másik konvenciót fogadja el, a keverék
+hatására pedig a role-t és a címkét is eldobta, hatvan címkézetlen div-et hagyva.
+
+A csempék most végig `role` / `aria-checked` / `aria-label` propokat használnak. A
+React Native 0.71+ ezeket natívan is elfogadja, tehát egy propkészlet mindkét
+platformot kiszolgálja — de a két konvenciót nem szabad egy elemen keverni.
 
 ## Listák, és hogy mire jók valójában
 

@@ -146,7 +146,11 @@ export default function UserProfileScreen() {
                         {venues.get(entry.play.venueId)?.name ?? entry.play.author}
                       </Text>
                     }
-                    trailing={<MaskRatingRow rating={entry.review.ratingOverall} size={13} />}
+                    trailing={
+                      entry.review.ratingOverall !== undefined ? (
+                        <MaskRatingRow rating={entry.review.ratingOverall} size={13} />
+                      ) : undefined
+                    }
                   />
                 ))}
               </View>

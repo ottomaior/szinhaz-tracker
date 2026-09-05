@@ -189,7 +189,17 @@ export default function ProfileScreen() {
               the catalogue's stand-ins carry only a monogram — a diary you
               cannot read the titles of is not a diary. */}
           {activeTab === strings.profile.tabDiary && (
-            <TabBody loaded={diaryLoaded} isEmpty={diary.length === 0} emptyLabel={strings.profile.diaryEmpty}>
+            <TabBody
+              loaded={diaryLoaded}
+              isEmpty={diary.length === 0}
+              emptyLabel={strings.profile.diaryEmpty}
+              // An empty diary is the one place onboarding is worth offering:
+              // it is a doorway rather than an apology, and the catalogue's
+              // archives are what make it answerable.
+              emptyAction={
+                <Button label={strings.onboarding.prompt} onPress={() => router.push("/onboarding")} />
+              }
+            >
               {diary.map((entry) => (
                 <PlayRow
                   key={entry.review.id}
@@ -200,12 +210,21 @@ export default function ProfileScreen() {
                       <Text variant="caption" tone="faint" numberOfLines={1}>
                         {venues.get(entry.play.venueId)?.name ?? entry.play.author}
                       </Text>
+                      {/* "Dátum nélkül" for an entry ticked during onboarding.
+                          Saying so is the point — an invented date would make
+                          the diary unreliable everywhere it is counted. */}
                       <Text variant="caption" tone="faint">
-                        {strings.profile.seenOn(formatDate(entry.review.seenAt))}
+                        {entry.review.seenAt
+                          ? strings.profile.seenOn(formatDate(entry.review.seenAt))
+                          : strings.profile.seenUndated}
                       </Text>
                     </>
                   }
-                  trailing={<MaskRatingRow rating={entry.review.ratingOverall} size={13} />}
+                  trailing={
+                    entry.review.ratingOverall !== undefined ? (
+                      <MaskRatingRow rating={entry.review.ratingOverall} size={13} />
+                    ) : undefined
+                  }
                 />
               ))}
             </TabBody>
@@ -243,9 +262,11 @@ export default function ProfileScreen() {
                   meta={
                     <>
                       <View style={styles.reviewMeta}>
-                        <MaskRatingRow rating={entry.review.ratingOverall} size={13} />
+                        {entry.review.ratingOverall !== undefined && (
+                          <MaskRatingRow rating={entry.review.ratingOverall} size={13} />
+                        )}
                         <Text variant="caption" tone="faint">
-                          {formatDate(entry.review.seenAt)}
+                          {entry.review.seenAt ? formatDate(entry.review.seenAt) : strings.profile.seenUndated}
                         </Text>
                       </View>
                       <Text variant="bodySmall" tone="dim">
@@ -274,17 +295,21 @@ function TabBody({
   loaded,
   isEmpty,
   emptyLabel,
+  emptyAction,
   children,
 }: {
   loaded: boolean;
   isEmpty: boolean;
   emptyLabel: string;
+  /** Optional way out of the empty state — an empty screen should be a door. */
+  emptyAction?: React.ReactNode;
   children: React.ReactNode;
 }) {
   if (loaded && isEmpty) {
     return (
       <View style={styles.emptyState}>
         <Text variant="bodySmall" tone="faint">{emptyLabel}</Text>
+        {emptyAction}
       </View>
     );
   }
@@ -382,5 +407,5 @@ const styles = StyleSheet.create({
   tabItemActive: { borderBottomWidth: 2, borderBottomColor: colors.gold },
   tabList: { marginTop: space.lg, gap: space.lg },
   reviewMeta: { flexDirection: "row", alignItems: "center", gap: space.sm },
-  emptyState: { marginTop: 24, alignItems: "center", paddingVertical: 30 },
+  emptyState: { marginTop: 24, alignItems: "center", paddingVertical: 30, gap: space.lg },
 });

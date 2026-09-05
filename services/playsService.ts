@@ -70,10 +70,10 @@ type ReviewRow = {
   play_id: string;
   user_id: string;
   created_at: string;
-  seen_at: string;
+  seen_at: string | null;
   performance_id: string | null;
   is_rewatch: boolean;
-  rating_overall: number;
+  rating_overall: number | null;
   rating_acting: number | null;
   rating_directing: number | null;
   rating_set_design: number | null;
@@ -175,13 +175,13 @@ function toReview(row: ReviewRow): Review {
     playId: row.play_id,
     userId: row.user_id,
     createdAt: row.created_at,
-    // Rows written before 0022 have no seen_at only in a database that has not
-    // had the migration; falling back to the write date keeps such a client
-    // rendering a date rather than "Invalid Date".
-    seenAt: row.seen_at ?? row.created_at.slice(0, 10),
+    // Left undefined rather than filled in. Since 0026 a null here is a real
+    // answer — "seen it, cannot say when" — and substituting the write date
+    // would turn every onboarding tick into a claim that they went today.
+    seenAt: row.seen_at ?? undefined,
     performanceId: row.performance_id ?? undefined,
     isRewatch: row.is_rewatch ?? false,
-    ratingOverall: row.rating_overall,
+    ratingOverall: row.rating_overall ?? undefined,
     ratingActing: row.rating_acting ?? undefined,
     ratingDirecting: row.rating_directing ?? undefined,
     ratingSetDesign: row.rating_set_design ?? undefined,
@@ -629,7 +629,17 @@ async function statsForUser(userId: string) {
   // screen rendered them as though they meant something.
   const [{ count: playsSeen }, { count: thisYear }, { count: followers }, { count: following }] = await Promise.all([
     supabase.from("reviews").select("id", { count: "exact", head: true }).eq("user_id", userId),
-    supabase.from("reviews").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("created_at", yearStart),
+    // Counted on `seen_at`, not `created_at`. Those were the same thing only
+    // while the app had no way to say when you were there; now they diverge in
+    // the two cases that matter most — somebody catching up on last spring, and
+    // an onboarding pass, where fifteen entries written today would otherwise
+    // all claim to be this year's theatregoing. Entries with no date at all sit
+    // out of this count rather than being guessed into it.
+    supabase
+      .from("reviews")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .gte("seen_at", yearStart),
     supabase.from("follows").select("follower_id", { count: "exact", head: true }).eq("followee_id", userId),
     supabase.from("follows").select("followee_id", { count: "exact", head: true }).eq("follower_id", userId),
   ]);
@@ -771,7 +781,7 @@ export async function getVenuesByIds(ids: string[]): Promise<Map<string, Venue>>
 export async function submitReview(input: {
   playId: string;
   /** `YYYY-MM-DD` in Budapest — the evening, not the moment of writing. */
-  seenAt: string;
+  seenAt?: string;
   /**
    * The showtime, when the caller knows which one.
    *
@@ -780,7 +790,8 @@ export async function submitReview(input: {
    * production falls on `seenAt`.
    */
   performanceId?: string;
-  ratingOverall: number;
+  /** Omitted for a "seen it, not rating it" entry — see 0026. */
+  ratingOverall?: number;
   ratingActing?: number;
   ratingDirecting?: number;
   ratingSetDesign?: number;
@@ -798,18 +809,20 @@ export async function submitReview(input: {
   // remember whether the first one made it into the app.
   const priorCount = await countUserEntriesForPlay(input.playId, authUser.id);
 
+  // Only resolvable when there is a date to resolve against. An entry with no
+  // date cannot name an evening, which is the same thing it is saying.
   const performanceId =
-    input.performanceId ?? (await solePerformanceOn(input.playId, input.seenAt));
+    input.performanceId ?? (input.seenAt ? await solePerformanceOn(input.playId, input.seenAt) : undefined);
 
   const { data, error } = await supabase
     .from("reviews")
     .insert({
       play_id: input.playId,
       user_id: authUser.id,
-      seen_at: input.seenAt,
+      seen_at: input.seenAt ?? null,
       performance_id: performanceId ?? null,
       is_rewatch: priorCount > 0,
-      rating_overall: input.ratingOverall,
+      rating_overall: input.ratingOverall ?? null,
       rating_acting: input.ratingActing ?? null,
       rating_directing: input.ratingDirecting ?? null,
       rating_set_design: input.ratingSetDesign ?? null,
@@ -820,6 +833,84 @@ export async function submitReview(input: {
     .single();
   if (error) throw error;
   return toReview(data as ReviewRow);
+}
+
+/**
+ * Productions to offer a new account: "which of these have you seen?"
+ *
+ * A diary that starts empty is a form; a diary with fifteen entries on day one
+ * is a product. The theatres' own archives are what make that possible — 272 of
+ * these candidates are productions no longer running, kept loggable by
+ * 0005_archive_and_reconcile.sql for exactly this.
+ *
+ * Dealt round-robin across theatres by `onboarding_candidates()` — see the note
+ * in 0026 about why ordering by premiere date alone produced a screen that was
+ * a third Örkény and a quarter puppet theatre.
+ *
+ * Two things this ranking is deliberately not. It is not `perf_count_total`
+ * ("it ran a lot, so more people saw it"), which is populated on only 161 of
+ * 1,214 rows — all current productions with scraped showtimes — so it would
+ * bury the archive this screen exists to surface. And it is not filtered for
+ * workshops and talks: the catalogue cannot currently tell those from
+ * productions at these venues (both are `próza` from `venue_default`, and
+ * runtime is null for plenty of real productions too). A stray "Workshop: …"
+ * tile costs a skipped tap; a title-matching heuristic would quietly hide real
+ * work, which costs more.
+ */
+export async function getOnboardingCandidates(options: { city?: string; limit?: number } = {}): Promise<Play[]> {
+  const { data, error } = await supabase.rpc("onboarding_candidates", {
+    city_filter: options.city ?? null,
+    limit_count: options.limit ?? 60,
+  });
+  if (error) throw error;
+  // The function returns `setof plays`, so there is no cast join here — this
+  // screen shows a poster and a title and never asks who was in it.
+  return (data ?? []).map((r: PlayRow) => toPlay(r));
+}
+
+/**
+ * Record several productions as seen, with no date and no rating.
+ *
+ * This is the whole point of 0026. Writing today's date would be the mistake
+ * 0022 exists to undo, and writing a rating nobody gave would move the public
+ * score of a real production — `plays.rating_overall` is computed from these
+ * rows and printed on Play Detail.
+ *
+ * Upserted rather than inserted so running onboarding twice does not fail on
+ * the second pass; a production already ticked stays ticked.
+ */
+export async function markManyAsSeen(playIds: string[]): Promise<number> {
+  if (playIds.length === 0) return 0;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Sign in required");
+
+  // Which of these they have already logged, so a re-run neither duplicates an
+  // entry nor overwrites a real dated one with a blank.
+  const { data: existing, error: existingError } = await supabase
+    .from("reviews")
+    .select("play_id")
+    .eq("user_id", user.id)
+    .in("play_id", playIds);
+  if (existingError) throw existingError;
+
+  const already = new Set(((existing ?? []) as { play_id: string }[]).map((r) => r.play_id));
+  const toInsert = playIds.filter((id) => !already.has(id));
+  if (toInsert.length === 0) return 0;
+
+  const { error } = await supabase.from("reviews").insert(
+    toInsert.map((playId) => ({
+      play_id: playId,
+      user_id: user.id,
+      seen_at: null,
+      rating_overall: null,
+      text: "",
+      tags: [],
+    }))
+  );
+  if (error) throw error;
+  return toInsert.length;
 }
 
 /** How many times this user has already logged this production. */

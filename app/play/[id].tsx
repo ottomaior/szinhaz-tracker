@@ -545,7 +545,7 @@ function ReviewRow({ review }: { review: Review }) {
       <Avatar initials={user.initials} size={32} />
       <View style={{ flex: 1, gap: space.xs }}>
         <Text variant="label">{user.name}</Text>
-        <MaskRatingRow rating={review.ratingOverall} size={11} gap={2} />
+        {review.ratingOverall !== undefined && <MaskRatingRow rating={review.ratingOverall} size={11} gap={2} />}
         {!!review.text && (
           <Text variant="bodySmall" tone="dim">{`„${review.text}”`}</Text>
         )}
