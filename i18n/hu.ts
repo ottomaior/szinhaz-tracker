@@ -60,6 +60,16 @@ export const strings = {
     title: "Felfedezés",
     searchPlaceholder: "Keresés: darabok, színházak, színészek…",
     filterAll: "Mind",
+    /**
+     * What each filter is, shown on its chip while nothing is chosen and as
+     * the heading of the sheet it opens. Once a value is set the chip shows
+     * the value instead — "Debrecen" rather than "Város" — so the row says
+     * what is filtered without needing a row per facet.
+     */
+    filterCity: "Város",
+    filterGenre: "Műfaj",
+    filterVenue: "Színház",
+    filterVenueType: "Helyszín típusa",
     filterKoszinhaz: "Kőszínház",
     filterFuggetlen: "Független",
     filterSzabadteri: "Szabadtéri",

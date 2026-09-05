@@ -125,6 +125,24 @@ export function ChevronLeftIcon({ size = 17, color = colors.text, strokeWidth = 
   );
 }
 
+/** The affordance on a control that opens a list of options. */
+export function ChevronDownIcon({ size = 13, color = colors.textDim, strokeWidth = 2 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="m5 9 7 7 7-7" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+/** Marks the chosen option in a list. */
+export function CheckIcon({ size = 16, color = colors.gold, strokeWidth = 2.2 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="m5 13 4.5 4.5L19 7" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
 export function CloseIcon({ size = 18, color = colors.text, strokeWidth = 2 }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">

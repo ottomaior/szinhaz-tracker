@@ -23,6 +23,7 @@ import type { Play, Venue, VenueType } from "@/data/types";
 import { SearchIcon, PlusIcon, CloseIcon } from "@/components/icons/Icons";
 import { MaskIcon } from "@/components/icons/MaskIcon";
 import { Chip } from "@/components/ui/Chip";
+import { SelectChip, type SelectOption } from "@/components/ui/SelectChip";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PosterCardSkeleton, SkeletonRail } from "@/components/ui/Skeleton";
@@ -131,6 +132,29 @@ export default function DiscoverScreen() {
   const [activeGenre, setActiveGenre] = useState<string>();
   const [searchSort, setSearchSort] = useState<SortKey>("relevance");
   const [browseSort, setBrowseSort] = useState<BrowseSort>("rating");
+
+  // Built here rather than inline so each list is one object per render and
+  // the "Mind" entry is written once instead of at four call sites.
+  const cityOptions: SelectOption[] = [
+    { value: undefined, label: strings.discover.filterAll },
+    ...cities.map((c) => ({ value: c, label: c })),
+  ];
+  const genreOptions: SelectOption[] = [
+    { value: undefined, label: strings.discover.filterAll },
+    ...genres.map((g) => ({ value: g, label: strings.genres[g] ?? g })),
+  ];
+  const venueOptions: SelectOption[] = [
+    { value: undefined, label: strings.discover.filterAll },
+    ...venues.map((v) => ({ value: v.id, label: v.name })),
+  ];
+  const venueTypeOptions: SelectOption[] = FILTERS.filter((f) => f !== strings.discover.filterAll).map((f) => ({
+    value: f,
+    label: f,
+  }));
+  venueTypeOptions.unshift({ value: undefined, label: strings.discover.filterAll });
+  // Sorting always has a value, so no "Mind" entry: there is no unsorted list.
+  const searchSortOptions: SelectOption[] = SEARCH_SORTS.map((o) => ({ value: o.key, label: o.label }));
+  const browseSortOptions: SelectOption[] = BROWSE_SORTS.map((o) => ({ value: o.key, label: o.label }));
 
   const venueType = FILTER_TO_VENUE_TYPE[activeFilter];
   const city = activeCity === strings.discover.filterAll ? undefined : activeCity;
@@ -325,86 +349,80 @@ export default function DiscoverScreen() {
             </View>
           )}
 
-          {SHOW_VENUE_TYPE_FILTER && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-              {FILTERS.map((f) => (
-                <Chip key={f} label={f} active={activeFilter === f} onPress={() => setActiveFilter(f)} />
-              ))}
-            </ScrollView>
-          )}
+          {/*
+            One row of value-carrying chips, replacing four rows of options.
+            Each opens a sheet; each shows what it is currently set to.
 
-          {cities.length > 0 && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-              {[strings.discover.filterAll, ...cities].map((c) => (
-                <Chip key={c} label={c} active={activeCity === c} onPress={() => setActiveCity(c)} />
-              ))}
-            </ScrollView>
-          )}
+            Those four rows pushed the first result to 401px on a 375x812
+            phone — half the screen was controls, and the Musor calendar showed
+            exactly one performance above the fold.
 
-          {/* Which theatre, within whatever city is selected. Only shown when
-              there is a choice to make: with one venue in scope the row is a
-              single chip that cannot change the result, and Debrecen is
-              exactly that today — Csokonai is the only Debrecen venue the
-              adapters feed. It appears there by itself the moment a second one
-              does. */}
-          {/* Genre. Only worth offering now that it means something: until
-              0016_genre_taxonomy.sql these values were adapter defaults —
-              "próza" on 276 rows and "színház" on 167, neither of them read
-              from any theatre's site — so the chips would have partitioned the
-              catalogue by which scraper had written it. */}
-          {genres.length > 1 && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-              <Chip
-                label={strings.discover.filterAll}
-                active={!activeGenre}
-                onPress={() => setActiveGenre(undefined)}
+            Chips still carry their value rather than collapsing behind a
+            single "Filters" button: this screen already hides a filter row
+            instead of showing one that returns nothing, and renames the
+            "Nepszeru" heading when the sort stops matching it. A screen
+            quietly filtered to Debrecen and opera, looking unfiltered, would
+            be the same mistake in a new place.
+
+            Facets with nothing to choose between are left out entirely, which
+            is the rule the rows already followed.
+          */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+            {SHOW_VENUE_TYPE_FILTER && (
+              <SelectChip
+                name={strings.discover.filterVenueType}
+                value={activeFilter === strings.discover.filterAll ? undefined : activeFilter}
+                options={venueTypeOptions}
+                onChange={(next) => setActiveFilter(next ?? strings.discover.filterAll)}
               />
-              {genres.map((g) => (
-                <Chip
-                  key={g}
-                  label={strings.genres[g] ?? g}
-                  active={activeGenre === g}
-                  onPress={() => setActiveGenre(activeGenre === g ? undefined : g)}
-                />
-              ))}
-            </ScrollView>
-          )}
+            )}
 
-          {venues.length > 1 && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-              <Chip
-                label={strings.discover.filterAll}
-                active={!activeVenueId}
-                onPress={() => setActiveVenueId(undefined)}
+            {cities.length > 1 && (
+              <SelectChip
+                name={strings.discover.filterCity}
+                value={activeCity === strings.discover.filterAll ? undefined : activeCity}
+                options={cityOptions}
+                onChange={(next) => setActiveCity(next ?? strings.discover.filterAll)}
               />
-              {venues.map((v) => (
-                <Chip
-                  key={v.id}
-                  label={v.name}
-                  active={activeVenueId === v.id}
-                  onPress={() => setActiveVenueId(activeVenueId === v.id ? undefined : v.id)}
-                />
-              ))}
-            </ScrollView>
-          )}
+            )}
+
+            {genres.length > 1 && (
+              <SelectChip
+                name={strings.discover.filterGenre}
+                value={activeGenre}
+                options={genreOptions}
+                onChange={setActiveGenre}
+              />
+            )}
+
+            {venues.length > 1 && (
+              <SelectChip
+                name={strings.discover.filterVenue}
+                value={activeVenueId}
+                options={venueOptions}
+                onChange={setActiveVenueId}
+              />
+            )}
+
+            {/* Sorting sits in the same row rather than on a bar of its own.
+                Not offered in the calendar, where the ordering is the date. */}
+            {mode !== "program" && (
+              <SelectChip
+                name={strings.sort.label}
+                title={strings.sort.label}
+                value={isSearching ? searchSort : browseSort}
+                // Highlighted only once it has been moved off its default, so
+                // the gold on this row always means "changed".
+                defaultValue={isSearching ? "relevance" : "rating"}
+                options={isSearching ? searchSortOptions : browseSortOptions}
+                onChange={(next) => {
+                  if (isSearching) setSearchSort((next as SortKey) ?? "relevance");
+                  else setBrowseSort((next as BrowseSort) ?? "rating");
+                }}
+              />
+            )}
+          </ScrollView>
         </View>
-
-        {mode !== "program" && (
-          <View style={styles.sortBar}>
-            <Text variant="caption" tone="faint">
-              {strings.sort.label}
-            </Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-              {isSearching
-                ? SEARCH_SORTS.map((s) => (
-                    <Chip key={s.key} label={s.label} active={searchSort === s.key} onPress={() => setSearchSort(s.key)} />
-                  ))
-                : BROWSE_SORTS.map((s) => (
-                    <Chip key={s.key} label={s.label} active={browseSort === s.key} onPress={() => setBrowseSort(s.key)} />
-                  ))}
-            </ScrollView>
-          </View>
-        )}
 
         {isSearching ? (
           <ScrollView contentContainerStyle={styles.scrollBody} keyboardShouldPersistTaps="handled">
@@ -658,15 +676,6 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   segment: { flex: 1, alignItems: "center", paddingVertical: space.sm, borderRadius: radius.sm },
-  sortBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.md,
-    paddingLeft: gutter,
-    paddingVertical: space.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.hairlineSoft,
-  },
   segmentActive: { backgroundColor: colors.surface2 },
   scrollBody: { padding: gutter, paddingBottom: 100, gap: space.lg },
   rail: { gap: space.lg, paddingHorizontal: gutter },
