@@ -22,8 +22,21 @@ RUN npm run build
 # literally "[id].html". nginx can serve a path with brackets in it, but that is
 # an avoidable thing to get subtly wrong in a config file, so give each shell a
 # plain name here and let nginx reference that instead.
-RUN cp "dist/play/[id].html" dist/play/_shell.html \
- && cp "dist/user/[id].html" dist/user/_shell.html
+#
+# Every dynamic route, found rather than listed. This used to name play/ and
+# user/ explicitly, and adding /person/ and /list/ to nginx without adding them
+# here reintroduced exactly the bug the nginx comment describes: try_files fell
+# through to /index.html and both routes were served the feed's markup, byte for
+# byte, in production only. A per-route line here is a step that has to be
+# remembered, and it was not.
+#
+# `ls` at the end is the guard: if the export ever stops emitting bracketed
+# filenames, this fails the build rather than shipping a site whose dynamic
+# routes silently serve the wrong document.
+RUN for f in $(find dist -maxdepth 2 -name '*.html' | grep -F '['); do \
+      cp "$f" "$(dirname "$f")/_shell.html"; \
+    done \
+ && ls -1 dist/*/_shell.html
 
 FROM nginx:1.27-alpine
 
