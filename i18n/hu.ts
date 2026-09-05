@@ -75,6 +75,8 @@ export const strings = {
     // for any city the venue table happens to contain.
     trendingTitleInCity: (city: string) => `Népszerű itt: ${city}`,
     searchResultsTitle: (n: number) => `${n} találat`,
+    /** The grid heading once it is no longer ordered by rating. */
+    allPlaysTitle: "Előadások",
     searching: "Keresés…",
     noResultsTitle: "Nincs találat",
     noResultsAction: "Nem található? Add hozzá magad",
@@ -178,6 +180,22 @@ export const strings = {
     watchlistError: "Nem sikerült frissíteni a kívánságlistát.",
     archivedBadge: "Archív",
     archivedNote: "Ez a produkció már nincs műsoron, de naplózhatod, ha láttad.",
+
+    showtimes: "Időpontok",
+    showtimesCount: (n: number) => (n === 1 ? "1 előadás" : `${n} előadás`),
+    showtimesSeeAll: (n: number) => `Mind a(z) ${n}`,
+    showtimesSeeLess: "Kevesebb",
+    /**
+     * Said instead of an empty list. Which of these applies is a real
+     * difference to a reader: a theatre that has not published next season yet
+     * is not the same thing as a production that has closed, and before this
+     * the screen showed the same blank space for both.
+     */
+    noShowtimesRunning: "A színház még nem hirdette meg a következő időpontokat.",
+    noShowtimesAnnounced: "A bemutató még nem kapott meghirdetett időpontot.",
+    noShowtimesEnded: "Ez a produkció lekerült a műsorról.",
+    noShowtimesUnknown: "Erről a produkcióról nincs időpontunk.",
+    ticketsAt: (venue: string) => `Jegyek: ${venue}`,
   },
 
   checkin: {
@@ -237,9 +255,64 @@ export const strings = {
     diaryEmpty: "Még nincs naplózott előadása.",
   },
 
+  /**
+   * Labels for `plays.genre_normalized` — the fixed vocabulary from
+   * 0016_genre_taxonomy.sql, which is what the filters and the play detail
+   * line now read.
+   *
+   * The previous version of this map keyed on "musical", "drama" and
+   * "physical theatre": three English words against a column that has never
+   * held an English value, so every lookup missed and the raw scraped term was
+   * rendered instead.
+   */
   genres: {
-    musical: "musical",
-    drama: "dráma",
-    "physical theatre": "fizikai színház",
+    "próza": "Próza",
+    opera: "Opera",
+    operett: "Operett",
+    musical: "Musical",
+    "zenés": "Zenés",
+    "tánc": "Tánc",
+    "báb": "Báb",
+    "felolvasószínház": "Felolvasószínház",
+    "egyéb": "Egyéb",
   } as Record<string, string>,
+
+  /**
+   * Where a genre came from, shown where the distinction matters.
+   *
+   * A production tagged "Próza" because Katona stages prose is a weaker claim
+   * than one the theatre itself filed under a genre term, and the app should
+   * be able to say which it is rather than presenting both as fact.
+   */
+  genreSource: {
+    source: "a színház besorolása",
+    inferred: "a szerző alapján",
+    venue_default: "a színház profilja alapján",
+    user: "kézzel megadva",
+  } as Record<string, string>,
+
+  genreUnknown: "Nincs besorolva",
+
+  /**
+   * Ordering. Offered because there was none: search results came back
+   * alphabetically and the browse grid was always by rating, with no way to
+   * ask for anything else.
+   */
+  sort: {
+    label: "Rendezés",
+    relevance: "Találat",
+    next: "Legközelebbi",
+    premiere: "Bemutató",
+    rating: "Értékelés",
+    title: "Cím",
+  },
+
+  /** The date-first half of Discover: pick an evening, see what is on. */
+  program: {
+    modeBrowse: "Felfedezés",
+    modeProgram: "Műsor",
+    performanceCount: (n: number) => (n === 1 ? "1 előadás" : `${n} előadás`),
+    emptyTitle: "Nincs meghirdetett időpont",
+    emptyBody: "A szűrőkhöz nem találunk előadást a következő két hónapban. Próbálj tágabb szűrést.",
+  },
 };

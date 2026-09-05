@@ -120,9 +120,16 @@ async function run(): Promise<SyncedPlay[]> {
       author: details.author,
       director: details.director,
       venueId: VENUE_IDS.csokonaiDebrecen,
-      // Archived pages carry no taxonomy term, so there is nothing truer to
-      // say than that this was theatre.
-      genre: "színház",
+      // Archived pages carry no taxonomy term at all, so this adapter reports
+      // none. It used to write the bare word "színház" across all 166 rows,
+      // which is true of every production in the database and therefore says
+      // nothing — and, being indistinguishable from a real taxonomy term, it
+      // filled the genre filter with a value that could not be filtered on.
+      // Csokonai is a multi-genre house so there is no venue default to fall
+      // back to either; what 0016_genre_taxonomy.sql can still do is recognise
+      // Verdi and Mozart in the author field, which recovers the opera and
+      // operetta half of this archive without inventing anything.
+      genre: undefined,
       runtimeMinutes: details.runtimeMinutes,
       intermissions: details.intermissions,
       premiereDate: details.premiereDate,

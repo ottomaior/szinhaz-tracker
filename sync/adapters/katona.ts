@@ -45,8 +45,11 @@ const ARCHIVE_PATH = "/eloadasok/archivum";
 /** Joomla pages 5 items at a time; this bounds a runaway loop, not the archive. */
 const MAX_PAGES = 60;
 
-/** Katona is a prose theater; the site publishes no genre field. */
-const DEFAULT_GENRE = "próza";
+/*
+ * Katona is a prose theatre; the frozen Joomla archive publishes no genre
+ * field either. Left undefined for the same reason as the live adapter — see
+ * sync/adapters/katona-wp.ts and venues.default_genre.
+ */
 
 const PRODUCTION_HREF = /^\/eloadasok\/[a-z]+\/\d+-[^/]+$/;
 
@@ -147,7 +150,7 @@ async function fetchProduction(path: string): Promise<SyncedPlay | undefined> {
     author,
     director,
     venueId: VENUE_IDS.katona,
-    genre: DEFAULT_GENRE,
+    genre: undefined,
     runtimeMinutes,
     intermissions,
     premiereDate,

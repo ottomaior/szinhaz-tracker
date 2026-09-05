@@ -16,7 +16,7 @@ npx expo install --fix
 
 Then create a [Supabase](https://supabase.com) project (free tier is
 enough), run every file in `supabase/migrations/` **in order** (`0001_init.sql`
-through `0012_replace_play_cast.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
+through `0021_genre_source_terms.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
 URL/anon key from the project's Settings → API page:
 
 ```bash
@@ -55,7 +55,8 @@ app/                     expo-router screens (file-based routing)
   (tabs)/
     _layout.tsx            tab navigator, custom TabBar
     index.tsx               Feed
-    discover.tsx             Discover — search + venue-type filters
+    discover.tsx             Discover — two modes (browse rails / Műsor
+                              calendar), ranked search, sort and filters
     watchlist.tsx             Watchlist
     profile.tsx                Profile
   play/[id].tsx           Play Detail
@@ -80,7 +81,8 @@ data/types.ts             domain types (Play, Venue, Review, User, …)
 services/supabase.ts      the Supabase client (reads EXPO_PUBLIC_SUPABASE_*)
 services/playsService.ts  the ONLY thing screens import play/venue/user
                           data from — queries Supabase
-services/searchService.ts search over plays/venues/cast (Postgres RPC)
+services/searchService.ts ranked, accent-insensitive search with a typo
+                          fallback, over plays/venues/cast (Postgres RPC)
 services/authService.ts   sign up / sign in / sign out
 
 supabase/migrations/      schema, RLS policies, triggers, and RPCs (run
@@ -141,6 +143,97 @@ no media queries inside `StyleSheet.create`), `components/ui/Screen` caps and
 centres content, and `components/ui/Grid` computes tile widths from its own
 measured width rather than percentages.
 
+## Finding a play, and finding out when
+
+Three things the catalogue could not do until recently, and what was actually
+wrong with each.
+
+### Genre was not metadata
+
+`plays.genre` was mostly invented by this project rather than read from a
+source. 276 of 476 rows said "próza" and 167 said "színház", and every one of
+those came from a hardcoded `DEFAULT_GENRE` constant in an adapter — the same
+files carried a comment saying the site publishes no genre field, and then
+wrote one anyway. Twelve more rows had the genre "IX. MagdaFeszt", a festival
+name that Csokonai's taxonomy files alongside real terms, on productions that
+included an award ceremony and a concert. A genre chip filtering on that would
+have partitioned the catalogue by which scraper had written each row.
+
+`0016_genre_taxonomy.sql` keeps whatever the source said in `genre`, now
+nullable so an adapter can report nothing, and derives `genre_normalized`
+beside it over a fixed vocabulary. `genre_source` records where that answer
+came from, because these are genuinely different claims:
+
+| `genre_source` | means |
+|---|---|
+| `source` | the theatre's own taxonomy term |
+| `inferred` | derived here from the composer in `author` — Verdi and Puccini do not write operettas |
+| `venue_default` | assumed from what the house stages (`venues.default_genre`) |
+| `user` | typed in by whoever added the play |
+
+The inference is deliberately conservative: anything unrecognised stays
+`zenés` rather than being rounded to `musical`, and there is a short list of
+works whose composer's usual genre is the wrong answer for that piece —
+Offenbach wrote a hundred operettas and one serious opera, and *Hoffmann meséi*
+is the opera.
+
+### Search did not rank, and demanded accents
+
+`search_plays` ended in `order by pl.title`, so results were alphabetical and
+a cast match could outrank the production actually named in the query. It used
+`ilike`, which is accent-sensitive: "orkeny" found nothing, "szinhaz" found
+nothing. And a single typo returned an empty screen whose call to action is
+"add it yourself", so a misspelling led directly to a duplicate row.
+
+`0019_search_ranking.sql` enables `unaccent` and `pg_trgm` — both had been
+available in the project all along — and adds relevance bands (exact title >
+title prefix > title contains > author > director > venue > stage > genre) with
+a trigram floor beneath every literal band, so a fuzzy hit can never outrank a
+real one. The fuzzy net uses `word_similarity` rather than `similarity`:
+`similarity('csokonay', 'csokonai nemzeti szinhaz')` is 0.26 because it divides
+by the whole target, where `word_similarity` scores the term against the best
+matching run of words inside it and gives 0.78. Measured on this catalogue,
+Csokonay→Csokonai is 0.78, Katonna→Katona 0.67, Verdy→Verdi 0.67, and nonsense
+is 0.00; the threshold sits at 0.6.
+
+Discover also gained a sort control. The options differ between search and
+browse on purpose — "relevance" needs a query to be relevant to, so it is not
+offered where nothing is typed — and the "Népszerű" heading changes to
+"Előadások" under any sort but rating, because the heading is a claim about
+what the list is.
+
+### Showtimes were collected and never shown
+
+`getUpcomingPerformances()` had existed in `services/playsService.ts` since
+the performances table was added and had **zero call sites**. Hundreds of
+future showtimes sat in the database, each with the stage it plays on, while
+Play Detail showed a single "next performance" line.
+
+There are now two ways in. Play Detail lists every upcoming date grouped by
+month, with the stage; and Discover has a second mode, **Műsor**, that reads
+the catalogue from the calendar end — pick an evening, see what is on that
+night across every theatre in scope, grouped by venue. That direction was not
+queryable at all before: every query in the app started from a production and
+asked when it played. It is backed by `program_in_range` and `program_days`
+(`0017_program_by_day.sql`), and the date picker only offers days that have
+something on them, so it can never lead to an empty screen.
+
+Where a production genuinely has no dates, the screen now says which of the
+four reasons applies rather than showing a blank space — a theatre that has not
+published next season yet is not the same thing as a production that has
+closed.
+
+**A note on time.** Every showtime is stored as a `timestamptz` and rendered
+through `utils/datetime.ts`, which pins `Europe/Budapest` explicitly rather
+than using the device's zone: a browser in London would otherwise render a
+19:00 Budapest curtain as 18:00, which is the one number a listing must never
+get wrong. `utils/datetime.test.ts` asserts this across a DST boundary, since
+the failure is invisible on screen — 18:00 looks like a perfectly plausible
+curtain. The same bug was found and fixed in the database: the derived
+`status_reason` string formatted its timestamps without a zone, so Play Detail
+rendered "next performance 2026-09-06 17:00" directly beneath a correct
+"szept. 6., vasárnap · 19:00" (`0018_status_reason_timezone.sql`).
+
 ## What's real now
 
 The app is backed by a real Supabase (Postgres) database with Row Level
@@ -182,13 +275,30 @@ access", which is true of only one of them):
   with `Crawl-delay: 20`. Listings are crawlable; the crawl delay is what
   makes a full pass slow.
 
-Five adapters are live and enabled by default, together supplying about 490
-productions — roughly 165 currently playing or announced, and 325 that the
-theatres themselves file under their archives — along with 155 showtimes.
-Archived rows carry `plays.is_archived`, which keeps them out of Discover's
-premieres/trending rails while leaving them searchable and loggable, so you
-can still record a play you saw years ago (see
+Ten adapters are live and enabled by default, covering eight theatres in two
+cities and supplying about 1,160 productions — roughly 310 currently playing or
+announced, and 850 that the theatres themselves file under their archives —
+along with 400 upcoming showtimes. Archived rows carry `plays.is_archived`,
+which keeps them out of Discover's browse rails while leaving them searchable
+and loggable, so you can still record a play you saw years ago (see
 `0005_archive_and_reconcile.sql`).
+
+| Theatre | City | Adapter(s) | Source |
+|---|---|---|---|
+| Örkény István Színház | Budapest | `orkeny` | own JSON API |
+| Katona József Színház | Budapest | `katona-wp`, `katona-archive` | WordPress + frozen Joomla |
+| Nemzeti Színház | Budapest | `nemzeti` | own site |
+| Centrál Színház | Budapest | `central` | own site + The Events Calendar API |
+| Madách Színház | Budapest | `madach` | own site |
+| Vígszínház | Budapest | `vigszinhaz` | own JSON API |
+| Csokonai Nemzeti Színház | Debrecen | `csokonai`, `csokonai-archive` | own site |
+| Vojtina Bábszínház | Debrecen | `vojtina` | own site |
+
+Debrecen having a second venue is what turns Discover's theatre chips on
+there: the row hides itself when a city has only one option, because a filter
+that cannot change the result reads as broken. Vojtina is also the catalogue's
+first puppet theatre, so it gives `genre_normalized` its first real `báb`
+values rather than another few dozen rows of prose.
 
 **Katona József Színház** (Budapest) takes two adapters, because the theatre
 relaunched its website on WordPress (uploads dated 2026-06/07) and the old
@@ -236,22 +346,36 @@ header in `sync/adapters/jegymester.ts` for what would be needed to fix
 that. Csokonai used to be on that same broken platform too — its working
 adapter now reads Csokonai's own site instead.
 
-Not yet built, with what was actually found when each was checked live:
+**Vígszínház** is now live and is the richest source of the lot, but not the
+way an earlier version of this file predicted. Its pages render client-side and
+the RSC flight payload holds only the interface's label dictionary — no
+production data at all. What the app actually calls is `/api/programme/`, which
+returns every production with a premiere date, a runtime in minutes, an
+interval count and a structured director. Two things are worth knowing about
+it: it reaches back to **1890**, so `sync/adapters/vigszinhaz.ts` stops at a
+premiere year of 1960 (nobody using this app saw the 1897 season, and importing
+the lot would make one venue four times the size of everything else); and it is
+the one source with **no cast** available anywhere reachable, so its
+productions will not be found by searching for a performer.
 
-- **Vígszínház** — feasible but unfinished. `/hu/eloadasok` server-renders
-  56 production links (`/hu/produkciok/{slug}`) with real artwork, but the
-  per-production metadata lives in the Next.js RSC flight payload, where the
-  cast is a list of numeric member ids needing a second directory lookup —
-  the same shape Örkény's API uses. Structure mapped, adapter not written.
+**Madách** needs a note of its own. Its `robots.txt` is Cloudflare's
+content-signals boilerplate and nothing else — the whole file is comments
+explaining what a content signal means, with no `User-agent` block, no
+`Disallow`, and no signal values actually set. By that text's own clause (c),
+an operator who sets no signal "neither grants nor restricts permission", so
+there is no expressed restriction and no crawl rule to honour. Worth
+re-reading if that file ever grows a real directive.
+
+Still not built, with what was found when each was checked live:
+
 - **Radnóti** and **Trafó** — not reachable by plain HTTP at all. Both render
   their listings client-side: a plain fetch of Radnóti's `/repertoar/`,
   `/bemutatok-20262027/` and `/archivum/` returns three byte-identical
   navigation shells, and `trafo.hu/programok` yields a single link in 168KB
   of markup. These would need a headless browser in the sync job, a much
   heavier dependency for a scheduled GitHub Action than cheerio.
+- **Pesti Magyar Színház** — returns "Access Forbidden" to a plain request.
 
-Also not yet built: followers/following, and the remaining Jegy.hu-based
-theaters (Nemzeti, Madách, Centrál, Pesti Magyar, Vojtina). Watchlist
-add/remove is done — `services/playsService.ts` has
-`addToWatchlist`/`removeFromWatchlist`, wired to a toggle button on Play
-Detail.
+Also not yet built: followers/following. Watchlist add/remove is done —
+`services/playsService.ts` has `addToWatchlist`/`removeFromWatchlist`, wired to
+a toggle button on Play Detail.

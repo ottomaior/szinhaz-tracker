@@ -8,8 +8,17 @@ import { gutter, minTouchTarget, radius, space } from "@/theme/tokens";
 import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
 import { useRecentSearches } from "@/hooks/useRecentSearches";
-import { getCities, getFilterVenues, getNowPlaying, getPremieres, getTrending, getVenueById } from "@/services/playsService";
-import { searchPlays } from "@/services/searchService";
+import {
+  getCities,
+  getFilterGenres,
+  getFilterVenues,
+  getNowPlaying,
+  getPremieres,
+  getTrending,
+  getVenueById,
+  type BrowseSort,
+} from "@/services/playsService";
+import { searchPlays, type SortKey } from "@/services/searchService";
 import type { Play, Venue, VenueType } from "@/data/types";
 import { SearchIcon, PlusIcon, CloseIcon } from "@/components/icons/Icons";
 import { MaskIcon } from "@/components/icons/MaskIcon";
@@ -19,6 +28,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { PosterCardSkeleton, SkeletonRail } from "@/components/ui/Skeleton";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { Screen } from "@/components/ui/Screen";
+import { ProgramView } from "@/components/ui/ProgramView";
 import { Grid } from "@/components/ui/Grid";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
@@ -56,10 +66,51 @@ const FILTER_TO_VENUE_TYPE: Record<string, VenueType | undefined> = {
  */
 const TILE_ASPECT = 3 / 4;
 
+/**
+ * Discover answers two different questions and now says which one it is on.
+ *
+ * "Felfedezés" is the browse rails: what is worth seeing, ranked. "Műsor" is
+ * the calendar: pick an evening, see what is on that night across every
+ * theatre in scope. The second was not reachable at all before — every query
+ * in the app started from a production and asked when it played, never from a
+ * date — even though the sync job has been collecting showtimes all along.
+ *
+ * A fifth bottom tab would have been the obvious home for it, and is why it is
+ * here instead: components/ui/TabBar splits the routes around a raised centre
+ * button, so an odd number of tabs puts three on one side and two on the other
+ * and pulls the "+" off centre.
+ */
+type DiscoverMode = "browse" | "program";
+
+/**
+ * The sort options, and why there are two sets.
+ *
+ * "Relevancia" only means something when there is a query to be relevant to,
+ * so it is offered in search results and nowhere else — an option that cannot
+ * change what you are looking at is worse than no option. Everything else is
+ * shared, and in browse mode applies to the "Népszerű" grid, the one rail
+ * whose ordering is not already its subject.
+ */
+const SEARCH_SORTS: { key: SortKey; label: string }[] = [
+  { key: "relevance", label: strings.sort.relevance },
+  { key: "next", label: strings.sort.next },
+  { key: "premiere", label: strings.sort.premiere },
+  { key: "rating", label: strings.sort.rating },
+  { key: "title", label: strings.sort.title },
+];
+
+const BROWSE_SORTS: { key: BrowseSort; label: string }[] = [
+  { key: "rating", label: strings.sort.rating },
+  { key: "next", label: strings.sort.next },
+  { key: "premiere", label: strings.sort.premiere },
+  { key: "title", label: strings.sort.title },
+];
+
 export default function DiscoverScreen() {
   const insets = useSafeAreaInsets();
   const fontsLoaded = useAppFonts();
   const router = useRouter();
+  const [mode, setMode] = useState<DiscoverMode>("browse");
   const [activeFilter, setActiveFilter] = useState(strings.discover.filterAll);
   const [cities, setCities] = useState<string[]>([]);
   const [activeCity, setActiveCity] = useState(strings.discover.filterAll);
@@ -76,10 +127,15 @@ export default function DiscoverScreen() {
   const [browseLoading, setBrowseLoading] = useState(true);
   const [browseFailed, setBrowseFailed] = useState(false);
   const [showAllPremieres, setShowAllPremieres] = useState(false);
+  const [genres, setGenres] = useState<string[]>([]);
+  const [activeGenre, setActiveGenre] = useState<string>();
+  const [searchSort, setSearchSort] = useState<SortKey>("relevance");
+  const [browseSort, setBrowseSort] = useState<BrowseSort>("rating");
 
   const venueType = FILTER_TO_VENUE_TYPE[activeFilter];
   const city = activeCity === strings.discover.filterAll ? undefined : activeCity;
   const venueId = activeVenueId;
+  const genre = activeGenre;
   const isSearching = query.trim().length > 0;
 
   useEffect(() => {
@@ -109,14 +165,32 @@ export default function DiscoverScreen() {
     };
   }, [city]);
 
+  // Scoped to city and venue for the same reason those are scoped to each
+  // other: a chip whose only outcome is an empty screen reads as broken.
+  useEffect(() => {
+    let active = true;
+    getFilterGenres({ venueType, city, venueId })
+      .then((next) => {
+        if (!active) return;
+        setGenres(next);
+        setActiveGenre((current) => (current && next.includes(current) ? current : undefined));
+      })
+      .catch(() => {
+        if (active) setGenres([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [venueType, city, venueId]);
+
   const loadBrowse = useCallback(async () => {
     setBrowseFailed(false);
     setBrowseLoading(true);
     try {
       const [nextNowPlaying, nextPremieres, nextTrending] = await Promise.all([
-        getNowPlaying({ venueType, city, venueId }),
-        getPremieres({ venueType, city, venueId }),
-        getTrending({ venueType, city, venueId }),
+        getNowPlaying({ venueType, city, venueId, genre }),
+        getPremieres({ venueType, city, venueId, genre }),
+        getTrending({ venueType, city, venueId, genre }, browseSort),
       ]);
       setNowPlaying(nextNowPlaying);
       setPremieres(nextPremieres);
@@ -130,17 +204,20 @@ export default function DiscoverScreen() {
     } finally {
       setBrowseLoading(false);
     }
-  }, [venueType, city, venueId]);
+  }, [venueType, city, venueId, genre, browseSort]);
 
   useEffect(() => {
+    // Skipped in program mode: three rail queries whose results nothing
+    // renders is a round trip per filter change for nothing.
+    if (mode !== "browse") return;
     loadBrowse();
-  }, [loadBrowse]);
+  }, [loadBrowse, mode]);
 
   // Collapse the expanded premiere list whenever the filters change, so the
   // "see all" toggle can never be left claiming to show a list it no longer has.
   useEffect(() => {
     setShowAllPremieres(false);
-  }, [venueType, city, venueId]);
+  }, [venueType, city, venueId, genre]);
 
   useEffect(() => {
     if (!isSearching) {
@@ -150,13 +227,13 @@ export default function DiscoverScreen() {
     }
     setSearching(true);
     const handle = setTimeout(() => {
-      searchPlays(query, venueType, city, true, venueId)
+      searchPlays(query, { venueType, city, venueId, genre, sort: searchSort })
         .then(setSearchResults)
         .catch(() => setSearchResults([]))
         .finally(() => setSearching(false));
     }, 300);
     return () => clearTimeout(handle);
-  }, [query, venueType, city, venueId, isSearching]);
+  }, [query, venueType, city, venueId, genre, searchSort, isSearching]);
 
   const hasBrowseContent = nowPlaying.length > 0 || premieres.length > 0 || trending.length > 0;
   const archivedCount = searchResults.filter((p) => p.isArchived || p.status === "ended").length;
@@ -222,6 +299,32 @@ export default function DiscoverScreen() {
             </View>
           )}
 
+          {/* Hidden while searching: results are their own answer, and a mode
+              switch above them would silently change what a query returns. */}
+          {!isSearching && (
+            <View style={styles.segmented}>
+              {(
+                [
+                  ["browse", strings.program.modeBrowse],
+                  ["program", strings.program.modeProgram],
+                ] as [DiscoverMode, string][]
+              ).map(([value, label]) => (
+                <Pressable
+                  key={value}
+                  onPress={() => setMode(value)}
+                  style={[styles.segment, mode === value && styles.segmentActive]}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: mode === value }}
+                  accessibilityLabel={label}
+                >
+                  <Text variant="label" tone={mode === value ? "default" : "faint"}>
+                    {label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          )}
+
           {SHOW_VENUE_TYPE_FILTER && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
               {FILTERS.map((f) => (
@@ -244,6 +347,29 @@ export default function DiscoverScreen() {
               exactly that today — Csokonai is the only Debrecen venue the
               adapters feed. It appears there by itself the moment a second one
               does. */}
+          {/* Genre. Only worth offering now that it means something: until
+              0016_genre_taxonomy.sql these values were adapter defaults —
+              "próza" on 276 rows and "színház" on 167, neither of them read
+              from any theatre's site — so the chips would have partitioned the
+              catalogue by which scraper had written it. */}
+          {genres.length > 1 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+              <Chip
+                label={strings.discover.filterAll}
+                active={!activeGenre}
+                onPress={() => setActiveGenre(undefined)}
+              />
+              {genres.map((g) => (
+                <Chip
+                  key={g}
+                  label={strings.genres[g] ?? g}
+                  active={activeGenre === g}
+                  onPress={() => setActiveGenre(activeGenre === g ? undefined : g)}
+                />
+              ))}
+            </ScrollView>
+          )}
+
           {venues.length > 1 && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
               <Chip
@@ -262,6 +388,23 @@ export default function DiscoverScreen() {
             </ScrollView>
           )}
         </View>
+
+        {mode !== "program" && (
+          <View style={styles.sortBar}>
+            <Text variant="caption" tone="faint">
+              {strings.sort.label}
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+              {isSearching
+                ? SEARCH_SORTS.map((s) => (
+                    <Chip key={s.key} label={s.label} active={searchSort === s.key} onPress={() => setSearchSort(s.key)} />
+                  ))
+                : BROWSE_SORTS.map((s) => (
+                    <Chip key={s.key} label={s.label} active={browseSort === s.key} onPress={() => setBrowseSort(s.key)} />
+                  ))}
+            </ScrollView>
+          </View>
+        )}
 
         {isSearching ? (
           <ScrollView contentContainerStyle={styles.scrollBody} keyboardShouldPersistTaps="handled">
@@ -315,6 +458,8 @@ export default function DiscoverScreen() {
               </View>
             )}
           </ScrollView>
+        ) : mode === "program" ? (
+          <ProgramView filters={{ venueType, city, venueId, genre }} />
         ) : (
           <ScrollView contentContainerStyle={{ paddingBottom: 100, gap: space["2xl"] }}>
             {browseLoading && (
@@ -383,8 +528,14 @@ export default function DiscoverScreen() {
             {!browseLoading && trending.length > 0 && (
               <View style={{ gap: space.md, paddingHorizontal: gutter }}>
                 <Text variant="subheading">
-                  {/* Was hardcoded to Budapest even with Debrecen selected. */}
-                  {city ? strings.discover.trendingTitleInCity(city) : strings.discover.trendingTitle}
+                  {/* The heading follows the sort. "Népszerű" is a claim about
+                      ratings; leaving it up while the grid is ordered by
+                      premiere date would describe the wrong list. */}
+                  {browseSort !== "rating"
+                    ? strings.discover.allPlaysTitle
+                    : city
+                      ? strings.discover.trendingTitleInCity(city)
+                      : strings.discover.trendingTitle}
                 </Text>
                 <Grid>
                   {trending.map((p) => (
@@ -497,6 +648,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.lg,
   },
   chipRow: { gap: space.sm, paddingRight: gutter },
+  segmented: {
+    flexDirection: "row",
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    borderRadius: radius.md,
+    padding: 3,
+    gap: 3,
+  },
+  segment: { flex: 1, alignItems: "center", paddingVertical: space.sm, borderRadius: radius.sm },
+  sortBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: space.md,
+    paddingLeft: gutter,
+    paddingVertical: space.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.hairlineSoft,
+  },
+  segmentActive: { backgroundColor: colors.surface2 },
   scrollBody: { padding: gutter, paddingBottom: 100, gap: space.lg },
   rail: { gap: space.lg, paddingHorizontal: gutter },
   railCard: { width: 132, gap: space.sm },

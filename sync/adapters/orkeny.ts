@@ -38,7 +38,18 @@ import { VENUE_IDS } from "../venueMap";
 import type { SyncAdapter, SyncedPlay } from "../lib/types";
 
 const SITE_URL = "https://orkenyszinhaz.hu";
-const PERFORMANCE_MONTHS = 3;
+/**
+ * How far ahead to walk the calendar for showtimes.
+ *
+ * Six months rather than three. A theatre publishes its next season in one
+ * go, months before it starts, and a three-month window meant that
+ * announcement was invisible until it had almost arrived — the catalogue held
+ * dates two months out at most, so half the productions listed as "Műsoron"
+ * had nothing to show when asked when they play. Months with nothing in them
+ * cost one request each and return an empty page, which is a cheap way to be
+ * ready the day the rest of the season goes up.
+ */
+const PERFORMANCE_MONTHS = 6;
 const REPERTOIRE_LIMIT = 500; // comfortably above the 216 that exist today
 
 // Örkény publishes no Crawl-delay and this adapter makes only a handful of
@@ -48,8 +59,16 @@ const CRAWL_DELAY_MS = 300;
 const CATEGORY_STREAM = 4;
 const CATEGORY_ARCHIVE = 5;
 
-/** Örkény is a prose theater; nothing in the API carries a genre field. */
-const DEFAULT_GENRE = "próza";
+/*
+ * Örkény is a prose theatre, and nothing in the API carries a genre field.
+ *
+ * That second fact is the one this adapter reports. The theatre's profile is
+ * recorded once, on the venue row (`venues.default_genre`), where the
+ * classifier in 0016_genre_taxonomy.sql applies it and marks the result
+ * `genre_source = 'venue_default'` — an assumption, labelled as one. Writing
+ * "próza" here instead made the same assumption look like scraped metadata on
+ * 194 productions.
+ */
 
 type Localized = { hu?: string | null; en?: string | null };
 
@@ -132,10 +151,10 @@ function isNotAProduction(p: RawPerformance): boolean {
   return ANCILLARY_TITLE.test(p.title.hu ?? p.title.en ?? "");
 }
 
-function genreOf(p: RawPerformance): string {
+function genreOf(p: RawPerformance): string | undefined {
   const tags = tagTexts(p.tags);
   if (tags.some((t) => /felolvasószínház/i.test(t))) return "felolvasószínház";
-  return DEFAULT_GENRE;
+  return undefined;
 }
 
 async function run(): Promise<SyncedPlay[]> {

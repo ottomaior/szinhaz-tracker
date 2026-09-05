@@ -59,13 +59,57 @@ export interface RatingBreakdown {
   count: number;
 }
 
+/**
+ * The vocabulary the app filters and sorts on.
+ *
+ * Deliberately smaller and stricter than what the theatres publish between
+ * them. `plays.genre` still holds each source's own word verbatim; this is the
+ * mapped value, derived by public.recompute_play_genre().
+ */
+export type Genre =
+  | "próza"
+  | "opera"
+  | "operett"
+  | "musical"
+  | "zenés"
+  | "tánc"
+  | "báb"
+  | "felolvasószínház"
+  | "egyéb";
+
+/**
+ * How much to trust a play's genre.
+ *
+ * Worth carrying into the UI rather than flattening away, because these are
+ * genuinely different claims. `source` is the theatre's own taxonomy term.
+ * `inferred` is ours, read off the composer named in the author field — safe
+ * for Verdi, and never applied without a confident match. `venue_default` is
+ * an assumption about the house rather than about the production: true of
+ * Katona and Örkény, who stage prose and publish no genre field, but an
+ * assumption all the same.
+ */
+export type GenreSource = "source" | "inferred" | "venue_default" | "user";
+
 export interface Play {
   id: string;
   title: string;
   author: string;
   director: string;
   venueId: string;
-  genre: string;
+  /** The source's own word for it, verbatim. Undefined when it published none. */
+  genre?: string;
+  /** The mapped genre the filters use. Undefined means genuinely unknown. */
+  genreNormalized?: Genre;
+  genreSource?: GenreSource;
+  /** Programmed as part of a festival rather than the regular repertoire. */
+  isFestival: boolean;
+  festivalName?: string;
+  /**
+   * The stage this production usually plays on — Kamra, Sufni, Csokonai
+   * Teátrum. Held on the play as well as on each performance, so it can still
+   * be filtered on between runs, when there are no dates to read it from.
+   */
+  primaryRoom?: string;
   runtimeMinutes?: number;
   intermissions: number;
   premiereDate?: string; // ISO date
@@ -80,6 +124,39 @@ export interface Play {
   statusReason?: string;
   nextPerformanceAt?: string; // ISO datetime
   lastPerformanceAt?: string; // ISO datetime
+  performanceCount: number;
+}
+
+/**
+ * One showtime, with everything needed to render it in a date-first listing.
+ *
+ * Distinct from `Performance` on purpose. `Performance` belongs to a play you
+ * already have in hand — the play detail screen holds the production and asks
+ * for its dates. This is the other direction: the evening comes first and the
+ * production is what you are trying to discover, so the title, venue and cover
+ * art have to travel with the date rather than being looked up per row.
+ */
+export interface ProgramEntry {
+  performanceId: string;
+  startsAt: string; // ISO datetime
+  room?: string;
+  playId: string;
+  title: string;
+  author: string;
+  director: string;
+  genreNormalized?: Genre;
+  runtimeMinutes?: number;
+  status: PlayStatus;
+  poster?: Poster;
+  venueId: string;
+  venueName: string;
+  venueCity: string;
+}
+
+/** A day with something on it, for the program date picker. */
+export interface ProgramDay {
+  /** `YYYY-MM-DD`, in Budapest. */
+  day: string;
   performanceCount: number;
 }
 

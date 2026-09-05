@@ -2,6 +2,32 @@ import { supabase } from "@/services/supabase";
 import { toPoster } from "@/services/playsService";
 import type { Play, VenueType } from "@/data/types";
 
+/**
+ * How to order results.
+ *
+ * "relevance" is scored in the database by public.search_rank() — an exact
+ * title beats a title starting with the term, which beats one containing it,
+ * which beats the author, director, venue and cast attached to it. Before
+ * 0019_search_ranking.sql there was no ordering at all beyond `order by
+ * title`, so the best answer to a search appeared wherever the alphabet
+ * happened to put it.
+ */
+export type SortKey = "relevance" | "next" | "premiere" | "rating" | "title";
+
+export type SearchOptions = {
+  venueType?: VenueType;
+  city?: string;
+  venueId?: string;
+  genre?: string;
+  room?: string;
+  sort?: SortKey;
+  /**
+   * Archived productions are included by default and that is deliberate — see
+   * the note on searchPlays below.
+   */
+  includeArchived?: boolean;
+};
+
 type PlayRow = Parameters<typeof mapRow>[0];
 
 function mapRow(row: {
@@ -10,7 +36,12 @@ function mapRow(row: {
   author: string;
   director: string;
   venue_id: string;
-  genre: string;
+  genre: string | null;
+  genre_normalized: string | null;
+  genre_source: string | null;
+  is_festival: boolean;
+  festival_name: string | null;
+  primary_room: string | null;
   runtime_minutes: number | null;
   intermissions: number;
   premiere_date: string | null;
@@ -40,7 +71,12 @@ function mapRow(row: {
     author: row.author,
     director: row.director,
     venueId: row.venue_id,
-    genre: row.genre,
+    genre: row.genre ?? undefined,
+    genreNormalized: (row.genre_normalized ?? undefined) as Play["genreNormalized"],
+    genreSource: (row.genre_source ?? undefined) as Play["genreSource"],
+    isFestival: row.is_festival ?? false,
+    festivalName: row.festival_name ?? undefined,
+    primaryRoom: row.primary_room ?? undefined,
     runtimeMinutes: row.runtime_minutes ?? undefined,
     intermissions: row.intermissions,
     premiereDate: row.premiere_date ?? undefined,
@@ -71,23 +107,23 @@ function mapRow(row: {
  * whole point of keeping the theaters' archives in the catalog. Discover's
  * browse rails are the place that hides them (see getTrending/getPremieres).
  */
-export async function searchPlays(
-  query: string,
-  venueType?: VenueType,
-  city?: string,
-  includeArchived = true,
-  venueId?: string
-): Promise<Play[]> {
+export async function searchPlays(query: string, options: SearchOptions = {}): Promise<Play[]> {
   const trimmed = query.trim();
   if (!trimmed) return [];
   const { data, error } = await supabase.rpc("search_plays", {
     search_term: trimmed,
-    venue_type_filter: venueType ?? null,
-    city_filter: city ?? null,
-    include_archived: includeArchived,
+    venue_type_filter: options.venueType ?? null,
+    city_filter: options.city ?? null,
+    include_archived: options.includeArchived ?? true,
     // Added in 0015. Without it the venue chip filtered the browse rails and
     // silently did nothing to the search results under the same chip.
-    venue_id_filter: venueId ?? null,
+    venue_id_filter: options.venueId ?? null,
+    // Added in 0019, along with ranking. Passing null rather than omitting
+    // them: PostgREST resolves an RPC by the argument names it is given, so a
+    // call that leaves arguments out is a different signature to it.
+    genre_filter: options.genre ?? null,
+    room_filter: options.room ?? null,
+    sort_by: options.sort ?? "relevance",
   });
   if (error) throw error;
   return (data ?? []).map((r: PlayRow) => mapRow(r));

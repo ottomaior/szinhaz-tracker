@@ -4,9 +4,18 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
 import { gutter, radius, space } from "@/theme/tokens";
-import { addToWatchlist, getPlayById, getReviewsForPlay, getUserById, getVenueById, isInWatchlist, removeFromWatchlist } from "@/services/playsService";
+import {
+  addToWatchlist,
+  getPlayById,
+  getReviewsForPlay,
+  getUpcomingPerformances,
+  getUserById,
+  getVenueById,
+  isInWatchlist,
+  removeFromWatchlist,
+} from "@/services/playsService";
 import { useAuth } from "@/contexts/AuthContext";
-import type { Play, Poster, Review, User, Venue } from "@/data/types";
+import type { Performance, Play, Poster, Review, User, Venue } from "@/data/types";
 import { IconButton, Button } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
@@ -15,6 +24,8 @@ import { Text } from "@/components/ui/Text";
 import { MaskRatingRow } from "@/components/icons/MaskIcon";
 import { ChevronLeftIcon, ShareIcon, TicketIcon, PlusIcon } from "@/components/icons/Icons";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { ShowtimeList } from "@/components/ui/ShowtimeList";
+import { formatLongDate, formatShowtime } from "@/utils/datetime";
 import { strings } from "@/i18n/hu";
 import { closeModal } from "@/utils/navigation";
 
@@ -45,6 +56,7 @@ export default function PlayDetailScreen() {
   const [play, setPlay] = useState<Play>();
   const [venue, setVenue] = useState<Venue>();
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [performances, setPerformances] = useState<Performance[]>([]);
   const [loadFailed, setLoadFailed] = useState(false);
   const [inWatchlist, setInWatchlist] = useState(false);
   const [watchlistBusy, setWatchlistBusy] = useState(false);
@@ -68,6 +80,11 @@ export default function PlayDetailScreen() {
     getReviewsForPlay(id)
       .then(setReviews)
       .catch(() => setReviews([]));
+    // An empty list on failure is the right fallback: ShowtimeList then says
+    // why there is nothing to show rather than rendering a broken section.
+    getUpcomingPerformances(id)
+      .then(setPerformances)
+      .catch(() => setPerformances([]));
   }, [id]);
 
   useEffect(() => {
@@ -175,11 +192,19 @@ export default function PlayDetailScreen() {
                   </Text>
                 </>
               )}
-              {!!play.genre && (
+              {!!play.genreNormalized && (
                 <>
                   <View style={styles.dot} />
                   <Text variant="caption" tone="faint">
-                    {strings.genres[play.genre] ?? play.genre}
+                    {strings.genres[play.genreNormalized] ?? play.genreNormalized}
+                  </Text>
+                </>
+              )}
+              {play.isFestival && !!play.festivalName && (
+                <>
+                  <View style={styles.dot} />
+                  <Text variant="caption" tone="faint">
+                    {play.festivalName}
                   </Text>
                 </>
               )}
@@ -251,6 +276,8 @@ export default function PlayDetailScreen() {
             </Text>
           )}
 
+          <ShowtimeList performances={performances} play={play} />
+
           {!!play.synopsis && (
             <Text variant="body" tone="dim">
               {play.synopsis}
@@ -308,14 +335,10 @@ export default function PlayDetailScreen() {
  */
 function schedulingLine(play: Play): string {
   if (play.nextPerformanceAt) {
-    const when = new Date(play.nextPerformanceAt).toLocaleString("hu-HU", {
-      month: "short", day: "numeric", weekday: "short", hour: "2-digit", minute: "2-digit",
-    });
-    return strings.status.nextPerformance + ": " + when;
+    return strings.status.nextPerformance + ": " + formatShowtime(play.nextPerformanceAt);
   }
   if (play.lastPerformanceAt) {
-    const when = new Date(play.lastPerformanceAt).toLocaleDateString("hu-HU", { year: "numeric", month: "long", day: "numeric" });
-    return strings.status.lastPerformance + ": " + when;
+    return strings.status.lastPerformance + ": " + formatLongDate(play.lastPerformanceAt);
   }
   return play.status === "running" || play.status === "announced" ? strings.status.noUpcoming : "";
 }

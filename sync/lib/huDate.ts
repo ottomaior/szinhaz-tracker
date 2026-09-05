@@ -30,6 +30,16 @@ const HU_DATE = new RegExp(String.raw`(\d{1,4})\.\s*(${MONTH_PATTERN})\s*(\d{1,2
 const ISO_DATE = /(\d{4})-(\d{2})-(\d{2})/;
 
 /**
+ * The all-numeric Hungarian form, "2026.09.13." — Vojtina Bábszínház writes
+ * both its premiere dates and its whole programme this way, where every other
+ * source spells the month out.
+ *
+ * The four-digit year is required rather than optional, which is what keeps
+ * this from matching an ordinary numbered list ("1. 2. 3.") in body copy.
+ */
+const DOTTED_DATE = new RegExp(String.raw`(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})\.?`);
+
+/**
  * Parses the first Hungarian (or ISO) date found in `text` into `YYYY-MM-DD`,
  * or returns undefined when there isn't a usable one.
  *
@@ -43,6 +53,18 @@ export function parseHungarianDate(text?: string | null): string | undefined {
 
   const iso = text.match(ISO_DATE);
   if (iso) return plausible(Number(iso[1])) ? `${iso[1]}-${iso[2]}-${iso[3]}` : undefined;
+
+  const dotted = text.match(DOTTED_DATE);
+  if (dotted) {
+    const year = Number(dotted[1]);
+    const month = Number(dotted[2]);
+    const day = Number(dotted[3]);
+    if (plausible(year) && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      return `${dotted[1]}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    }
+    // Four digits followed by dots that are not a real date. Fall through to
+    // the other forms rather than returning a wrong answer.
+  }
 
   const match = text.match(HU_DATE);
   if (!match) return undefined;

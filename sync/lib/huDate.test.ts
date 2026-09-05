@@ -24,6 +24,23 @@ describe("parseHungarianDate", () => {
     expect(parseHungarianDate("Nincs meghirdetett időpont")).toBeUndefined();
     expect(parseHungarianDate(undefined)).toBeUndefined();
   });
+
+  // Vojtina Bábszínház writes every date all-numerically, where the other
+  // sources spell the month out.
+  it("reads the all-numeric Hungarian form", () => {
+    expect(parseHungarianDate("Bemutató: 2023.01.17.")).toBe("2023-01-17");
+    expect(parseHungarianDate("2026.09.13.")).toBe("2026-09-13");
+  });
+
+  it("does not mistake a numbered list for a date", () => {
+    // The four-digit year requirement is what rules this out. Without it the
+    // pattern would fire on ordinary body copy.
+    expect(parseHungarianDate("1. 2. 3.")).toBeUndefined();
+  });
+
+  it("rejects an impossible all-numeric date rather than storing it", () => {
+    expect(parseHungarianDate("2023.13.45.")).toBeUndefined();
+  });
 });
 
 describe("budapestLocalToUtcIso", () => {

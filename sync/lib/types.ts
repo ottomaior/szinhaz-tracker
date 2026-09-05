@@ -5,7 +5,19 @@ export type SyncedPlay = {
   author: string;
   director: string;
   venueId: string; // this app's venues.id, via sync/venueMap.ts
-  genre: string;
+  /**
+   * The source's own word for what kind of evening this is, verbatim.
+   *
+   * Optional, and left undefined by every adapter whose site publishes no
+   * genre at all. It used to be required, which is the entire reason four
+   * adapters carried a `DEFAULT_GENRE` constant and wrote "próza" or "színház"
+   * onto productions nobody had classified: 443 of 476 rows in the catalogue
+   * held one of those two invented values. `plays.genre_normalized` is the
+   * field the app filters on, and 0016_genre_taxonomy.sql derives it from this
+   * one plus the venue's own profile — so saying nothing here is both allowed
+   * and more useful than guessing.
+   */
+  genre?: string;
   runtimeMinutes?: number;
   intermissions?: number;
   premiereDate?: string; // YYYY-MM-DD

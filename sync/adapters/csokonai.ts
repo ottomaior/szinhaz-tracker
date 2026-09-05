@@ -40,7 +40,18 @@ import type { SyncAdapter, SyncedPlay } from "../lib/types";
 const BASE_URL = "https://csokonaiszinhaz.hu";
 const CRAWL_DELAY_MS = 800; // polite pacing; robots.txt sets no explicit Crawl-delay
 const MAX_INDEX_PAGES = 25; // generous ceiling; the index is 4 pages today
-const PERFORMANCE_MONTHS = 3;
+/**
+ * How far ahead to walk the calendar for showtimes.
+ *
+ * Six months rather than three. A theatre publishes its next season in one
+ * go, months before it starts, and a three-month window meant that
+ * announcement was invisible until it had almost arrived — the catalogue held
+ * dates two months out at most, so half the productions listed as "Műsoron"
+ * had nothing to show when asked when they play. Months with nothing in them
+ * cost one request each and return an empty page, which is a cheap way to be
+ * ready the day the rest of the season goes up.
+ */
+const PERFORMANCE_MONTHS = 6;
 
 /**
  * Taxonomy terms that describe *where* a show plays rather than what kind of
@@ -50,8 +61,20 @@ const PERFORMANCE_MONTHS = 3;
  */
 const VENUE_TERM_SLUGS = new Set(["nagyerdei-szabadteri-szinpad"]);
 
-/** Used when a production carries no usable genre term at all. */
-const FALLBACK_GENRE = "színház";
+/*
+ * There is deliberately no fallback genre.
+ *
+ * This used to be `const FALLBACK_GENRE = "színház"` — the bare word
+ * "theatre", written onto any production whose only taxonomy term was a venue
+ * term. It is true of everything in the catalogue and so distinguishes
+ * nothing, and because it looked exactly like a real taxonomy term it could
+ * not be told apart from one downstream. Reporting undefined lets
+ * 0016_genre_taxonomy.sql record an honest "unknown" instead.
+ *
+ * Note that the *presence* of a slug in genreBySlug still matters and is
+ * unchanged: carrying no term at all is what separates real productions from
+ * the theatre's talks and building tours. Only the stored value goes away.
+ */
 
 type CalendarOccurrence = {
   detailUrl: string;
@@ -159,7 +182,10 @@ async function fetchGenreBySlug(): Promise<Map<string, string>> {
         if (VENUE_TERM_SLUGS.has(termSlug) && genreBySlug.has(slug)) continue;
         if (!genreBySlug.has(slug) || !VENUE_TERM_SLUGS.has(termSlug)) {
           if (!genreBySlug.has(slug)) added = true;
-          genreBySlug.set(slug, VENUE_TERM_SLUGS.has(termSlug) ? "" : label || FALLBACK_GENRE);
+          // Empty string, not a placeholder word: the slug being *present* is
+          // what marks this as a real production, and the value is the genre
+          // only when the term actually carried a readable label.
+          genreBySlug.set(slug, VENUE_TERM_SLUGS.has(termSlug) ? "" : label || "");
         }
       }
       if (!added) break;
@@ -376,7 +402,7 @@ async function run(): Promise<SyncedPlay[]> {
 
     const details = await fetchProductionDetails(detailUrl);
     const occurrences = occurrencesByUrl.get(detailUrl) ?? [];
-    const genre = genreBySlug.get(slug) || occurrences.find((o) => o.genre)?.genre || FALLBACK_GENRE;
+    const genre = genreBySlug.get(slug) || occurrences.find((o) => o.genre)?.genre || undefined;
 
     plays.push({
       sourceKey: slug,

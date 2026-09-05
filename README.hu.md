@@ -18,7 +18,7 @@ npx expo install --fix
 
 Ezután hozz létre egy [Supabase](https://supabase.com) projektet (az ingyenes
 csomag bőven elég), futtasd le a `supabase/migrations/` **összes** fájlját
-**sorrendben** (`0001_init.sql`-től a `0012_replace_play_cast.sql`-ig) a projekt
+**sorrendben** (`0001_init.sql`-től a `0021_genre_source_terms.sql`-ig) a projekt
 SQL-szerkesztőjében, majd másold a `.env.example`-t `.env`-re, és töltsd ki a
 projekt Settings → API oldaláról az URL-t és az anon kulcsot:
 
@@ -59,7 +59,8 @@ app/                     expo-router képernyők (fájlalapú útvonalak)
   (tabs)/
     _layout.tsx            tab navigátor, saját TabBar
     index.tsx               Feed
-    discover.tsx             Felfedezés — keresés + helyszíntípus szűrők
+    discover.tsx             Felfedezés — két mód (böngésző sávok / Műsor
+                              naptár), rangsorolt keresés, rendezés, szűrők
     watchlist.tsx             Figyelőlista
     profile.tsx                Profil
   play/[id].tsx           Előadás részletei
@@ -86,7 +87,8 @@ data/types.ts             domain típusok (Play, Venue, Review, User, …)
 services/supabase.ts      a Supabase kliens (az EXPO_PUBLIC_SUPABASE_*-ot olvassa)
 services/playsService.ts  a képernyők KIZÁRÓLAG innen kapnak előadás/helyszín/
                           felhasználó adatot — Supabase lekérdezésekkel
-services/searchService.ts keresés előadásokban/helyszínekben/szereplők közt
+services/searchService.ts rangsorolt, ékezetfüggetlen keresés elgépelés-tűréssel,
+                          előadásokban/helyszínekben/szereplők közt
                           (Postgres RPC)
 services/authService.ts   regisztráció / belépés / kilépés
 
@@ -152,6 +154,101 @@ react-native-webben nincs media query a `StyleSheet.create`-en belül), a
 `components/ui/Grid` pedig a saját mért szélességéből számol csempeszélességet,
 nem százalékból.
 
+## Hogyan találsz meg egy előadást, és mikor játsszák
+
+Három dolog, amit a katalógus mostanáig nem tudott, és hogy pontosan mi volt a
+baj mindegyikkel.
+
+### A műfaj nem volt metaadat
+
+A `plays.genre` nagyrészt nem forrásból származott, hanem ez a projekt találta
+ki. 476 sorból 276 azt mondta, "próza", 167 pedig azt, "színház", és mindegyik
+egy adapterbe drótozott `DEFAULT_GENRE` konstansból jött — ugyanazokban a
+fájlokban ott a megjegyzés, hogy az oldal nem közöl műfajmezőt, aztán mégis
+írtak egyet. További tizenkét sor műfaja "IX. MagdaFeszt" volt: fesztiválnév,
+amit a Csokonai taxonómiája a valódi kifejezések mellé sorol, olyan sorokon,
+amelyek közt díjátadó és koncert is akadt. Egy ilyen mezőre szűrő műfaj-chip
+aszerint darabolta volna a katalógust, hogy melyik lekapó írta az adott sort.
+
+A `0016_genre_taxonomy.sql` meghagyja a `genre`-ben azt, amit a forrás mondott
+— a mező mostantól nullozható, tehát egy adapter mondhatja azt is, hogy semmit
+—, és mellé képzi a `genre_normalized`-et egy rögzített szótár fölött. A
+`genre_source` azt rögzíti, honnan jött ez a válasz, mert ezek valóban
+különböző állítások:
+
+| `genre_source` | jelentése |
+|---|---|
+| `source` | a színház saját taxonómiai kifejezése |
+| `inferred` | innen származtatva az `author` mezőben álló zeneszerzőből — Verdi és Puccini nem írt operettet |
+| `venue_default` | a ház profiljából feltételezve (`venues.default_genre`) |
+| `user` | kézzel megadva, aki felvitte az előadást |
+
+A következtetés szándékosan óvatos: ami nem ismerhető fel biztosan, az `zenés`
+marad, nem kerekítjük `musical`-ra; és van egy rövid lista azokról a művekről,
+ahol a szerző szokásos műfaja rossz választ adna erre a darabra — Offenbach száz
+operettet írt és egy komoly operát, és a *Hoffmann meséi* az opera.
+
+### A keresés nem rangsorolt, és ékezeteket követelt
+
+A `search_plays` `order by pl.title`-lel végződött, tehát az eredmények
+betűrendben jöttek, és egy szereposztás-találat megelőzhette azt a produkciót,
+amit a keresés valójában néven nevezett. `ilike`-ot használt, ami ékezetérzékeny:
+az "orkeny" semmit nem talált, a "szinhaz" sem. Egyetlen elgépelés pedig üres
+képernyőt adott, aminek a felhívása az, hogy "vedd fel te magad" — így egy
+félreütés egyenesen duplikált sorhoz vezetett.
+
+A `0019_search_ranking.sql` bekapcsolja az `unaccent` és a `pg_trgm`
+kiterjesztést — mindkettő végig elérhető volt a projektben —, és relevanciasávokat
+ad (pontos cím > címkezdet > címben szerepel > szerző > rendező > helyszín >
+színpad > műfaj), minden szó szerinti sáv alatt egy trigram-küszöbbel, így egy
+elgépelés-találat soha nem előzhet meg egy valódit. A hibatűrő háló
+`word_similarity`-t használ, nem `similarity`-t: a
+`similarity('csokonay', 'csokonai nemzeti szinhaz')` értéke 0,26, mert az egész
+célszöveggel oszt, míg a `word_similarity` a célszövegen belüli legjobban
+illeszkedő szósorozathoz méri a kifejezést, és 0,78-at ad. Ezen a katalóguson
+mérve: Csokonay→Csokonai 0,78, Katonna→Katona 0,67, Verdy→Verdi 0,67, értelmetlen
+szövegre 0,00; a küszöb 0,6-nál van.
+
+A Felfedezés rendezésvezérlőt is kapott. A lehetőségek szándékosan mások
+keresésben és böngészésben — a "találat" szerinti rendezéshez kell egy lekérdezés,
+amihez viszonyítani lehet, ezért ott nem jelenik meg, ahol nincs beírva semmi —,
+és a "Népszerű" felirat "Előadások"-ra vált minden olyan rendezésnél, ami nem
+értékelés szerinti, mert a felirat állítás arról, hogy mi ez a lista.
+
+### A játszási időpontokat begyűjtöttük, de sosem mutattuk meg
+
+A `getUpcomingPerformances()` a `services/playsService.ts`-ben ott volt, mióta
+a performances tábla létezik, és **egyetlen hívási helye sem volt**. Több száz
+jövőbeli időpont ült az adatbázisban, mindegyik a színpaddal együtt, miközben az
+Előadás részletei oldal egyetlen "következő előadás" sort mutatott.
+
+Mostantól két út vezet oda. Az Előadás részletei oldal hónapokra bontva
+felsorolja az összes közelgő időpontot, a színpaddal együtt; a Felfedezésnek
+pedig lett egy második módja, a **Műsor**, ami a naptár felől olvassa a
+katalógust — kiválasztasz egy estét, és látod, mi megy aznap az összes szóba jövő
+színházban, helyszínenként csoportosítva. Ez az irány korábban egyáltalán nem
+volt lekérdezhető: az app minden lekérdezése egy produkcióból indult, és azt
+kérdezte, mikor játsszák. A hátterében a `program_in_range` és a `program_days`
+áll (`0017_program_by_day.sql`), a dátumválasztó pedig csak olyan napokat kínál,
+amelyeken van is valami, így soha nem vezethet üres képernyőre.
+
+Ahol egy produkciónak tényleg nincs időpontja, ott a képernyő mostantól
+megmondja, a négy ok közül melyik érvényes, ahelyett hogy üres helyet mutatna —
+egy színház, amelyik még nem hirdette meg a következő évadot, nem ugyanaz, mint
+egy produkció, amelyik lekerült a műsorról.
+
+**Egy megjegyzés az időről.** Minden játszási időpont `timestamptz`-ként van
+tárolva, és a `utils/datetime.ts`-en keresztül jelenik meg, ami kifejezetten az
+`Europe/Budapest` zónát rögzíti, nem az eszközét: egy londoni böngésző különben
+18:00-ként jelenítene meg egy 19:00-s budapesti kezdést, és ez az az egyetlen
+szám, amit egy műsorlista soha nem ronthat el. A `utils/datetime.test.ts` ezt
+egy nyári időszámítás-váltáson át is ellenőrzi, mert a hiba a képernyőn
+láthatatlan — a 18:00 tökéletesen hihető kezdésnek látszik. Ugyanezt a hibát
+megtaláltuk és javítottuk az adatbázisban is: a származtatott `status_reason`
+szöveg zóna nélkül formázta az időbélyegeit, így az Előadás részletei oldal a
+"next performance 2026-09-06 17:00" sort közvetlenül a helyes "szept. 6.,
+vasárnap · 19:00" alá írta ki (`0018_status_reason_timezone.sql`).
+
 ## Ami ma tényleg megvan
 
 Az app mögött valódi Supabase (Postgres) adatbázis van Row Level Security-vel,
@@ -192,13 +289,31 @@ tiltja az automatikus hozzáférést", ami csak az egyikre igaz):
   tiltja, `Crawl-delay: 20` mellett. A műsor bejárható; a késleltetés miatt lesz
   lassú egy teljes kör.
 
-Öt adapter él és alapból be van kapcsolva, együtt nagyjából 490 produkciót adnak
-— ebből körülbelül 165 fut most vagy meg van hirdetve, 325 pedig olyan, amit
-maguk a színházak sorolnak az archívumukba —, valamint 155 játszási időpontot.
-Az archív sorok `plays.is_archived`-et kapnak, ami kiveszi őket a Felfedezés
-bemutató- és felkapott-sávjaiból, de kereshetők és rögzíthetők maradnak, így
-évekkel ezelőtt látott előadást is fel lehet vinni (lásd
-`0005_archive_and_reconcile.sql`).
+Tíz adapter él és alapból be van kapcsolva, nyolc színházat fed le két
+városban, együtt nagyjából 1160 produkciót adnak — ebből körülbelül 310 fut most
+vagy meg van hirdetve, 850 pedig olyan, amit maguk a színházak sorolnak az
+archívumukba —, valamint 400 közelgő játszási időpontot. Az archív sorok
+`plays.is_archived`-et kapnak, ami kiveszi őket a Felfedezés böngészősávjaiból,
+de kereshetők és rögzíthetők maradnak, így évekkel ezelőtt látott előadást is
+fel lehet vinni (lásd `0005_archive_and_reconcile.sql`).
+
+| Színház | Város | Adapter(ek) | Forrás |
+|---|---|---|---|
+| Örkény István Színház | Budapest | `orkeny` | saját JSON API |
+| Katona József Színház | Budapest | `katona-wp`, `katona-archive` | WordPress + befagyasztott Joomla |
+| Nemzeti Színház | Budapest | `nemzeti` | saját oldal |
+| Centrál Színház | Budapest | `central` | saját oldal + The Events Calendar API |
+| Madách Színház | Budapest | `madach` | saját oldal |
+| Vígszínház | Budapest | `vigszinhaz` | saját JSON API |
+| Csokonai Nemzeti Színház | Debrecen | `csokonai`, `csokonai-archive` | saját oldal |
+| Vojtina Bábszínház | Debrecen | `vojtina` | saját oldal |
+
+Attól, hogy Debrecennek lett egy második helyszíne, kapcsolnak be ott a
+Felfedezés színház-chipjei: a sor elrejti magát, ha egy városban csak egy
+lehetőség van, mert egy szűrő, ami nem tud változtatni az eredményen, hibásnak
+látszik. A Vojtina egyben a katalógus első bábszínháza is, így a
+`genre_normalized` tőle kapja az első valódi `báb` értékeit, nem újabb pár
+tucat prózasort.
 
 A **Katona József Színház** (Budapest) két adaptert visz, mert a színház
 WordPressre költöztette az oldalát (a feltöltések dátuma 2026-06/07), és a régi
@@ -246,14 +361,30 @@ a figyelmeztető fejlécet a `sync/adapters/jegymester.ts`-ben. A Csokonai
 korábban szintén ezen az elromlott platformon volt — a most működő adaptere a
 Csokonai saját oldalát olvassa.
 
-Ami még nincs megírva, azzal együtt, hogy élő ellenőrzéskor mi derült ki róla:
+A **Vígszínház** mostanra él, és a legbőségesebb forrás az összes közül — de nem
+úgy, ahogy e fájl korábbi változata jósolta. Az oldalai kliensoldalon
+renderelnek, az RSC flight payload pedig csak a felület saját feliratszótárát
+tartalmazza: produkcióadatot egyáltalán nem. Amit az alkalmazás ténylegesen hív,
+az az `/api/programme/`, és ez minden produkciót visszaad bemutatódátummal,
+perces játékidővel, szünetszámmal és strukturált rendezővel. Két dolgot érdemes
+tudni róla: **1890-ig** nyúlik vissza, ezért a `sync/adapters/vigszinhaz.ts`
+1960-os bemutatóévnél megáll (az 1897-es évadot senki nem látta, aki ezt az
+appot használja, és a teljes behúzás egyetlen helyszínt négyszer akkorává tenne,
+mint az összes többit együtt); és ez az egyetlen forrás, ahol **szereposztás**
+sehol nem érhető el, tehát ezeket a produkciókat színészre keresve nem lehet
+megtalálni.
 
-- **Vígszínház** — megvalósítható, de befejezetlen. A `/hu/eloadasok`
-  szerveroldalon 56 produkciólinket ad ki (`/hu/produkciok/{slug}`) valódi
-  grafikával, de a produkciónkénti metaadat a Next.js RSC flight payloadjában
-  van, ahol a szereposztás numerikus tag-azonosítók listája, amihez még egy
-  névjegyzék-lekérés kell — pontosan olyan alakú, mint az Örkény API-ja. A
-  szerkezet fel van térképezve, az adapter nincs megírva.
+A **Madách** külön megjegyzést kíván. A `robots.txt`-je a Cloudflare
+content-signals sablonszövege és semmi más — az egész fájl kommentekből áll,
+amelyek elmagyarázzák, mi az a content signal, de nincs benne `User-agent`
+blokk, nincs `Disallow`, és egyetlen jelzésérték sincs beállítva. A szöveg saját
+(c) pontja szerint az az üzemeltető, aki nem állít be jelzést, "sem nem ad, sem
+nem korlátoz engedélyt" — tehát nincs kifejezett korlátozás, és nincs betartandó
+bejárási szabály sem. Érdemes újraolvasni, ha az a fájl valaha valódi direktívát
+kap.
+
+Ami továbbra sincs megírva, azzal együtt, hogy élő ellenőrzéskor mi derült ki:
+
 - **Radnóti** és **Trafó** — sima HTTP-vel egyáltalán nem érhetők el. Mindkettő
   kliensoldalon rendereli a műsorát: a Radnóti `/repertoar/`,
   `/bemutatok-20262027/` és `/archivum/` oldala sima lekéréssel három bájtra
@@ -262,8 +393,9 @@ Ami még nincs megírva, azzal együtt, hogy élő ellenőrzéskor mi derült ki
   szinkronfeladatban, ami egy ütemezett GitHub Actionhöz jóval nehezebb
   függőség, mint a cheerio.
 
-Szintén nincs még kész: követés/követők, és a maradék Jegy.hu-alapú színházak
-(Nemzeti, Madách, Centrál, Pesti Magyar, Vojtina). A figyelőlistára
+- **Pesti Magyar Színház** — sima lekérésre "Access Forbidden" a válasz.
+
+Szintén nincs még kész: követés/követők. A figyelőlistára
 felvétel/levétel viszont kész — a `services/playsService.ts`-ben ott az
 `addToWatchlist`/`removeFromWatchlist`, az Előadás részletei oldal kapcsolójára
 kötve.

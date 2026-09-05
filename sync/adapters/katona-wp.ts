@@ -53,8 +53,16 @@ const BASE_URL = "https://katonajozsefszinhaz.hu";
 const INDEX_PATH = "/eloadasok/";
 const CRAWL_DELAY_MS = 800; // robots.txt sets no Crawl-delay; this is courtesy
 
-/** Katona is a prose theater; the site publishes no genre field. */
-const DEFAULT_GENRE = "próza";
+/*
+ * Katona is a prose theatre; the site publishes no genre field.
+ *
+ * Reported as "nothing here" rather than as "próza" — the theatre's profile
+ * lives on `venues.default_genre` and is applied by the classifier in
+ * 0016_genre_taxonomy.sql, which labels it `genre_source = 'venue_default'`.
+ * Leaving it undefined is also what lets a musical in the repertoire be
+ * recognised as one: Chicago is now classified from its authors rather than
+ * buried under this adapter's default.
+ */
 
 /** Endpoints living under the same path that are not productions. */
 const NOT_PRODUCTIONS = new Set(["feed", "page"]);
@@ -239,7 +247,7 @@ export function parseProduction(html: string, slug: string): SyncedPlay | undefi
     author,
     director,
     venueId: VENUE_IDS.katona,
-    genre: DEFAULT_GENRE,
+    genre: undefined,
     runtimeMinutes,
     intermissions,
     premiereDate,

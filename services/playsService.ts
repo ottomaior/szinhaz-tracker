@@ -7,6 +7,8 @@ import type {
   Play,
   PlayStatus,
   Poster,
+  ProgramDay,
+  ProgramEntry,
   Review,
   User,
   Venue,
@@ -26,7 +28,12 @@ type PlayRow = {
   author: string;
   director: string;
   venue_id: string;
-  genre: string;
+  genre: string | null;
+  genre_normalized: string | null;
+  genre_source: string | null;
+  is_festival: boolean;
+  festival_name: string | null;
+  primary_room: string | null;
   runtime_minutes: number | null;
   intermissions: number;
   premiere_date: string | null;
@@ -121,7 +128,12 @@ function toPlay(row: PlayRow): Play {
     author: row.author,
     director: row.director,
     venueId: row.venue_id,
-    genre: row.genre,
+    genre: row.genre ?? undefined,
+    genreNormalized: (row.genre_normalized ?? undefined) as Play["genreNormalized"],
+    genreSource: (row.genre_source ?? undefined) as Play["genreSource"],
+    isFestival: row.is_festival ?? false,
+    festivalName: row.festival_name ?? undefined,
+    primaryRoom: row.primary_room ?? undefined,
     runtimeMinutes: row.runtime_minutes ?? undefined,
     intermissions: row.intermissions,
     premiereDate: row.premiere_date ?? undefined,
@@ -229,7 +241,7 @@ const PLAY_SELECT_WITH_VENUE_FILTERS: string = `*, play_cast(name, role, sort_or
 /** Discover renders these as a grid, so an unbounded fetch was pure waste. */
 const TRENDING_LIMIT = 40;
 
-export type VenueFilters = { venueType?: VenueType; city?: string; venueId?: string };
+export type VenueFilters = { venueType?: VenueType; city?: string; venueId?: string; genre?: string };
 
 function applyVenueFilters(query: any, filters?: VenueFilters) {
   if (filters?.venueType) query = query.eq("venues.type", filters.venueType);
@@ -237,8 +249,28 @@ function applyVenueFilters(query: any, filters?: VenueFilters) {
   // Read off the play's own column rather than the joined venue: same answer,
   // and it does not need the `venues!inner` join the other two force.
   if (filters?.venueId) query = query.eq("venue_id", filters.venueId);
+  // Matches only what is actually classified. A play whose source published no
+  // genre has genre_normalized null and is excluded from a genre-filtered list
+  // rather than being quietly claimed by whichever chip is active — see
+  // 0016_genre_taxonomy.sql on why null here is a real answer and not a gap.
+  if (filters?.genre) query = query.eq("genre_normalized", filters.genre);
   return query;
 }
+
+/**
+ * How to order a browse list.
+ *
+ * Narrower than the search sort keys on purpose: "relevance" needs a query to
+ * be relevant to, so it is not offered where there is nothing typed.
+ */
+export type BrowseSort = "rating" | "next" | "premiere" | "title";
+
+const BROWSE_ORDER: Record<BrowseSort, { column: string; ascending: boolean }> = {
+  rating: { column: "rating_overall", ascending: false },
+  next: { column: "next_perf_at", ascending: true },
+  premiere: { column: "premiere_date", ascending: false },
+  title: { column: "title", ascending: true },
+};
 
 /**
  * Statuses a browse rail will show.
@@ -281,9 +313,23 @@ export async function getNowPlaying(filters?: VenueFilters): Promise<Play[]> {
   return ((data ?? []) as unknown as PlayRow[]).map((r) => toPlay(r));
 }
 
-export async function getTrending(filters?: VenueFilters): Promise<Play[]> {
+/**
+ * The main browse grid.
+ *
+ * The only rail that takes a sort: the other two are defined by their ordering
+ * — "Közelgő bemutatók" is premieres by date and "Műsoron most" is the next
+ * dates soonest first — so re-ordering either would leave a rail that no
+ * longer means what its heading says.
+ *
+ * `nullsFirst: false` matters on every key but rating. Most of the catalogue
+ * has no premiere date and half has no upcoming performance, and Postgres
+ * sorts nulls first on an ascending order by default, which would open the
+ * grid with every production we know least about.
+ */
+export async function getTrending(filters?: VenueFilters, sort: BrowseSort = "rating"): Promise<Play[]> {
   const needsJoin = !!(filters?.venueType || filters?.city);
   const select: string = needsJoin ? PLAY_SELECT_WITH_VENUE_FILTERS : PLAY_SELECT;
+  const order = BROWSE_ORDER[sort] ?? BROWSE_ORDER.rating;
   // Browse rails show only current work — the catalog also carries the
   // theaters' own archives so old productions stay loggable and searchable.
   let query = supabase
@@ -291,7 +337,7 @@ export async function getTrending(filters?: VenueFilters): Promise<Play[]> {
     .select(select)
     .eq("is_archived", false)
     .in("status", BROWSABLE_STATUSES)
-    .order("rating_overall", { ascending: false })
+    .order(order.column, { ascending: order.ascending, nullsFirst: false })
     .limit(TRENDING_LIMIT);
   query = applyVenueFilters(query, filters);
   const { data, error } = await query;
@@ -388,6 +434,162 @@ export async function getUpcomingPerformances(playId: string): Promise<Performan
     .order("starts_at", { ascending: true });
   if (error) throw error;
   return (data ?? []).map((r) => toPerformance(r as PerformanceRow));
+}
+
+/**
+ * Filters the program view understands.
+ *
+ * Genre joins the venue filters here because a date-first listing is where it
+ * finally has something to bite on: "opera in Debrecen next Saturday" is a
+ * real question, and until 0016_genre_taxonomy.sql the genre column could not
+ * answer it — 443 of 476 rows held a value an adapter had invented.
+ */
+export type ProgramFilters = VenueFilters & { genre?: string };
+
+type ProgramRow = {
+  performance_id: string;
+  starts_at: string;
+  room: string | null;
+  play_id: string;
+  title: string;
+  author: string;
+  director: string;
+  genre_normalized: string | null;
+  runtime_minutes: number | null;
+  status: PlayStatus;
+  is_archived: boolean;
+  venue_id: string;
+  venue_name: string;
+  venue_city: string;
+} & PosterColumns;
+
+function toProgramEntry(row: ProgramRow): ProgramEntry {
+  return {
+    performanceId: row.performance_id,
+    startsAt: row.starts_at,
+    room: row.room ?? undefined,
+    playId: row.play_id,
+    title: row.title,
+    author: row.author,
+    director: row.director,
+    genreNormalized: (row.genre_normalized ?? undefined) as ProgramEntry["genreNormalized"],
+    runtimeMinutes: row.runtime_minutes ?? undefined,
+    status: row.status ?? "unknown",
+    poster: toPoster(row),
+    venueId: row.venue_id,
+    venueName: row.venue_name,
+    venueCity: row.venue_city,
+  };
+}
+
+/**
+ * A Budapest calendar day as the UTC instants that bound it.
+ *
+ * The database stores `timestamptz` and the range predicate compares instants,
+ * so a day cannot be passed as a bare date: midnight UTC is still the previous
+ * evening in Hungary, which would drop a day's late shows and pick up the
+ * previous day's. Constructed by asking what UTC offset applied on that date
+ * rather than assuming one, since the program spans both sides of the October
+ * clock change.
+ */
+function budapestDayBounds(dayKey: string): { start: string; end: string } {
+  const offsetAt = (isoNoon: string) => {
+    const probe = new Date(isoNoon);
+    const parts = Object.fromEntries(
+      new Intl.DateTimeFormat("en-US", {
+        timeZone: "Europe/Budapest",
+        hour12: false,
+        year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit", second: "2-digit",
+      })
+        .formatToParts(probe)
+        .map((p) => [p.type, p.value])
+    );
+    const asIfUtc = Date.UTC(
+      Number(parts.year), Number(parts.month) - 1, Number(parts.day),
+      Number(parts.hour) % 24, Number(parts.minute), Number(parts.second)
+    );
+    return asIfUtc - probe.getTime();
+  };
+
+  const offset = offsetAt(`${dayKey}T12:00:00Z`);
+  const startMs = Date.parse(`${dayKey}T00:00:00Z`) - offset;
+  return {
+    start: new Date(startMs).toISOString(),
+    end: new Date(startMs + 24 * 60 * 60 * 1000).toISOString(),
+  };
+}
+
+/** Everything playing on one Budapest calendar day, soonest first. */
+export async function getProgramForDay(dayKey: string, filters?: ProgramFilters): Promise<ProgramEntry[]> {
+  const { start, end } = budapestDayBounds(dayKey);
+  const { data, error } = await supabase.rpc("program_in_range", {
+    range_start: start,
+    range_end: end,
+    city_filter: filters?.city ?? null,
+    venue_id_filter: filters?.venueId ?? null,
+    genre_filter: filters?.genre ?? null,
+  });
+  if (error) throw error;
+  return ((data ?? []) as ProgramRow[]).map(toProgramEntry);
+}
+
+/**
+ * Which of the next `days` days have anything scheduled.
+ *
+ * Only days with something on them come back, so the date picker never offers
+ * an evening that leads to an empty screen — the same rule the venue and city
+ * chips already follow.
+ */
+export async function getProgramDays(days = 60, filters?: ProgramFilters): Promise<ProgramDay[]> {
+  const now = new Date();
+  const end = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+  const { data, error } = await supabase.rpc("program_days", {
+    range_start: now.toISOString(),
+    range_end: end.toISOString(),
+    city_filter: filters?.city ?? null,
+    venue_id_filter: filters?.venueId ?? null,
+    genre_filter: filters?.genre ?? null,
+  });
+  if (error) throw error;
+  return ((data ?? []) as { day: string; performance_count: number }[]).map((r) => ({
+    day: r.day,
+    performanceCount: r.performance_count,
+  }));
+}
+
+/**
+ * The genres actually present in the browsable catalogue, most common first.
+ *
+ * Built from the data rather than from the vocabulary in data/types.ts, for
+ * the reason the venue-type chips were hidden for: a chip whose only possible
+ * outcome is an empty screen reads as broken, not as "we have none of those".
+ * The catalogue holds no báb at all until a puppet theatre is synced, and no
+ * opera outside Debrecen.
+ */
+export async function getFilterGenres(filters?: VenueFilters): Promise<string[]> {
+  const needsJoin = !!(filters?.venueType || filters?.city);
+  // Annotated `string` rather than left as a literal union, the same way the
+  // browse rails above do it: supabase-js parses a literal select at the type
+  // level, and a ternary between two of them defeats the parser rather than
+  // widening it.
+  const select: string = needsJoin ? "genre_normalized, venues!inner(type, city)" : "genre_normalized";
+  let query = supabase
+    .from("plays")
+    .select(select)
+    .eq("is_archived", false)
+    .in("status", BROWSABLE_STATUSES)
+    .not("genre_normalized", "is", null);
+  query = applyVenueFilters(query, filters);
+  const { data, error } = await query;
+  if (error) throw error;
+
+  const counts = new Map<string, number>();
+  for (const row of (data ?? []) as unknown as { genre_normalized: string | null }[]) {
+    if (!row.genre_normalized) continue;
+    counts.set(row.genre_normalized, (counts.get(row.genre_normalized) ?? 0) + 1);
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "hu")).map(([g]) => g);
 }
 
 async function statsForUser(userId: string) {

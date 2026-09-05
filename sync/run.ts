@@ -18,6 +18,11 @@ import { csokonaiAdapter } from "./adapters/csokonai";
 import { csokonaiArchiveAdapter } from "./adapters/csokonai-archive";
 import { katonaAdapter as katonaArchiveAdapter } from "./adapters/katona";
 import { katonaWpAdapter } from "./adapters/katona-wp";
+import { vojtinaAdapter } from "./adapters/vojtina";
+import { nemzetiAdapter } from "./adapters/nemzeti";
+import { centralAdapter } from "./adapters/central";
+import { madachAdapter } from "./adapters/madach";
+import { vigszinhazAdapter } from "./adapters/vigszinhaz";
 import { mirrorPoster } from "./lib/posters";
 import type { SyncAdapter, SyncedPlay } from "./lib/types";
 
@@ -49,17 +54,26 @@ const ALL_ADAPTERS: SyncAdapter[] = [
   orkenyAdapter,
   csokonaiAdapter,
   csokonaiArchiveAdapter,
+  vojtinaAdapter,
+  nemzetiAdapter,
+  centralAdapter,
+  madachAdapter,
+  vigszinhazAdapter,
   katonaWpAdapter,
   katonaArchiveAdapter,
   katonaAdapter,
   csokonaiJegymesterAdapter,
 ];
 
-// Run automatically by the scheduled workflow: Örkény's own API, plus
-// Csokonai (Debrecen) and Katona (Budapest), both scraped from their own
-// WordPress sites, plus Katona's frozen Joomla install for its back
-// catalogue (see sync/adapters/katona.ts — the theatre relaunched, and the
-// old domain now serves only the archive).
+// Run automatically by the scheduled workflow. Every one of these reads a
+// theatre's own site or API — no aggregator, no ticketing platform.
+//
+//   Budapest  Örkény (own JSON API), Katona (WordPress, plus its frozen Joomla
+//             install for the back catalogue — the theatre relaunched and the
+//             old domain now serves only the archive), Nemzeti, Centrál,
+//             Madách, Vígszínház (own JSON API).
+//   Debrecen  Csokonai (repertoire and archive, two adapters for the reason
+//             given in sync/adapters/csokonai-archive.ts), and Vojtina.
 //
 // katonaAdapter/csokonaiJegymesterAdapter stay excluded — verified against
 // the live site, that endpoint returns 403 "requires access token" (see
@@ -69,6 +83,11 @@ const DEFAULT_ADAPTERS: SyncAdapter[] = [
   orkenyAdapter,
   csokonaiAdapter,
   csokonaiArchiveAdapter,
+  vojtinaAdapter,
+  nemzetiAdapter,
+  centralAdapter,
+  madachAdapter,
+  vigszinhazAdapter,
   katonaWpAdapter,
   katonaArchiveAdapter,
 ];
@@ -164,7 +183,7 @@ async function upsertPlay(sourceName: string, synced: SyncedPlay) {
         author: synced.author,
         director: synced.director,
         venue_id: synced.venueId,
-        genre: synced.genre,
+        genre: synced.genre ?? null,
         runtime_minutes: synced.runtimeMinutes ?? null,
         intermissions: synced.intermissions ?? 0,
         premiere_date: synced.premiereDate ?? null,
@@ -349,7 +368,10 @@ function reportDryRun(adapter: SyncAdapter, plays: SyncedPlay[]) {
   const withRuntime = plays.filter((p) => p.runtimeMinutes).length;
   const archived = plays.filter((p) => p.isArchived).length;
   const performances = plays.reduce((n, p) => n + p.performances.length, 0);
-  const genres = [...new Set(plays.map((p) => p.genre))].sort();
+  // "(nincs)" rather than a blank: an adapter reporting no genre is now the
+  // expected case for most sources, and a dry run should say so out loud
+  // instead of printing an empty slot that reads like a parsing failure.
+  const genres = [...new Set(plays.map((p) => p.genre ?? "(nincs)"))].sort();
 
   console.log(`\n[${adapter.name}] DRY RUN — ${plays.length} plays, ${performances} performances`);
   console.log(`  archived:   ${archived}`);
@@ -366,7 +388,7 @@ function reportDryRun(adapter: SyncAdapter, plays: SyncedPlay[]) {
   console.log("  sample:");
   for (const p of plays.slice(0, 5)) {
     console.log(
-      `    ${p.isArchived ? "[archív] " : ""}${p.title} — ${p.author || "?"} / rend. ${p.director || "?"} — ${p.genre} — ${
+      `    ${p.isArchived ? "[archív] " : ""}${p.title} — ${p.author || "?"} / rend. ${p.director || "?"} — ${p.genre ?? "(nincs)"} — ${
         p.premiereDate ?? "no premiere"
       } — ${p.cast.length} cast — ${p.performances.length} perf`
     );
@@ -487,7 +509,14 @@ async function main() {
   // Runs even when an adapter failed: the sources that did succeed still
   // moved dates around, and a partially refreshed catalog with correct
   // statuses beats a fully refreshed one with stale ones.
-  await recomputeStatuses();
+  //
+  // Skipped entirely under --dry-run. Both are RPCs that rewrite every row in
+  // `plays`, and a flag documented as "fetch and report, touch no database"
+  // was calling them anyway: the upserts were guarded and these never were.
+  if (!DRY_RUN) {
+    await recomputeStatuses();
+    await recomputeGenres();
+  }
 
   if (failures.length) {
     console.error(`${failures.length}/${adapters.length} adapter(s) failed.`);
@@ -510,6 +539,26 @@ async function recomputeStatuses() {
     // Never fail the whole job over this: the catalog rows are already
     // written and correct, and the next run recomputes anyway.
     console.error("[status] recompute failed (catalog rows are still up to date):", errorMessageOf(e));
+  }
+}
+
+/**
+ * Genre, festival flag and primary stage are derived the same way status is —
+ * see supabase/migrations/0016_genre_taxonomy.sql. Adapters now report only
+ * what their source actually publishes, which for most of them is nothing, so
+ * this pass is what turns a null genre into something the app can filter on:
+ * the venue's own profile, or the composer named in the author field.
+ *
+ * Runs after recomputeStatuses() because primary_room reads the performances
+ * this run just wrote.
+ */
+async function recomputeGenres() {
+  try {
+    const { error } = await getSupabaseAdmin().rpc("recompute_play_genre");
+    if (error) throw error;
+    console.log("[genre] recomputed genres, festival flags and stages");
+  } catch (e) {
+    console.error("[genre] recompute failed (catalog rows are still up to date):", errorMessageOf(e));
   }
 }
 
