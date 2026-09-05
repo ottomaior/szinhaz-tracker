@@ -187,7 +187,7 @@ export default function ProfileScreen() {
                         {venues.get(entry.play.venueId)?.name ?? entry.play.author}
                       </Text>
                       <Text variant="caption" tone="faint">
-                        {strings.profile.seenOn(formatDate(entry.review.createdAt))}
+                        {strings.profile.seenOn(formatDate(entry.review.seenAt))}
                       </Text>
                     </>
                   }
@@ -231,7 +231,7 @@ export default function ProfileScreen() {
                       <View style={styles.reviewMeta}>
                         <MaskRatingRow rating={entry.review.ratingOverall} size={13} />
                         <Text variant="caption" tone="faint">
-                          {formatDate(entry.review.createdAt)}
+                          {formatDate(entry.review.seenAt)}
                         </Text>
                       </View>
                       <Text variant="bodySmall" tone="dim">
@@ -277,8 +277,20 @@ function TabBody({
   return <View style={styles.tabList}>{children}</View>;
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("hu-HU", { year: "numeric", month: "short", day: "numeric" });
+/**
+ * A diary date, from the `YYYY-MM-DD` the review carries.
+ *
+ * Parsed at midday rather than midnight: a bare date string is midnight UTC,
+ * which is still the previous evening in Budapest, so every entry would be
+ * labelled with the day before the one the person actually chose.
+ */
+function formatDate(dayKey: string) {
+  return new Date(`${dayKey}T12:00:00Z`).toLocaleDateString("hu-HU", {
+    timeZone: "Europe/Budapest",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }
 
 function Stat({ value, label, gold = false }: { value: number; label: string; gold?: boolean }) {

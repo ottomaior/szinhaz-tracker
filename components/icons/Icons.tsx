@@ -125,6 +125,29 @@ export function ChevronLeftIcon({ size = 17, color = colors.text, strokeWidth = 
   );
 }
 
+export function ChevronRightIcon({ size = 17, color = colors.text, strokeWidth = 2 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M9 5l7 7-7 7" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+/** Leaving the app — on the button that opens the theatre's own page. */
+export function ExternalLinkIcon({ size = 14, color = colors.gold, strokeWidth = 1.8 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 /** The affordance on a control that opens a list of options. */
 export function ChevronDownIcon({ size = 13, color = colors.textDim, strokeWidth = 2 }: IconProps) {
   return (

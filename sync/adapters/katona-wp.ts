@@ -243,6 +243,7 @@ export function parseProduction(html: string, slug: string): SyncedPlay | undefi
 
   return {
     sourceKey: slug,
+    sourceUrl: `${BASE_URL}/eloadasok/${slug}/`,
     title,
     author,
     director,

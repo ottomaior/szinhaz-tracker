@@ -184,6 +184,7 @@ async function upsertPlay(sourceName: string, synced: SyncedPlay) {
         director: synced.director,
         venue_id: synced.venueId,
         genre: synced.genre ?? null,
+        source_url: synced.sourceUrl ?? null,
         runtime_minutes: synced.runtimeMinutes ?? null,
         intermissions: synced.intermissions ?? 0,
         premiere_date: synced.premiereDate ?? null,

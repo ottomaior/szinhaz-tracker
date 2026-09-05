@@ -9,13 +9,13 @@ import type { FeedItem, Play, User, Venue, Review, WatchlistEntry } from "@/data
 import { useAuth } from "@/contexts/AuthContext";
 import { Chip } from "@/components/ui/Chip";
 import { MaskIcon, MaskRatingRow } from "@/components/icons/MaskIcon";
-import { HeartIcon, CommentIcon } from "@/components/icons/Icons";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { Avatar } from "@/components/ui/Avatar";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
+import { budapestDayKey, formatLongDate } from "@/utils/datetime";
 
 export default function FeedScreen() {
   const insets = useSafeAreaInsets();
@@ -183,7 +183,24 @@ function CheckinCard({ review, onOpenPlay }: { review: Review; onOpenPlay: (id: 
 
   return (
     <View style={{ gap: space.md }}>
-      <CardByline user={user} action={strings.feed.checkedIn} meta={[timeAgo(review.createdAt), venue?.name].filter(Boolean).join(" · ")} />
+      {/* Two different times, and the card needs both when they disagree. The
+          feed is a record of activity, so the byline leads with how long ago
+          this was posted; but somebody catching up on a production they saw
+          last spring is posting today about an evening in March, and without
+          the second half the card would quietly claim they had just been. */}
+      <CardByline
+        user={user}
+        action={strings.feed.checkedIn}
+        meta={[
+          timeAgo(review.createdAt),
+          review.seenAt !== budapestDayKey(review.createdAt)
+            ? strings.feed.seenOn(formatLongDate(`${review.seenAt}T12:00:00Z`))
+            : undefined,
+          venue?.name,
+        ]
+          .filter(Boolean)
+          .join(" · ")}
+      />
 
       <Pressable onPress={() => onOpenPlay(play.id)} accessibilityRole="button" accessibilityLabel={play.title}>
         {/* `scrim` matters here: these are production photos, and bright ones
@@ -201,23 +218,13 @@ function CheckinCard({ review, onOpenPlay }: { review: Review; onOpenPlay: (id: 
         </View>
       </Pressable>
 
-      <View style={styles.rowBetween}>
-        <MaskRatingRow rating={review.ratingOverall} size={15} />
-        <View style={styles.counters}>
-          <View style={styles.counter}>
-            <HeartIcon />
-            <Text variant="caption" tone="faint">
-              {review.likeCount}
-            </Text>
-          </View>
-          <View style={styles.counter}>
-            <CommentIcon />
-            <Text variant="caption" tone="faint">
-              {review.commentCount}
-            </Text>
-          </View>
-        </View>
-      </View>
+      {/* The heart and speech-bubble counters that used to sit opposite the
+          rating are gone. `reviews.like_count` and `comment_count` are real
+          columns and no code path has ever incremented either, so both drew a
+          permanent zero beside an icon that did nothing when tapped — which
+          teaches a first-time visitor that the app is a mockup. They come back
+          when liking and commenting exist. */}
+      <MaskRatingRow rating={review.ratingOverall} size={15} />
 
       {!!review.text && (
         <Text variant="bodySmall" tone="dim">{`„${review.text}”`}</Text>
@@ -305,8 +312,6 @@ const styles = StyleSheet.create({
   byline: { flexDirection: "row", alignItems: "center", gap: space.md },
   name: { color: colors.text },
   watchlistRow: { flexDirection: "row", alignItems: "center", gap: space.md },
-  counters: { flexDirection: "row", alignItems: "center", gap: space.lg },
-  counter: { flexDirection: "row", alignItems: "center", gap: space.xs },
   rowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   // `right` was missing, so long titles ran off the poster and out past the
   // edge of the card.

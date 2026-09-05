@@ -16,7 +16,7 @@ npx expo install --fix
 
 Then create a [Supabase](https://supabase.com) project (free tier is
 enough), run every file in `supabase/migrations/` **in order** (`0001_init.sql`
-through `0021_genre_source_terms.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
+through `0023_source_url.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
 URL/anon key from the project's Settings → API page:
 
 ```bash
@@ -60,13 +60,14 @@ app/                     expo-router screens (file-based routing)
     watchlist.tsx             Watchlist
     profile.tsx                Profile
   play/[id].tsx           Play Detail
-  checkin.tsx             Log a Performance (modal)
+  checkin.tsx             Log a Performance — date, rating, review (modal)
   add-play.tsx            Add a play manually (modal, requires sign-in)
   sign-in.tsx / sign-up.tsx  Auth modals
 
 components/
   icons/                  hand-drawn SVG icons, incl. the mask rating glyph
-  ui/                     Button, Chip, Avatar, PosterPlaceholder, TabBar
+  ui/                     Button, Chip, SelectChip, DateField, Avatar,
+                          PosterPlaceholder, TabBar
 
 theme/                    design tokens — the single source of truth for
                           the "Velvet Curtain" visual system
@@ -76,6 +77,11 @@ theme/                    design tokens — the single source of truth for
   tokens.ts               spacing, radii, elevation, breakpoints, max widths
 
 contexts/AuthContext.tsx  Supabase session state, wraps the whole app
+
+utils/calendar.ts         month-grid arithmetic for the date picker, kept out
+                          of the component so it can be tested
+utils/datetime.ts         Hungarian date/time formatting, pinned to
+                          Europe/Budapest
 
 data/types.ts             domain types (Play, Venue, Review, User, …)
 services/supabase.ts      the Supabase client (reads EXPO_PUBLIC_SUPABASE_*)
@@ -233,6 +239,92 @@ curtain. The same bug was found and fixed in the database: the derived
 `status_reason` string formatted its timestamps without a zone, so Play Detail
 rendered "next performance 2026-09-06 17:00" directly beneath a correct
 "szept. 6., vasárnap · 19:00" (`0018_status_reason_timezone.sql`).
+
+## The diary knows what night it was
+
+The app existed to remember evenings spent in a theatre and could not record
+which evening. `submitReview()` inserted no date at all, so the diary read
+`reviews.created_at` and stamped every entry with the moment the row was
+written. The check-in modal even showed a date — `new Date()` printed into a box
+with no press handler, so it was both wrong for anything but tonight and
+impossible to correct.
+
+That is worst in exactly the case the catalogue was built for.
+`0005_archive_and_reconcile.sql` keeps roughly 900 archived productions
+searchable and loggable *precisely* so somebody can record a play they saw years
+ago — and then the diary claimed they saw it today.
+
+`0022_diary_dates.sql` adds three columns to `reviews`:
+
+| column | holds |
+|---|---|
+| `seen_at` | the evening itself, as a `date` — what the diary sorts and groups by |
+| `performance_id` | which showtime it was, when the catalogue holds one |
+| `is_rewatch` | not the first time they saw this production |
+
+`seen_at` is a `date`, not a `timestamptz`. Curtain time is a property of the
+performance, which `performance_id` points at; asking somebody to confirm a
+minute they half-remember is a longer form with no better data at the end of it.
+Its default is today **in Budapest** rather than `current_date`, which is the
+database's own zone — between midnight and 02:00 those are different days, and a
+check-in typed on the way home from a late curtain is when that window is
+busiest.
+
+`components/ui/DateField.tsx` is the control, built rather than installed:
+`@react-native-community/datetimepicker` is native-only in practice and the web
+export is what ships. It is shaped after the `SelectChip` filter sheet on
+purpose — same chip, same sheet, same grabber — and never offers a future date,
+because a diary that can hold next month is a diary you cannot trust the totals
+of. The month arithmetic lives in `utils/calendar.ts` rather than in the
+component, for the reason `vitest.config.ts` gives for `utils/datetime.ts`: a
+grid offset by one renders as a perfectly plausible calendar with every date
+under the wrong weekday, and nobody checks a calendar against another calendar.
+
+Which showtime it was is resolved rather than asked. A production usually plays
+once on a given evening, so `submitReview()` links the review to that
+performance silently; the form only asks on a matinee-and-evening day, which is
+the one case where the answer is not obvious.
+
+### One person, one vote
+
+Rewatches are ordinary in theatre in a way they are not in film, and
+`reviews` deliberately has no unique key on `(play_id, user_id)` — the diary
+should hold both nights. But `recompute_play_rating()` averaged every *row*, so
+somebody who saw a production three times and rated it 5 each time carried three
+times the weight of somebody who saw it once, and the public rating quietly
+became a measure of enthusiasm times attendance. It now averages per person
+first and then across people. `rating_count` counts people too, since that is
+what "55 értékelés" claims on screen.
+
+### Well liked, or divisive
+
+A production could say 4.2 with no way to show whether that was eleven fives and
+two ones. `play_rating_histogram()` returns one row per whole-mask band, always
+all five so the axis is complete, and Play Detail draws it above the log button
+whenever more than one person has rated — a single rating has no spread.
+
+## The exit to the box office
+
+`plays` carried `source` and `source_key` from the start: enough to upsert
+against, not enough to link to. Every adapter fetched a production's detail page,
+parsed the title, cast and showtimes out of it, and threw the address away.
+
+The cost showed up at the end of the funnel. Somebody browses the Műsor
+calendar, finds an evening, opens the production, reads the synopsis, decides to
+go — and the app had nowhere to send them.
+
+`0023_source_url.sql` adds `plays.source_url`, and every adapter now keeps it.
+Two exceptions worth knowing:
+
+- **Vígszínház** gets `/hu/produkciok/{slug}`. A plain fetch of that returns a
+  navigation shell, which is why the data comes from `/api/programme/` — but
+  that is a fact about scraping it. A browser runs the client-side render and
+  shows the real page, so it is a perfectly good address to send a person to.
+- **Örkény** gets nothing. `/api/performances` returns an id and no slug, and
+  the site assembles its production links client-side, so there is no route
+  derivable from what the API gives us. A guessed URL pattern behind a "Jegyek"
+  button is worse than no button: it sends somebody who has already decided to
+  go to a 404.
 
 ## What's real now
 

@@ -34,6 +34,8 @@ export const strings = {
   },
 
   feed: {
+    /** Only shown when the evening differs from the day the entry was posted. */
+    seenOn: (date: string) => `látta: ${date}`,
     checkedIn: "megnézte",
     wantsToSee: "szeretné megnézni",
     addedToWatchlist: "hozzáadva a kívánságlistához",
@@ -170,6 +172,20 @@ export const strings = {
 
   playDetail: {
     logButton: "Előadás naplózása",
+
+    /**
+     * The exit to the box office. Labelled for where it goes rather than what
+     * it does — "Jegyek" is the word every Hungarian theatre puts on this, and
+     * the button leaves the app, which the icon says.
+     */
+    tickets: "Jegyek a színház oldalán",
+    ticketsFailed: "Nem sikerült megnyitni a színház oldalát.",
+
+    /** Above the histogram: how the ratings are spread, not just their average. */
+    ratingSpread: "Értékelések megoszlása",
+    ratingBand: (band: number, people: number) =>
+      `${band} maszk: ${people} értékelés`,
+
     castCrew: "Szereposztás és alkotók",
     fromFollowing: "Vélemények",
     reviewsCount: (n: number) => `${n} vélemény`,
@@ -230,6 +246,27 @@ export const strings = {
     pickPlayHint: "Kezdj el gépelni a darab, a színház vagy egy színész nevével.",
     pickPlayNoResults: "Nincs találat. Vedd fel a darabot a Felfedezés fülön.",
     changePlay: "Másik előadás",
+
+    /* When you were there — the whole point of 0022_diary_dates.sql. */
+    dateLabel: "Mikor láttad?",
+    today: "Ma",
+    yesterday: "Tegnap",
+    previousMonth: "Előző hónap",
+    nextMonth: "Következő hónap",
+
+    /**
+     * Shown when the catalogue holds more than one showtime on the chosen day.
+     * A single showtime is linked silently; asking about the one case where the
+     * answer is obvious would be a question for its own sake.
+     */
+    whichShowtime: "Melyik előadás?",
+
+    /**
+     * Not a checkbox. The app knows this is a return visit because it can see
+     * the earlier entry, so this states the fact rather than asking about it.
+     */
+    rewatchNotice: (count: number) =>
+      count === 1 ? "Ezt már láttad egyszer — ez a második alkalom." : `Ezt már ${count}-szer láttad.`,
   },
 
   profile: {

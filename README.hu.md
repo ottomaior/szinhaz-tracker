@@ -18,7 +18,7 @@ npx expo install --fix
 
 Ezután hozz létre egy [Supabase](https://supabase.com) projektet (az ingyenes
 csomag bőven elég), futtasd le a `supabase/migrations/` **összes** fájlját
-**sorrendben** (`0001_init.sql`-től a `0021_genre_source_terms.sql`-ig) a projekt
+**sorrendben** (`0001_init.sql`-től a `0023_source_url.sql`-ig) a projekt
 SQL-szerkesztőjében, majd másold a `.env.example`-t `.env`-re, és töltsd ki a
 projekt Settings → API oldaláról az URL-t és az anon kulcsot:
 
@@ -64,13 +64,14 @@ app/                     expo-router képernyők (fájlalapú útvonalak)
     watchlist.tsx             Figyelőlista
     profile.tsx                Profil
   play/[id].tsx           Előadás részletei
-  checkin.tsx             Előadás rögzítése (modál)
+  checkin.tsx             Előadás rögzítése — dátum, értékelés, vélemény (modál)
   add-play.tsx            Előadás kézi felvitele (modál, belépés kell hozzá)
   sign-in.tsx / sign-up.tsx  Auth modálok
 
 components/
   icons/                  kézzel rajzolt SVG ikonok, köztük az álarc-értékelő jel
-  ui/                     Button, Chip, Avatar, PosterPlaceholder, TabBar
+  ui/                     Button, Chip, SelectChip, DateField, Avatar,
+                          PosterPlaceholder, TabBar
 
 theme/                    tervezési tokenek — a „Velvet Curtain" vizuális
                           rendszer egyetlen forrása
@@ -82,6 +83,11 @@ theme/                    tervezési tokenek — a „Velvet Curtain" vizuális
                           maximális szélességek
 
 contexts/AuthContext.tsx  Supabase munkamenet-állapot, az egész appot körbeveszi
+
+utils/calendar.ts         a dátumválasztó hónaprács-számításai, a komponensen
+                          kívül tartva, hogy tesztelhető legyen
+utils/datetime.ts         magyar dátum- és időformázás, Europe/Budapest
+                          zónára rögzítve
 
 data/types.ts             domain típusok (Play, Venue, Review, User, …)
 services/supabase.ts      a Supabase kliens (az EXPO_PUBLIC_SUPABASE_*-ot olvassa)
@@ -248,6 +254,98 @@ megtaláltuk és javítottuk az adatbázisban is: a származtatott `status_reaso
 szöveg zóna nélkül formázta az időbélyegeit, így az Előadás részletei oldal a
 "next performance 2026-09-06 17:00" sort közvetlenül a helyes "szept. 6.,
 vasárnap · 19:00" alá írta ki (`0018_status_reason_timezone.sql`).
+
+## A napló már tudja, melyik este volt
+
+Az app azért létezett, hogy megjegyezze a színházban töltött estéket, és éppen
+azt nem tudta rögzíteni, *melyik* estéről van szó. A `submitReview()` egyáltalán
+nem írt be dátumot, így a napló a `reviews.created_at` mezőt olvasta, és minden
+bejegyzésre annak a pillanatnak a bélyegét ütötte, amikor a sor létrejött. A
+naplózó modál még dátumot is mutatott — egy `new Date()`-et egy dobozba nyomtatva,
+minden gombkezelő nélkül —, ami így egyszerre volt hibás mindenre a mai estén
+kívül, és javíthatatlan.
+
+Ez pont abban az esetben a legrosszabb, amiért a katalógus egyáltalán felépült. A
+`0005_archive_and_reconcile.sql` nagyjából 900 archív produkciót tart
+kereshetőként és naplózhatóként **éppen azért**, hogy valaki rögzíthessen egy
+évekkel ezelőtt látott darabot — a napló pedig azt állította, hogy ma látta.
+
+A `0022_diary_dates.sql` három oszlopot ad a `reviews` táblához:
+
+| oszlop | mit tárol |
+|---|---|
+| `seen_at` | maga az este, `date` típusként — a napló eszerint rendez és csoportosít |
+| `performance_id` | melyik időpont volt, ha a katalógus ismer ilyet |
+| `is_rewatch` | nem ez volt az első alkalom, hogy látta a produkciót |
+
+A `seen_at` `date`, nem `timestamptz`. A kezdés az előadás tulajdonsága, arra a
+`performance_id` mutat; félig megjegyzett percet megerősíttetni valakivel
+hosszabb űrlap, aminek a végén nem lesz jobb adat. Az alapértéke a **budapesti**
+mai nap, nem a `current_date`, ami az adatbázis saját zónája — éjfél és hajnali
+2 között ez két különböző nap, és egy késői előadásról hazafelé begépelt
+bejegyzés pont ebbe az ablakba esik a leggyakrabban.
+
+A vezérlő a `components/ui/DateField.tsx`, amit megírtunk és nem telepítettünk: a
+`@react-native-community/datetimepicker` a gyakorlatban csak natívon működik, a
+webes export viszont az, ami élesben megy. Szándékosan a `SelectChip` szűrőlap
+formáját követi — ugyanaz a chip, ugyanaz a lap, ugyanaz a fogantyú —, és soha
+nem kínál jövőbeli dátumot, mert az a napló, amibe jövő hónap is belefér, olyan
+napló, aminek az összesítéseiben nem lehet megbízni. A hónapszámítás a
+`utils/calendar.ts`-ben lakik és nem a komponensben, ugyanazért, amiért a
+`vitest.config.ts` a `utils/datetime.ts`-t is kiemeli: az egy nappal elcsúszott
+rács tökéletesen hihető naptárként jelenik meg, csak épp minden dátum rossz
+napnév alatt — és naptárt senki nem ellenőriz másik naptárral.
+
+Azt, hogy melyik időpont volt, az app kikövetkezteti, nem megkérdezi. Egy
+produkciót általában egyszer játszanak egy adott estén, így a `submitReview()`
+csendben összeköti a bejegyzést azzal az előadással; az űrlap csak akkor kérdez,
+ha aznap délutáni és esti előadás is van — ez az egyetlen eset, ahol a válasz nem
+magától értetődő.
+
+### Egy ember, egy szavazat
+
+Az újranézés a színházban hétköznapi módon fordul elő, a filmhez képest sokkal
+inkább, ezért a `reviews` táblán szándékosan nincs egyedi kulcs a
+`(play_id, user_id)` páron — a naplónak mindkét estét meg kell tartania. A
+`recompute_play_rating()` viszont minden *sort* átlagolt, így aki háromszor
+látott egy produkciót és mindháromszor 5-öst adott, háromszoros súllyal
+szerepelt ahhoz képest, aki egyszer látta, és a nyilvános értékelés észrevétlenül
+a lelkesedés és a látogatásszám szorzatává vált. Mostantól előbb személyenként
+átlagol, aztán a személyek között. A `rating_count` is embereket számol, mert a
+képernyőn az "55 értékelés" ezt állítja.
+
+### Szeretett, vagy megosztó
+
+Egy produkció kiírhatta, hogy 4,2, és sehogy nem tudta megmutatni, hogy ez
+tizenegy ötös és két egyes-e. A `play_rating_histogram()` maszksávonként egy sort
+ad vissza, mindig mind az ötöt, hogy a tengely teljes legyen, és az Előadás
+részletei oldal a naplózó gomb fölé rajzolja, amint egynél többen értékelték —
+egyetlen értékelésnek nincs szórása.
+
+## Kijárat a jegypénztárhoz
+
+A `plays` táblán a `source` és a `source_key` kezdettől fogva megvolt: ahhoz elég,
+hogy upsertelni lehessen rá, ahhoz nem, hogy linkelni. Minden adapter lekérte egy
+produkció aloldalát, kiszedte belőle a címet, a szereposztást és az időpontokat,
+majd eldobta a címet.
+
+Ennek az ára a tölcsér végén jelent meg. Valaki böngészi a Műsor naptárat, talál
+egy estét, megnyitja a produkciót, elolvassa a tartalmat, eldönti, hogy megy — és
+az appnak nem volt hová küldenie.
+
+A `0023_source_url.sql` felveszi a `plays.source_url` oszlopot, és minden adapter
+megőrzi. Két kivétel érdemel említést:
+
+- A **Vígszínház** a `/hu/produkciok/{slug}` címet kapja. Ennek az egyszerű
+  lekérése navigációs vázat ad vissza, ezért jön az adat az `/api/programme/`
+  végpontról — de ez a scrapelésről szóló tény. A böngésző lefuttatja a kliens
+  oldali renderelést és megmutatja a valódi oldalt, tehát emberi látogatót
+  tökéletesen jó ide küldeni.
+- Az **Örkény** nem kap semmit. Az `/api/performances` azonosítót ad vissza és
+  slugot nem, az oldal pedig kliens oldalon állítja össze a produkciólinkjeit,
+  így nincs az API-ból levezethető útvonal. Egy megtippelt URL-minta a "Jegyek"
+  gomb mögött rosszabb, mint ha nem lenne gomb: azt küldi 404-re, aki már
+  eldöntötte, hogy megy.
 
 ## Ami ma tényleg megvan
 

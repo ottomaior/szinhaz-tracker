@@ -18,6 +18,16 @@ export type SyncedPlay = {
    * and more useful than guessing.
    */
   genre?: string;
+  /**
+   * The theatre's own page for this production.
+   *
+   * Every adapter already fetches this page to parse the title, cast and
+   * showtimes out of it, and used to drop the address afterwards — which left
+   * the app with nowhere to send somebody who had just decided to go. Optional
+   * only because the two API-backed sources (Örkény, Vígszínház) publish
+   * productions that have no public page of their own to link to.
+   */
+  sourceUrl?: string;
   runtimeMinutes?: number;
   intermissions?: number;
   premiereDate?: string; // YYYY-MM-DD

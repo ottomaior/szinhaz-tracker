@@ -146,6 +146,7 @@ async function fetchProduction(path: string): Promise<SyncedPlay | undefined> {
 
   return {
     sourceKey: path.split("/").pop() ?? path,
+    sourceUrl: `${BASE_URL}${path}`,
     title,
     author,
     director,

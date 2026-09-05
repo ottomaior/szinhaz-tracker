@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View, ScrollView, StyleSheet, Pressable, Share, Platform } from "react-native";
+import { View, ScrollView, StyleSheet, Pressable, Share, Platform, Linking } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
@@ -8,6 +8,7 @@ import {
   addToWatchlist,
   getPlayById,
   getReviewsForPlay,
+  getRatingHistogram,
   getUpcomingPerformances,
   getUserById,
   getVenueById,
@@ -22,7 +23,7 @@ import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { ContentColumn } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { MaskRatingRow } from "@/components/icons/MaskIcon";
-import { ChevronLeftIcon, ShareIcon, TicketIcon, PlusIcon } from "@/components/icons/Icons";
+import { ChevronLeftIcon, ExternalLinkIcon, ShareIcon, TicketIcon, PlusIcon } from "@/components/icons/Icons";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { ShowtimeList } from "@/components/ui/ShowtimeList";
 import { formatLongDate, formatShowtime } from "@/utils/datetime";
@@ -61,6 +62,7 @@ export default function PlayDetailScreen() {
   const [inWatchlist, setInWatchlist] = useState(false);
   const [watchlistBusy, setWatchlistBusy] = useState(false);
   const [notice, setNotice] = useState<string>();
+  const [histogram, setHistogram] = useState<number[]>([0, 0, 0, 0, 0]);
 
   useEffect(() => {
     if (!id) {
@@ -85,6 +87,11 @@ export default function PlayDetailScreen() {
     getUpcomingPerformances(id)
       .then(setPerformances)
       .catch(() => setPerformances([]));
+    // All zeroes on failure, which the render guard reads as "nothing to draw"
+    // — the average above is still correct and still shown.
+    getRatingHistogram(id)
+      .then(setHistogram)
+      .catch(() => setHistogram([0, 0, 0, 0, 0]));
   }, [id]);
 
   useEffect(() => {
@@ -116,6 +123,16 @@ export default function PlayDetailScreen() {
       setNotice(strings.common.loadError);
     } finally {
       setWatchlistBusy(false);
+    }
+  }
+
+  async function openTickets(url: string) {
+    try {
+      await Linking.openURL(url);
+    } catch {
+      // A blocked pop-up or a dead scheme leaves the person on this screen with
+      // no idea the tap registered, which is the one failure worth naming here.
+      setNotice(strings.playDetail.ticketsFailed);
     }
   }
 
@@ -253,6 +270,18 @@ export default function PlayDetailScreen() {
             </View>
           </View>
 
+          {/* The average alone cannot tell "everyone liked it" from "the room
+              split down the middle", and those are different productions. Shown
+              only from two people up: a single rating has no spread, and one bar
+              at full height beside four empty ones would overstate a sample of
+              one. */}
+          {play.rating.count > 1 && histogram.some((n) => n > 0) && (
+            <View style={{ gap: space.sm }}>
+              <Text variant="label" tone="dim">{strings.playDetail.ratingSpread}</Text>
+              <RatingHistogram bands={histogram} />
+            </View>
+          )}
+
           <View style={{ flexDirection: "row", gap: space.md }}>
             <Button
               label={strings.playDetail.logButton}
@@ -269,6 +298,24 @@ export default function PlayDetailScreen() {
               <TicketIcon size={18} color={inWatchlist ? colors.bg : colors.text} />
             </IconButton>
           </View>
+
+          {/* Where somebody who has just decided to go actually needs to end up.
+              Every adapter fetches this page and used to discard the address,
+              so the app could take a person all the way to "yes, that one" and
+              then stop. Absent for hand-added plays and for Örkény, whose API
+              publishes no slug to build a route from — a guessed URL behind
+              this button would send a decided visitor to a 404. */}
+          {!!play.sourceUrl && (
+            <Pressable
+              onPress={() => openTickets(play.sourceUrl!)}
+              accessibilityRole="link"
+              accessibilityLabel={strings.playDetail.tickets}
+              style={styles.ticketLink}
+            >
+              <ExternalLinkIcon size={14} />
+              <Text variant="label" tone="accent">{strings.playDetail.tickets}</Text>
+            </Pressable>
+          )}
 
           {!!notice && (
             <Text accessibilityRole="alert" variant="bodySmall" tone="accent">
@@ -361,6 +408,47 @@ function formatRuntime(minutes: number) {
   return `${hours} ${strings.playDetail.hours} ${rest} ${strings.playDetail.minutes}`;
 }
 
+/**
+ * The spread of a production's ratings, one column per whole-mask band.
+ *
+ * Vertical rather than the horizontal bars used for the acting/directing
+ * averages just above, and deliberately so: those three are one value each on a
+ * shared 0–5 scale, which reads as a comparison down a column. This is a
+ * distribution over an axis, and the axis is the point — the shape of five
+ * columns is what separates "everyone liked it" from "the room split".
+ *
+ * Heights are relative to the busiest band, so the tallest column always fills
+ * the plot regardless of how many people have rated. A band nobody chose still
+ * draws a hairline, which is what makes the empty ones read as zero rather than
+ * as missing.
+ */
+function RatingHistogram({ bands }: { bands: number[] }) {
+  const peak = Math.max(...bands, 1);
+  return (
+    <View style={styles.histogram} accessibilityRole="image" accessibilityLabel={bands.map((n, i) => strings.playDetail.ratingBand(i + 1, n)).join(", ")}>
+      {bands.map((count, i) => (
+        <View key={i} style={styles.histogramColumn}>
+          <View style={styles.histogramPlot}>
+            <View
+              style={[
+                styles.histogramBar,
+                {
+                  height: `${Math.max(2, (count / peak) * 100)}%`,
+                  // The band holding the most ratings is the one the reader is
+                  // looking for; the rest recede rather than competing with it.
+                  backgroundColor: count === peak && count > 0 ? colors.gold : colors.goldDeep,
+                  opacity: count === 0 ? 0.25 : 1,
+                },
+              ]}
+            />
+          </View>
+          <Text variant="caption" tone="faint">{i + 1}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 function RatingBar({ label, value }: { label: string; value: number }) {
   const pct = Math.max(0, Math.min(1, value / 5)) * 100;
   return (
@@ -399,6 +487,25 @@ function ReviewRow({ review }: { review: Review }) {
 }
 
 const styles = StyleSheet.create({
+  ticketLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: space.sm,
+    paddingVertical: space.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    backgroundColor: colors.surface,
+  },
+
+  histogram: { flexDirection: "row", alignItems: "flex-end", gap: space.sm, height: 78 },
+  histogramColumn: { flex: 1, alignItems: "center", gap: 6 },
+  // The bars grow from the bottom of a fixed plot, so the five columns share a
+  // baseline and the row's height does not change with the data.
+  histogramPlot: { width: "100%", height: 54, justifyContent: "flex-end" },
+  histogramBar: { width: "100%", borderRadius: radius.sm },
+
   centered: {
     flex: 1,
     backgroundColor: colors.bg,

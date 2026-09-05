@@ -1,5 +1,6 @@
 import { supabase, SUPABASE_URL } from "@/services/supabase";
 import { getFollowingIds } from "@/services/followService";
+import { budapestDayKey } from "@/utils/datetime";
 import type {
   CastMember,
   FeedItem,
@@ -38,6 +39,7 @@ type PlayRow = {
   intermissions: number;
   premiere_date: string | null;
   synopsis: string | null;
+  source_url: string | null;
   poster_url: string | null;
   poster_path: string | null;
   poster_thumb_path: string | null;
@@ -68,6 +70,9 @@ type ReviewRow = {
   play_id: string;
   user_id: string;
   created_at: string;
+  seen_at: string;
+  performance_id: string | null;
+  is_rewatch: boolean;
   rating_overall: number;
   rating_acting: number | null;
   rating_directing: number | null;
@@ -138,6 +143,7 @@ function toPlay(row: PlayRow): Play {
     intermissions: row.intermissions,
     premiereDate: row.premiere_date ?? undefined,
     synopsis: row.synopsis ?? undefined,
+    sourceUrl: row.source_url ?? undefined,
     poster: toPoster(row),
     isArchived: row.is_archived ?? false,
     status: row.status ?? "unknown",
@@ -169,6 +175,12 @@ function toReview(row: ReviewRow): Review {
     playId: row.play_id,
     userId: row.user_id,
     createdAt: row.created_at,
+    // Rows written before 0022 have no seen_at only in a database that has not
+    // had the migration; falling back to the write date keeps such a client
+    // rendering a date rather than "Invalid Date".
+    seenAt: row.seen_at ?? row.created_at.slice(0, 10),
+    performanceId: row.performance_id ?? undefined,
+    isRewatch: row.is_rewatch ?? false,
     ratingOverall: row.rating_overall,
     ratingActing: row.rating_acting ?? undefined,
     ratingDirecting: row.rating_directing ?? undefined,
@@ -689,18 +701,26 @@ export async function removeFromWatchlist(playId: string): Promise<void> {
 export type DiaryEntry = { play: Play; review: Review };
 
 /**
- * Everything a user has logged, newest first.
+ * Everything a user has logged, most recent evening first.
  *
  * Carries the review as well as the play, because the diary list shows when
  * they saw it and how they rated it, and the reviews tab is the same rows
  * filtered to the ones they actually wrote something about — the check-in flow
  * makes the text optional, so most entries have none.
+ *
+ * Ordered by `seen_at`, not `created_at`. Those were the same thing only while
+ * the app had no way to say when you were there: someone catching up on three
+ * productions from last spring in one sitting would otherwise get a diary in
+ * the order they happened to type them.
  */
 export async function getDiaryEntriesForUser(userId: string): Promise<DiaryEntry[]> {
   const { data, error } = await supabase
     .from("reviews")
     .select(`*, plays (${PLAY_SELECT})`)
     .eq("user_id", userId)
+    // created_at breaks the tie, so two productions logged for the same evening
+    // — a matinee and an evening show — keep a stable, sensible order.
+    .order("seen_at", { ascending: false })
     .order("created_at", { ascending: false });
   if (error) throw error;
   return (data ?? [])
@@ -732,6 +752,16 @@ export async function getVenuesByIds(ids: string[]): Promise<Map<string, Venue>>
 
 export async function submitReview(input: {
   playId: string;
+  /** `YYYY-MM-DD` in Budapest — the evening, not the moment of writing. */
+  seenAt: string;
+  /**
+   * The showtime, when the caller knows which one.
+   *
+   * Left undefined by the check-in form for anything with no matching date in
+   * the catalogue; resolved here when exactly one performance of this
+   * production falls on `seenAt`.
+   */
+  performanceId?: string;
   ratingOverall: number;
   ratingActing?: number;
   ratingDirecting?: number;
@@ -744,11 +774,23 @@ export async function submitReview(input: {
   } = await supabase.auth.getUser();
   if (!authUser) throw new Error("Sign in required");
 
+  // Whether this is a return visit is a fact about what is already logged, not
+  // a checkbox for the user to remember to tick. Asking would also get it wrong
+  // as often as not: people log the second viewing months later and no longer
+  // remember whether the first one made it into the app.
+  const priorCount = await countUserEntriesForPlay(input.playId, authUser.id);
+
+  const performanceId =
+    input.performanceId ?? (await solePerformanceOn(input.playId, input.seenAt));
+
   const { data, error } = await supabase
     .from("reviews")
     .insert({
       play_id: input.playId,
       user_id: authUser.id,
+      seen_at: input.seenAt,
+      performance_id: performanceId ?? null,
+      is_rewatch: priorCount > 0,
       rating_overall: input.ratingOverall,
       rating_acting: input.ratingActing ?? null,
       rating_directing: input.ratingDirecting ?? null,
@@ -760,6 +802,83 @@ export async function submitReview(input: {
     .single();
   if (error) throw error;
   return toReview(data as ReviewRow);
+}
+
+/** How many times this user has already logged this production. */
+export async function countUserEntriesForPlay(playId: string, userId?: string): Promise<number> {
+  let id = userId;
+  if (!id) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return 0;
+    id = user.id;
+  }
+  const { count, error } = await supabase
+    .from("reviews")
+    .select("id", { count: "exact", head: true })
+    .eq("play_id", playId)
+    .eq("user_id", id);
+  if (error) throw error;
+  return count ?? 0;
+}
+
+/**
+ * Every showtime this production has on one Budapest day.
+ *
+ * The check-in form asks for a date, which is what a person remembers. Most of
+ * the time that is enough to identify the evening exactly — a production plays
+ * once on a given day — and the link is made without a second question. A
+ * matinee-and-evening day is the case that needs asking about, and this is what
+ * tells the form which day that is.
+ */
+export async function getPerformancesOnDay(playId: string, dayKey: string): Promise<Performance[]> {
+  // A Budapest day, expressed as the UTC half-open interval it occupies. Doing
+  // this by string-matching starts_at would put a 19:00 curtain on the previous
+  // day for the half of the year Hungary is two hours ahead of UTC.
+  const from = new Date(`${dayKey}T00:00:00+00:00`);
+  const { data, error } = await supabase
+    .from("performances")
+    .select("id, play_id, venue_id, room, starts_at")
+    .eq("play_id", playId)
+    .gte("starts_at", new Date(from.getTime() - 12 * 3_600_000).toISOString())
+    .lte("starts_at", new Date(from.getTime() + 36 * 3_600_000).toISOString())
+    .order("starts_at");
+  if (error) throw error;
+  // The window above is deliberately loose, then filtered exactly in Budapest
+  // terms — cheaper than expressing the zone conversion as a Postgrest filter,
+  // and it cannot drift with the DST rules.
+  return (data ?? [])
+    .map((r) => toPerformance(r as PerformanceRow))
+    .filter((p) => budapestDayKey(p.startsAt) === dayKey);
+}
+
+/** The one performance on that day, when there is exactly one. */
+async function solePerformanceOn(playId: string, dayKey: string): Promise<string | undefined> {
+  try {
+    const matches = await getPerformancesOnDay(playId, dayKey);
+    return matches.length === 1 ? matches[0].id : undefined;
+  } catch {
+    // A failed lookup must not cost somebody their check-in. The review is the
+    // thing worth keeping; which of the evening's two showings it was is not.
+    return undefined;
+  }
+}
+
+/**
+ * How a production's ratings are spread, one count per whole-star band.
+ *
+ * Always five rows, including the bands nobody chose, so the caller draws a
+ * complete axis rather than a chart with holes in it.
+ */
+export async function getRatingHistogram(playId: string): Promise<number[]> {
+  const { data, error } = await supabase.rpc("play_rating_histogram", { target_play_id: playId });
+  if (error) throw error;
+  const bands = [0, 0, 0, 0, 0];
+  for (const row of (data ?? []) as { band: number; people: number }[]) {
+    if (row.band >= 1 && row.band <= 5) bands[row.band - 1] = row.people;
+  }
+  return bands;
 }
 
 export async function searchVenues(query: string): Promise<Venue[]> {

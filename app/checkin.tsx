@@ -7,18 +7,26 @@ import { inputFontSize } from "@/theme/type";
 import { gutter, radius, space } from "@/theme/tokens";
 import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
-import { getPlayById, getVenueById, submitReview } from "@/services/playsService";
+import {
+  countUserEntriesForPlay,
+  getPerformancesOnDay,
+  getPlayById,
+  getVenueById,
+  submitReview,
+} from "@/services/playsService";
 import { searchPlays } from "@/services/searchService";
 import { useAuth } from "@/contexts/AuthContext";
-import type { Play, Venue } from "@/data/types";
-import { CalendarIcon, PinIcon, SearchIcon } from "@/components/icons/Icons";
+import type { Performance, Play, Venue } from "@/data/types";
+import { PinIcon, SearchIcon } from "@/components/icons/Icons";
 import { MaskRatingRow } from "@/components/icons/MaskIcon";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
+import { DateField } from "@/components/ui/DateField";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { ContentColumn } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { Chip } from "@/components/ui/Chip";
 import { strings } from "@/i18n/hu";
+import { formatTime, todayInBudapest } from "@/utils/datetime";
 import { closeModal } from "@/utils/navigation";
 
 const MOMENT_TAGS = [strings.checkin.tagStandingOvation, strings.checkin.tagCried, strings.checkin.tagRecommend];
@@ -34,6 +42,14 @@ export default function CheckInScreen() {
   const [saving, setSaving] = useState(false);
   const [playLoadFailed, setPlayLoadFailed] = useState(false);
   const [error, setError] = useState<string>();
+
+  // The evening being logged. Defaults to today, which is what most check-ins
+  // are, and is now a real value the user can move rather than the wall clock
+  // this screen used to print into a field nobody could edit.
+  const [seenAt, setSeenAt] = useState(todayInBudapest);
+  const [showtimes, setShowtimes] = useState<Performance[]>([]);
+  const [performanceId, setPerformanceId] = useState<string>();
+  const [priorCount, setPriorCount] = useState(0);
 
   const [overall, setOverall] = useState(4);
   const [acting, setActing] = useState(4);
@@ -74,6 +90,55 @@ export default function CheckInScreen() {
       .catch(() => setVenue(undefined));
   }, [play]);
 
+  // Whether this is a return visit, read from what is already logged rather
+  // than asked. Purely for the line shown above the ratings — the flag itself
+  // is decided server-side in submitReview, so a stale count here cannot write
+  // the wrong thing.
+  useEffect(() => {
+    if (!play) {
+      setPriorCount(0);
+      return;
+    }
+    let active = true;
+    countUserEntriesForPlay(play.id)
+      .then((n) => {
+        if (active) setPriorCount(n);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [play]);
+
+  // Which of that day's showtimes it was. Asked about only when the catalogue
+  // holds more than one — a production usually plays once on a given evening,
+  // and a question with a single possible answer is a question not worth asking.
+  useEffect(() => {
+    if (!play) {
+      setShowtimes([]);
+      setPerformanceId(undefined);
+      return;
+    }
+    let active = true;
+    getPerformancesOnDay(play.id, seenAt)
+      .then((found) => {
+        if (!active) return;
+        setShowtimes(found);
+        // Preselect nothing when there is a choice to make: guessing the
+        // evening show would be right most nights and silently wrong on the
+        // matinees, which is the only case this control exists for.
+        setPerformanceId(found.length === 1 ? found[0].id : undefined);
+      })
+      .catch(() => {
+        if (!active) return;
+        setShowtimes([]);
+        setPerformanceId(undefined);
+      });
+    return () => {
+      active = false;
+    };
+  }, [play, seenAt]);
+
   function toggleTag(tag: string) {
     setSelectedTags((cur) => (cur.includes(tag) ? cur.filter((t) => t !== tag) : [...cur, tag]));
   }
@@ -85,6 +150,8 @@ export default function CheckInScreen() {
     try {
       await submitReview({
         playId: play.id,
+        seenAt,
+        performanceId,
         ratingOverall: overall,
         ratingActing: acting,
         ratingDirecting: directing,
@@ -157,21 +224,49 @@ export default function CheckInScreen() {
           </View>
         </View>
 
-        <View style={{ flexDirection: "row", gap: 10 }}>
-          <View style={styles.field}>
-            <CalendarIcon />
-            <Text variant="bodySmall">
-              {new Date().toLocaleDateString("hu-HU", { month: "short", day: "numeric", year: "numeric" })}
-            </Text>
+        {/* When and where.
+            The date used to be `new Date()` printed into a box with no press
+            handler — so the one field that decides where an entry lands in the
+            diary was both wrong for anything but tonight and impossible to
+            correct. Half the catalogue is the theatres' own archives, kept
+            loggable precisely so somebody can record a production they saw
+            years ago. */}
+        <View style={{ gap: 10 }}>
+          <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.checkin.dateLabel}</Text>
+          <View style={{ flexDirection: "row", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            <DateField value={seenAt} onChange={setSeenAt} />
+            <View style={[styles.field, { flex: 1, minWidth: 140 }]}>
+              <PinIcon />
+              {/* This was hardcoded to a single stage name for every play, no
+                  matter where it actually runs. It shows the real venue now. */}
+              <Text numberOfLines={1} variant="bodySmall" style={{ flex: 1 }}>
+                {venue?.name ?? strings.common.noRating}
+              </Text>
+            </View>
           </View>
-          <View style={styles.field}>
-            <PinIcon />
-            {/* This was hardcoded to a single stage name for every play, no
-                matter where it actually runs. It shows the real venue now. */}
-            <Text numberOfLines={1} variant="bodySmall" style={{ flex: 1 }}>
-              {venue?.name ?? strings.common.noRating}
-            </Text>
-          </View>
+
+          {priorCount > 0 && (
+            <Text variant="caption" tone="accent">{strings.checkin.rewatchNotice(priorCount)}</Text>
+          )}
+
+          {showtimes.length > 1 && (
+            <View style={{ gap: 8, marginTop: 4 }}>
+              <Text variant="caption" tone="faint">{strings.checkin.whichShowtime}</Text>
+              <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
+                {showtimes.map((p) => (
+                  <Chip
+                    key={p.id}
+                    label={[formatTime(p.startsAt), p.room].filter(Boolean).join(" · ")}
+                    active={performanceId === p.id}
+                    // Tapping the chosen one again clears it: the two showings
+                    // are indistinguishable in memory often enough that "I am
+                    // not sure" has to stay reachable.
+                    onPress={() => setPerformanceId((cur) => (cur === p.id ? undefined : p.id))}
+                  />
+                ))}
+              </View>
+            </View>
+          )}
         </View>
 
         <View style={styles.ratingCard}>

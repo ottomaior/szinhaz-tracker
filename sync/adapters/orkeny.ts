@@ -177,6 +177,16 @@ async function run(): Promise<SyncedPlay[]> {
 
     byId.set(String(p.id), {
       sourceKey: String(p.id),
+      /*
+       * No sourceUrl.
+       *
+       * `/api/performances` returns an id and no slug, and the site is a SPA
+       * whose production links are assembled client-side, so there is no route
+       * here that can be derived from what the API gives us. A guessed URL
+       * pattern behind a "Jegyek" button is worse than no button: it sends
+       * somebody who has decided to go to a 404. If the API ever grows a slug,
+       * this is a one-line change.
+       */
       // Normalized like every other text field. This was the one field
       // that skipped it, so entity-encoded titles reached the database.
       title: normalizeText(p.title.hu ?? p.title.en) ?? "Ismeretlen cím",

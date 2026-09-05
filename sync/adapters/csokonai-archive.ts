@@ -116,6 +116,7 @@ async function run(): Promise<SyncedPlay[]> {
 
     plays.push({
       sourceKey: slug,
+      sourceUrl: detailUrl,
       title: details.title,
       author: details.author,
       director: details.director,

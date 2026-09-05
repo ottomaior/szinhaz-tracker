@@ -199,6 +199,16 @@ export function toSyncedPlay(
 
   return {
     sourceKey: slug,
+    /*
+     * The page a person gets, not the one this adapter gets.
+     *
+     * The header above explains that fetching `/hu/produkciok/{slug}` returns a
+     * navigation shell, which is why the data comes from `/api/programme/`
+     * instead. That is a fact about a plain HTTP fetch: a browser runs the
+     * client-side render and shows the real production page, so this is a
+     * perfectly good address to send somebody to — it is only useless to us.
+     */
+    sourceUrl: `${SITE_URL}/hu/produkciok/${slug}`,
     title,
     author: hu(production.authors) ?? "",
     director: directors.join(" – "),

@@ -114,6 +114,15 @@ export interface Play {
   intermissions: number;
   premiereDate?: string; // ISO date
   synopsis?: string;
+  /**
+   * The theatre's own page for this production.
+   *
+   * Where somebody who has just decided to go actually needs to end up. Absent
+   * for plays added by hand, for Örkény (whose API publishes no slug to build a
+   * route from), and for any row the sync job has not revisited since the
+   * column was added.
+   */
+  sourceUrl?: string;
   poster?: Poster;
   cast: CastMember[];
   rating: RatingBreakdown;
@@ -186,7 +195,25 @@ export interface Review {
   id: string;
   playId: string;
   userId: string;
+  /** When the row was written. Almost never what the diary wants — see `seenAt`. */
   createdAt: string; // ISO datetime
+  /**
+   * The evening the person was in the theatre, `YYYY-MM-DD` in Budapest.
+   *
+   * A date rather than a datetime: the curtain time belongs to the performance,
+   * which `performanceId` points at when it is known. This is what the diary
+   * sorts and groups by, and what the season stats count.
+   */
+  seenAt: string;
+  /**
+   * Which showtime it was, when the catalogue holds one for that day.
+   *
+   * Null for the archived half of the catalogue, which carries no performance
+   * rows, and for any evening the theatre has since withdrawn from its site.
+   */
+  performanceId?: string;
+  /** Not the first time they saw this production. */
+  isRewatch: boolean;
   ratingOverall: number;
   ratingActing?: number;
   ratingDirecting?: number;
