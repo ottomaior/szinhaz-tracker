@@ -1,6 +1,13 @@
 import { View, Pressable } from "react-native";
 import Svg, { Path, Ellipse } from "react-native-svg";
 import { colors } from "@/theme/colors";
+import {
+  MASK_BODY_PATH,
+  MASK_EYES,
+  MASK_MOUTH_PATH,
+  MASK_STROKE_WIDTH,
+  MASK_VIEWBOX,
+} from "@/components/icons/maskGeometry";
 
 /**
  * The app's signature rating glyph: a theatrical mask, used everywhere a
@@ -28,16 +35,18 @@ export function MaskIcon({
   const punchColor = state === "on" ? colors.bg : offColor;
 
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24">
+    <Svg width={size} height={size} viewBox={`0 0 ${MASK_VIEWBOX} ${MASK_VIEWBOX}`}>
+      <Path d={MASK_BODY_PATH} fill={fill} stroke={stroke} strokeWidth={MASK_STROKE_WIDTH} />
+      {MASK_EYES.map((eye) => (
+        <Ellipse key={eye.cx} cx={eye.cx} cy={eye.cy} rx={eye.rx} ry={eye.ry} fill={punchColor} />
+      ))}
       <Path
-        d="M4 10c0-4.4 3.6-7 8-7s8 2.6 8 7c0 3-1.6 4.6-1.6 7.4 0 2.5-2.9 3.6-6.4 3.6s-6.4-1.1-6.4-3.6C5.6 14.6 4 13 4 10z"
-        fill={fill}
-        stroke={stroke}
-        strokeWidth={1.5}
+        d={MASK_MOUTH_PATH}
+        stroke={punchColor}
+        strokeWidth={MASK_STROKE_WIDTH}
+        strokeLinecap="round"
+        fill="none"
       />
-      <Ellipse cx={9} cy={10} rx={1.2} ry={1.5} fill={punchColor} />
-      <Ellipse cx={15} cy={10} rx={1.2} ry={1.5} fill={punchColor} />
-      <Path d="M9 15.3c1 1 5 1 6 0" stroke={punchColor} strokeWidth={1.5} strokeLinecap="round" fill="none" />
     </Svg>
   );
 }

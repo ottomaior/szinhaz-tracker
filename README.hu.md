@@ -18,7 +18,7 @@ npx expo install --fix
 
 Ezután hozz létre egy [Supabase](https://supabase.com) projektet (az ingyenes
 csomag bőven elég), futtasd le a `supabase/migrations/` **összes** fájlját
-**sorrendben** (`0001_init.sql`-től a `0032_likes_and_comments.sql`-ig) a projekt
+**sorrendben** (`0001_init.sql`-től a `0033_friends_ratings.sql`-ig) a projekt
 SQL-szerkesztőjében, majd másold a `.env.example`-t `.env`-re, és töltsd ki a
 projekt Settings → API oldaláról az URL-t és az anon kulcsot:
 
@@ -78,7 +78,9 @@ app/                     expo-router képernyők (fájlalapú útvonalak)
   sign-in.tsx / sign-up.tsx  Auth modálok
 
 components/
-  icons/                  kézzel rajzolt SVG ikonok, köztük az álarc-értékelő jel
+  icons/                  kézzel rajzolt SVG ikonok, köztük az álarc-értékelő
+                          jel; a maskGeometry.ts tartja a útvonalait, közösen a
+                          megosztókártyával, hogy a kettő ne csússzon el
   ui/                     Button, Chip, SelectChip, DateField, Avatar,
                           FollowSubjectButton, PosterPlaceholder, ReviewSocial,
                           TabBar
@@ -125,6 +127,9 @@ services/notificationService.ts  az értesítések — az appból csak olvashat�
                           írják, kérés soha
 services/socialService.ts tetszések és hozzászólások egy naplóbejegyzésen;
                           számlálót soha nem ír, azt triggerek tartják karban
+services/friendsService.ts mit gondoltak a követettek egy produkcióról
+services/shareCardService.ts egy este canvasra rajzolva, PNG-ként — csak
+                          weben, és ezt ki is mondja, nem csendben degradálódik
 services/authService.ts   regisztráció / belépés / kilépés
 
 supabase/migrations/      séma, RLS szabályok, triggerek és RPC-k (kézzel kell
@@ -686,6 +691,66 @@ azután, hogy a bejegyzés már bent van, a `submitReview` akkor is visszaadja a
 bejegyzést. Az este már el van mentve, és elveszíteni azért, mert a
 szereplőlista nem ment be, sokkal rosszabb csere lenne, mint egy bejegyzés, ami
 rögzíti az estét, de azt nem, ki játszott.
+
+## Mit gondoltak a követettek, és egy kártya, amit érdemes megosztani
+
+Két dolog zárja a terv utolsó fázisát.
+
+**A követettek értékelései.** Egy teljes adatbázisra vett átlag arra válaszol,
+hogy „szeretik-e ezt", ami nem az a kérdés, amit bárki feltesz egy műsor előtt
+állva. Az inkább úgy szól: „*én* szeretném-e" — és a legolcsóbb őszinte közelítés
+hozzá, jóval azelőtt, hogy elég adat lenne bármiféle kollaboratív szűréshez, az,
+hogy mit gondolt róla az a néhány ember, akit te választottál. A
+`0033_friends_ratings.sql` két lekérdezést ad hozzá: ki látta a követettjeid
+közül ezt a produkciót, és hol jártak mostanában.
+
+Mindkettő RPC, mert a kliensoldali alternatíva az volna, hogy lekérjük az összes
+követést, aztán az összes véleményt, aztán az összes profilt, és JavaScriptben
+összefésülünk három listát egyetlen sorért. Három döntés van bennük:
+
+Az adatlapon lévő lista **az este szerint rendez, nem az értékelés szerint** —
+ez emberek listája, és a barátaidat aszerint sorrendbe tenni, mennyire tetszett
+nekik valami, róluk szóló rangsornak hat. **Személyenként egy sort** mutat akkor
+is, ha valaki többször látta, mert egy rajongó három bejegyzése leszorítana
+mindenki mást egy olyan képernyőről, ahol néhány arcnak van hely. A Felfedezés
+sávja pedig szándékosan **„amit láttak"**, nem „amit a legjobbra értékeltek":
+egy felsőfok négy vélemény fölött ugyanaz az üres állítás, mint a
+népszerűség-átlag, ami mellett áll — az viszont, hogy „elmentek rá", tény, és az
+első bejegyzéstől kezdve igaz.
+
+Mindkettő eltűnik, ha üres, ami a legtöbb fióknál az idő legnagyobb részében így
+van. Egy üres „a barátaid" blokk arra emlékeztet, hogy nincsenek, és nem ez egy
+műsorkínálat dolga.
+
+**A megosztókártya.** A `handleShare()` linket osztott meg, ami semmit nem
+terjeszt: egy link egy apphoz, ami senkinek nincs meg, úgy néz ki, mint egy link
+egy apphoz, ami senkinek nincs meg. Egy naplózó appot a kép terjeszt, és ennek
+van egy igazán jellegzetes jele, amit beletehet — a legtöbb app csillagokkal
+értékel.
+
+**Canvasra rajzoljuk, nem SVG-szövegként**, egyetlen konkrét okból: az `<img>`-en
+keresztül raszterizált SVG el van szigetelve a dokumentumtól, és nem éri el az
+oldal webfontjait — a kártya tehát Georgiában jönne ki, miközben az app Bodoni
+Modában van szedve. A canvas-szöveg azzal rajzol, ami a dokumentumban be van
+töltve, így a kártya és a képernyő, ahonnan jött, ugyanabban a betűben van.
+
+Az álarc a `components/icons/maskGeometry.ts`-ből jön, amit már a `MaskIcon` is
+onnan rajzol. Ez az az egyetlen elem, amin az egész ötlet áll, és a
+útvonalszámok két példánya elcsúszna, amint az egyikhez hozzányúl valaki — az
+elcsúszás pedig csak valaki más képernyőképén lenne látható.
+
+Az elrendezés **alulról felfelé** épül, és nem ez volt az első próbálkozás. A
+plakáttól lefelé rétegezni a kézenfekvő megoldás, és egy háromsoros címet
+egyenesen átvitt a szóvédjegyen — az „Ugyanaz másként - Kortársunk, Rómeó és
+Júlia" pedig valódi cím ebben a katalógusban. Ha a rögzített elemeket az alsó
+élhez horgonyozzuk, és a cím felfelé nő bele abba a helybe, amit a plakát
+visszaad, a kártya nem tud átfedésbe kerülni magával, bármit is csinál a cím.
+
+Csak weben működik, és ezt ki is mondja. Egy nézet képpé alakításához nativ
+oldalon nativ modul és újrafordítás kell, a kiszállított termék pedig a statikus
+webes export — így az `isShareCardSupported()` kapuzza a vezérlőt ahelyett, hogy
+csendben visszaesne linkmegosztásra, ami ugyanaz a hazugság lenne, mint egy
+számláló, ami sosem mozdul.
 
 ## Két számláló, ami sosem volt igaz
 

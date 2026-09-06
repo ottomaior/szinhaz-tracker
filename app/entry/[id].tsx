@@ -14,6 +14,7 @@ import { ModalHeader } from "@/components/ui/ModalHeader";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { ContentColumn } from "@/components/ui/Screen";
 import { ReviewSocial } from "@/components/ui/ReviewSocial";
+import { isShareCardSupported, shareCard } from "@/services/shareCardService";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 import { formatTime } from "@/utils/datetime";
@@ -44,6 +45,8 @@ export default function DiaryEntryScreen() {
   }>();
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const [shareError, setShareError] = useState<string>();
 
   useFocusEffect(
     useCallback(() => {
@@ -69,6 +72,29 @@ export default function DiaryEntryScreen() {
     }, [id])
   );
 
+  async function handleShare() {
+    if (!entry || sharing) return;
+    setShareError(undefined);
+    setSharing(true);
+    try {
+      const ok = await shareCard({
+        title: entry.play.title,
+        venue: entry.venue?.name,
+        dateLabel: entry.review.seenAt ? formatDate(entry.review.seenAt) : undefined,
+        rating: entry.review.ratingOverall,
+        // The mirrored copy, not the theatre's own URL: a hotlinked image taints
+        // the canvas and `toBlob` then throws, losing the card rather than the
+        // picture.
+        posterUrl: entry.play.poster?.mirrored ? entry.play.poster.url : undefined,
+      });
+      if (!ok) setShareError(strings.entry.shareFailed);
+    } catch {
+      setShareError(strings.entry.shareFailed);
+    } finally {
+      setSharing(false);
+    }
+  }
+
   if (loaded && (failed || !entry)) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -88,9 +114,38 @@ export default function DiaryEntryScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ModalHeader title={strings.entry.headerTitle} fallbackRoute="/(tabs)/profile" />
+      <ModalHeader
+        title={strings.entry.headerTitle}
+        fallbackRoute="/(tabs)/profile"
+        // Offered only where it can actually produce the image. On native the
+        // control would need a native view-shot module and a rebuild, and a
+        // share button that silently degrades to a link is the same lie as a
+        // counter that never moves.
+        action={
+          isShareCardSupported() ? (
+            <Pressable
+              onPress={handleShare}
+              hitSlop={12}
+              disabled={sharing}
+              accessibilityRole="button"
+              accessibilityLabel={strings.entry.share}
+            >
+              <Text variant="label" tone="accent" style={{ opacity: sharing ? 0.55 : 1 }}>
+                {sharing ? strings.entry.sharing : strings.entry.share}
+              </Text>
+            </Pressable>
+          ) : undefined
+        }
+      />
 
       <ScrollView contentContainerStyle={{ paddingBottom: space["5xl"] }}>
+        {!!shareError && (
+          <ContentColumn style={{ paddingHorizontal: gutter, paddingTop: space.md }}>
+            <Text accessibilityRole="alert" variant="bodySmall" tone="accent">
+              {shareError}
+            </Text>
+          </ContentColumn>
+        )}
         <ContentColumn style={{ padding: gutter, gap: space.xl }}>
           {/* What was seen, and the way back to it. */}
           <Pressable

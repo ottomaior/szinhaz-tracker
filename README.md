@@ -16,7 +16,7 @@ npx expo install --fix
 
 Then create a [Supabase](https://supabase.com) project (free tier is
 enough), run every file in `supabase/migrations/` **in order** (`0001_init.sql`
-through `0032_likes_and_comments.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
+through `0033_friends_ratings.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
 URL/anon key from the project's Settings → API page:
 
 ```bash
@@ -74,7 +74,9 @@ app/                     expo-router screens (file-based routing)
   sign-in.tsx / sign-up.tsx  Auth modals
 
 components/
-  icons/                  hand-drawn SVG icons, incl. the mask rating glyph
+  icons/                  hand-drawn SVG icons, incl. the mask rating glyph;
+                          maskGeometry.ts holds its paths, shared with the
+                          share card so the two cannot drift
   ui/                     Button, Chip, SelectChip, DateField, Avatar,
                           FollowSubjectButton, PosterPlaceholder, ReviewSocial,
                           TabBar
@@ -117,6 +119,9 @@ services/notificationService.ts  the inbox — read-only from the app; rows are
                           triggers, never by a request
 services/socialService.ts likes and comments on a diary entry; never writes a
                           counter, since triggers maintain both
+services/friendsService.ts what the people you follow made of a production
+services/shareCardService.ts an evening drawn onto a canvas as a PNG — web
+                          only, and it says so rather than degrading quietly
 services/authService.ts   sign up / sign in / sign out
 
 supabase/migrations/      schema, RLS policies, triggers, and RPCs (run
@@ -653,6 +658,64 @@ One thing deliberately not rethrown: if the `review_cast` insert fails after the
 review is in, `submitReview` returns the review anyway. The evening is already
 saved, and losing it because a cast list would not go in is a far worse trade
 than an entry that records the night but not who was in it.
+
+## What the people you follow thought, and a card worth posting
+
+Two things close out the plan's last phase.
+
+**Friends' ratings.** An average over the whole database answers "is this well
+liked", which is not the question anybody asks standing in front of a listing.
+That one is closer to "would *I* like this", and the cheapest honest proxy —
+long before there is enough data for anything resembling collaborative
+filtering — is what the handful of people you chose to follow made of it.
+`0033_friends_ratings.sql` adds the two reads: who among your follows has seen a
+production, and what they have been to lately.
+
+Both are RPCs because the client alternative is fetching every follow, then
+every review, then every profile, and joining three lists in JavaScript for a
+screen that wants one row. Three decisions inside them:
+
+The play-detail list is **ordered by the evening, not by the rating** — it is a
+list of people, and sorting your friends by how much they liked something reads
+as a ranking of them. It shows **one row per person** even for a rewatcher,
+because three entries from one enthusiast would crowd everybody else off a
+screen with room for a handful of faces. And the Discover rail is deliberately
+**"what they have been to"** rather than "what they rated highest": a superlative
+over four reviews is the same empty claim as the popularity average it sits
+beside, while "they went to this" is a fact and is true from the first entry.
+
+Both hide themselves when empty, which is most accounts most of the time. An
+empty "your friends" block is a reminder that you have none, and that is not
+what a listing is for.
+
+**The share card.** `handleShare()` shared a link, which spreads nothing: a link
+to an app nobody has looks like a link to an app nobody has. What spreads a
+logging app is the picture, and this one has a genuinely distinctive mark to put
+in it — most apps rate in stars.
+
+It is drawn on a **canvas rather than as an SVG string**, for one specific
+reason: an SVG rasterised through an `<img>` is isolated from the document and
+cannot reach the page's webfonts, so the card would come out set in Georgia
+while the app is set in Bodoni Moda. Canvas text draws with what the document
+has loaded, so the card and the screen it came from are in the same faces.
+
+The mask comes from `components/icons/maskGeometry.ts`, which `MaskIcon` now
+draws from too. This is the one asset the whole idea rests on, and two copies of
+those path numbers would drift the moment either was touched — with the drift
+only ever visible on somebody else's screenshot.
+
+The layout is built **from the bottom up**, and that was not the first attempt.
+Stacking downwards from the poster is the obvious way and it put a three-line
+title straight through the wordmark — and "Ugyanaz másként - Kortársunk, Rómeó
+és Júlia" is a real title in this catalogue. Anchoring the fixed furniture to the
+bottom edge and letting the title grow upwards into space the poster gives back
+means the card cannot overlap itself whatever the title does.
+
+It is web-only, and says so. Rendering a view to an image on native needs a
+native module and a rebuild, and the deployed product is the static web export —
+so `isShareCardSupported()` gates the control rather than letting it degrade
+silently into a link share, which would be the same lie as a counter that never
+moves.
 
 ## Two counters that were never true
 

@@ -8,6 +8,7 @@ import { gutter, minTouchTarget, radius, space } from "@/theme/tokens";
 import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
 import { useRecentSearches } from "@/hooks/useRecentSearches";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   getCities,
   getFilterGenres,
@@ -20,6 +21,7 @@ import {
   type BrowseSort,
 } from "@/services/playsService";
 import { getLists, type ListSummary } from "@/services/listsService";
+import { getFriendsRecentPlays } from "@/services/friendsService";
 import { searchPlays, type SortKey } from "@/services/searchService";
 import type { Play, Venue, VenueType } from "@/data/types";
 import { SearchIcon, PlusIcon, CloseIcon } from "@/components/icons/Icons";
@@ -44,6 +46,9 @@ const FILTERS = [strings.discover.filterAll, strings.discover.filterKoszinhaz, s
  * screen. Three is a shelf; ten is a second Listák screen with no way out.
  */
 const FEATURED_LIST_LIMIT = 3;
+
+/** How many of the productions your follows have been to the rail carries. */
+const FRIENDS_RAIL_LIMIT = 10;
 
 /**
  * Whether to offer the venue-type chips.
@@ -125,6 +130,7 @@ export default function DiscoverScreen() {
   // open. Applied once, in an effect below, so the chip stays the user's to
   // change afterwards rather than being reasserted on every render.
   const { venueId: venueIdParam } = useLocalSearchParams<{ venueId?: string }>();
+  const { session } = useAuth();
   const [mode, setMode] = useState<DiscoverMode>("browse");
   const [activeFilter, setActiveFilter] = useState(strings.discover.filterAll);
   const [cities, setCities] = useState<string[]>([]);
@@ -148,6 +154,7 @@ export default function DiscoverScreen() {
   const [browseSort, setBrowseSort] = useState<BrowseSort>("rating");
   const [featuredLists, setFeaturedLists] = useState<ListSummary[]>([]);
   const [listCovers, setListCovers] = useState<Map<string, Play>>(new Map());
+  const [friendsSeen, setFriendsSeen] = useState<{ play: Play; friends: number }[]>([]);
 
   // Built here rather than inline so each list is one object per render and
   // the "Mind" entry is written once instead of at four call sites.
@@ -228,6 +235,50 @@ export default function DiscoverScreen() {
     setActiveVenueId(venueIdParam);
     setMode("browse");
   }, [venueIdParam, venues]);
+
+  /**
+   * What the people this account follows have been to lately.
+   *
+   * Deliberately "have been to" rather than "rated highest": a rail titled with
+   * a superlative over four reviews is the same empty claim as the popularity
+   * average it sits beside, while "they went to this" is a fact and is true
+   * from the first entry.
+   *
+   * Fetched once per session rather than per filter, and hidden entirely when
+   * empty — which is most accounts, most of the time. An empty "your friends"
+   * rail is a reminder that you have none, which is not what Discover is for.
+   */
+  useEffect(() => {
+    if (!session) {
+      setFriendsSeen([]);
+      return;
+    }
+    let active = true;
+    getFriendsRecentPlays(FRIENDS_RAIL_LIMIT)
+      .then(async (rows) => {
+        if (!active || rows.length === 0) {
+          if (active) setFriendsSeen([]);
+          return;
+        }
+        const plays = await getPlaysByIds(rows.map((r) => r.playId));
+        const byId = new Map(plays.map((p) => [p.id, p]));
+        if (!active) return;
+        setFriendsSeen(
+          rows
+            .map((r) => {
+              const play = byId.get(r.playId);
+              return play ? { play, friends: r.friends } : undefined;
+            })
+            .filter((x): x is { play: Play; friends: number } => !!x)
+        );
+      })
+      .catch(() => {
+        if (active) setFriendsSeen([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [session]);
 
   // Scoped to the selected city, so picking Debrecen offers Debrecen's
   // theatres rather than all of them.
@@ -576,6 +627,23 @@ export default function DiscoverScreen() {
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
                   {nowPlaying.map((p) => (
                     <PremiereCard key={p.id} play={p} onPress={() => router.push(`/play/${p.id}`)} />
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+
+            {/* Above the editorial lists, and only for an account that follows
+                somebody: a handful of people you chose beats anything written
+                for everybody, and unlike the lists it is different for every
+                reader. */}
+            {!browseLoading && !browseFiltered && friendsSeen.length > 0 && (
+              <View style={{ gap: space.md }}>
+                <View style={{ paddingHorizontal: gutter }}>
+                  <Text variant="subheading">{strings.friends.discoverHeading}</Text>
+                </View>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
+                  {friendsSeen.map(({ play }) => (
+                    <PremiereCard key={play.id} play={play} onPress={() => router.push(`/play/${play.id}`)} />
                   ))}
                 </ScrollView>
               </View>

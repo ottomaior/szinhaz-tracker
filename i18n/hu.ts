@@ -388,6 +388,16 @@ export const strings = {
     openNotifications: "Értesítések",
   },
 
+  /** What the people you follow thought — see 0033. */
+  friends: {
+    playHeading: "A követettek szerint",
+    /* Singular and plural, because "1 követett látta" is what the screen will
+       say for most people for a long time. */
+    seenBy: (n: number) => (n === 1 ? "1 követett látta" : `${n} követett látta`),
+    discoverHeading: "Amit a követettek láttak",
+    unrated: "Nem értékelte",
+  },
+
   /** Likes and comments — see 0032, which made the two counters true. */
   social: {
     like: "Tetszik",
@@ -414,6 +424,9 @@ export const strings = {
     notFound: "Ez a bejegyzés nem található.",
     seenOn: (date: string) => `Megnézve: ${date}`,
     seenUndated: "Dátum nélkül naplózva",
+    share: "Megosztás",
+    sharing: "Kép készítése…",
+    shareFailed: "Nem sikerült képet készíteni. Próbáld újra.",
     rewatch: "Újranézés",
     castHeading: "Akiket aznap este láttál",
     castAlternateBadge: "beugró",

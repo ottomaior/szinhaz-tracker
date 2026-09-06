@@ -28,6 +28,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { ShowtimeList } from "@/components/ui/ShowtimeList";
 import { AddToListSheet } from "@/components/ui/AddToListSheet";
 import { FollowSubjectButton } from "@/components/ui/FollowSubjectButton";
+import { getFriendRatings, type FriendRating } from "@/services/friendsService";
 import { formatLongDate, formatShowtime } from "@/utils/datetime";
 import { personSlug } from "@/utils/people";
 import { strings } from "@/i18n/hu";
@@ -67,6 +68,7 @@ export default function PlayDetailScreen() {
   const [notice, setNotice] = useState<string>();
   const [histogram, setHistogram] = useState<number[]>([0, 0, 0, 0, 0]);
   const [listSheetOpen, setListSheetOpen] = useState(false);
+  const [friendRatings, setFriendRatings] = useState<FriendRating[]>([]);
 
   useEffect(() => {
     if (!id) {
@@ -97,6 +99,27 @@ export default function PlayDetailScreen() {
       .then(setHistogram)
       .catch(() => setHistogram([0, 0, 0, 0, 0]));
   }, [id]);
+
+  // Keyed on the session as well as the production: "the people you follow" is
+  // a different answer for a different account, and the same screen is reached
+  // by signing in from it.
+  useEffect(() => {
+    if (!id || !session) {
+      setFriendRatings([]);
+      return;
+    }
+    let active = true;
+    getFriendRatings(id)
+      .then((rows) => {
+        if (active) setFriendRatings(rows);
+      })
+      .catch(() => {
+        if (active) setFriendRatings([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [id, session]);
 
   useEffect(() => {
     if (!id || !session) {
@@ -395,6 +418,47 @@ export default function PlayDetailScreen() {
             </Text>
           )}
 
+          {/* Above the synopsis and the showtimes, below the ratings: this is
+              the one opinion on the screen that is about people the reader
+              actually chose, and burying it under the cast list would put it
+              below every stranger's average. Hidden entirely when nobody you
+              follow has been — an empty "your friends" block is a reminder that
+              you have none, which is not what a listing is for. */}
+          {friendRatings.length > 0 && (
+            <View style={{ gap: space.md }}>
+              <View style={styles.friendsHeading}>
+                <Text variant="subheading">{strings.friends.playHeading}</Text>
+                <Text variant="caption" tone="faint">
+                  {strings.friends.seenBy(friendRatings.length)}
+                </Text>
+              </View>
+              {friendRatings.map((f) => (
+                <Pressable
+                  key={f.userId}
+                  onPress={() => router.push(`/user/${f.userId}`)}
+                  style={styles.friendRow}
+                  accessibilityRole="button"
+                  accessibilityLabel={f.name}
+                >
+                  <Avatar uri={f.avatarUrl} initials={f.initials} size={34} />
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text variant="label" numberOfLines={1}>{f.name}</Text>
+                    {!!f.seenAt && (
+                      <Text variant="caption" tone="faint">
+                        {formatLongDate(`${f.seenAt}T12:00:00Z`)}
+                      </Text>
+                    )}
+                  </View>
+                  {f.rating !== undefined ? (
+                    <MaskRatingRow rating={f.rating} size={13} />
+                  ) : (
+                    <Text variant="caption" tone="faint">{strings.friends.unrated}</Text>
+                  )}
+                </Pressable>
+              ))}
+            </View>
+          )}
+
           <ShowtimeList performances={performances} play={play} />
 
           {!!play.synopsis && (
@@ -569,6 +633,13 @@ function ReviewRow({ review }: { review: Review }) {
 }
 
 const styles = StyleSheet.create({
+  friendsHeading: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+    gap: space.md,
+  },
+  friendRow: { flexDirection: "row", alignItems: "center", gap: space.md },
   ticketLink: {
     flexDirection: "row",
     alignItems: "center",
