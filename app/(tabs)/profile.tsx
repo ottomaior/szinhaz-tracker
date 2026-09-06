@@ -87,11 +87,20 @@ export default function ProfileScreen() {
 
   if (!session) {
     return (
-      <View style={[styles.emptyState, { flex: 1, justifyContent: "center", paddingTop: insets.top, backgroundColor: colors.bg }]}>
-        <Text variant="body" tone="dim" style={{ marginBottom: space.lg }}>
-          {strings.profile.signInPrompt}
-        </Text>
-        <Button label={strings.profile.signInButton} onPress={() => router.push("/sign-in")} />
+      <View style={{ flex: 1, backgroundColor: colors.bg, paddingTop: insets.top }}>
+        {/* The gear belongs here too. Appearance is a property of the device
+            somebody is reading on, not of an account, so gating it behind a
+            session left a signed-out visitor with a theme they could not
+            change and no way to find out one existed. */}
+        <View style={styles.signedOutBar}>
+          <SettingsButton onPress={() => router.push("/settings")} />
+        </View>
+        <View style={[styles.emptyState, { flex: 1, justifyContent: "center" }]}>
+          <Text variant="body" tone="dim" style={{ marginBottom: space.lg }}>
+            {strings.profile.signInPrompt}
+          </Text>
+          <Button label={strings.profile.signInButton} onPress={() => router.push("/sign-in")} />
+        </View>
       </View>
     );
   }
@@ -122,14 +131,7 @@ export default function ProfileScreen() {
               >
                 <Text variant="label">{strings.profile.edit}</Text>
               </Pressable>
-              <Pressable
-                style={[styles.headerBtn, styles.headerIconBtn]}
-                onPress={() => router.push("/settings")}
-                accessibilityRole="button"
-                accessibilityLabel={strings.settings.title}
-              >
-                <SettingsIcon size={17} color={colors.textDim} />
-              </Pressable>
+              <SettingsButton onPress={() => router.push("/settings")} />
               <Pressable
                 style={styles.headerBtn}
                 onPress={() => setConfirmingSignOut((s) => !s)}
@@ -388,6 +390,21 @@ function Stat({ value, label, gold = false }: { value: number; label: string; go
   );
 }
 
+/** The way into Settings, identical whether or not anybody is signed in. */
+function SettingsButton({ onPress }: { onPress: () => void }) {
+  return (
+    <Pressable
+      style={[styles.headerBtn, styles.headerIconBtn]}
+      onPress={onPress}
+      hitSlop={8}
+      accessibilityRole="button"
+      accessibilityLabel={strings.settings.title}
+    >
+      <SettingsIcon size={17} color={colors.textDim} />
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   cover: {
     height: 118,
@@ -411,6 +428,7 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 6,
   },
+  signedOutBar: { flexDirection: "row", justifyContent: "flex-end", paddingHorizontal: gutter, paddingTop: space.md },
   headerBtn: {
     borderWidth: 1,
     borderColor: colors.hairline,
