@@ -18,7 +18,7 @@ npx expo install --fix
 
 Ezután hozz létre egy [Supabase](https://supabase.com) projektet (az ingyenes
 csomag bőven elég), futtasd le a `supabase/migrations/` **összes** fájlját
-**sorrendben** (`0001_init.sql`-től a `0030_alerts.sql`-ig) a projekt
+**sorrendben** (`0001_init.sql`-től a `0031_the_evad.sql`-ig) a projekt
 SQL-szerkesztőjében, majd másold a `.env.example`-t `.env`-re, és töltsd ki a
 projekt Settings → API oldaláról az URL-t és az anon kulcsot:
 
@@ -67,6 +67,7 @@ app/                     expo-router képernyők (fájlalapú útvonalak)
   person/[slug].tsx       Egy alkotó, és minden, amiben szerepel
   list/[id].tsx           Egy lista és a tartalma
   entry/[id].tsx          Egy este: kiket láttál, hol ültél, mennyibe került
+  season/[start].tsx      Egy évad összegzése, szeptembertől augusztusig
   lists.tsx               Szerkesztői listák és a sajátjaid (modál)
   inbox.tsx               Amit az éjszakai szinkron megtudott, és te kérdezted
   checkin.tsx             Előadás rögzítése — dátum, értékelés, vélemény (modál)
@@ -101,6 +102,9 @@ utils/datetime.ts         magyar dátum- és időformázás, Europe/Budapest
                           zónára rögzítve
 utils/money.ts            forintösszeg kiolvasása szövegmezőből, és a különbség
                           a tiszteletjegy meg a „nem adta meg" között
+utils/season.ts           melyik évadba tartozik egy este, és hogyan írja le a
+                          magyar az évad nevét — a season_start_year()
+                          adatbázisfüggvény kliensoldali fele
 
 data/types.ts             domain típusok (Play, Venue, Review, User, …)
 services/supabase.ts      a Supabase kliens (az EXPO_PUBLIC_SUPABASE_*-ot olvassa)
@@ -678,6 +682,58 @@ azután, hogy a bejegyzés már bent van, a `submitReview` akkor is visszaadja a
 bejegyzést. Az este már el van mentve, és elveszíteni azért, mert a
 szereplőlista nem ment be, sokkal rosszabb csere lenne, mint egy bejegyzés, ami
 rögzíti az estét, de azt nem, ki játszott.
+
+## Az évadot számoljuk, nem a naptári évet
+
+Senki nem naptári években számolja a színházba járását. A magyar évad
+szeptemberben kezdődik, és egy statisztika, ami december 31-én vág ketté,
+mindegyiket félbevágja: a novemberi vígszínházi bemutató és a februári ugyanahhoz
+az évadhoz tartozik, mégis két külön összesítésbe került.
+
+A profil a `0001_init.sql` óta hordoz egy `thisYear` mutatót, pontosan ezen a
+rossz naptáron. A `0031_the_evad.sql` ez a mutató képernyővé nőve, a helyes
+naptárral — és maga a mutató is az évadot számolja, ami látható különbség, nem
+szőrszálhasogatás: egy fiók, amelynek januári, áprilisi és szeptemberi
+bejegyzései vannak, a régi naptáron **3**-at mutat, az újon **1**-et, és az új
+szám az igaz.
+
+**Az évad augusztusban zárul, nem júniusban.** Ez a migráció egyetlen valódi
+döntése. A `0006_play_status.sql` már rögzíti, hogy a kőszínházak június
+közepétől sötétek, és hogy a szabadtéri helyszínek ezt pontosan megfordítják — a
+Nagyerdei, a Margitsziget és a Városmajor *csak* nyáron játszik. Ha az évad
+júniusban érne véget, ezek az esték két évad közötti résbe esnének. Így az évad
+szeptember 1-től augusztus 31-ig tart, minden dátum pontosan egybe tartozik, és
+egy júliusi margitszigeti este az előző ősszel nyílt évad farka, nem külön évad.
+
+**A számtan szándékosan kétszer van megírva**, ugyanúgy, mint a `person_slug()`:
+a `public.season_start_year()` számolja a sorokat, a `utils/season.ts` nevezi meg
+az évadot a címben, még mielőtt bármilyen körút lezajlana, a határesetek pedig
+egymáshoz vannak rögzítve. Ha eltérnének, az oldal címe az egyik évadot mondaná,
+a tartalma a másikat.
+
+A `utils/season.ts` viszi a toldalékot is, ami az a fajta részlet, ami eldönti,
+hogy egy app írottnak vagy fordítottnak hat. A magyar a kiejtés szerint teszi a
+kötőhangot a szám után: a 26 „huszonhat", tehát „a 2025/26-**os** évad", a 27
+viszont „huszonhét", tehát „a 2026/27-**es** évad" — a nullára végződő év pedig a
+tízes szót veszi („a 2029/30-**as** évad", a „harmincas"-ból). Mindez tesztelve
+van.
+
+**A legtöbbször látott előadó két forrásból jön, igazságtartalom szerinti
+sorrendben.** Ahol egy bejegyzés rögzítette, ki lépett aznap színpadra — a 0028
+`review_cast` táblája —, arra az estére kizárólag az számít. Minden más este az
+előadás hivatalos szereplőlistájára esik vissza, ami a legjobb, amit egy
+katalógus mondhat egy olyan estéről, amihez senki nem naplózott szereposztást. Az
+a lényeg, hogy a kettő *bejegyzésenként* keveredik, nem évadonként: egy este, ami
+azt mondja, „a beugrót láttam", nem számíthat egyszerre a főszereplőnek is, akiről
+azt állítja, hogy nem lépett fel.
+
+Két dolgot a képernyő kimond ahelyett, hogy elrejtené. Kiírja a nevezőt a
+költések mögé — kilencből öt bejegyzésen alapuló átlag más állítás, mint a
+kilencen alapuló, és csak az egyik „az évad átlagos jegyára". És kiírja, hány
+bejegyzés esik kívül minden évadon, mert nincs dátuma — ilyet ír az onboarding:
+aki az első futáskor tizenöt előadást jelölt be, máskülönben megnyitná ezt az
+oldalt, nullát látna, és arra jutna, hogy elromlott. Ugyanaz az őszinteség, amit
+a `0026` választott, amikor a `seen_at`-et nullozhatóvá tette.
 
 ## A kör bezárása
 

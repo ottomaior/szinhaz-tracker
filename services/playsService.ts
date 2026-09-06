@@ -2,6 +2,7 @@ import { supabase, SUPABASE_URL } from "@/services/supabase";
 import { getFollowingIds } from "@/services/followService";
 import { avatarUrl } from "@/services/profileService";
 import { budapestDayKey } from "@/utils/datetime";
+import { currentSeasonStart, seasonRange } from "@/utils/season";
 import type {
   CastMember,
   FeedItem,
@@ -655,29 +656,38 @@ export async function getFilterGenres(filters?: VenueFilters): Promise<string[]>
 }
 
 async function statsForUser(userId: string) {
-  const now = new Date();
-  const yearStart = `${now.getFullYear()}-01-01`;
+  // The évad, not the calendar year. Splitting at 31 December puts a November
+  // premiere and the February one in different totals, which is not how anybody
+  // counts their theatregoing — see 0031 and `utils/season.ts`.
+  const seasonStart = currentSeasonStart();
+  const { from: seasonFrom, to: seasonTo } = seasonRange(seasonStart);
   // The follower and following counters were hardcoded to 0 while the profile
   // screen rendered them as though they meant something.
-  const [{ count: playsSeen }, { count: thisYear }, { count: followers }, { count: following }] = await Promise.all([
-    supabase.from("reviews").select("id", { count: "exact", head: true }).eq("user_id", userId),
-    // Counted on `seen_at`, not `created_at`. Those were the same thing only
-    // while the app had no way to say when you were there; now they diverge in
-    // the two cases that matter most — somebody catching up on last spring, and
-    // an onboarding pass, where fifteen entries written today would otherwise
-    // all claim to be this year's theatregoing. Entries with no date at all sit
-    // out of this count rather than being guessed into it.
-    supabase
-      .from("reviews")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .gte("seen_at", yearStart),
-    supabase.from("follows").select("follower_id", { count: "exact", head: true }).eq("followee_id", userId),
-    supabase.from("follows").select("followee_id", { count: "exact", head: true }).eq("follower_id", userId),
-  ]);
+  const [{ count: playsSeen }, { count: thisSeason }, { count: followers }, { count: following }] =
+    await Promise.all([
+      supabase.from("reviews").select("id", { count: "exact", head: true }).eq("user_id", userId),
+      // Counted on `seen_at`, not `created_at`. Those were the same thing only
+      // while the app had no way to say when you were there; now they diverge in
+      // the two cases that matter most — somebody catching up on last spring, and
+      // an onboarding pass, where fifteen entries written today would otherwise
+      // all claim to be this season's theatregoing. Entries with no date at all
+      // sit out of this count rather than being guessed into it.
+      //
+      // Bounded at both ends, unlike the calendar-year version this replaced: a
+      // season has a far edge, and an entry dated into next autumn belongs to
+      // next autumn.
+      supabase
+        .from("reviews")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .gte("seen_at", seasonFrom)
+        .lte("seen_at", seasonTo),
+      supabase.from("follows").select("follower_id", { count: "exact", head: true }).eq("followee_id", userId),
+      supabase.from("follows").select("followee_id", { count: "exact", head: true }).eq("follower_id", userId),
+    ]);
   return {
     playsSeen: playsSeen ?? 0,
-    thisYear: thisYear ?? 0,
+    thisSeason: thisSeason ?? 0,
     followers: followers ?? 0,
     following: following ?? 0,
   };

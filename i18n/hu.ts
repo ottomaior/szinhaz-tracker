@@ -315,6 +315,52 @@ export const strings = {
   },
 
   /**
+   * The évad in review. Counted September to August — see 0031_the_evad.sql
+   * for why the summer belongs to the season that opened the previous autumn.
+   */
+  season: {
+    headerTitle: "Évad",
+    /* The label arrives with its suffix already on it — "2025/26-os",
+       "2026/27-es" — because which one is right depends on how the closing
+       year is spoken. See `seasonSuffix` in utils/season.ts. */
+    title: (labelWithSuffix: string) => `A ${labelWithSuffix} évad`,
+    thisSeason: "Ez az évad",
+    entries: "Előadás",
+    venues: "Színház",
+    cities: "Város",
+    rewatches: "Újranézés",
+    rated: "Értékelve",
+    firstNight: "Első este",
+    lastNight: "Utolsó este",
+    spendHeading: "Amibe került",
+    spendTotal: (huf: number) => `${huf.toLocaleString("hu-HU")} Ft`,
+    spendAverage: (huf: number) => `Átlag ${huf.toLocaleString("hu-HU")} Ft`,
+    /* Said rather than hidden: an average over three priced entries out of
+       twenty is a different claim from an average over twenty. */
+    spendCoverage: (priced: number, total: number) =>
+      priced === total
+        ? "Minden bejegyzésnél megadtad a jegyárat."
+        : `${total} bejegyzésből ${priced} tartalmaz jegyárat.`,
+    spendEmpty:
+      "Naplózáskor megadhatod a jegyárat — akkor itt összesítjük, mibe került az évad.",
+    genresHeading: "Mit néztél",
+    peopleHeading: "Kiket láttad a legtöbbször",
+    peopleNights: (n: number) => (n === 1 ? "1 este" : `${n} este`),
+    /* Where the number comes from, because it is two different things. */
+    peopleSource:
+      "A naplózott szereposztásból, ahol megadtad — máshol az előadás hivatalos szereplőlistájából.",
+    topHeading: "A legjobb este",
+    seatCount: (n: number) => (n === 1 ? "1 helyet jegyeztél fel" : `${n} helyet jegyeztél fel`),
+    empty: "Ebben az évadban még nincs naplózott előadásod.",
+    emptyAction: "Felfedezés",
+    undated: (n: number) =>
+      n === 1
+        ? "1 bejegyzésed dátum nélkül van, ezért egyik évadba sem számít bele."
+        : `${n} bejegyzésed dátum nélkül van, ezért egyik évadba sem számítanak bele.`,
+    signInPrompt: "Jelentkezz be az évadösszegződhöz",
+  },
+
+  /**
    * The inbox. What the nightly sync learned that somebody was waiting to
    * hear — see 0030_alerts.sql for what produces each of the four kinds.
    */
@@ -461,7 +507,7 @@ export const strings = {
 
   profile: {
     playsSeen: "Megnézett darab",
-    thisYear: "Idén",
+    thisSeason: "Ebben az évadban",
     followers: "Követő",
     following: "Követett",
     tabDiary: "Napló",

@@ -16,7 +16,7 @@ npx expo install --fix
 
 Then create a [Supabase](https://supabase.com) project (free tier is
 enough), run every file in `supabase/migrations/` **in order** (`0001_init.sql`
-through `0030_alerts.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
+through `0031_the_evad.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
 URL/anon key from the project's Settings → API page:
 
 ```bash
@@ -63,6 +63,7 @@ app/                     expo-router screens (file-based routing)
   person/[slug].tsx       One performer or director, and everything they are on
   list/[id].tsx           One list and what is on it
   entry/[id].tsx          One evening: who was on, where you sat, what it cost
+  season/[start].tsx      One évad in review, September to August
   lists.tsx               Editorial lists, and yours (modal)
   inbox.tsx               What the nightly sync learned that you asked about
   checkin.tsx             Log a Performance — date, rating, review (modal)
@@ -95,6 +96,9 @@ utils/datetime.ts         Hungarian date/time formatting, pinned to
                           Europe/Budapest
 utils/money.ts            reading a forint amount out of a text field, and the
                           difference between a free ticket and no answer
+utils/season.ts           which évad a night belongs to, and how Hungarian
+                          spells the season's name — the client half of
+                          season_start_year() in the database
 
 data/types.ts             domain types (Play, Venue, Review, User, …)
 services/supabase.ts      the Supabase client (reads EXPO_PUBLIC_SUPABASE_*)
@@ -645,6 +649,59 @@ One thing deliberately not rethrown: if the `review_cast` insert fails after the
 review is in, `submitReview` returns the review anyway. The evening is already
 saved, and losing it because a cast list would not go in is a far worse trade
 than an entry that records the night but not who was in it.
+
+## Counting the évad, not the calendar year
+
+Nobody counts their theatregoing in calendar years. The Hungarian season runs
+from September, and a stats page that splits at 31 December cuts every one of
+them in half: the Vígszínház premiere you saw in November and the one you saw
+in February belong to the same évad and landed in two different totals.
+
+The profile has carried a `thisYear` stat since `0001_init.sql`, on exactly that
+wrong calendar. `0031_the_evad.sql` is that stat grown into a screen and given
+the right one — and the stat itself now counts the season, which is a visible
+difference rather than a pedantic one: an account with three entries dated
+January, April and September reads **3** on the old calendar and **1** on the
+new, and the new number is the true one.
+
+**The season closes in August, not June.** This is the one real decision in the
+migration. `0006_play_status.sql` already records that the kőszínházak go dark
+from mid-June, and that the szabadtéri venues invert that exactly — Nagyerdei,
+Margitsziget and Városmajor play *only* in the summer. Ending the évad in June
+would drop those evenings into a gap between two seasons. So a season runs
+1 September to 31 August, every date belongs to exactly one, and a July night at
+the Margitsziget is the tail of the season that opened the previous autumn
+rather than a season of its own.
+
+**The arithmetic is written twice, on purpose**, the same way `person_slug()` is:
+`public.season_start_year()` counts the rows, `utils/season.ts` names the season
+in the heading before any round trip has happened, and the boundary cases are
+pinned against each other. If they disagreed the page would be titled one season
+and filled with another.
+
+`utils/season.ts` also carries the suffix, which is the sort of detail that
+decides whether an app reads as written or as translated. Hungarian glues a
+linking vowel onto a number according to how it is *spoken*: 26 is "huszonhat",
+so "a 2025/26-**os** évad", but 27 is "huszonhét", so "a 2026/27-**es** évad" —
+and a year ending in zero takes the tens word instead ("a 2029/30-**as** évad",
+from "harmincas"). All of it is tested.
+
+**Most-seen performer uses two sources in order of truthfulness.** Where an
+entry recorded who was actually on — `review_cast`, from 0028 — that is the only
+thing counted for that evening. Every other night falls back to the production's
+published cast, which is the best a catalogue can do about a night nobody logged
+a cast for. Mixing them *per entry* rather than per season is the point: an
+evening that says "I saw the understudy" must not also be counted for the
+principal it says did not go on.
+
+Two things the screen says out loud rather than hiding. It prints the
+denominator behind the spend — an average over five priced entries out of nine
+is a different claim from an average over nine, and only one of them is "your
+average ticket this season". And it says how many entries sit outside every
+season because they carry no date, which is what onboarding writes: somebody who
+ticked fifteen productions on their first run would otherwise open this page,
+see a zero, and conclude it was broken. That is the same honesty `0026` chose
+when it made `seen_at` nullable in the first place.
 
 ## Closing the loop
 

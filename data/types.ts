@@ -190,7 +190,12 @@ export interface User {
   bio?: string;
   stats: {
     playsSeen: number;
-    thisYear: number;
+    /**
+     * Evenings in the current évad — September to August, not the calendar
+     * year. This was `thisYear` until 0031, on a calendar that cut every
+     * Hungarian season in half.
+     */
+    thisSeason: number;
     followers: number;
     following: number;
   };

@@ -16,6 +16,7 @@ import { ChevronRightIcon } from "@/components/icons/Icons";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
+import { currentSeasonStart } from "@/utils/season";
 
 const TABS = [strings.profile.tabDiary, strings.profile.tabWatchlists, strings.profile.tabReviews] as const;
 
@@ -162,7 +163,22 @@ export default function ProfileScreen() {
           <View style={styles.statsRow}>
             <Stat value={user.stats.playsSeen} label={strings.profile.playsSeen} />
             <View style={styles.statDivider} />
-            <Stat value={user.stats.thisYear} label={strings.profile.thisYear} gold />
+            {/* The one stat that opens something. It used to count the calendar
+                year, which cuts every Hungarian season in half; it now counts
+                the évad and leads to the screen that breaks it down. */}
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: "/season/[start]",
+                  params: { start: String(currentSeasonStart()) },
+                })
+              }
+              accessibilityRole="button"
+              accessibilityLabel={strings.profile.thisSeason}
+              style={{ flex: 1 }}
+            >
+              <Stat value={user.stats.thisSeason} label={strings.profile.thisSeason} gold />
+            </Pressable>
             <View style={styles.statDivider} />
             <Stat value={user.stats.followers} label={strings.profile.followers} />
             <View style={styles.statDivider} />
