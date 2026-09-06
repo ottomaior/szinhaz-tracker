@@ -98,7 +98,7 @@ export default function UserProfileScreen() {
       <ScrollView contentContainerStyle={{ paddingBottom: space["5xl"] }}>
         <ContentColumn style={{ paddingHorizontal: gutter, gap: space.lg }}>
           <View style={styles.profileRow}>
-            <Avatar initials={user.initials} size={72} serif />
+            <Avatar uri={user.avatarUrl} initials={user.initials} size={72} serif />
             <View style={{ flex: 1, gap: 2 }}>
               <Text variant="subheading">{user.name}</Text>
               <Text variant="bodySmall" tone="faint">
@@ -106,6 +106,15 @@ export default function UserProfileScreen() {
               </Text>
             </View>
           </View>
+
+          {/* Under the row rather than beside the name: a bio runs to three
+              lines often enough that squeezing it next to a 72pt avatar would
+              set it two words wide. */}
+          {!!user.bio && (
+            <Text variant="bodySmall" tone="dim">
+              {user.bio}
+            </Text>
+          )}
 
           <Button
             label={

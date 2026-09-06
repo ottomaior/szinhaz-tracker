@@ -144,7 +144,7 @@ function CardByline({ user, action, meta }: { user: User; action: string; meta: 
       accessibilityRole="button"
       accessibilityLabel={user.name}
     >
-      <Avatar initials={user.initials} size={36} />
+      <Avatar uri={user.avatarUrl} initials={user.initials} size={36} />
       <View style={{ flexShrink: 1 }}>
         <Text variant="bodySmall">
           <Text variant="bodySmall" style={styles.name}>

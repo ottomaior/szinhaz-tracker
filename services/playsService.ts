@@ -1,5 +1,6 @@
 import { supabase, SUPABASE_URL } from "@/services/supabase";
 import { getFollowingIds } from "@/services/followService";
+import { avatarUrl } from "@/services/profileService";
 import { budapestDayKey } from "@/utils/datetime";
 import type {
   CastMember,
@@ -63,7 +64,15 @@ type PlayRow = {
 
 type VenueRow = { id: string; name: string; type: Venue["type"]; city: string };
 
-type ProfileRow = { id: string; name: string; handle: string; city: string | null; initials: string };
+type ProfileRow = {
+  id: string;
+  name: string;
+  handle: string;
+  city: string | null;
+  initials: string;
+  avatar_path: string | null;
+  bio: string | null;
+};
 
 type ReviewRow = {
   id: string;
@@ -652,7 +661,16 @@ async function statsForUser(userId: string) {
 }
 
 function toUser(row: ProfileRow, stats: User["stats"]): User {
-  return { id: row.id, name: row.name, handle: row.handle, city: row.city ?? "", initials: row.initials, stats };
+  return {
+    id: row.id,
+    name: row.name,
+    handle: row.handle,
+    city: row.city ?? "",
+    initials: row.initials,
+    avatarUrl: row.avatar_path ? avatarUrl(row.avatar_path) : undefined,
+    bio: row.bio ?? undefined,
+    stats,
+  };
 }
 
 export async function getUserById(id: string): Promise<User | undefined> {

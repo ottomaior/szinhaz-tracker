@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { creditLabel, personCanonicalName, personSlug } from "./people";
+import { creditLabel, personCanonicalName, personSlug, profileInitials } from "./people";
 
 /**
  * The names below are real, taken from the catalogue, and chosen to cover the
@@ -141,5 +141,31 @@ describe("creditLabel", () => {
     // 814 cast rows have an empty role. The credit is still real; the row just
     // cannot say what it was for, and the page shows the production alone.
     expect(creditLabel([], false, "Rendező")).toBe("");
+  });
+});
+
+/**
+ * Pinned against `public.profile_initials()` the same way the slug table is:
+ * every case below was also run through the SQL function, so the form's live
+ * preview and the value the trigger stores cannot drift apart.
+ */
+export const INITIALS_CASES: [name: string, initials: string][] = [
+  ["Máthé Zsolt", "MZ"],
+  // Three words takes the first two, not the outer two: Hungarian puts the
+  // surname first, so "TN" is the pair that reads as a monogram here.
+  ["Takács Nóra Diána", "TN"],
+  // Extra whitespace is what a form produces, not what a person typed.
+  ["  Takács   Nóra Diána ", "TN"],
+  ["Für Anikó", "FA"],
+  // A single name gives a single letter rather than the first two characters:
+  // "TÜ" reads as an abbreviation of the name, not as initials.
+  ["Tünde", "T"],
+  ["", "?"],
+  ["   ", "?"],
+];
+
+describe("profileInitials", () => {
+  it.each(INITIALS_CASES)("turns %j into %j", (name, initials) => {
+    expect(profileInitials(name)).toBe(initials);
   });
 });

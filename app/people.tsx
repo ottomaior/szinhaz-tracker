@@ -97,7 +97,7 @@ export default function PeopleScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={person.name}
               >
-                <Avatar initials={person.initials} size={44} />
+                <Avatar uri={person.avatarUrl} initials={person.initials} size={44} />
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text variant="body">{person.name}</Text>
                   <Text variant="caption" tone="faint">

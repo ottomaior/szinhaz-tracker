@@ -1,4 +1,5 @@
 import { supabase } from "@/services/supabase";
+import { avatarUrl } from "@/services/profileService";
 import type { User } from "@/data/types";
 
 type ProfileRow = {
@@ -7,6 +8,7 @@ type ProfileRow = {
   handle: string;
   city: string | null;
   initials: string;
+  avatar_path: string | null;
 };
 
 /**
@@ -16,10 +18,17 @@ type ProfileRow = {
  * follow button, and computing review counts and follower totals for twenty
  * rows to display none of them would be four queries per row.
  */
-export type PersonSummary = Pick<User, "id" | "name" | "handle" | "city" | "initials">;
+export type PersonSummary = Pick<User, "id" | "name" | "handle" | "city" | "initials" | "avatarUrl">;
 
 function toPerson(row: ProfileRow): PersonSummary {
-  return { id: row.id, name: row.name, handle: row.handle, city: row.city ?? "", initials: row.initials };
+  return {
+    id: row.id,
+    name: row.name,
+    handle: row.handle,
+    city: row.city ?? "",
+    initials: row.initials,
+    avatarUrl: row.avatar_path ? avatarUrl(row.avatar_path) : undefined,
+  };
 }
 
 async function currentUserId(): Promise<string | undefined> {
@@ -41,7 +50,7 @@ async function profilesByIds(ids: string[]): Promise<PersonSummary[]> {
   if (ids.length === 0) return [];
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, name, handle, city, initials")
+    .select("id, name, handle, city, initials, avatar_path")
     .in("id", ids)
     .order("name");
   if (error) throw error;

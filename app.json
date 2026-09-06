@@ -35,7 +35,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "A Színház Tracker a fotóidhoz kér hozzáférést, hogy borítóképet tölthess fel az általad hozzáadott darabokhoz."
+          "photosPermission": "A Színház Tracker a fotóidhoz kér hozzáférést, hogy profilképet állíthass be, és borítóképet tölthess fel az általad hozzáadott darabokhoz."
         }
       ]
     ],

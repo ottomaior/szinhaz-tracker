@@ -24,7 +24,7 @@ export function ModalHeader({
 }: {
   title: string;
   /** Where to land when the modal was opened directly and has no history. */
-  fallbackRoute?: "/(tabs)/discover" | "/(tabs)";
+  fallbackRoute?: "/(tabs)/discover" | "/(tabs)" | "/(tabs)/profile";
   /** Trailing control, e.g. the check-in modal's save. Replaces the spacer. */
   action?: ReactNode;
 }) {

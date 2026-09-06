@@ -16,7 +16,7 @@ npx expo install --fix
 
 Then create a [Supabase](https://supabase.com) project (free tier is
 enough), run every file in `supabase/migrations/` **in order** (`0001_init.sql`
-through `0026_seen_without_a_date.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
+through `0027_profile_identity.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
 URL/anon key from the project's Settings → API page:
 
 ```bash
@@ -67,6 +67,7 @@ app/                     expo-router screens (file-based routing)
   onboarding.tsx          "Which of these have you seen?" — a first-run grid
                           over the theatres' archives (modal)
   add-play.tsx            Add a play manually (modal, requires sign-in)
+  edit-profile.tsx        Picture, name, city and bio (modal, requires sign-in)
   sign-in.tsx / sign-up.tsx  Auth modals
 
 components/
@@ -83,8 +84,9 @@ theme/                    design tokens — the single source of truth for
 
 contexts/AuthContext.tsx  Supabase session state, wraps the whole app
 
-utils/people.ts           name canonicalisation and slugging — the client half
-                          of person_slug() in the database
+utils/people.ts           name canonicalisation, slugging and profile initials
+                          — the client half of person_slug() and
+                          profile_initials() in the database
 utils/calendar.ts         month-grid arithmetic for the date picker, kept out
                           of the component so it can be tested
 utils/datetime.ts         Hungarian date/time formatting, pinned to
@@ -97,6 +99,8 @@ services/playsService.ts  the ONLY thing screens import play/venue/user
 services/peopleService.ts one performer's credits, over play_cast and
                           plays.director together
 services/listsService.ts  lists and their entries, user-made and editorial
+services/profileService.ts  the editable half of a profile — avatar upload,
+                          bio, and the public URL for a stored avatar
 services/searchService.ts ranked, accent-insensitive search with a typo
                           fallback, over plays/venues/cast (Postgres RPC)
 services/authService.ts   sign up / sign in / sign out
@@ -552,6 +556,52 @@ Two exceptions worth knowing:
   derivable from what the API gives us. A guessed URL pattern behind a "Jegyek"
   button is worse than no button: it sends somebody who has already decided to
   go to a 404.
+
+## A profile worth looking at
+
+`profiles` held four fields from `0001_init.sql` — name, handle, city, initials
+— and three of them are identifiers rather than anything a person chose. Every
+screen that draws somebody drew the same monogram in the same circle, and the
+"Profil szerkesztése" pill on the profile screen had no press handler behind it,
+because there was nothing to edit.
+
+`0027_profile_identity.sql` adds the two fields that make the screen worth
+visiting: `avatar_path` and `bio`. Four decisions in it are worth knowing about.
+
+**The avatar is a path, not a URL.** The same shape `0011_poster_storage.sql`
+established for cover art: rows store `<uid>/<file>` inside a public `avatars`
+bucket, and `avatarUrl()` builds the CDN address. Moving the origin then never
+means rewriting rows.
+
+**Its own bucket, not a folder in `posters`.** The two files have different
+lifetimes. A mirrored poster is fetched once and kept; an avatar is replaced
+whenever somebody changes their mind, which is why `avatars` also carries a
+delete policy and `posters` does not. `updateProfile()` removes the file the
+profile has just stopped pointing at, so replacing a picture five times leaves
+one file rather than five.
+
+**Ownership is enforced twice.** Storage RLS scopes writes to
+`(storage.foldername(name))[1] = auth.uid()`, which stops an upload into
+somebody else's folder — verified against a real signed-in session, which gets
+`403 new row violates row-level security policy`. But the *row* is a separate
+question: `profiles_update_own` lets a user write their own row directly, so
+without a second check they could point `avatar_path` at a file that is not
+theirs. `profiles_guard_avatar_path` rejects any path that does not begin with
+the profile's own id. This is the same reasoning `0013_user_poster_uploads.sql`
+applies to `poster_path` inside `create_play_with_cast`.
+
+**Initials follow the name.** They are the fallback shown when there is no
+photograph, so an account that renames itself and keeps its old monogram is
+simply wrong. `profile_initials()` takes the first letter of each of the first
+two words — "Máthé Zsolt" is `MZ` — and a trigger recomputes it whenever the
+name changes. The signup trigger's `upper(left(name, 2))` produced `MÁ` for the
+same person, so the four existing rows were backfilled through the new function.
+
+`bio` is capped at 280 characters by a check constraint rather than only by the
+form's `maxLength`, because the update policy means the form is not the only way
+in. The form does not use `maxLength` at all: silently swallowing keystrokes
+reads as a broken keyboard, so it shows a counter once fewer than sixty
+characters remain and refuses the save if it is over.
 
 ## What's real now
 

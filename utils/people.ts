@@ -113,3 +113,26 @@ export function creditLabel(roles: string[], directed: boolean, directorLabel: s
     : roles;
   return (directed ? [directorLabel, ...rest] : rest).join(" · ");
 }
+
+/**
+ * The monogram shown where somebody has no profile picture.
+ *
+ * The client half of `public.profile_initials()` in
+ * `supabase/migrations/0027_profile_identity.sql`, and here for the same reason
+ * `personSlug` is: the database owns the stored value — a trigger recomputes
+ * `profiles.initials` whenever the name changes — but the edit form has to
+ * show the monogram as the name is being typed, before any round trip has
+ * happened. If the two disagreed, the avatar in the form would be a preview of
+ * something else.
+ *
+ * The first letter of each of the first two words, so "Máthé Zsolt" is MZ. The
+ * signup trigger's original `upper(left(name, 2))` gave MÁ, which is the
+ * beginning of a surname rather than a monogram.
+ */
+export function profileInitials(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  const letters = words.slice(0, 2).map((w) => w[0]).join("");
+  // "?" rather than an empty string: the name is required, but a profile row
+  // written some other way should still draw something inside its circle.
+  return (letters || name.trim().slice(0, 2)).toUpperCase() || "?";
+}

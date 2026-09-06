@@ -370,6 +370,35 @@ export const strings = {
     seenOn: (date: string) => `Megnézve: ${date}`,
     signInPrompt: "Jelentkezz be, hogy lásd a profilod",
     signInButton: "Bejelentkezés",
+    edit: "Profil szerkesztése",
+  },
+
+  editProfile: {
+    title: "Profil szerkesztése",
+    photoLabel: "Profilkép",
+    photoAdd: "Kép hozzáadása",
+    photoReplace: "Kép cseréje",
+    photoRemove: "Kép eltávolítása",
+    photoUploading: "Feltöltés…",
+    photoHint:
+      "Ha nincs képed, a neved kezdőbetűi jelennek meg helyette. Csak olyan képet tölts fel, amire jogod van.",
+    nameLabel: "Név",
+    namePlaceholder: "Ahogy mások látnak",
+    cityLabel: "Város",
+    cityPlaceholder: "Pl. Budapest",
+    bioLabel: "Bemutatkozás",
+    bioPlaceholder: "Mit szeretsz nézni? Melyik a törzsszínházad?",
+    /* The counter counts down rather than up: what matters is the room left. */
+    bioRemaining: (left: number) => `${left} karakter maradt`,
+    /* Past the limit the countdown would read "-20 karakter maradt", which is
+       arithmetic rather than Hungarian. */
+    bioOver: (over: number) => `${over} karakterrel hosszabb a megengedettnél`,
+    save: "Mentés",
+    saving: "Mentés…",
+    errorNameRequired: "A név nem maradhat üresen.",
+    errorPhotoPermission: "A képfeltöltéshez engedélyt kell adnod a galériához.",
+    errorPhotoUpload: "A kép feltöltése nem sikerült. Próbáld újra.",
+    errorBioTooLong: "A bemutatkozás legfeljebb 280 karakter lehet.",
   },
 
   people: {

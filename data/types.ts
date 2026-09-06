@@ -182,7 +182,12 @@ export interface User {
   name: string;
   handle: string;
   city: string;
+  /** Fallback monogram. Derived from the name by a trigger — see 0027. */
   initials: string;
+  /** Public URL of the profile picture, when one has been uploaded. */
+  avatarUrl?: string;
+  /** Short self-description, at most 280 characters. */
+  bio?: string;
   stats: {
     playsSeen: number;
     thisYear: number;

@@ -107,19 +107,28 @@ export default function ProfileScreen() {
 
         <View style={{ paddingHorizontal: gutter }}>
           <View style={styles.profileRow}>
-            <Avatar initials={user.initials} size={78} serif />
-            {/* This used to be a "Profil szerkesztése" pill with no press
-                handler, next to a settings gear that signed the user out on a
-                single tap with no confirmation. One real, clearly labelled,
-                confirmed control replaces both. */}
-            <Pressable
-              style={styles.signOutBtn}
-              onPress={() => setConfirmingSignOut((s) => !s)}
-              accessibilityRole="button"
-              accessibilityState={{ expanded: confirmingSignOut }}
-            >
-              <Text variant="label">{strings.auth.signOut}</Text>
-            </Pressable>
+            <Avatar uri={user.avatarUrl} initials={user.initials} size={78} serif />
+            {/* The edit pill used to be here with no press handler at all, next
+                to a settings gear that signed the user out on a single tap with
+                no confirmation. Now it goes somewhere, and signing out asks
+                first. */}
+            <View style={styles.headerActions}>
+              <Pressable
+                style={styles.headerBtn}
+                onPress={() => router.push("/edit-profile")}
+                accessibilityRole="button"
+              >
+                <Text variant="label">{strings.profile.edit}</Text>
+              </Pressable>
+              <Pressable
+                style={styles.headerBtn}
+                onPress={() => setConfirmingSignOut((s) => !s)}
+                accessibilityRole="button"
+                accessibilityState={{ expanded: confirmingSignOut }}
+              >
+                <Text variant="label" tone="dim">{strings.auth.signOut}</Text>
+              </Pressable>
+            </View>
           </View>
 
           {confirmingSignOut && (
@@ -143,6 +152,11 @@ export default function ProfileScreen() {
             <Text variant="bodySmall" tone="faint">
               {[`@${user.handle}`, user.city].filter(Boolean).join(" · ")}
             </Text>
+            {!!user.bio && (
+              <Text variant="bodySmall" tone="dim" style={{ marginTop: 6 }}>
+                {user.bio}
+              </Text>
+            )}
           </View>
 
           <View style={styles.statsRow}>
@@ -358,13 +372,22 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginTop: -40,
   },
-  signOutBtn: {
+  // Wraps rather than overflows: two pills plus a 78pt avatar do not fit on a
+  // 375pt screen, and the second one was being cut off by the right edge.
+  headerActions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
+    flexShrink: 1,
+    gap: 8,
+    marginBottom: 6,
+  },
+  headerBtn: {
     borderWidth: 1,
     borderColor: colors.hairline,
     borderRadius: 999,
     paddingVertical: 7,
     paddingHorizontal: 16,
-    marginBottom: 6,
   },
   confirmCard: {
     marginTop: 12,

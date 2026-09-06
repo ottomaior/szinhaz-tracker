@@ -91,7 +91,15 @@ export default function PersonScreen() {
           {!loaded && <PersonSkeleton />}
 
           {loaded && failed && (
-            <EmptyState title={strings.common.loadError} actionLabel={strings.common.retry} onAction={() => router.replace({ pathname: "/person/[slug]", params: { slug } })} />
+            <EmptyState
+              title={strings.common.loadError}
+              actionLabel={strings.common.retry}
+              // Guarded because the param is optional: there is nothing to
+              // retry without a slug, and the route will not accept one.
+              onAction={() => {
+                if (slug) router.replace({ pathname: "/person/[slug]", params: { slug } });
+              }}
+            />
           )}
 
           {/* A slug nobody matches. Reachable by typing a URL, and — more

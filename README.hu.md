@@ -18,7 +18,7 @@ npx expo install --fix
 
 Ezután hozz létre egy [Supabase](https://supabase.com) projektet (az ingyenes
 csomag bőven elég), futtasd le a `supabase/migrations/` **összes** fájlját
-**sorrendben** (`0001_init.sql`-től a `0026_seen_without_a_date.sql`-ig) a projekt
+**sorrendben** (`0001_init.sql`-től a `0027_profile_identity.sql`-ig) a projekt
 SQL-szerkesztőjében, majd másold a `.env.example`-t `.env`-re, és töltsd ki a
 projekt Settings → API oldaláról az URL-t és az anon kulcsot:
 
@@ -71,6 +71,7 @@ app/                     expo-router képernyők (fájlalapú útvonalak)
   onboarding.tsx          "Mit láttál már?" — első indítás rácsa a színházak
                           archívuma fölött (modál)
   add-play.tsx            Előadás kézi felvitele (modál, belépés kell hozzá)
+  edit-profile.tsx        Kép, név, város és bemutatkozás (modál, belépés kell)
   sign-in.tsx / sign-up.tsx  Auth modálok
 
 components/
@@ -89,7 +90,8 @@ theme/                    tervezési tokenek — a „Velvet Curtain" vizuális
 
 contexts/AuthContext.tsx  Supabase munkamenet-állapot, az egész appot körbeveszi
 
-utils/people.ts           névkanonizálás és slug-képzés — a person_slug()
+utils/people.ts           névkanonizálás, slug-képzés és profil-kezdőbetűk — a
+                          person_slug() és a profile_initials()
                           adatbázisfüggvény kliensoldali fele
 utils/calendar.ts         a dátumválasztó hónaprács-számításai, a komponensen
                           kívül tartva, hogy tesztelhető legyen
@@ -104,6 +106,8 @@ services/peopleService.ts egy alkotó közreműködései, a play_cast és a
                           plays.director táblát együtt olvasva
 services/listsService.ts  listák és a bejegyzéseik, felhasználói és
                           szerkesztői egyaránt
+services/profileService.ts  a profil szerkeszthető fele — profilkép feltöltése,
+                          bemutatkozás, és a tárolt kép nyilvános URL-je
 services/searchService.ts rangsorolt, ékezetfüggetlen keresés elgépelés-tűréssel,
                           előadásokban/helyszínekben/szereplők közt
                           (Postgres RPC)
@@ -582,6 +586,56 @@ megőrzi. Két kivétel érdemel említést:
   így nincs az API-ból levezethető útvonal. Egy megtippelt URL-minta a "Jegyek"
   gomb mögött rosszabb, mint ha nem lenne gomb: azt küldi 404-re, aki már
   eldöntötte, hogy megy.
+
+## Egy profil, amit érdemes megnézni
+
+A `profiles` a `0001_init.sql` óta négy mezőt tartalmazott — név, felhasználónév,
+város, kezdőbetűk —, és ezek közül három azonosító, nem pedig olyasmi, amit az
+ember maga választ. Minden képernyő ugyanazt a monogramot rajzolta ugyanabba a
+körbe, a profilon lévő „Profil szerkesztése" pirula mögött pedig nem volt
+eseménykezelő, mert nem volt mit szerkeszteni.
+
+A `0027_profile_identity.sql` hozzáadja azt a két mezőt, amitől a képernyőre
+érdemes lesz visszatérni: `avatar_path` és `bio`. Négy döntés érdemes belőle
+megjegyzésre.
+
+**A profilkép útvonal, nem URL.** Ugyanaz az alak, amit a
+`0011_poster_storage.sql` a borítóképekre bevezetett: a sorokban `<uid>/<fájl>`
+áll egy nyilvános `avatars` bucketen belül, a CDN-címet pedig az `avatarUrl()`
+építi fel. Így az origó megváltoztatása soha nem jár sorok átírásával.
+
+**Külön bucket, nem a `posters` egyik mappája.** A két fájlnak más az élettartama.
+A letükrözött plakátot egyszer töltjük le és megtartjuk; a profilképet akkor
+cserélik, amikor a tulajdonosa meggondolja magát — ezért van az `avatars`
+bucketen törlési szabály is, a `posters`-en pedig nincs. Az `updateProfile()`
+eltávolítja azt a fájlt, amire a profil épp most szűnt meg mutatni, így az
+ötödik képcsere után is egy fájl marad, nem öt.
+
+**A tulajdonlást két helyen érvényesítjük.** A tárhely RLS-e a
+`(storage.foldername(name))[1] = auth.uid()` feltétellel szűkíti az írást, ami
+megakadályozza a más mappájába való feltöltést — ezt valódi belépett munkamenettel
+ellenőriztük, `403 new row violates row-level security policy` a válasz. A *sor*
+viszont külön kérdés: a `profiles_update_own` engedi, hogy a felhasználó
+közvetlenül írja a saját sorát, tehát második ellenőrzés nélkül olyan fájlra is
+ráállíthatná az `avatar_path`-t, ami nem az övé. A `profiles_guard_avatar_path`
+minden olyan útvonalat elutasít, ami nem a profil saját azonosítójával kezdődik.
+Ugyanez az érvelés áll a `poster_path` mögött a `0013_user_poster_uploads.sql`
+`create_play_with_cast` függvényében.
+
+**A kezdőbetűk követik a nevet.** Ez az a tartalék, ami fénykép hiányában
+látszik, tehát az a fiók, ami átnevezi magát és megtartja a régi monogramját,
+egyszerűen hibás. A `profile_initials()` az első két szó első betűjét veszi —
+„Máthé Zsolt" így `MZ` —, egy trigger pedig újraszámolja, valahányszor a név
+változik. A regisztrációs trigger `upper(left(name, 2))` kifejezése ugyanerre a
+névre `MÁ`-t adott, ezért a meglévő négy sort az új függvénnyel töltöttük fel
+újra.
+
+A `bio` hossza 280 karakterben van maximálva egy check megszorítással, nem csak
+az űrlap `maxLength`-jével, mert a módosítási szabály miatt nem az űrlap az
+egyetlen út befelé. Az űrlap egyáltalán nem használ `maxLength`-et: a
+leütéseket némán elnyelni úgy hat, mintha a billentyűzet lenne rossz — ezért
+hatvan karakternél kevesebb hátralévő helynél számlálót mutat, és mentéskor
+utasítja vissza a túl hosszú szöveget.
 
 ## Ami ma tényleg megvan
 
