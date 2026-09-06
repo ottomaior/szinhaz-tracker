@@ -25,7 +25,7 @@ export function Chip({
         style={{
           fontFamily: bodyFont(fontsLoaded, active ? "bold" : "medium"),
           fontSize: 12.5,
-          color: active ? colors.bg : colors.textDim,
+          color: active ? colors.onAccent : colors.textDim,
         }}
       >
         {label}

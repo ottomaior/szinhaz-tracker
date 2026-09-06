@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
-import { elevation, gutter, minTouchTarget, radius, space } from "@/theme/tokens";
+import { elevation, gutter, minTouchTarget, overlay, radius, space } from "@/theme/tokens";
 import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
 import { CheckIcon, ChevronDownIcon, CloseIcon } from "@/components/icons/Icons";
@@ -83,13 +83,13 @@ export function SelectChip({
           style={{
             fontFamily: bodyFont(fontsLoaded, active ? "bold" : "medium"),
             fontSize: 12.5,
-            color: active ? colors.bg : colors.textDim,
+            color: active ? colors.onAccent : colors.textDim,
             maxWidth: 150,
           }}
         >
           {label}
         </Text>
-        <ChevronDownIcon size={12} color={active ? colors.bg : colors.textFaint} />
+        <ChevronDownIcon size={12} color={active ? colors.onAccent : colors.textFaint} />
       </Pressable>
 
       <Modal
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
    */
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(9,4,3,0.6)",
+    backgroundColor: overlay.scrim,
     justifyContent: "flex-end",
   },
   sheet: {

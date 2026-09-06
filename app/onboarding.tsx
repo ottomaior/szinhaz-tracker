@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { View, ScrollView, StyleSheet, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
-import { gutter, radius, space } from "@/theme/tokens";
+import { gutter, overlay, radius, space } from "@/theme/tokens";
 import {
   getCities,
   getCurrentUser,
@@ -210,7 +210,7 @@ export default function OnboardingScreen() {
                       {isSelected && (
                         <View style={styles.tickOverlay}>
                           <View style={styles.tick}>
-                            <CheckIcon size={18} color={colors.bg} />
+                            <CheckIcon size={18} color={colors.onAccent} />
                           </View>
                         </View>
                       )}
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
   tickOverlay: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: radius.md,
-    backgroundColor: "rgba(18,5,5,0.55)",
+    backgroundColor: overlay.onImageVeil,
     alignItems: "center",
     justifyContent: "center",
   },

@@ -3,7 +3,7 @@ import { View, ScrollView, StyleSheet, Pressable, Share, Platform, Linking } fro
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
-import { gutter, radius, space } from "@/theme/tokens";
+import { gutter, overlay, radius, space } from "@/theme/tokens";
 import {
   addToWatchlist,
   getPlayById,
@@ -365,7 +365,7 @@ export default function PlayDetailScreen() {
               disabled={watchlistBusy}
               accessibilityLabel={inWatchlist ? strings.playDetail.removeFromWatchlist : strings.playDetail.addToWatchlist}
             >
-              <TicketIcon size={18} color={inWatchlist ? colors.bg : colors.text} />
+              <TicketIcon size={18} color={inWatchlist ? colors.onAccent : colors.text} />
             </IconButton>
           </View>
 
@@ -721,7 +721,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: space.md,
     bottom: space.sm,
-    color: "rgba(245,237,228,0.62)",
+    color: overlay.onImageText,
   },
   metaRow: { flexDirection: "row", alignItems: "center", gap: space.sm, marginTop: 2, flexWrap: "wrap" },
   statusRow: { flexDirection: "row", alignItems: "center", gap: space.md, flexWrap: "wrap", marginTop: space.xs },

@@ -47,8 +47,8 @@ export function StatusBadge({ status, size = "md" }: { status: PlayStatus; size?
 // deliberately quiet: an ended production is still worth browsing and
 // logging, so its badge should read as a fact, not as a warning.
 const TONES: Record<Exclude<PlayStatus, "unknown">, { bg: string; border: string; text: string }> = {
-  running: { bg: "rgba(219,177,85,0.15)", border: "rgba(219,177,85,0.45)", text: colors.gold },
-  announced: { bg: "rgba(245,237,228,0.08)", border: colors.hairline, text: colors.text },
+  running: { bg: colors.goldTintBg, border: colors.goldTintBorder, text: colors.gold },
+  announced: { bg: colors.neutralTintBg, border: colors.hairline, text: colors.text },
   dormant: { bg: colors.surface, border: colors.hairline, text: colors.textDim },
   ended: { bg: colors.surface, border: colors.hairlineSoft, text: colors.textFaint },
 };

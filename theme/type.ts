@@ -69,7 +69,7 @@ const TONES: Record<TypeTone, string> = {
   faint: colors.textFaint,
   accent: colors.gold,
   // For text sitting on a gold fill.
-  inverse: colors.bg,
+  inverse: colors.onAccent,
 };
 
 /**

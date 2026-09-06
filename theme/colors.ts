@@ -1,36 +1,38 @@
 /**
- * "Velvet Curtain" design system tokens.
+ * The active palette, as every screen sees it.
  *
- * These are sRGB hex equivalents of the OKLCH values used in the original
- * design canvas (see PRODUCT/design notes). React Native's style engine does
- * not accept oklch() color functions, so the values below were computed via
- * the OKLab -> linear sRGB -> sRGB pipeline to match exactly what the canvas
- * mockups rendered.
+ * This module deliberately keeps the shape it has always had — one flat object
+ * of colour tokens — because 38 files import it and ~140 of those references
+ * sit inside module-level `StyleSheet.create` blocks that evaluate once, at
+ * import. Changing the shape would have meant rewriting all of them.
+ *
+ * Instead the *values* change per platform:
+ *
+ * - On the web each token is the string "var(--vc-...)". react-native-web
+ *   recognises a CSS custom property as a colour and passes it through
+ *   verbatim, so the generated atomic classes are stable and a theme switch is
+ *   one `data-theme` attribute write on the root element. app/+html.tsx
+ *   defines what those properties resolve to; theme/themes.ts holds the
+ *   palettes and explains the mechanism and its one sharp edge in full.
+ *
+ * - On native there are no custom properties and no picker, so this is the
+ *   Velvet Curtain palette exactly as before. app.json's
+ *   `userInterfaceStyle: "dark"` and the #120505 splash background are pinned
+ *   to match, and should stay pinned: the asymmetry is deliberate.
+ *
+ * The one rule when adding a token: on the web its value must be a bare
+ * `var(...)`. Anything react-native-web cannot recognise is emitted as
+ * `undefined` into the stylesheet and silently dropped by the browser, which
+ * is why alpha variants are their own tokens rather than mixed at the call
+ * site.
  */
-export const colors = {
-  bg: "#120505", // oklch(14% 0.025 25)
-  bgElevated: "#1d0c0a", // oklch(18% 0.03 26)
-  surface: "#251210", // oklch(21% 0.032 27)
-  surface2: "#331d1a", // oklch(26% 0.035 28)
+import { Platform } from "react-native";
+import { cssVarName, themes, type Palette } from "./themes";
 
-  hairline: "rgba(255,255,255,0.10)",
-  hairlineSoft: "rgba(255,255,255,0.06)",
+const varPalette = Object.fromEntries(
+  Object.keys(themes.velvetDark).map((token) => [token, "var(" + cssVarName(token) + ")"])
+) as Palette;
 
-  text: "#f5ede4", // oklch(95% 0.015 75) — 17.26:1 on bg
-  textDim: "#b9a69e", // oklch(74% 0.025 45) — 8.59:1 on bg
-  /**
-   * Metadata and timestamps.
-   *
-   * Lifted from #80716d, which measured 4.29:1 against `bg` — below the 4.5:1
-   * WCAG AA needs for body text, and used throughout at 10–12.5px, where it
-   * matters most. This is 4.88:1 and visually almost indistinguishable.
-   */
-  textFaint: "#8a7a75",
+export const colors: Palette = Platform.OS === "web" ? varPalette : themes.velvetDark;
 
-  gold: "#dbb155", // oklch(78% 0.12 85)
-  goldDeep: "#b28324", // oklch(64% 0.12 80)
-
-  shadow: "rgba(0,0,0,0.45)",
-} as const;
-
-export type ColorToken = keyof typeof colors;
+export type ColorToken = keyof Palette;

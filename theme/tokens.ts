@@ -10,6 +10,7 @@
  * they accumulated.
  */
 import { Platform } from "react-native";
+import { colors } from "./colors";
 
 /**
  * Spacing, on a 4px grid.
@@ -59,20 +60,53 @@ export const hairlineWidth = Platform.select({ ios: 0.5, android: 0.5, default: 
  * elevation here is carried by a hairline catching light along the top edge —
  * the way a lit surface reads on a dark stage — and the shadow is kept for
  * separating only the largest surfaces from the background.
+ *
+ * Both colours are palette tokens rather than literals, so a light theme can
+ * drop the top highlight (which means nothing on cream) and soften the
+ * shadow. The alpha lives inside the token and `shadowOpacity` is 1, rather
+ * than the other way round: the web build discards `shadowOpacity` when the
+ * colour is a custom property — see theme/themes.ts — and on iOS
+ * `shadowOpacity: 1` times the colour's own alpha is the same result.
  */
 export const elevation = {
   none: {},
   raised: {
     borderTopWidth: hairlineWidth,
-    borderTopColor: "rgba(255,255,255,0.06)",
+    borderTopColor: colors.edgeHighlight,
   },
   floating: {
-    shadowColor: "#000",
-    shadowOpacity: 0.45,
+    shadowColor: colors.shadow,
+    shadowOpacity: 1,
     shadowRadius: 24,
     shadowOffset: { width: 0, height: 8 },
     elevation: 8,
   },
+} as const;
+
+/**
+ * Veils that deliberately do not belong to the theme.
+ *
+ * `scrim` sits between a sheet and the app and pushes the app back, which is
+ * as true on cream as it is on velvet — iOS and Material both darken behind a
+ * sheet in light mode too. The `onImage*` values sit on a production
+ * photograph, which has no idea what theme is on: a cream pill over a dark
+ * stage still is harder to read in every theme, not easier.
+ *
+ * These were nine hand-mixed rgba literals scattered across the screens.
+ * Collecting them here is what makes it visible that they were considered and
+ * left alone on purpose, rather than missed.
+ */
+export const overlay = {
+  /** Behind a sheet or a popover, over the app itself. */
+  scrim: "rgba(9,4,3,0.6)",
+  /** A chip or badge laid over a poster. */
+  onImage: "rgba(9,4,3,0.78)",
+  /** A translucent icon button on a full-bleed hero image. */
+  onImageSoft: "rgba(10,4,3,0.55)",
+  /** A veil over a poster the user is picking from. */
+  onImageVeil: "rgba(18,5,5,0.55)",
+  /** Credit text set directly on artwork. */
+  onImageText: "rgba(245,237,228,0.62)",
 } as const;
 
 /**

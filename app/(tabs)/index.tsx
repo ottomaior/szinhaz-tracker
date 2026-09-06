@@ -437,7 +437,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  badgeText: { color: colors.bg, fontWeight: "700", fontSize: 10, lineHeight: 16 },
+  badgeText: { color: colors.onAccent, fontWeight: "700", fontSize: 10, lineHeight: 16 },
   scopeRow: {
     flexDirection: "row",
     gap: space.sm,

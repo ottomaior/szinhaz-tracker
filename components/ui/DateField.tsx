@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Modal, Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
-import { elevation, gutter, minTouchTarget, radius, space } from "@/theme/tokens";
+import { elevation, gutter, minTouchTarget, overlay, radius, space } from "@/theme/tokens";
 import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
 import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, CloseIcon } from "@/components/icons/Icons";
@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
 
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(9,4,3,0.6)",
+    backgroundColor: overlay.scrim,
     justifyContent: "flex-end",
   },
   sheet: {

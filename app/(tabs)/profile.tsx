@@ -12,7 +12,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { PlayRow } from "@/components/ui/PlayRow";
 import { MaskRatingRow } from "@/components/icons/MaskIcon";
-import { ChevronRightIcon } from "@/components/icons/Icons";
+import { ChevronRightIcon, SettingsIcon } from "@/components/icons/Icons";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
@@ -111,8 +111,9 @@ export default function ProfileScreen() {
             <Avatar uri={user.avatarUrl} initials={user.initials} size={78} serif />
             {/* The edit pill used to be here with no press handler at all, next
                 to a settings gear that signed the user out on a single tap with
-                no confirmation. Now it goes somewhere, and signing out asks
-                first. */}
+                no confirmation. Now it goes somewhere, signing out asks first,
+                and the gear leads to the settings it always looked like it
+                would. */}
             <View style={styles.headerActions}>
               <Pressable
                 style={styles.headerBtn}
@@ -120,6 +121,14 @@ export default function ProfileScreen() {
                 accessibilityRole="button"
               >
                 <Text variant="label">{strings.profile.edit}</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.headerBtn, styles.headerIconBtn]}
+                onPress={() => router.push("/settings")}
+                accessibilityRole="button"
+                accessibilityLabel={strings.settings.title}
+              >
+                <SettingsIcon size={17} color={colors.textDim} />
               </Pressable>
               <Pressable
                 style={styles.headerBtn}
@@ -409,6 +418,8 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     paddingHorizontal: 16,
   },
+  // An icon has no text to give the pill its width, so it gets its own.
+  headerIconBtn: { paddingHorizontal: 11, alignItems: "center", justifyContent: "center" },
   confirmCard: {
     marginTop: 12,
     gap: 10,

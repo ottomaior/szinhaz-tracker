@@ -6,6 +6,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useAppFontsSettled } from "@/hooks/useAppFonts";
 import { colors } from "@/theme/colors";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -36,7 +37,8 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <SafeAreaProvider>
+      <ThemeProvider>
+        <SafeAreaProvider>
         <StatusBar style="light" />
         <Stack
           screenOptions={{
@@ -56,12 +58,14 @@ export default function RootLayout() {
           <Stack.Screen name="people" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
           <Stack.Screen name="inbox" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
           <Stack.Screen name="edit-profile" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+          <Stack.Screen name="settings" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
           <Stack.Screen name="checkin" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
           <Stack.Screen name="add-play" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
           <Stack.Screen name="sign-in" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
           <Stack.Screen name="sign-up" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
         </Stack>
-      </SafeAreaProvider>
+        </SafeAreaProvider>
+      </ThemeProvider>
     </AuthProvider>
   );
 }

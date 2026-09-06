@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
-import { elevation, gutter, minTouchTarget, radius, space } from "@/theme/tokens";
+import { elevation, gutter, minTouchTarget, overlay, radius, space } from "@/theme/tokens";
 import { addToList, getListIdsContaining, getLists, removeFromList, type ListSummary } from "@/services/listsService";
 import { getCurrentUser } from "@/services/playsService";
 import { CheckIcon, CloseIcon } from "@/components/icons/Icons";
@@ -155,7 +155,7 @@ export function AddToListSheet({
 const styles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(9,4,3,0.6)",
+    backgroundColor: overlay.scrim,
     justifyContent: "flex-end",
   },
   sheet: {

@@ -1,6 +1,7 @@
 import { View, Pressable } from "react-native";
 import Svg, { Path, Ellipse } from "react-native-svg";
 import { colors } from "@/theme/colors";
+import { fillPaint, paint, strokePaint } from "@/components/icons/svgPaint";
 import {
   MASK_BODY_PATH,
   MASK_EYES,
@@ -32,17 +33,17 @@ export function MaskIcon({
   // background showing through isn't possible in SVG fill, so we punch
   // holes using the bg color passed as `offColor`'s complement — in
   // practice we just draw them in the base app background tone.
-  const punchColor = state === "on" ? colors.bg : offColor;
+  const punchColor = state === "on" ? colors.onAccent : offColor;
 
   return (
     <Svg width={size} height={size} viewBox={`0 0 ${MASK_VIEWBOX} ${MASK_VIEWBOX}`}>
-      <Path d={MASK_BODY_PATH} fill={fill} stroke={stroke} strokeWidth={MASK_STROKE_WIDTH} />
+      <Path d={MASK_BODY_PATH} {...paint(fill, stroke)} strokeWidth={MASK_STROKE_WIDTH} />
       {MASK_EYES.map((eye) => (
-        <Ellipse key={eye.cx} cx={eye.cx} cy={eye.cy} rx={eye.rx} ry={eye.ry} fill={punchColor} />
+        <Ellipse key={eye.cx} cx={eye.cx} cy={eye.cy} rx={eye.rx} ry={eye.ry} {...fillPaint(punchColor)} />
       ))}
       <Path
         d={MASK_MOUTH_PATH}
-        stroke={punchColor}
+        {...strokePaint(punchColor)}
         strokeWidth={MASK_STROKE_WIDTH}
         strokeLinecap="round"
         fill="none"

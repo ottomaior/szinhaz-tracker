@@ -163,12 +163,14 @@ A színek és a tipográfia a `theme/`-ben laknak. A paletta ugyanaz a „Velvet
 Curtain" rendszer, mint a tervezővásznon: majdnem fekete, meleg bordó háttér,
 meleg arany kiemelőszín, Bodoni Moda a kiemelt szövegre, Sora a felület
 szövegére, és egy saját színházi álarc ikon mindenütt, ahol egyébként csillagos
-értékelés lenne.
+értékelés lenne. Ez ma már a négy választható paletta egyike — lásd lejjebb a
+„Négy paletta" részt —, de továbbra is ez az, amire az app tervezve van.
 
-A `theme/colors.ts` dokumentálja, melyik hexa konstans melyik OKLCH értékből
-lett átváltva, arra az esetre, ha később hangolni kell a palettán — a React
-Native stílusmotorja nem fogad el `oklch()`-t, ezért itt minden előre átváltott
-sRGB hexa.
+A `theme/themes.ts` tartja a palettákat, és dokumentálja, melyik hexa konstans
+melyik OKLCH értékből lett átváltva, arra az esetre, ha később hangolni kell
+valamelyiken — a React Native stílusmotorja nem fogad el `oklch()`-t, ezért ott
+minden előre átváltott sRGB hexa. A `theme/colors.ts` az a vékony réteg, ami
+eldönti, melyik palettát látja az adott platform.
 
 Két szabályt érdemes ismerni, mielőtt bárki új képernyőt ír:
 
@@ -184,9 +186,12 @@ Két szabályt érdemes ismerni, mielőtt bárki új képernyőt ír:
   alá esnek. A `theme/type.ts` ezt ki is kényszeríti — a `heading` alatti minden
   szerep Sora.
 
-A `textFaint` `#80716d`-ről `#8a7a75`-re lett világosítva. Az eredeti 4,29:1-et
-mért a háttérhez képest, ami kevés a WCAG AA által folyószövegre elvárt
-4,5:1-hez — és pont ez a szín viszi az app legkisebb méretű metaadatait.
+A `textFaint` kétszer is világosodott, mindkétszer ugyanazért. A `#80716d`
+4,29:1-et mért a háttérhez képest; a `#8a7a75` ezt megoldotta, de a
+`surface`-en még mindig 4,37:1 volt, a `surface2`-n pedig 3,85:1 — és pont ez a
+szín viszi az app legkisebb méretű metaadatait, méghozzá jellemzően *kártyán
+belül*, vagyis épp azon a két háttéren. Most `#9a8a84`: 6,04 / 5,41 / 4,76,
+mindhárom háttéren megfelel.
 
 Az elrendezés reszponzív, nem csak telefonra való, mert a webes kiadás is
 kimegy. A `hooks/useBreakpoint.ts` futásidőben olvassa a nézetablakot (a
@@ -194,6 +199,66 @@ react-native-webben nincs media query a `StyleSheet.create`-en belül), a
 `components/ui/Screen` maximalizálja és középre húzza a tartalmat, a
 `components/ui/Grid` pedig a saját mért szélességéből számol csempeszélességet,
 nem százalékból.
+
+## Négy paletta, és hogyan jut el egy téma a képernyőig
+
+Az olvasó a Beállításokban választ témát, ahová a profilján lévő fogaskerék
+vezet: **Bársony** (az eredeti), **Színlap** (ugyanaz a színlap, nyomtatva —
+meleg krém és tinta), **Letisztult** (semleges, szürke) és **Éjszakai** (hűvös
+szürke sötét mód), valamint egy **Rendszer szerint** opció, ami az eszközt
+követi. A választás az eszközön marad, `AsyncStorage`-ban, nem a profilban: a
+téma annak a képernyőnek a tulajdonsága, amin olvasol, nem a tiéd.
+
+Csak a szín változik. A Bodoni Moda, az álarc ikon, a térköz-rács és a
+lekerekítések az app identitása, nem beállítás.
+
+Az érdekes rész az, hogy egy téma egyáltalán változni tud. Minden képernyő
+modulszintű `StyleSheet.create`-en belül olvassa a `colors`-t, ami egyszer, a
+betöltéskor értékelődik ki — renderkor semmi nem olvassa újra. A kézenfekvő
+megoldás mind a 37 blokk hookká írása lett volna, ami nagyon nagy változtatás.
+Kiderült, hogy fölösleges: a react-native-web elfogad CSS custom property-t
+színként, és változtatás nélkül átengedi:
+
+```js
+// react-native-web/dist/modules/isWebColor/index.js
+color === 'currentcolor' || color === 'inherit' || color.indexOf('var(') === 0
+```
+
+Vagyis a weben a `colors.bg` maga a `"var(--vc-bg)"` *string*, a generált
+atomi osztályok sosem változnak, és a témaváltás egyetlen `data-theme`
+attribútum beírása a `<html>`-re — nulla újrarenderelés, nulla React-oldali
+stílusszámítás. Az `app/+html.tsx` mondja meg, mire oldódnak fel ezek a
+property-k, és egy blokkoló, beágyazott szkripttel még az első kirajzolás
+előtt alkalmazza az elmentett témát, hogy aki témát választott, egy képkockára
+se lássa a rosszat. A **„Rendszer szerint" két `prefers-color-scheme` media
+query**, nem `matchMedia`-feliratkozás: nem kerül JavaScriptbe, és akkor is
+működik, ha a bundle be sem töltődik.
+
+Két következmény, amit érdemes tudni, mielőtt bárki új színt vesz fel:
+
+- **Minden témázott érték csupasz `var(...)` kell legyen.** Az `isWebColor`
+  csak a `var(`-ral kezdődő stringeket fogadja el; minden más a
+  `processColor`-hoz esik, null-lal tér vissza, és szó szerinti
+  `background-color:undefined` deklarációként kerül a stíluslapba, amit a
+  böngésző némán eldob. Így az `rgba(var(--vc-gold-rgb), 0.15)` és a
+  `color-mix()` nem elérhető, és minden alfa, amire egy témának szüksége van —
+  a jelvények árnyalatai, a fülsáv fénye, a kiemelt felső él — külön token.
+  Ezért 18 tokenes a paletta, nem 12.
+- **Az alfa a tokenbe kerül, a `shadowOpacity` pedig 1 marad.** Ha a szín egy
+  custom property, a react-native-web `createBoxShadowValue`-ja még a
+  `shadowOpacity` alkalmazása előtt kilép, és eldobja azt.
+
+Néhány szín szándékosan nem követi a témát, és mindegyik ott is leírja, miért:
+a modálisok sötétítése és az előadásfotókra fektetett kezelőelemek (`overlay` a
+`theme/tokens.ts`-ben), a `PosterPlaceholder` generált színvilágai, és a
+megosztókártya. A kártya azért van a bársony palettához szögezve, mert a canvas
+nem tud `var()`-t feloldani — az `addColorStop` kivételt dob rá, amitől az
+egész funkció a link-megosztásos tartalékra esne vissza —, és mert ami elhagyja
+az appot, az app képét kell vinnie, nem egy olvasó megjelenítési beállításáét.
+
+A natív oldalon nincs custom property és nincs témaválasztó: ott közvetlenül a
+bársony paletta megy, ezért marad az `app.json`-ban a
+`userInterfaceStyle: "dark"`. Az aszimmetria szándékos.
 
 ## Hogyan találsz meg egy előadást, és mikor játsszák
 

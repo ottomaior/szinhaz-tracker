@@ -1,5 +1,6 @@
 import { Pressable, Text, StyleSheet, View, ActivityIndicator } from "react-native";
 import { colors } from "@/theme/colors";
+import { overlay } from "@/theme/tokens";
 import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
 
@@ -26,7 +27,7 @@ export function Button({
   const fontsLoaded = useAppFonts();
   const isPrimary = variant === "primary";
   const isBlocked = disabled || loading;
-  const labelColor = isPrimary ? colors.bg : colors.text;
+  const labelColor = isPrimary ? colors.onAccent : colors.text;
   return (
     <Pressable
       onPress={onPress}
@@ -114,7 +115,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   iconBtnTranslucent: {
-    backgroundColor: "rgba(10,4,3,0.55)",
+    backgroundColor: overlay.onImageSoft,
   },
   iconBtnSolid: {
     borderWidth: 1,

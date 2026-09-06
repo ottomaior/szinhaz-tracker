@@ -6,8 +6,11 @@ import {
   MASK_STROKE_WIDTH,
   MASK_VIEWBOX,
 } from "@/components/icons/maskGeometry";
-import { colors } from "@/theme/colors";
+import { themes } from "@/theme/themes";
 import { fonts } from "@/theme/typography";
+
+/** Pinned, not the reader's chosen theme — see the note below. */
+const card = themes.velvetDark;
 
 /**
  * An evening, as an image worth posting.
@@ -26,6 +29,14 @@ import { fonts } from "@/theme/typography";
  *
  * The mask itself comes from `maskGeometry`, the same constants `MaskIcon`
  * draws — the version that leaves the app has to be the version inside it.
+ *
+ * The card is painted in the Velvet Curtain palette whatever theme the reader
+ * has chosen, for two reasons. The practical one: these are canvas fill and
+ * stroke styles, and on the web `colors` is a set of `var(--vc-…)` strings
+ * that canvas cannot resolve — `addColorStop` throws on one, which would take
+ * the whole card down to the link-sharing fallback without a visible error.
+ * The better one: this is the artefact that leaves the app, and it should
+ * look like the app rather than like one reader's display preference.
  *
  * Web only. Rendering a view to an image on native needs `react-native-view-shot`
  * or an equivalent, which is a native module and a rebuild; the deployed product
@@ -68,16 +79,16 @@ function drawMask(
   ctx.lineCap = "round";
 
   const body = new Path2D(MASK_BODY_PATH);
-  ctx.strokeStyle = filled ? colors.gold : colors.hairline;
+  ctx.strokeStyle = filled ? card.gold : card.hairline;
   if (filled) {
-    ctx.fillStyle = colors.gold;
+    ctx.fillStyle = card.gold;
     ctx.fill(body);
   }
   ctx.stroke(body);
 
   // The eyes and mouth are punched out in the app by drawing them in the
   // background tone. The card sits on that same tone, so the trick carries.
-  const punch = filled ? colors.bg : colors.hairline;
+  const punch = filled ? card.onAccent : card.hairline;
   ctx.fillStyle = punch;
   for (const eye of MASK_EYES) {
     ctx.beginPath();
@@ -148,8 +159,8 @@ export async function renderShareCard(input: ShareCardInput): Promise<Blob | und
 
   // Velvet, warmed towards the top where the poster sits.
   const bg = ctx.createLinearGradient(0, 0, 0, HEIGHT);
-  bg.addColorStop(0, colors.surface);
-  bg.addColorStop(1, colors.bg);
+  bg.addColorStop(0, card.surface);
+  bg.addColorStop(1, card.bg);
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
@@ -209,14 +220,14 @@ export async function renderShareCard(input: ShareCardInput): Promise<Blob | und
 
   // The title, in the app's own display face — available because this is canvas
   // text in the same document, not an isolated SVG.
-  ctx.fillStyle = colors.text;
+  ctx.fillStyle = card.text;
   ctx.font = `600 76px "${fonts.displaySemibold}", Georgia, serif`;
   titleLines.forEach((line, i) => {
     ctx.fillText(line, margin, titleTop + i * lineHeight);
   });
 
   if (subtitle) {
-    ctx.fillStyle = colors.textDim;
+    ctx.fillStyle = card.textDim;
     ctx.font = `400 34px "${fonts.body}", system-ui, sans-serif`;
     ctx.fillText(subtitle, margin, subtitleTop);
   }
@@ -230,7 +241,7 @@ export async function renderShareCard(input: ShareCardInput): Promise<Blob | und
 
   // The wordmark, bottom left, small. This is a card about an evening, not an
   // advertisement with an evening on it.
-  ctx.fillStyle = colors.gold;
+  ctx.fillStyle = card.gold;
   ctx.font = `600 30px "${fonts.bodySemibold}", system-ui, sans-serif`;
   ctx.fillText("Színház Tracker", margin, wordmarkTop);
 

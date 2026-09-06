@@ -612,6 +612,28 @@ export const strings = {
     edit: "Profil szerkesztése",
   },
 
+  settings: {
+    title: "Beállítások",
+    appearance: "Megjelenés",
+    /* Said once, above the list, rather than repeated on every row. */
+    appearanceHint: "A választás ezen az eszközön marad meg.",
+    themeSystem: "Rendszer szerint",
+    /* Appended to the system row so the third state is not a mystery. */
+    themeSystemNow: (name: string) => `jelenleg: ${name}`,
+    themes: {
+      velvetDark: "Bársony",
+      playbillLight: "Színlap",
+      minimalLight: "Letisztult",
+      modernDark: "Éjszakai",
+    },
+    themeBlurbs: {
+      velvetDark: "A ház stílusa: sötét bordó, arany kiemeléssel.",
+      playbillLight: "Ugyanaz a színlap, nyomtatva: meleg krém és tinta.",
+      minimalLight: "Világos és semleges, minden dísz nélkül.",
+      modernDark: "Hűvös, szürke sötét mód.",
+    },
+  },
+
   editProfile: {
     title: "Profil szerkesztése",
     photoLabel: "Profilkép",

@@ -144,7 +144,10 @@ function MonogramText({ children, size }: { children: string; size: number }) {
         fontFamily: displayFont(fontsLoaded),
         fontSize: size,
         lineHeight: Math.round(size * 1.18),
-        color: colors.gold,
+        // Deliberately off the palette: the colourway underneath is always
+        // dark artwork (see COLORWAYS below), so this has to stay light-side
+        // gold even on a theme where `colors.gold` is a dark bronze.
+        color: "#dbb155",
         opacity: 0.26,
       }}
     >

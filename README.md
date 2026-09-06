@@ -149,16 +149,18 @@ sync/                     standalone Node script (`npm run sync`; add
 
 ## Design system
 
-Colors and type live in `theme/`. The palette is the same "Velvet
+Colors and type live in `theme/`. The house palette is the same "Velvet
 Curtain" system from the design canvas: a near-black warm burgundy
 background, a warm gold accent, Bodoni Moda for display type, Sora for UI
 text, and a custom theatrical-mask icon used everywhere a star rating
-would normally go.
+would normally go. It is now one of four a reader can choose between — see
+"Four palettes" below — but it is still the one the app is designed around.
 
-`theme/colors.ts` documents which OKLCH value each hex constant was
-converted from, in case the palette needs adjusting later — React Native's
-style engine doesn't accept `oklch()`, so everything here is pre-converted
-sRGB hex.
+`theme/themes.ts` holds the palettes and documents which OKLCH value each
+hex constant was converted from, in case one needs adjusting later — React
+Native's style engine doesn't accept `oklch()`, so everything there is
+pre-converted sRGB hex. `theme/colors.ts` is the thin layer that picks which
+palette a given platform sees.
 
 Two rules are worth knowing before adding a screen:
 
@@ -173,15 +175,78 @@ Two rules are worth knowing before adding a screen:
   collapses into mush at caption size, where the hairlines fall below a pixel.
   `theme/type.ts` enforces this — every role below `heading` is Sora.
 
-`textFaint` was lifted from `#80716d` to `#8a7a75`. The original measured
-4.29:1 against the background, short of the 4.5:1 WCAG AA wants for body
-text, and it is the colour used for metadata at the smallest sizes in the app.
+`textFaint` has been lifted twice, both times for the same reason. `#80716d`
+measured 4.29:1 against the background; `#8a7a75` fixed that but was still
+4.37:1 on `surface` and 3.85:1 on `surface2` — and this is the colour that
+carries metadata at the app's smallest sizes *inside cards*, which is exactly
+where those two grounds are. It is now `#9a8a84`: 6.04 / 5.41 / 4.76, passing
+on all three.
 
 Layout is responsive rather than phone-only, because the web export ships.
 `hooks/useBreakpoint.ts` reads the viewport at runtime (react-native-web has
 no media queries inside `StyleSheet.create`), `components/ui/Screen` caps and
 centres content, and `components/ui/Grid` computes tile widths from its own
 measured width rather than percentages.
+
+## Four palettes, and how a theme reaches the screen
+
+The reader picks a theme in Settings, reached from the gear on their profile:
+**Bársony** (the original velvet), **Színlap** (the same playbill printed —
+warm cream and ink), **Letisztult** (neutral, achromatic) and **Éjszakai**
+(cool charcoal), plus a **Rendszer szerint** option that follows the device.
+The choice is kept on the device in `AsyncStorage`, not in the profile: a
+theme is a property of the screen you are reading on, not of who you are.
+
+Only colour varies. Bodoni Moda, the mask glyph, the spacing grid and the
+radii are the app's identity rather than a preference.
+
+The interesting part is how a theme can change at all. Every screen reads
+`colors` inside a module-level `StyleSheet.create`, which evaluates once at
+import — nothing re-reads it on render. Rewriting all 37 of those into hooks
+would have been the obvious fix and a very large one. It turned out to be
+unnecessary, because react-native-web accepts a CSS custom property as a
+colour and passes it through untouched:
+
+```js
+// react-native-web/dist/modules/isWebColor/index.js
+color === 'currentcolor' || color === 'inherit' || color.indexOf('var(') === 0
+```
+
+So on the web `colors.bg` is the *string* `"var(--vc-bg)"`, the generated
+atomic classes never change, and switching a theme is one `data-theme`
+attribute write on `<html>` — no re-render and no restyle pass in React at
+all. `app/+html.tsx` declares what those properties resolve to and applies
+the saved theme in a blocking inline script, before the first paint, so a
+reader who chose a theme never sees a frame of the wrong one. **"Follow the
+system" is two `prefers-color-scheme` media queries** rather than a
+`matchMedia` subscription: it costs no JavaScript, and it keeps working
+before hydration and if the bundle never loads.
+
+Two consequences worth knowing before adding a colour:
+
+- **Every themed value must be a bare `var(...)`.** `isWebColor` matches only
+  strings starting with `var(`; anything else falls through to `processColor`,
+  returns null, and is emitted as the literal declaration
+  `background-color:undefined`, which the browser drops silently. So
+  `rgba(var(--vc-gold-rgb), 0.15)` and `color-mix()` are unavailable, and
+  every alpha a theme needs — the badge tints, the tab bar's glow, the raised
+  top edge — is its own token. That is why the palette is 18 tokens, not 12.
+- **The alpha goes in the token, and `shadowOpacity` stays 1.** When the
+  colour is a custom property, react-native-web's `createBoxShadowValue`
+  short-circuits before applying `shadowOpacity` and drops it.
+
+Some colours deliberately do not follow the theme, and each says so where it
+lives: the modal scrims and the chrome laid over production photographs
+(`overlay` in `theme/tokens.ts`), `PosterPlaceholder`'s generated colourways,
+and the share card. The card is pinned to the velvet palette both because
+canvas cannot resolve a `var()` — `addColorStop` throws on one, which would
+take the whole feature down to the link-sharing fallback — and because the
+artefact that leaves the app should look like the app, not like one reader's
+display preference.
+
+Native has no custom properties and no picker: it reads the velvet palette
+directly, which is why `app.json` still pins `userInterfaceStyle: "dark"`.
+The asymmetry is deliberate.
 
 ## Finding a play, and finding out when
 

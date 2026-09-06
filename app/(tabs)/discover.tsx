@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
 import { inputFontSize } from "@/theme/type";
-import { gutter, minTouchTarget, radius, space } from "@/theme/tokens";
+import { gutter, minTouchTarget, overlay, radius, space } from "@/theme/tokens";
 import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
 import { useRecentSearches } from "@/hooks/useRecentSearches";
@@ -1053,7 +1053,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: space.sm,
     right: space.sm,
-    backgroundColor: "rgba(9,4,3,0.78)",
+    backgroundColor: overlay.onImage,
     borderRadius: radius.pill,
     paddingVertical: 3,
     paddingHorizontal: space.sm,
