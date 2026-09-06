@@ -273,6 +273,60 @@ curtain. The same bug was found and fixed in the database: the derived
 rendered "next performance 2026-09-06 17:00" directly beneath a correct
 "szept. 6., vasárnap · 19:00" (`0018_status_reason_timezone.sql`).
 
+### The grid stopped at forty, and never showed the archive
+
+Two problems that looked like one. Filtering Discover to Debrecen produced a
+grid of forty productions with nothing on screen saying whether forty was the
+answer or the limit — and Debrecen has 76 currently browsable productions and
+166 archived ones behind them.
+
+`TRENDING_LIMIT` was a **cap wearing the name of a page size**. It is a page now:
+`getTrending` takes a page number, returns the rows alongside an exact count,
+and the grid prints "40 / 242 előadás" with a control to fetch the rest. Saying
+how many there *are* rather than how many fit is most of the fix; a number that
+silently means "as many as we bother to load" is the same class of thing as a
+counter nothing increments.
+
+Paging needs a **stable sort**, which the old query did not have. Ordering by
+rating alone leaves hundreds of rows tied at 0.0 and Postgres is free to arrange
+ties differently per request, so a row on page one could reappear on page two
+while another was never returned at all. Every browse query now carries `id` as
+a tiebreaker. Checked by paging Debrecen to the end: 242 cards for 242 rows.
+
+The archive is the second half. The browse rails have always shown current work
+only, and that is right — 731 closed Budapest productions mixed into "what can I
+go and see" would bury the 232 that are on. But the archive is the *larger* half
+of this catalogue and exists precisely so old productions stay findable and
+loggable, so refusing to show it anywhere in Discover was the other half of the
+same mistake. There is now a scope control in the filter row — "Ami most megy" /
+"Az archívummal együtt" — and the heading changes with it, because a grid
+labelled "Népszerű" that is mostly productions which closed years ago describes
+the wrong list.
+
+The scope had to reach the **filter options too**, not just the grid. A city,
+venue or genre chip list built from current work only cannot reach half of what
+the widened grid holds — Debrecen has theatres with nothing currently on and
+archived productions between them. `applyBrowseScope` is one helper so the two
+cannot drift, and it moves `is_archived` and `status` together: a production the
+source files under its archive is archived, and one whose status decayed to
+`ended` because its last date passed is not, and neither belongs in "what is on".
+
+### The badge explained itself in English
+
+`plays.status_reason` is written by `recompute_play_status()` for whoever is
+reading the database — "next performance 2026-09-06 19:00 (4 known dates)" — and
+Play Detail rendered it raw, directly under the Hungarian line saying the same
+thing. It read as debug output left in by accident, because that is more or less
+what it was.
+
+All five of its shapes are English duplication: of the scheduling line, of the
+archive note, or of a premiere date. So the note is derived on the client from
+the same facts the reason encodes, in Hungarian, and returns nothing in the
+cases the screen has already covered. Two survive: a dormant production, where
+`schedulingLine` is silent and the badge would otherwise be the only thing
+saying anything, and an announced one, where the premiere date appears nowhere
+else and "when does it open" is the whole question.
+
 ## The diary knows what night it was
 
 The app existed to remember evenings spent in a theatre and could not record

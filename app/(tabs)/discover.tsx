@@ -152,6 +152,14 @@ export default function DiscoverScreen() {
   const [activeGenre, setActiveGenre] = useState<string>();
   const [searchSort, setSearchSort] = useState<SortKey>("relevance");
   const [browseSort, setBrowseSort] = useState<BrowseSort>("rating");
+  // Off by default: the rails answer "what can I go and see", and 731 closed
+  // Budapest productions mixed into that would bury the 232 that are on. It is
+  // a control rather than a constant because the archive is the larger half of
+  // this catalogue and is kept precisely so it stays findable.
+  const [includeArchived, setIncludeArchived] = useState(false);
+  const [trendingTotal, setTrendingTotal] = useState(0);
+  const [trendingPage, setTrendingPage] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [featuredLists, setFeaturedLists] = useState<ListSummary[]>([]);
   const [listCovers, setListCovers] = useState<Map<string, Play>>(new Map());
   const [friendsSeen, setFriendsSeen] = useState<{ play: Play; friends: number }[]>([]);
@@ -185,11 +193,15 @@ export default function DiscoverScreen() {
   const genre = activeGenre;
   const isSearching = query.trim().length > 0;
 
+  // Re-read when the scope changes, like the other two option lists: a chip
+  // list narrower than the grid it filters cannot reach half of what is on
+  // screen. Debrecen has theatres with nothing currently on and 166 archived
+  // productions between them.
   useEffect(() => {
-    getCities()
+    getCities(includeArchived)
       .then(setCities)
       .catch(() => setCities([]));
-  }, []);
+  }, [includeArchived]);
 
   /**
    * The editorial lists, fetched once and never refetched per filter.
@@ -284,7 +296,7 @@ export default function DiscoverScreen() {
   // theatres rather than all of them.
   useEffect(() => {
     let active = true;
-    getFilterVenues(city)
+    getFilterVenues(city, includeArchived)
       .then((next) => {
         if (!active) return;
         setVenues(next);
@@ -299,13 +311,13 @@ export default function DiscoverScreen() {
     return () => {
       active = false;
     };
-  }, [city]);
+  }, [city, includeArchived]);
 
   // Scoped to city and venue for the same reason those are scoped to each
   // other: a chip whose only outcome is an empty screen reads as broken.
   useEffect(() => {
     let active = true;
-    getFilterGenres({ venueType, city, venueId })
+    getFilterGenres({ venueType, city, venueId, includeArchived })
       .then((next) => {
         if (!active) return;
         setGenres(next);
@@ -317,30 +329,71 @@ export default function DiscoverScreen() {
     return () => {
       active = false;
     };
-  }, [venueType, city, venueId]);
+  }, [venueType, city, venueId, includeArchived]);
 
   const loadBrowse = useCallback(async () => {
     setBrowseFailed(false);
     setBrowseLoading(true);
     try {
-      const [nextNowPlaying, nextPremieres, nextTrending] = await Promise.all([
+      const scoped = { venueType, city, venueId, genre, includeArchived };
+      const [nextNowPlaying, nextPremieres, firstPage] = await Promise.all([
+        // These two stay current-only whatever the scope says: an archived
+        // production has no future date to be "on soon" and no premiere ahead
+        // of it. Passing the flag would widen them to nothing.
         getNowPlaying({ venueType, city, venueId, genre }),
         getPremieres({ venueType, city, venueId, genre }),
-        getTrending({ venueType, city, venueId, genre }, browseSort),
+        getTrending(scoped, browseSort, 0),
       ]);
       setNowPlaying(nextNowPlaying);
       setPremieres(nextPremieres);
-      setTrending(nextTrending);
+      setTrending(firstPage.plays);
+      setTrendingTotal(firstPage.total);
+      setTrendingPage(0);
     } catch {
       // Previously both promises rejected unhandled and the screen stayed
       // blank with no indication that anything had gone wrong.
       setBrowseFailed(true);
       setPremieres([]);
       setTrending([]);
+      setTrendingTotal(0);
     } finally {
       setBrowseLoading(false);
     }
-  }, [venueType, city, venueId, genre, browseSort]);
+  }, [venueType, city, venueId, genre, browseSort, includeArchived]);
+
+  /**
+   * The next page of the grid, appended.
+   *
+   * An explicit control rather than infinite scroll: the grid is the last
+   * section of a screen that also carries three rails, and a list that grows
+   * as you reach the end of it makes the bottom of the page unreachable —
+   * including the empty state and the "add a play" way out that live below it.
+   */
+  const loadMoreTrending = useCallback(async () => {
+    if (loadingMore) return;
+    const nextPage = trendingPage + 1;
+    setLoadingMore(true);
+    try {
+      const { plays } = await getTrending(
+        { venueType, city, venueId, genre, includeArchived },
+        browseSort,
+        nextPage
+      );
+      // Appended by id rather than concatenated blindly: a filter change that
+      // lands while a page is in flight would otherwise splice two different
+      // result sets together.
+      setTrending((current) => {
+        const seen = new Set(current.map((p) => p.id));
+        return [...current, ...plays.filter((p) => !seen.has(p.id))];
+      });
+      setTrendingPage(nextPage);
+    } catch {
+      // Silent: the rows already on screen are still correct, and an error
+      // banner for a page that did not arrive is louder than the problem.
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore, trendingPage, venueType, city, venueId, genre, includeArchived, browseSort]);
 
   useEffect(() => {
     // Skipped in program mode: three rail queries whose results nothing
@@ -517,6 +570,25 @@ export default function DiscoverScreen() {
                 value={activeVenueId}
                 options={venueOptions}
                 onChange={setActiveVenueId}
+              />
+            )}
+
+            {/* What the grid is a list *of*. Not a filter — it widens rather
+                than narrows — but it belongs in this row because it is the
+                same kind of decision, and because putting it anywhere else
+                would hide the answer to "where is everything else". Browse
+                only: search has covered the archive from the start. */}
+            {mode === "browse" && !isSearching && (
+              <SelectChip
+                name={strings.discover.scopeLabel}
+                title={strings.discover.scopeLabel}
+                value={includeArchived ? "all" : undefined}
+                defaultValue={undefined}
+                options={[
+                  { value: undefined, label: strings.discover.scopeCurrent },
+                  { value: "all", label: strings.discover.scopeAll },
+                ]}
+                onChange={(next) => setIncludeArchived(next === "all")}
               />
             )}
 
@@ -701,21 +773,47 @@ export default function DiscoverScreen() {
 
             {!browseLoading && trending.length > 0 && (
               <View style={{ gap: space.md, paddingHorizontal: gutter }}>
-                <Text variant="subheading">
-                  {/* The heading follows the sort. "Népszerű" is a claim about
-                      ratings; leaving it up while the grid is ordered by
-                      premiere date would describe the wrong list. */}
-                  {browseSort !== "rating"
-                    ? strings.discover.allPlaysTitle
-                    : city
-                      ? strings.discover.trendingTitleInCity(city)
-                      : strings.discover.trendingTitle}
-                </Text>
+                <View style={{ gap: space.xs }}>
+                  <Text variant="subheading">
+                    {/* The heading follows both the sort and the scope. "Népszerű"
+                        is a claim about ratings; leaving it up while the grid is
+                        ordered by premiere date would describe the wrong list,
+                        and so would leaving it up over a list that is mostly
+                        productions which closed years ago. */}
+                    {includeArchived
+                      ? city
+                        ? strings.discover.allIncludingArchiveInCity(city)
+                        : strings.discover.allIncludingArchive
+                      : browseSort !== "rating"
+                        ? strings.discover.allPlaysTitle
+                        : city
+                          ? strings.discover.trendingTitleInCity(city)
+                          : strings.discover.trendingTitle}
+                  </Text>
+                  {/* How many there are, not how many fit. The grid used to stop
+                      at forty with nothing saying whether that was the answer
+                      or the limit — which for Debrecen meant 40 of 242. */}
+                  <Text variant="caption" tone="faint">
+                    {strings.discover.showingCount(trending.length, trendingTotal)}
+                  </Text>
+                </View>
                 <Grid>
                   {trending.map((p) => (
                     <TrendingCard key={p.id} play={p} onPress={() => router.push(`/play/${p.id}`)} />
                   ))}
                 </Grid>
+                {trending.length < trendingTotal && (
+                  <Pressable
+                    onPress={loadMoreTrending}
+                    disabled={loadingMore}
+                    accessibilityRole="button"
+                    style={[styles.loadMore, { opacity: loadingMore ? 0.55 : 1 }]}
+                  >
+                    <Text variant="label" tone="accent">
+                      {loadingMore ? strings.discover.loadingMore : strings.discover.loadMore}
+                    </Text>
+                  </Pressable>
+                )}
               </View>
             )}
 
@@ -838,6 +936,15 @@ const styles = StyleSheet.create({
   railCard: { width: 132, gap: space.sm },
   rowBetween: { flexDirection: "row", alignItems: "baseline", justifyContent: "space-between" },
   noResults: { alignItems: "center", gap: space.md, paddingVertical: space["3xl"] },
+  loadMore: {
+    alignSelf: "center",
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    borderRadius: 999,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    marginTop: space.sm,
+  },
   ratingBadge: {
     position: "absolute",
     top: space.sm,

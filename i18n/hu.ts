@@ -91,6 +91,20 @@ export const strings = {
     // Debrecen*ben*), so this uses a suffix-free construction that is correct
     // for any city the venue table happens to contain.
     trendingTitleInCity: (city: string) => `Népszerű itt: ${city}`,
+
+    /* The browse scope. Not a filter — it widens the list rather than narrowing
+       it — but it lives in the same row because it is the same kind of
+       decision about what the grid is a list of. */
+    scopeLabel: "Terjedelem",
+    scopeCurrent: "Ami most megy",
+    scopeAll: "Az archívummal együtt",
+    allIncludingArchive: "Minden előadás, archívummal",
+    allIncludingArchiveInCity: (city: string) => `Minden előadás itt: ${city}`,
+    /* Says how many there are, not how many fit on screen. */
+    showingCount: (shown: number, total: number) =>
+      shown >= total ? `${total} előadás` : `${shown} / ${total} előadás`,
+    loadMore: "Továbbiak betöltése",
+    loadingMore: "Betöltés…",
     searchResultsTitle: (n: number) => `${n} találat`,
     /** The grid heading once it is no longer ordered by rating. */
     allPlaysTitle: "Előadások",
@@ -224,6 +238,11 @@ export const strings = {
     watchlistError: "Nem sikerült frissíteni a kívánságlistát.",
     archivedBadge: "Archív",
     archivedNote: "Ez a produkció már nincs műsoron, de naplózhatod, ha láttad.",
+    /* Shown only where nothing else on the screen answers the question — see
+       `statusNote` in app/play/[id].tsx for why the raw `status_reason` is not
+       rendered. */
+    dormantNote: "A színház repertoárján szerepel, de nincs meghirdetett időpont.",
+    premiereNote: (date: string) => `Bemutató: ${date}`,
 
     showtimes: "Időpontok",
     showtimesCount: (n: number) => (n === 1 ? "1 előadás" : `${n} előadás`),

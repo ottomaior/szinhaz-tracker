@@ -283,10 +283,51 @@ export async function getFeed(scope: FeedScope = "everyone"): Promise<FeedItem[]
 
 const PLAY_SELECT_WITH_VENUE_FILTERS: string = `*, play_cast(name, role, sort_order), venues!inner(type, city)`;
 
-/** Discover renders these as a grid, so an unbounded fetch was pure waste. */
-const TRENDING_LIMIT = 40;
+/**
+ * One page of the browse grid.
+ *
+ * This used to be a hard cap rather than a page size, which is a different
+ * thing wearing the same number: Debrecen has 76 currently browsable
+ * productions and 166 archived ones, and the grid stopped at 40 with nothing on
+ * screen admitting there was more. It is a page now — see `getTrending`.
+ */
+export const TRENDING_PAGE_SIZE = 40;
 
-export type VenueFilters = { venueType?: VenueType; city?: string; venueId?: string; genre?: string };
+/** How far the "on soon" rail scrolls sideways before it stops. */
+const NOW_PLAYING_LIMIT = 40;
+
+export type VenueFilters = {
+  venueType?: VenueType;
+  city?: string;
+  venueId?: string;
+  genre?: string;
+  /**
+   * Widen the browse rails to the theatres' own archives.
+   *
+   * Off by default, and deliberately a choice rather than the default: the
+   * rails answer "what can I go and see", and 731 closed Budapest productions
+   * mixed into that answer would bury the 232 that are actually on. But the
+   * archive is the larger half of this catalogue and is kept precisely so it
+   * stays findable and loggable, so refusing to show it at all was the other
+   * half of the same mistake.
+   */
+  includeArchived?: boolean;
+};
+
+/**
+ * Narrows a browse query to current work, unless the caller asked for the
+ * archive too.
+ *
+ * `is_archived` and `status` are two different facts and both have to move
+ * together: a production the source files under its archive is archived, and
+ * one whose status decayed to `ended` because its last date passed is not, but
+ * neither belongs in "what is on". Widening one without the other produced a
+ * grid that claimed to include the archive and still hid most of it.
+ */
+function applyBrowseScope(query: any, filters?: VenueFilters) {
+  if (filters?.includeArchived) return query;
+  return query.eq("is_archived", false).in("status", BROWSABLE_STATUSES);
+}
 
 function applyVenueFilters(query: any, filters?: VenueFilters) {
   if (filters?.venueType) query = query.eq("venues.type", filters.venueType);
@@ -351,7 +392,11 @@ export async function getNowPlaying(filters?: VenueFilters): Promise<Play[]> {
     .eq("status", "running")
     .not("next_perf_at", "is", null)
     .order("next_perf_at", { ascending: true })
-    .limit(TRENDING_LIMIT);
+    // A real cap rather than a page: this is a horizontal rail of what is on
+    // soonest, and nobody scrolls forty cards sideways looking for the
+    // forty-first. It also stays current-only whatever the browse scope says —
+    // an archived production has no future date to be soonest.
+    .limit(NOW_PLAYING_LIMIT);
   query = applyVenueFilters(query, filters);
   const { data, error } = await query;
   if (error) throw error;
@@ -371,23 +416,39 @@ export async function getNowPlaying(filters?: VenueFilters): Promise<Play[]> {
  * sorts nulls first on an ascending order by default, which would open the
  * grid with every production we know least about.
  */
-export async function getTrending(filters?: VenueFilters, sort: BrowseSort = "rating"): Promise<Play[]> {
+export async function getTrending(
+  filters?: VenueFilters,
+  sort: BrowseSort = "rating",
+  page = 0
+): Promise<{ plays: Play[]; total: number }> {
   const needsJoin = !!(filters?.venueType || filters?.city);
   const select: string = needsJoin ? PLAY_SELECT_WITH_VENUE_FILTERS : PLAY_SELECT;
   const order = BROWSE_ORDER[sort] ?? BROWSE_ORDER.rating;
-  // Browse rails show only current work — the catalog also carries the
-  // theaters' own archives so old productions stay loggable and searchable.
+  const from = page * TRENDING_PAGE_SIZE;
+
+  // `count: "exact"` alongside the page, so the screen can say how many there
+  // are rather than stopping at forty and leaving the reader to guess whether
+  // that is the answer or the limit. It is one query either way — PostgREST
+  // returns the count in the Content-Range header.
   let query = supabase
     .from("plays")
-    .select(select)
-    .eq("is_archived", false)
-    .in("status", BROWSABLE_STATUSES)
+    .select(select, { count: "exact" })
     .order(order.column, { ascending: order.ascending, nullsFirst: false })
-    .limit(TRENDING_LIMIT);
+    // A stable tiebreaker, and it matters far more now that there are pages:
+    // ordering by rating alone leaves hundreds of rows tied at 0, and Postgres
+    // is free to return them in a different arrangement per request — so a row
+    // on page one could reappear on page two while another was never returned
+    // at all.
+    .order("id", { ascending: true })
+    .range(from, from + TRENDING_PAGE_SIZE - 1);
+  query = applyBrowseScope(query, filters);
   query = applyVenueFilters(query, filters);
-  const { data, error } = await query;
+  const { data, error, count } = await query;
   if (error) throw error;
-  return ((data ?? []) as unknown as PlayRow[]).map((r) => toPlay(r));
+  return {
+    plays: ((data ?? []) as unknown as PlayRow[]).map((r) => toPlay(r)),
+    total: count ?? 0,
+  };
 }
 
 export async function getPremieres(filters?: VenueFilters): Promise<Play[]> {
@@ -416,15 +477,15 @@ export async function getPremieres(filters?: VenueFilters): Promise<Play[]> {
  * venue-type chips were hidden for: a filter whose only outcome is an empty
  * screen, which reads as broken rather than as "nothing here yet".
  *
- * Archived-only venues are excluded for the same reason: the browse rails show
- * current work, so a chip that empties them is not a filter worth offering.
+ * Archived-only venues are excluded for the same reason — unless the browse
+ * scope has been widened to the archive, in which case a theatre with nothing
+ * currently on is exactly what the reader is looking for. The options have to
+ * follow the scope: a chip list narrower than the grid it filters is how you
+ * get a filter that cannot reach half of what is on screen.
  */
-export async function getFilterVenues(city?: string): Promise<Venue[]> {
-  let query = supabase
-    .from("plays")
-    .select("venue_id, venues!inner (*)")
-    .eq("is_archived", false)
-    .in("status", BROWSABLE_STATUSES);
+export async function getFilterVenues(city?: string, includeArchived = false): Promise<Venue[]> {
+  let query = supabase.from("plays").select("venue_id, venues!inner (*)");
+  query = applyBrowseScope(query, { includeArchived });
   if (city) query = query.eq("venues.city", city);
   const { data, error } = await query;
   if (error) throw error;
@@ -438,16 +499,19 @@ export async function getFilterVenues(city?: string): Promise<Venue[]> {
 }
 
 /** Cities that have something to browse — same reasoning as `getFilterVenues`. */
-export async function getCities(): Promise<string[]> {
-  const { data, error } = await supabase
-    .from("plays")
-    .select("venues!inner (city)")
-    .eq("is_archived", false)
-    .in("status", BROWSABLE_STATUSES);
+export async function getCities(includeArchived = false): Promise<string[]> {
+  const { data, error } = await applyBrowseScope(
+    supabase.from("plays").select("venues!inner (city)"),
+    { includeArchived }
+  );
   if (error) throw error;
-  const cities = (data ?? [])
+  // Annotated on the way out rather than inferred: `applyBrowseScope` returns
+  // the loosely-typed builder these helpers all share, so the row shape has to
+  // be restated here instead of being carried through it.
+  const rows = (data ?? []) as { venues: { city?: string } | { city?: string }[] | null }[];
+  const cities = rows
     .map((r) => (Array.isArray(r.venues) ? r.venues[0] : r.venues))
-    .map((v) => (v as { city?: string } | null)?.city)
+    .map((v) => v?.city)
     .filter((c): c is string => !!c);
   return Array.from(new Set(cities)).sort((a, b) => a.localeCompare(b, "hu"));
 }
@@ -637,12 +701,8 @@ export async function getFilterGenres(filters?: VenueFilters): Promise<string[]>
   // level, and a ternary between two of them defeats the parser rather than
   // widening it.
   const select: string = needsJoin ? "genre_normalized, venues!inner(type, city)" : "genre_normalized";
-  let query = supabase
-    .from("plays")
-    .select(select)
-    .eq("is_archived", false)
-    .in("status", BROWSABLE_STATUSES)
-    .not("genre_normalized", "is", null);
+  let query = supabase.from("plays").select(select).not("genre_normalized", "is", null);
+  query = applyBrowseScope(query, filters);
   query = applyVenueFilters(query, filters);
   const { data, error } = await query;
   if (error) throw error;

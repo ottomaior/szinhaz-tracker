@@ -289,6 +289,64 @@ szöveg zóna nélkül formázta az időbélyegeit, így az Előadás részletei
 "next performance 2026-09-06 17:00" sort közvetlenül a helyes "szept. 6.,
 vasárnap · 19:00" alá írta ki (`0018_status_reason_timezone.sql`).
 
+### A rács negyvennél megállt, az archívumot pedig sosem mutatta
+
+Két probléma, ami egynek látszott. A Felfedezést Debrecenre szűrve negyven
+produkcióból álló rács jött ki, és semmi nem mondta meg, hogy a negyven a válasz
+vagy a korlát — Debrecenben pedig 76 jelenleg böngészhető produkció van, és
+mögöttük további 166 archivált.
+
+A `TRENDING_LIMIT` **korlát volt, ami lapméret nevét viselte**. Most már lap: a
+`getTrending` lapszámot vesz át, a sorokkal együtt pontos darabszámot ad vissza,
+a rács pedig kiírja, hogy „40 / 242 előadás", és van gombja a többihez. A javítás
+nagyobb része az, hogy megmondjuk, *hányan vannak*, nem azt, hogy hány fér ki; egy
+szám, ami csendben azt jelenti, „amennyit betölteni akartunk", ugyanabba az
+osztályba tartozik, mint egy számláló, amit semmi nem növel.
+
+A lapozáshoz **stabil rendezés** kell, ami a korábbi lekérdezésben nem volt. Az
+értékelés szerinti rendezés mellett több száz sor holtversenyben áll 0.0-n, a
+Postgres pedig kérésenként másképp rendezheti a holtversenyt — így egy sor az
+első lapról megjelenhetett volna a másodikon is, miközben egy másik sosem jött
+volna vissza. Minden böngésző lekérdezés `id`-t visz második rendezési
+kulcsként. Ellenőrizve: Debrecent végiglapozva 242 kártya jött ki 242 sorra.
+
+Az archívum a másik fele. A böngésző sávok mindig is csak az aktuális munkát
+mutatták, és ez így helyes — 731 lezárt budapesti produkció belekeverve abba,
+hogy „mit nézhetek meg", maga alá temetné azt a 232-t, ami tényleg megy. Csakhogy
+az archívum ennek a katalógusnak a *nagyobbik* fele, és épp azért van, hogy a
+régi produkciók megtalálhatók és naplózhatók maradjanak — vagyis az, hogy a
+Felfedezésen sehol nem volt elérhető, ugyanannak a hibának a másik fele volt.
+Mostantól van egy terjedelem-vezérlő a szűrősorban — „Ami most megy" / „Az
+archívummal együtt" —, és a cím is változik vele, mert egy „Népszerű" feliratú
+rács, ami többségében évekkel ezelőtt lezárt produkciókat tartalmaz, rossz
+listát ír le.
+
+A terjedelemnek **a szűrőopciókig is el kellett érnie**, nem csak a rácsig. Egy
+város-, színház- vagy műfajlista, ami csak az aktuális munkából épül, nem éri el
+annak felét sem, amit a kiszélesített rács tartalmaz — Debrecenben vannak
+színházak, amiknek most semmi nem megy, és archivált produkciók vannak mögöttük.
+Az `applyBrowseScope` egyetlen segédfüggvény, hogy a kettő ne csússzon el, és
+együtt mozgatja az `is_archived`-et meg a `status`-t: az a produkció, amit a
+forrás az archívumába sorol, archivált, az pedig, aminek a státusza azért esett
+`ended`-re, mert lejárt az utolsó dátuma, nem az — és egyik sem tartozik abba,
+hogy „mi megy most".
+
+### A jelvény angolul magyarázta magát
+
+A `plays.status_reason`-t a `recompute_play_status()` írja annak, aki az
+adatbázist olvassa — „next performance 2026-09-06 19:00 (4 known dates)" —, az
+előadás adatlapja pedig nyersen jelenítette meg, közvetlenül a magyar sor alatt,
+ami ugyanazt mondta. Úgy hatott, mint véletlenül bent felejtett hibakeresési
+kimenet, mert nagyjából az is volt.
+
+Mind az öt alakja angol ismétlés: vagy az időpontsoré, vagy az archívum-jegyzeté,
+vagy egy bemutatódátumé. Ezért a jegyzetet a kliens vezeti le ugyanazokból a
+tényekből, magyarul, és semmit nem ad vissza azokban az esetekben, amiket a
+képernyő már lefedett. Kettő marad: a szünetelő produkció, ahol a
+`schedulingLine` néma, és a jelvény lenne az egyetlen, ami mond valamit, illetve
+a bemutató előtti, ahol a bemutató dátuma sehol máshol nem szerepel, pedig a
+„mikor lesz" az egész kérdés.
+
 ## A napló már tudja, melyik este volt
 
 Az app azért létezett, hogy megjegyezze a színházban töltött estéket, és éppen

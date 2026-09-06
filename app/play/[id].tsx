@@ -293,13 +293,24 @@ export default function PlayDetailScreen() {
               </Text>
             </View>
 
-            {/* recompute_play_status() writes a plain-language sentence saying
-                exactly why a production reads as it does ("no future dates;
-                last performance 2025-06-14"). Nothing displayed it, which left
-                the badge as an assertion the reader had to take on trust. */}
-            {!!play.statusReason && (
+            {/* Why the badge says what it says — in Hungarian, and only when it
+                is not already said above.
+
+                `plays.status_reason` used to be rendered raw. It is written by
+                `recompute_play_status()` for whoever is reading the database,
+                so it is English and machine-shaped: "next performance
+                2026-09-06 19:00 (4 known dates)" appeared directly under the
+                Hungarian line saying the same thing, which read as debug output
+                left in by accident. Every one of its five shapes is either
+                English duplication of the scheduling line, of the premiere
+                date, or of the archive note.
+
+                So the note is derived here from the same facts the reason
+                encodes, and returns nothing in the cases the screen has already
+                covered. */}
+            {!!statusNote(play) && (
               <Text variant="caption" tone="faint">
-                {play.statusReason}
+                {statusNote(play)}
               </Text>
             )}
 
@@ -534,6 +545,38 @@ function schedulingLine(play: Play): string {
     return strings.status.lastPerformance + ": " + formatLongDate(play.lastPerformanceAt);
   }
   return play.status === "running" || play.status === "announced" ? strings.status.noUpcoming : "";
+}
+
+/**
+ * The sentence under the badge, when there is one worth adding.
+ *
+ * Derived from the play rather than from `plays.status_reason`, which is
+ * written in English for whoever is reading the database and duplicates what
+ * the line above already says. Each branch answers a question the rest of the
+ * block leaves open, and every other case returns nothing rather than repeating
+ * itself in a fainter colour.
+ */
+function statusNote(play: Play): string {
+  // The archive note below already says this, at length.
+  if (play.isArchived) return "";
+
+  switch (play.status) {
+    case "dormant":
+      // The one case with nothing else on screen: `schedulingLine` is silent
+      // for a dormant production with no dates at all, so the badge would be
+      // the only thing saying anything.
+      return strings.playDetail.dormantNote;
+    case "announced":
+      // The premiere date appears nowhere else on this screen, and "when does
+      // it open" is the whole question a pre-premiere listing raises.
+      return play.premiereDate
+        ? strings.playDetail.premiereNote(formatLongDate(`${play.premiereDate}T12:00:00Z`))
+        : "";
+    // `running` and `ended` are both fully covered by the scheduling line above
+    // — next performance, or last one.
+    default:
+      return "";
+  }
 }
 
 /** Cast avatars were empty circles; initials at least identify the performer. */
