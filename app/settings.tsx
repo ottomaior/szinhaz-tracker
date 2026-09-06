@@ -1,13 +1,24 @@
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
-import { Link, type Href } from "expo-router";
+import { useState } from "react";
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { Link, useRouter, type Href } from "expo-router";
 import { colors } from "@/theme/colors";
+import { inputFontSize } from "@/theme/type";
+import { bodyFont } from "@/theme/typography";
+import { useAppFonts } from "@/hooks/useAppFonts";
 import { gutter, radius, space } from "@/theme/tokens";
 import { themes, THEME_ORDER, type ThemeId } from "@/theme/themes";
 import { CheckIcon, ChevronRightIcon } from "@/components/icons/Icons";
+import { Button } from "@/components/ui/Button";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
+import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import {
+  deleteAccount,
+  downloadMyData,
+  isDataExportSupported,
+} from "@/services/accountService";
 import { strings } from "@/i18n/hu";
 
 /**
@@ -21,6 +32,7 @@ import { strings } from "@/i18n/hu";
  * they want to know what they agreed to.
  */
 export default function SettingsScreen() {
+  const { session } = useAuth();
   const { preference, resolved, hydrated, setPreference } = useTheme();
 
   return (
@@ -79,6 +91,10 @@ export default function SettingsScreen() {
               blurb={strings.settings.legalImprintHint}
             />
           </View>
+
+          {/* Nothing to export and nothing to delete without an account, so the
+              whole section is absent rather than present-and-disabled. */}
+          {session ? <AccountSection /> : null}
         </ScrollView>
       </Screen>
     </View>
@@ -173,6 +189,149 @@ function LinkRow({
   );
 }
 
+/**
+ * The two things you can do to the account itself: take it with you, or end it.
+ *
+ * Both are GDPR obligations the app had no answer for — Art. 20 and Art. 17 —
+ * and both are required by the app stores later. They sit last, below the
+ * preferences, because that is where a destructive control belongs and because
+ * neither is something anybody opens Settings to do.
+ */
+function AccountSection() {
+  const router = useRouter();
+  const fontsLoaded = useAppFonts();
+
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string>();
+
+  const [confirming, setConfirming] = useState(false);
+  const [typed, setTyped] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string>();
+
+  const canExport = isDataExportSupported();
+  const confirmWord = strings.settings.deleteConfirmWord;
+  // Trimmed but not case-folded: the word is the deliberate part.
+  const confirmed = typed.trim() === confirmWord;
+
+  async function handleExport() {
+    if (exporting) return;
+    setExportError(undefined);
+    setExporting(true);
+    try {
+      await downloadMyData();
+    } catch {
+      setExportError(strings.settings.exportError);
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (deleting || !confirmed) return;
+    setDeleteError(undefined);
+    setDeleting(true);
+    try {
+      await deleteAccount();
+      // `replace`, not `push`: there is no account behind this screen any more,
+      // and leaving it on the stack means the back gesture lands on a profile
+      // that will fail to load.
+      router.replace("/(tabs)");
+    } catch {
+      setDeleteError(strings.settings.deleteError);
+      setDeleting(false);
+    }
+  }
+
+  return (
+    <>
+      <View style={{ gap: space.xs }}>
+        <Text variant="heading">{strings.settings.account}</Text>
+      </View>
+
+      <View style={{ gap: space.md }}>
+        <View style={{ gap: 2 }}>
+          <Text variant="subheading">{strings.settings.exportTitle}</Text>
+          <Text variant="caption" tone="faint">
+            {canExport ? strings.settings.exportHint : strings.settings.exportUnsupported}
+          </Text>
+        </View>
+        {canExport ? (
+          <Button
+            label={exporting ? strings.settings.exportWorking : strings.settings.exportButton}
+            variant="outline"
+            onPress={handleExport}
+            loading={exporting}
+            disabled={exporting}
+          />
+        ) : null}
+        {!!exportError && (
+          <Text accessibilityRole="alert" variant="bodySmall" tone="accent">
+            {exportError}
+          </Text>
+        )}
+      </View>
+
+      <View style={styles.danger}>
+        <View style={{ gap: space.xs }}>
+          <Text variant="subheading">{strings.settings.deleteTitle}</Text>
+          <Text variant="bodySmall" tone="dim">
+            {strings.settings.deleteHint}
+          </Text>
+        </View>
+
+        {confirming ? (
+          <>
+            <Text variant="bodySmall" tone="dim">
+              {strings.settings.deleteConfirmPrompt(confirmWord)}
+            </Text>
+            <TextInput
+              value={typed}
+              onChangeText={setTyped}
+              placeholder={confirmWord}
+              placeholderTextColor={colors.textFaint}
+              accessibilityLabel={strings.settings.deleteConfirmPrompt(confirmWord)}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              style={[styles.input, { fontFamily: bodyFont(fontsLoaded) }]}
+            />
+            {!!deleteError && (
+              <Text accessibilityRole="alert" variant="bodySmall" tone="accent">
+                {deleteError}
+              </Text>
+            )}
+            <View style={{ flexDirection: "row", gap: space.sm }}>
+              <Button
+                label={strings.common.cancel}
+                variant="outline"
+                style={{ flex: 1 }}
+                onPress={() => {
+                  setConfirming(false);
+                  setTyped("");
+                  setDeleteError(undefined);
+                }}
+              />
+              <Button
+                label={deleting ? strings.settings.deleteWorking : strings.settings.deleteConfirm}
+                style={{ flex: 1 }}
+                onPress={handleDelete}
+                loading={deleting}
+                disabled={!confirmed || deleting}
+              />
+            </View>
+          </>
+        ) : (
+          <Button
+            label={strings.settings.deleteStart}
+            variant="outline"
+            onPress={() => setConfirming(true)}
+          />
+        )}
+      </View>
+    </>
+  );
+}
+
 const styles = StyleSheet.create({
   content: { paddingHorizontal: gutter, paddingTop: space.xl, paddingBottom: space["4xl"], gap: space.lg },
   row: {
@@ -185,6 +344,29 @@ const styles = StyleSheet.create({
     borderColor: colors.hairlineSoft,
   },
   rowSelected: { borderColor: colors.gold, backgroundColor: colors.surface },
+  /**
+   * The one irreversible control in the app, boxed off from the preferences
+   * above it. `gold` rather than a red that does not exist in any of the four
+   * palettes: the accent is what this design system uses to mean "look here",
+   * and inventing a fifth colour for one border would read as a different app.
+   */
+  danger: {
+    gap: space.md,
+    padding: space.lg,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.gold,
+    backgroundColor: colors.surface,
+  },
+  input: {
+    backgroundColor: colors.bg,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    borderRadius: radius.md,
+    padding: space.md,
+    fontSize: inputFontSize,
+    color: colors.text,
+  },
   /**
    * A miniature of the theme rather than a row of colour chips: four bare
    * swatches say which colours are in a palette, but not what it feels like to

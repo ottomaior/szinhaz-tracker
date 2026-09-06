@@ -641,6 +641,37 @@ export const strings = {
     legalTermsHint: "Mit vállalunk a szolgáltatással, és mit kérünk cserébe.",
     legalImprint: "Impresszum",
     legalImprintHint: "Ki üzemelteti az alkalmazást, és hol éred el.",
+
+    /* The account's own two controls. Only shown to somebody signed in —
+       there is nothing to export or delete otherwise — which is why they sit
+       here rather than beside the theme rows. */
+    account: "A fiókod",
+    exportTitle: "Adataim letöltése",
+    exportHint:
+      "A profilod, a naplód, az értékeléseid, a listáid és a követéseid egyetlen JSON-fájlban.",
+    exportButton: "Letöltés",
+    exportWorking: "Összeállítás…",
+    /* Said rather than hidden, the same way the share card says it: a control
+       that quietly does nothing teaches people the app is a mockup. */
+    exportUnsupported: "Az adatok letöltése egyelőre csak böngészőben működik.",
+    exportError: "Nem sikerült összeállítani az adataidat. Próbáld újra.",
+
+    deleteTitle: "Fiók törlése",
+    /* Names what goes and what stays. A production somebody added by hand
+       survives them (plays.created_by is `on delete set null`), and finding
+       that out afterwards would feel like the deletion had not worked. */
+    deleteHint:
+      "Véglegesen törli a profilodat, a naplódat, az értékeléseidet, a listáidat, a követéseidet és a feltöltött képeidet. Az általad felvett előadások a katalógusban maradnak, de többé nem kapcsolódnak hozzád. Ez nem vonható vissza.",
+    deleteStart: "Fiók törlése",
+    /* Typing a word rather than pressing a second button: this is the one
+       action in the app that nothing can undo, and a two-tap confirmation is
+       the same gesture as the tap that opened it. */
+    deleteConfirmWord: "TÖRLÉS",
+    deleteConfirmPrompt: (word: string) =>
+      `Írd be, hogy „${word}”, ha biztos vagy benne.`,
+    deleteConfirm: "Végleges törlés",
+    deleteWorking: "Törlés…",
+    deleteError: "Nem sikerült törölni a fiókot. Próbáld újra, vagy írj nekünk.",
   },
 
   editProfile: {

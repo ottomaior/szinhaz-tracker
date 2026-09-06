@@ -6,5 +6,10 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"]
+  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
+  // Edge Functions run on Deno, not on the app runtime: they import over the
+  // network, use `Deno.*` globals, and know nothing about the `@/` alias.
+  // Typechecking them with the app compiler reports failures of the setup
+  // rather than of the code. They are checked by `supabase functions deploy`.
+  "exclude": ["supabase/functions"]
 }
