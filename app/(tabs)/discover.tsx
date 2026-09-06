@@ -15,9 +15,11 @@ import {
   getNowPlaying,
   getPremieres,
   getTrending,
+  getPlaysByIds,
   getVenueById,
   type BrowseSort,
 } from "@/services/playsService";
+import { getLists, type ListSummary } from "@/services/listsService";
 import { searchPlays, type SortKey } from "@/services/searchService";
 import type { Play, Venue, VenueType } from "@/data/types";
 import { SearchIcon, PlusIcon, CloseIcon } from "@/components/icons/Icons";
@@ -26,6 +28,7 @@ import { Chip } from "@/components/ui/Chip";
 import { SelectChip, type SelectOption } from "@/components/ui/SelectChip";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { ListCard } from "@/components/ui/ListCard";
 import { PosterCardSkeleton, SkeletonRail } from "@/components/ui/Skeleton";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { Screen } from "@/components/ui/Screen";
@@ -35,6 +38,12 @@ import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 
 const FILTERS = [strings.discover.filterAll, strings.discover.filterKoszinhaz, strings.discover.filterFuggetlen, strings.discover.filterSzabadteri];
+
+/**
+ * How many editorial lists Discover shows before sending people to the full
+ * screen. Three is a shelf; ten is a second Listák screen with no way out.
+ */
+const FEATURED_LIST_LIMIT = 3;
 
 /**
  * Whether to offer the venue-type chips.
@@ -132,6 +141,8 @@ export default function DiscoverScreen() {
   const [activeGenre, setActiveGenre] = useState<string>();
   const [searchSort, setSearchSort] = useState<SortKey>("relevance");
   const [browseSort, setBrowseSort] = useState<BrowseSort>("rating");
+  const [featuredLists, setFeaturedLists] = useState<ListSummary[]>([]);
+  const [listCovers, setListCovers] = useState<Map<string, Play>>(new Map());
 
   // Built here rather than inline so each list is one object per render and
   // the "Mind" entry is written once instead of at four call sites.
@@ -166,6 +177,40 @@ export default function DiscoverScreen() {
     getCities()
       .then(setCities)
       .catch(() => setCities([]));
+  }, []);
+
+  /**
+   * The editorial lists, fetched once and never refetched per filter.
+   *
+   * This is the half of 0025 that had not reached the screen it was written
+   * for. A brand-new account's Discover is otherwise led by "Népszerű", a grid
+   * ordered by an average over five reviews across 1,214 productions — not a
+   * popularity signal, and no amount of waiting makes it one. A hand-made list
+   * is worth reading on day one.
+   *
+   * Deliberately outside the filter effects: a list is a piece of writing about
+   * the catalogue, not a query over it, so narrowing to Debrecen cannot narrow
+   * it — which is also why the section hides itself entirely once a filter is
+   * on rather than showing results that ignore it.
+   */
+  useEffect(() => {
+    let active = true;
+    getLists({ featuredOnly: true })
+      .then(async (lists) => {
+        if (!active) return;
+        const top = lists.slice(0, FEATURED_LIST_LIMIT);
+        setFeaturedLists(top);
+        // One lookup for every cover on the rail, the way the lists screen
+        // does it — not four requests per card.
+        const plays = await getPlaysByIds([...new Set(top.flatMap((l) => l.coverPlayIds))]);
+        if (active) setListCovers(new Map(plays.map((p) => [p.id, p])));
+      })
+      .catch(() => {
+        if (active) setFeaturedLists([]);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   // Scoped to the selected city, so picking Debrecen offers Debrecen's
@@ -260,6 +305,10 @@ export default function DiscoverScreen() {
   }, [query, venueType, city, venueId, genre, searchSort, isSearching]);
 
   const hasBrowseContent = nowPlaying.length > 0 || premieres.length > 0 || trending.length > 0;
+  // Editorial lists are written about the whole catalogue and cannot answer a
+  // city or genre filter, so the section steps aside once one is on rather
+  // than sitting there ignoring it.
+  const browseFiltered = !!(venueType || city || venueId || genre);
   const archivedCount = searchResults.filter((p) => p.isArchived || p.status === "ended").length;
 
   return (
@@ -513,6 +562,29 @@ export default function DiscoverScreen() {
                     <PremiereCard key={p.id} play={p} onPress={() => router.push(`/play/${p.id}`)} />
                   ))}
                 </ScrollView>
+              </View>
+            )}
+
+            {/* Above "Népszerű" on purpose. What is on tonight is a fact and
+                stays first; after that, three hand-made lists are a better
+                thing to put in front of a new account than a grid ranked by an
+                average over five reviews. */}
+            {!browseLoading && !browseFiltered && featuredLists.length > 0 && (
+              <View style={{ gap: space.md, paddingHorizontal: gutter }}>
+                <View style={styles.rowBetween}>
+                  <Text variant="subheading">{strings.discover.featuredListsTitle}</Text>
+                  <Pressable onPress={() => router.push("/lists")} hitSlop={8} accessibilityRole="button">
+                    <Text variant="label" tone="accent">{strings.discover.seeAll}</Text>
+                  </Pressable>
+                </View>
+                {featuredLists.map((list) => (
+                  <ListCard
+                    key={list.id}
+                    list={list}
+                    playsById={listCovers}
+                    onPress={() => router.push({ pathname: "/list/[id]", params: { id: list.id } })}
+                  />
+                ))}
               </View>
             )}
 

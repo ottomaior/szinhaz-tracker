@@ -534,6 +534,14 @@ watchlist. The watchlist answers "am I going to this", which is one question
 with one answer; a list answers "what does this belong with", which is
 open-ended and can be several at once.
 
+Discover carries the first three editorial lists, between "Műsoron most" and
+"Népszerű" — above the ranked grid on purpose, since that grid's average is
+exactly what this feature exists to stand in for. The section hides itself the
+moment a city, theatre, venue-type or genre filter is on: an editorial list is
+a piece of writing about the catalogue rather than a query over it, so it
+cannot answer a filter, and leaving it up while it ignored one would be worse
+than not showing it at all.
+
 ## The exit to the box office
 
 `plays` carried `source` and `source_key` from the start: enough to upsert

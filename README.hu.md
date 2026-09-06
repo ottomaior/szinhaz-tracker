@@ -562,6 +562,14 @@ kívánságlista arra válaszol, hogy "elmegyek-e erre" — egy kérdés, egy v�
 a lista pedig arra, hogy "mivel tartozik ez össze", ami nyitott, és egyszerre
 több is lehet.
 
+A Felfedezés az első három szerkesztői listát viszi, a "Műsoron most" és a
+"Népszerű" közé — szándékosan a rangsorolt rács fölé, hiszen épp annak az
+átlagnak a helyére készült ez a funkció. A blokk eltűnik, amint város-,
+színház-, helyszíntípus- vagy műfajszűrő van bekapcsolva: a szerkesztői lista a
+katalógusról szóló írás, nem lekérdezés fölötte, tehát nem tud válaszolni a
+szűrőre — ott hagyni úgy, hogy közben figyelmen kívül hagyja, rosszabb lenne,
+mint egyáltalán nem mutatni.
+
 ## Kijárat a jegypénztárhoz
 
 A `plays` táblán a `source` és a `source_key` kezdettől fogva megvolt: ahhoz elég,

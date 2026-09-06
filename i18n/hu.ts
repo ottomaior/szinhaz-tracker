@@ -79,6 +79,9 @@ export const strings = {
     recentTitle: "Korábbi keresések",
     recentClear: "Törlés",
     premieresTitle: "Közelgő bemutatók",
+    /* Deliberately the same words as the Listák képernyő heading: it is the
+       same shelf, seen from two places. */
+    featuredListsTitle: "Szerkesztői listák",
     seeAll: "Összes",
     seeLess: "Kevesebb",
     trendingTitle: "Népszerű",
