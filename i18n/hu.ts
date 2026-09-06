@@ -131,6 +131,40 @@ export const strings = {
     /** Search deliberately includes the theatres' archives, which is worth saying. */
     includesArchived: (n: number) => `Ebből ${n} már nincs műsoron`,
     addPlayFab: "Darab hozzáadása",
+
+    /* The greeting that opens Felfedezés, and the sentence under it. */
+    greetingNamed: (name: string) => `Szia, ${name}`,
+    /* Signed out there is no name, and "Szia" alone reads as a mistake. */
+    greetingAnon: "Mi megy most?",
+    /**
+     * How busy the coming week is, in the city the header is set to.
+     *
+     * Four sentences rather than one with a number swapped in, because these
+     * are four different facts: plenty to choose from, exactly one, a week
+     * that has already run out, and a catalogue with nothing scheduled at all.
+     * Collapsing them would make at least one of them a lie.
+     *
+     * The city is deliberately absent. "Budapesten" and "Debrecenben" take
+     * different suffixes and Hungarian place names are not regular about it —
+     * the same trap `trendingTitleInCity` sidesteps. The picker sits directly
+     * above this line, so repeating the city buys nothing.
+     */
+    weekSentence: (count: number, hasUpcoming: boolean) =>
+      count >= 2
+        ? `Ezen a héten ${count} előadás közül választhatsz.`
+        : count === 1
+          ? "Ezen a héten egyetlen előadást játszanak."
+          : hasUpcoming
+            ? "Ezen a héten már nincs több előadás."
+            : "Jelenleg nincs meghirdetett előadás.",
+    /* Under the city picker: how much is in scope, not how much is filtered. */
+    venueCount: (n: number) => (n === 1 ? "1 színház" : `${n} színház`),
+    /* The header picker's unset state. The chip said "Mind", which reads as an
+       answer to "which filter" — but as the line that names what the whole
+       screen is scoped to it has to answer "which city". */
+    cityAll: "Minden város",
+    upcomingTitle: "Közelgő előadások",
+    upcomingToday: "Ma",
     emptyTitle: "Ehhez a szűréshez még nincs darab",
     emptyBody: "Próbálj másik várost vagy színháztípust, vagy vedd fel a darabot magad.",
   },
@@ -657,12 +691,14 @@ export const strings = {
     /* Appended to the system row so the third state is not a mystery. */
     themeSystemNow: (name: string) => `jelenleg: ${name}`,
     themes: {
+      lavenderLight: "Levendula",
       velvetDark: "Bársony",
       playbillLight: "Színlap",
       minimalLight: "Letisztult",
       modernDark: "Éjszakai",
     },
     themeBlurbs: {
+      lavenderLight: "Világos levendula, ibolya kiemeléssel — az alapértelmezett.",
       velvetDark: "A ház stílusa: sötét bordó, arany kiemeléssel.",
       playbillLight: "Ugyanaz a színlap, nyomtatva: meleg krém és tinta.",
       minimalLight: "Világos és semleges, minden dísz nélkül.",

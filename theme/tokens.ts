@@ -107,6 +107,17 @@ export const overlay = {
   onImageVeil: "rgba(18,5,5,0.55)",
   /** Credit text set directly on artwork. */
   onImageText: "rgba(245,237,228,0.62)",
+  /**
+   * A caption laid over a scrimmed poster — the feed card's title and byline.
+   *
+   * Light in every theme, and deliberately not `colors.text`. The scrim below
+   * it is dark whatever the palette says, so a theme whose text is near-black
+   * renders this caption as dark plum over a bright production photograph,
+   * which is unreadable. That is what happened the moment a light theme became
+   * the default; the two other light themes had the same latent bug and simply
+   * had not been anyone's default yet.
+   */
+  onImageHeading: "#f8f4fb",
 } as const;
 
 /**

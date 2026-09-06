@@ -11,11 +11,13 @@ import { useRecentSearches } from "@/hooks/useRecentSearches";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   getCities,
+  getCurrentUser,
   getFilterGenres,
   getFilterVenues,
   getNowPlaying,
   getPremieres,
   getTrending,
+  getUpcomingProgram,
   getPlaysByIds,
   getVenueById,
   type BrowseSort,
@@ -24,7 +26,7 @@ import { getLists, type ListSummary } from "@/services/listsService";
 import { getFriendsRecentPlays } from "@/services/friendsService";
 import { searchPlays, type SortKey } from "@/services/searchService";
 import { searchPeople, type PersonSearchResult } from "@/services/peopleService";
-import type { Play, Venue, VenueType } from "@/data/types";
+import type { Play, ProgramEntry, Venue, VenueType } from "@/data/types";
 import { SearchIcon, PlusIcon, CloseIcon } from "@/components/icons/Icons";
 import { MaskIcon } from "@/components/icons/MaskIcon";
 import { Avatar } from "@/components/ui/Avatar";
@@ -41,6 +43,7 @@ import { Grid } from "@/components/ui/Grid";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 import { personInitials } from "@/utils/people";
+import { budapestDayKey, formatTime, todayInBudapest } from "@/utils/datetime";
 
 const FILTERS = [strings.discover.filterAll, strings.discover.filterKoszinhaz, strings.discover.filterFuggetlen, strings.discover.filterSzabadteri];
 
@@ -167,11 +170,14 @@ export default function DiscoverScreen() {
   const [featuredLists, setFeaturedLists] = useState<ListSummary[]>([]);
   const [listCovers, setListCovers] = useState<Map<string, Play>>(new Map());
   const [friendsSeen, setFriendsSeen] = useState<{ play: Play; friends: number }[]>([]);
+  const [upcoming, setUpcoming] = useState<ProgramEntry[]>([]);
+  const [weekCount, setWeekCount] = useState(0);
+  const [viewerName, setViewerName] = useState<string>();
 
   // Built here rather than inline so each list is one object per render and
   // the "Mind" entry is written once instead of at four call sites.
   const cityOptions: SelectOption[] = [
-    { value: undefined, label: strings.discover.filterAll },
+    { value: undefined, label: strings.discover.cityAll },
     ...cities.map((c) => ({ value: c, label: c })),
   ];
   const genreOptions: SelectOption[] = [
@@ -295,6 +301,64 @@ export default function DiscoverScreen() {
       active = false;
     };
   }, [session]);
+
+  /**
+   * The name in the greeting.
+   *
+   * Read once per session rather than per filter change, and left undefined
+   * for a signed-out visitor — who gets a question instead of a greeting,
+   * since "Szia," with nothing after it reads as a bug. A failed lookup falls
+   * back to the same anonymous line: a greeting is not worth an error state.
+   */
+  useEffect(() => {
+    if (!session) {
+      setViewerName(undefined);
+      return;
+    }
+    let active = true;
+    getCurrentUser()
+      .then((user) => {
+        if (active) setViewerName(user?.name);
+      })
+      .catch(() => {
+        if (active) setViewerName(undefined);
+      });
+    return () => {
+      active = false;
+    };
+  }, [session]);
+
+  /**
+   * The next few evenings, and how busy the coming week is.
+   *
+   * Scoped to the city and nothing else. The genre and venue chips narrow the
+   * grid below, but this section answers "what is on near me soon", and a
+   * timeline silently filtered to opera would misdescribe the week the
+   * sentence above it is counting.
+   *
+   * Browse only: in Műsor mode the calendar is a better answer to the same
+   * question, and running both would be two queries to say one thing twice.
+   */
+  useEffect(() => {
+    if (mode !== "browse") return;
+    let active = true;
+    getUpcomingProgram({ city })
+      .then(({ entries, weekCount: n }) => {
+        if (!active) return;
+        setUpcoming(entries);
+        setWeekCount(n);
+      })
+      .catch(() => {
+        if (!active) return;
+        // Both cleared together: a stale count over an empty timeline would
+        // claim a week that nothing on screen backs up.
+        setUpcoming([]);
+        setWeekCount(0);
+      });
+    return () => {
+      active = false;
+    };
+  }, [city, mode]);
 
   // Scoped to the selected city, so picking Debrecen offers Debrecen's
   // theatres rather than all of them.
@@ -466,8 +530,23 @@ export default function DiscoverScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Screen>
         <View style={[styles.header, { paddingTop: insets.top + space.md }]}>
+          {/* The city leads, because it decides what the whole screen is a
+              list of — the rails, the upcoming timeline and the sentence in
+              the greeting all read from it. It used to sit in the chip row
+              below, where it looked like one narrowing filter among four. */}
           <View style={styles.titleRow}>
-            <Text variant="title">{strings.discover.title}</Text>
+            {cities.length > 1 ? (
+              <SelectChip
+                variant="header"
+                name={strings.discover.filterCity}
+                value={city}
+                subtitle={venues.length > 0 ? strings.discover.venueCount(venues.length) : undefined}
+                options={cityOptions}
+                onChange={(next) => setActiveCity(next ?? strings.discover.filterAll)}
+              />
+            ) : (
+              <Text variant="title">{strings.discover.title}</Text>
+            )}
             <Pressable
               style={styles.fab}
               onPress={() => router.push("/add-play")}
@@ -478,6 +557,24 @@ export default function DiscoverScreen() {
               <PlusIcon size={16} />
             </Pressable>
           </View>
+
+          {/* Browse only, and never over search results: a greeting above a
+              list of matches would be talking about a different screen. */}
+          {mode === "browse" && !isSearching && (
+            <View style={styles.greeting}>
+              {/* `title`, not `display`. At 32px the second sentence ran to
+                  three lines on a 375px phone and pushed the first rail to
+                  roughly 400px — the exact fold problem the filter chips were
+                  introduced to fix. 24px keeps the same two-voice hero and
+                  leaves the content visible. */}
+              <Text variant="title">
+                {viewerName ? strings.discover.greetingNamed(viewerName) : strings.discover.greetingAnon}
+              </Text>
+              <Text variant="title" tone="faint">
+                {strings.discover.weekSentence(weekCount, upcoming.length > 0)}
+              </Text>
+            </View>
+          )}
 
           <View style={styles.searchBar}>
             <SearchIcon />
@@ -578,15 +675,9 @@ export default function DiscoverScreen() {
               />
             )}
 
-            {cities.length > 1 && (
-              <SelectChip
-                name={strings.discover.filterCity}
-                value={activeCity === strings.discover.filterAll ? undefined : activeCity}
-                options={cityOptions}
-                onChange={(next) => setActiveCity(next ?? strings.discover.filterAll)}
-              />
-            )}
-
+            {/* No city chip: it lives in the header now, where it can say what
+                the screen is scoped to rather than looking like one more way
+                to narrow the grid. */}
             {genres.length > 1 && (
               <SelectChip
                 name={strings.discover.filterGenre}
@@ -759,6 +850,38 @@ export default function DiscoverScreen() {
                     <PremiereCard key={p.id} play={p} onPress={() => router.push(`/play/${p.id}`)} />
                   ))}
                 </ScrollView>
+              </View>
+            )}
+
+            {/* The calendar, read as a list rather than as a grid of days.
+                "Műsoron most" says what is running; this says which evenings
+                are coming and in what order, which is the question somebody
+                deciding whether to go out this week actually has. Scoped to
+                the city only — see the effect that loads it. */}
+            {!browseLoading && upcoming.length > 0 && (
+              <View style={{ gap: space.md, paddingHorizontal: gutter }}>
+                <View style={styles.rowBetween}>
+                  <Text variant="subheading">{strings.discover.upcomingTitle}</Text>
+                  <Pressable
+                    onPress={() => setMode("program")}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel={strings.program.modeProgram}
+                  >
+                    <Text variant="label" tone="accent">{strings.discover.seeAll}</Text>
+                  </Pressable>
+                </View>
+
+                <View style={{ gap: space.lg }}>
+                  {upcoming.map((entry, i) => (
+                    <UpcomingRow
+                      key={entry.performanceId}
+                      entry={entry}
+                      isLast={i === upcoming.length - 1}
+                      onPress={() => router.push(`/play/${entry.playId}`)}
+                    />
+                  ))}
+                </View>
               </View>
             )}
 
@@ -990,7 +1113,128 @@ function PersonResultRow({ person, onPress }: { person: PersonSearchResult; onPr
   );
 }
 
+
+/**
+ * The month and day of a performance, as Budapest sees them.
+ *
+ * Built with an explicit time zone rather than from the device's: a 19:00
+ * curtain is 17:00 UTC, and a reader in another zone would otherwise be shown
+ * the wrong day for a show they are booking in Hungary.
+ */
+function budapestDatePart(iso: string, part: "month" | "day"): string {
+  return new Intl.DateTimeFormat("hu-HU", {
+    timeZone: "Europe/Budapest",
+    ...(part === "month" ? { month: "short" as const } : { day: "numeric" as const }),
+  }).format(new Date(iso));
+}
+
+/**
+ * One evening on the "Közelgő előadások" timeline.
+ *
+ * The date sits outside the card, in its own column with a rule running down
+ * from it, so somebody scanning for "when" reads one left-aligned strip of
+ * dates instead of hunting for a stamp inside each image. Today is named
+ * rather than dated: "Ma" is the answer a reader is looking for, and a
+ * reader who wants the number has the rest of the row.
+ *
+ * The last row draws no rule. A line trailing off the bottom of the section
+ * would promise more evenings below it than there are.
+ */
+function UpcomingRow({
+  entry,
+  isLast,
+  onPress,
+}: {
+  entry: ProgramEntry;
+  isLast: boolean;
+  onPress: () => void;
+}) {
+  const isToday = budapestDayKey(entry.startsAt) === todayInBudapest();
+  const genreLabel = entry.genreNormalized
+    ? strings.genres[entry.genreNormalized] ?? entry.genreNormalized
+    : undefined;
+
+  return (
+    <View style={styles.upcomingRow}>
+      <View style={styles.upcomingDateCol}>
+        <View style={[styles.upcomingDateBox, isToday && styles.upcomingDateBoxToday]}>
+          <Text variant="caption" tone={isToday ? "accent" : "faint"} style={styles.upcomingMonth}>
+            {isToday ? strings.discover.upcomingToday : budapestDatePart(entry.startsAt, "month")}
+          </Text>
+          <Text variant="subheading" tone={isToday ? "accent" : "default"}>
+            {budapestDatePart(entry.startsAt, "day")}
+          </Text>
+        </View>
+        {!isLast && <View style={styles.upcomingLine} />}
+      </View>
+
+      <Pressable
+        style={styles.upcomingBody}
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={entry.title}
+      >
+        <PosterPlaceholder
+          poster={entry.poster}
+          title={entry.title}
+          seed={entry.playId}
+          height={122}
+          radius={radius.md}
+          preferThumb
+        />
+        <Text variant="subheading" numberOfLines={2}>
+          {entry.title}
+        </Text>
+        <View style={styles.upcomingMeta}>
+          <Text variant="caption" tone="faint" numberOfLines={1} style={{ flexShrink: 1 }}>
+            {formatTime(entry.startsAt)} · {entry.venueName}
+          </Text>
+          {/* Absent rather than blank when the source published no genre —
+              0016 leaves it null on purpose, and an empty pill would claim a
+              classification the catalogue does not have. */}
+          {!!genreLabel && (
+            <View style={styles.genrePill}>
+              <Text variant="caption" tone="dim">{genreLabel}</Text>
+            </View>
+          )}
+        </View>
+      </Pressable>
+    </View>
+  );
+}
 const styles = StyleSheet.create({
+
+  /* The two-line hero. `display` twice, with the second line recessive: the
+     reference sets the greeting and the news at the same size and separates
+     them by colour, which reads as one sentence in two voices rather than as
+     a heading with a subtitle under it. */
+  greeting: { paddingTop: space.xs, gap: 2 },
+
+  upcomingRow: { flexDirection: "row", gap: space.md, alignItems: "stretch" },
+  upcomingDateCol: { width: 60, alignItems: "center", gap: space.sm },
+  upcomingDateBox: {
+    width: 60,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    paddingVertical: space.sm,
+    alignItems: "center",
+    gap: 2,
+  },
+  upcomingDateBoxToday: { borderColor: colors.goldTintBorder, backgroundColor: colors.goldTintBg },
+  upcomingMonth: { textTransform: "uppercase", letterSpacing: 0.06 },
+  /* Runs from the date box to the bottom of the row, so the dates read as one
+     column rather than as a stack of unrelated boxes. */
+  upcomingLine: { width: 1, flex: 1, backgroundColor: colors.hairline, minHeight: space.md },
+  upcomingBody: { flex: 1, minWidth: 0, gap: space.sm },
+  upcomingMeta: { flexDirection: "row", alignItems: "center", gap: space.sm },
+  genrePill: {
+    backgroundColor: colors.neutralTintBg,
+    borderRadius: radius.pill,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+  },
   personRow: {
     flexDirection: "row",
     alignItems: "center",

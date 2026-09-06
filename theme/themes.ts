@@ -66,7 +66,12 @@ export type Palette = {
   goldGlow: string;
 };
 
-export type ThemeId = "velvetDark" | "playbillLight" | "minimalLight" | "modernDark";
+export type ThemeId =
+  | "velvetDark"
+  | "lavenderLight"
+  | "playbillLight"
+  | "minimalLight"
+  | "modernDark";
 
 /** The original: a near-black warm burgundy stage with a lit gold accent. */
 const velvetDark: Palette = {
@@ -216,8 +221,57 @@ const modernDark: Palette = {
   goldGlow: "rgba(216,180,92,0.38)",
 };
 
+/**
+ * The house lights up rather than down: a pale lilac wash over white cards.
+ *
+ * This is the app's default on a light device, and the palette the current
+ * layout was drawn against — the greeting, the date stamps over the artwork
+ * and the upcoming-performances timeline all assume a light ground.
+ *
+ * The accent is the one thing worth explaining. Everywhere else in this file
+ * `gold` is literally gold, but the token names a *role*, not a hue: it is
+ * what the app uses to say "you can still go and see this". Under a lilac
+ * wash an actual gold reads as a stain rather than as a signal, so here the
+ * role is carried by a deep violet — the same violet the raised "+" and the
+ * `running` badge draw from, so the accent still means one thing throughout.
+ * `goldDeep` is *lighter* than `gold` for the reason it is on the two other
+ * light themes: its consumers use it as a recessive fill, and on a light
+ * ground recessive means lighter.
+ */
+const lavenderLight: Palette = {
+  bg: "#f7f2fb", // oklch(96% 0.018 305)
+  bgElevated: "#f2ebf8",
+  surface: "#ffffff",
+  surface2: "#ece4f4", // oklch(92% 0.026 303)
+
+  // Plum ink at low alpha rather than white, for the reason the playbill
+  // theme uses it: a pale hairline is invisible on a pale ground.
+  hairline: "rgba(36,24,54,0.13)",
+  hairlineSoft: "rgba(36,24,54,0.07)",
+  /** No lit top edge — that is a dark-stage metaphor. See `playbillLight`. */
+  edgeHighlight: "transparent",
+
+  text: "#241436", // 15.51 / 17.10 / 13.82
+  textDim: "#544064", // 8.30 / 9.15 / 7.40
+  textFaint: "#6a5480", // 5.97 / 6.58 / 5.32
+
+  gold: "#6b3fa0", // 6.70 / 7.38 / 5.97
+  goldDeep: "#a98cc9", // recessive fill — lighter, as on the other light themes
+  onAccent: "#ffffff", // 7.38:1 on gold
+
+  goldTintBg: "rgba(107,63,160,0.10)",
+  goldTintBorder: "rgba(107,63,160,0.34)",
+  neutralTintBg: "rgba(36,20,54,0.055)",
+
+  // Violet-biased rather than neutral black: a grey shadow under a lilac card
+  // reads as dirt, the same problem the playbill theme has with cream.
+  shadow: "rgba(58,30,88,0.16)",
+  goldGlow: "rgba(107,63,160,0.26)",
+};
+
 export const themes: Record<ThemeId, Palette> = {
   velvetDark,
+  lavenderLight,
   playbillLight,
   minimalLight,
   modernDark,
@@ -226,17 +280,30 @@ export const themes: Record<ThemeId, Palette> = {
 /** Which side of light/dark each theme sits on, for `color-scheme` and the System option. */
 export const themeScheme: Record<ThemeId, "dark" | "light"> = {
   velvetDark: "dark",
+  lavenderLight: "light",
   playbillLight: "light",
   minimalLight: "light",
   modernDark: "dark",
 };
 
-/** What "follow the system" resolves to. */
+/**
+ * What "follow the system" resolves to.
+ *
+ * A device set to light gets Levendula, which is the app's current design
+ * direction. A device set to dark still gets Bársony: there is no lavender
+ * dark twin yet, and inverting a light palette would produce neither.
+ */
 export const DEFAULT_DARK: ThemeId = "velvetDark";
-export const DEFAULT_LIGHT: ThemeId = "playbillLight";
+export const DEFAULT_LIGHT: ThemeId = "lavenderLight";
 
-/** Order in the picker: the house style first, then its paper twin, then the alternatives. */
-export const THEME_ORDER: ThemeId[] = ["velvetDark", "playbillLight", "minimalLight", "modernDark"];
+/** Order in the picker: the current direction first, then the house style, then the alternatives. */
+export const THEME_ORDER: ThemeId[] = [
+  "lavenderLight",
+  "velvetDark",
+  "playbillLight",
+  "minimalLight",
+  "modernDark",
+];
 
 /**
  * Stored bare (not JSON) so the no-flash script in app/+html.tsx can read it

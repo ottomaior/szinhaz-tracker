@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
 /**
@@ -21,6 +22,16 @@ import { defineConfig } from "vitest/config";
  * the right paragraph. The test is what stops it reaching production.
  */
 export default defineConfig({
+  /**
+   * The same `@/…` alias tsconfig.json declares.
+   *
+   * Metro and TypeScript both resolve it already; Vitest did not, so the first
+   * test to import a module that uses it — `i18n/hu.ts`, which reaches for
+   * `@/utils/datetime` — failed to load rather than failed an assertion.
+   */
+  resolve: {
+    alias: { "@": fileURLToPath(new URL(".", import.meta.url)) },
+  },
   test: {
     include: ["sync/**/*.test.ts", "utils/**/*.test.ts", "i18n/**/*.test.ts"],
     environment: "node",

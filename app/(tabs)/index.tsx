@@ -3,8 +3,15 @@ import { View, ScrollView, StyleSheet, Pressable, RefreshControl } from "react-n
 import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
-import { gutter, radius, space } from "@/theme/tokens";
-import { getFeed, getPlayById, getUserById, getVenueById, type FeedScope } from "@/services/playsService";
+import { gutter, overlay, radius, space } from "@/theme/tokens";
+import {
+  getCurrentUser,
+  getFeed,
+  getPlayById,
+  getUserById,
+  getVenueById,
+  type FeedScope,
+} from "@/services/playsService";
 import { getUnreadCount } from "@/services/notificationService";
 import type { FeedItem, Play, User, Venue, Review, WatchlistEntry } from "@/data/types";
 import { useAuth } from "@/contexts/AuthContext";
@@ -29,6 +36,7 @@ export default function FeedScreen() {
   const { session } = useAuth();
   const [scope, setScope] = useState<FeedScope>("everyone");
   const [unread, setUnread] = useState(0);
+  const [viewer, setViewer] = useState<User>();
 
   const load = useCallback(async () => {
     setFailed(false);
@@ -67,6 +75,34 @@ export default function FeedScreen() {
     }, [session])
   );
 
+  /**
+   * The reader's own avatar for the header.
+   *
+   * Refetched on focus rather than only on mount, because the one screen that
+   * changes it — Profil szerkesztése — is reached from here and returns here,
+   * and a header still showing the old picture would look like the edit had
+   * not saved. A failure leaves `viewer` undefined, which `Avatar` renders as
+   * initials-less rather than as an error: a broken avatar is not worth a
+   * message.
+   */
+  useFocusEffect(
+    useCallback(() => {
+      if (!session) {
+        setViewer(undefined);
+        return;
+      }
+      let active = true;
+      getCurrentUser()
+        .then((user) => {
+          if (active) setViewer(user);
+        })
+        .catch(() => undefined);
+      return () => {
+        active = false;
+      };
+    }, [session])
+  );
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await load();
@@ -77,14 +113,15 @@ export default function FeedScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Screen width="reading">
         <View style={[styles.topBar, { paddingTop: insets.top + space.md }]}>
+          {/* The screen names itself rather than the app. Every other tab does,
+              the tab bar underneath already says which app this is, and the
+              widest line on the first screen is better spent on something the
+              reader does not already know. */}
           <View style={styles.brand}>
             <MaskIcon state="on" size={22} />
-            <Text variant="heading">{strings.appName}</Text>
+            <Text variant="title">{strings.tabs.feed}</Text>
           </View>
           <View style={styles.topBarActions}>
-            <Pressable onPress={() => router.push("/people")} hitSlop={8} accessibilityRole="button">
-              <Text variant="label" tone="accent">{strings.feed.findPeople}</Text>
-            </Pressable>
             {/* Only when signed in: an inbox is per account, and a bell that
                 can only ever be empty is a control that teaches you to ignore
                 it. The badge is a count, not a dot, because "3 dates published"
@@ -107,25 +144,53 @@ export default function FeedScreen() {
                 )}
               </Pressable>
             )}
+
+            {/* The reader's own face, and the shortest way back to their
+                diary. Signed out there is nobody to show and the Profil tab
+                is the honest route, so it is simply absent rather than a
+                grey silhouette that opens a sign-in prompt. */}
+            {!!session && (
+              <Pressable
+                onPress={() => router.push("/(tabs)/profile")}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel={strings.tabs.profile}
+              >
+                {/* Empty initials until the profile arrives, rather than
+                    hiding the avatar until then: the circle holds its place so
+                    the header does not shift under a thumb already reaching
+                    for it. */}
+                <Avatar uri={viewer?.avatarUrl} initials={viewer?.initials ?? ""} size={38} />
+              </Pressable>
+            )}
           </View>
         </View>
 
-        {/* Only offered when signed in: "Követettek" for a signed-out visitor
-            could only ever be empty, and the scope is per account anyway. */}
-        {!!session && (
-          <View style={styles.scopeRow}>
-            <Chip
-              label={strings.feed.scopeEveryone}
-              active={scope === "everyone"}
-              onPress={() => setScope("everyone")}
-            />
-            <Chip
-              label={strings.feed.scopeFollowing}
-              active={scope === "following"}
-              onPress={() => setScope("following")}
-            />
-          </View>
-        )}
+        {/* The scope chips are signed-in only — "Követettek" for a visitor with
+            no account could only ever be empty. "Színházbarátok" is not: it is
+            the one route into finding people, and a signed-out visitor is
+            exactly who needs it, so the row renders for them too with the link
+            alone. */}
+        <View style={styles.scopeRow}>
+          {!!session && (
+            <>
+              <Chip
+                label={strings.feed.scopeEveryone}
+                active={scope === "everyone"}
+                onPress={() => setScope("everyone")}
+              />
+              <Chip
+                label={strings.feed.scopeFollowing}
+                active={scope === "following"}
+                onPress={() => setScope("following")}
+              />
+            </>
+          )}
+          <View style={{ flex: 1 }} />
+          <Pressable onPress={() => router.push("/people")} hitSlop={8} accessibilityRole="button">
+            <Text variant="label" tone="accent">{strings.feed.findPeople}</Text>
+          </Pressable>
+        </View>
 
         <ScrollView
           contentContainerStyle={styles.body}
@@ -300,12 +365,16 @@ function CheckinCard({
         {/* `scrim` matters here: these are production photos, and bright ones
             left the white caption below completely unreadable. */}
         <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} height={200} radius={radius.md} scrim priority="high" />
+        {/* Both lines take their colour from `overlay`, not from the palette.
+            They sit on the scrim above, which is dark in every theme, so a
+            theme with near-black text would print this caption in dark plum
+            over a lit production photograph. */}
         <View style={styles.posterCaption}>
-          <Text variant="title" numberOfLines={2}>
+          <Text variant="title" numberOfLines={2} style={{ color: overlay.onImageHeading }}>
             {play.title}
           </Text>
           {!!play.director && (
-            <Text variant="bodySmall" tone="dim" numberOfLines={1}>
+            <Text variant="bodySmall" numberOfLines={1} style={{ color: overlay.onImageText }}>
               rend. {play.director}
             </Text>
           )}
@@ -439,6 +508,7 @@ const styles = StyleSheet.create({
   },
   badgeText: { color: colors.onAccent, fontWeight: "700", fontSize: 10, lineHeight: 16 },
   scopeRow: {
+    alignItems: "center",
     flexDirection: "row",
     gap: space.sm,
     paddingHorizontal: gutter,

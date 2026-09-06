@@ -694,6 +694,64 @@ export async function getProgramDays(days = 60, filters?: ProgramFilters): Promi
 }
 
 /**
+ * The next few evenings in one city, and how busy the coming week is.
+ *
+ * Feeds the "Közelgő előadások" timeline on Felfedezés and the sentence in the
+ * greeting above it. Both come back from one call because they are two
+ * readings of the same window, and asking separately would be two round trips
+ * to say one thing.
+ *
+ * Deduplicated by production, not by performance. A musical that plays four
+ * times this week is one thing to go and see; a timeline that listed it four
+ * times would push every other theatre in the city off the end of it. The RPC
+ * orders by `starts_at`, so the first row for a production is already its next
+ * performance and no comparison is needed — only a seen set.
+ *
+ * `weekCount` counts productions in the next seven days, which is what the
+ * greeting claims. It is computed from the same rows rather than from a second
+ * query, so the two can never disagree.
+ */
+export type UpcomingProgram = {
+  /** Soonest first, at most one entry per production. */
+  entries: ProgramEntry[];
+  /** Distinct productions playing within seven days. */
+  weekCount: number;
+};
+
+export async function getUpcomingProgram(
+  filters?: ProgramFilters,
+  options: { days?: number; limit?: number } = {}
+): Promise<UpcomingProgram> {
+  const { days = 30, limit = 6 } = options;
+  const now = new Date();
+  const rangeEnd = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+  const weekEnd = now.getTime() + 7 * 24 * 60 * 60 * 1000;
+
+  const { data, error } = await supabase.rpc("program_in_range", {
+    range_start: now.toISOString(),
+    range_end: rangeEnd.toISOString(),
+    city_filter: filters?.city ?? null,
+    venue_id_filter: filters?.venueId ?? null,
+    genre_filter: filters?.genre ?? null,
+  });
+  if (error) throw error;
+
+  const seen = new Set<string>();
+  const weekPlays = new Set<string>();
+  const entries: ProgramEntry[] = [];
+
+  for (const row of (data ?? []) as ProgramRow[]) {
+    const entry = toProgramEntry(row);
+    if (Date.parse(entry.startsAt) < weekEnd) weekPlays.add(entry.playId);
+    if (seen.has(entry.playId)) continue;
+    seen.add(entry.playId);
+    if (entries.length < limit) entries.push(entry);
+  }
+
+  return { entries, weekCount: weekPlays.size };
+}
+
+/**
  * The genres actually present in the browsable catalogue, most common first.
  *
  * Built from the data rather than from the vocabulary in data/types.ts, for

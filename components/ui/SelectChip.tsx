@@ -39,6 +39,8 @@ export function SelectChip({
   onChange,
   title,
   defaultValue,
+  variant = "chip",
+  subtitle,
 }: {
   /** What this facet is, shown when nothing is chosen: "Műfaj". */
   name: string;
@@ -56,6 +58,20 @@ export function SelectChip({
    * only true once the value differs from where it started.
    */
   defaultValue?: string;
+  /**
+   * How the trigger looks. The sheet is identical either way.
+   *
+   * `header` exists for the city on Felfedezés, which stopped being one facet
+   * among several when it started scoping the whole screen — the rails, the
+   * upcoming timeline and the sentence in the greeting all read from it. A
+   * control that decides what a screen is about belongs above the screen's
+   * title, not in a row of chips that merely narrow a grid. The sheet, its
+   * options and its accessibility are shared rather than reimplemented,
+   * because there is only one question being asked.
+   */
+  variant?: "chip" | "header";
+  /** A quiet second line under a `header` trigger: "8 színház". */
+  subtitle?: string;
 }) {
   const fontsLoaded = useAppFonts();
   const insets = useSafeAreaInsets();
@@ -69,29 +85,58 @@ export function SelectChip({
   const label = isSet ? selected?.label ?? name : name;
   const active = isSet;
 
+  const a11yLabel = `${name}: ${selected?.label ?? strings.discover.filterAll}`;
+
   return (
     <>
-      <Pressable
-        onPress={() => setOpen(true)}
-        accessibilityRole="button"
-        accessibilityLabel={`${name}: ${selected?.label ?? strings.discover.filterAll}`}
-        aria-expanded={open}
-        accessibilityState={{ expanded: open }}
-        style={[styles.chip, active ? styles.chipActive : styles.chipIdle]}
-      >
-        <Text
-          numberOfLines={1}
-          style={{
-            fontFamily: bodyFont(fontsLoaded, active ? "bold" : "medium"),
-            fontSize: 12.5,
-            color: active ? colors.onAccent : colors.textDim,
-            maxWidth: 150,
-          }}
+      {variant === "header" ? (
+        <Pressable
+          onPress={() => setOpen(true)}
+          accessibilityRole="button"
+          accessibilityLabel={a11yLabel}
+          aria-expanded={open}
+          accessibilityState={{ expanded: open }}
+          style={styles.header}
         >
-          {label}
-        </Text>
-        <ChevronDownIcon size={12} color={active ? colors.onAccent : colors.textFaint} />
-      </Pressable>
+          <View style={styles.headerLine}>
+            {/* The chosen city, or "Mind" — never the facet's name. Unlike a
+                chip, this trigger is the only thing on screen saying what the
+                whole page is scoped to, so it has to read as an answer even
+                when nothing has been picked. */}
+            <Text variant="subheading" numberOfLines={1}>
+              {selected?.label ?? strings.discover.filterAll}
+            </Text>
+            <ChevronDownIcon size={14} color={colors.textDim} />
+          </View>
+          {!!subtitle && (
+            <Text variant="caption" tone="faint" numberOfLines={1}>
+              {subtitle}
+            </Text>
+          )}
+        </Pressable>
+      ) : (
+        <Pressable
+          onPress={() => setOpen(true)}
+          accessibilityRole="button"
+          accessibilityLabel={a11yLabel}
+          aria-expanded={open}
+          accessibilityState={{ expanded: open }}
+          style={[styles.chip, active ? styles.chipActive : styles.chipIdle]}
+        >
+          <Text
+            numberOfLines={1}
+            style={{
+              fontFamily: bodyFont(fontsLoaded, active ? "bold" : "medium"),
+              fontSize: 12.5,
+              color: active ? colors.onAccent : colors.textDim,
+              maxWidth: 150,
+            }}
+          >
+            {label}
+          </Text>
+          <ChevronDownIcon size={12} color={active ? colors.onAccent : colors.textFaint} />
+        </Pressable>
+      )}
 
       <Modal
         visible={open}
@@ -161,6 +206,12 @@ const styles = StyleSheet.create({
   },
   chipActive: { backgroundColor: colors.gold },
   chipIdle: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.hairline },
+
+  /* Unpainted on purpose: this trigger sits over the header's wash and reads
+     as a heading you can change, not as a control dropped on top of one. The
+     touch target is met by the two lines plus the vertical padding. */
+  header: { paddingVertical: space.xs, paddingRight: space.sm, minHeight: minTouchTarget, justifyContent: "center" },
+  headerLine: { flexDirection: "row", alignItems: "center", gap: space.xs },
 
   /*
    * Absolutely filled rather than `flex: 1`.
