@@ -155,6 +155,42 @@ export const strings = {
     emailRequired: "Add meg az e-mail címed.",
     passwordRequired: "Add meg a jelszavad.",
     nameRequired: "Add meg a neved.",
+
+    /* Sign-up used to close its modal the moment the request resolved, which
+       looks exactly like being signed in. With e-mail megerősítés on, it is
+       not — so the screen now stays put and says what has to happen next. */
+    confirmEmailTitle: "Nézd meg a postaládád",
+    confirmEmailBody: (email: string) =>
+      `Küldtünk egy megerősítő linket a(z) ${email} címre. Kattints rá, és utána tudsz bejelentkezni.`,
+    confirmEmailSpam: "Ha pár percen belül nem érkezik meg, nézd meg a spam mappát is.",
+
+    forgotPassword: "Elfelejtetted a jelszavad?",
+    forgotTitle: "Új jelszó kérése",
+    forgotBody:
+      "Add meg az e-mail címed, és küldünk egy linket, amivel új jelszót állíthatsz be.",
+    forgotButton: "Link küldése",
+    /* Deliberately the same answer whether or not the address has an account:
+       a form that distinguishes the two is a way to find out who is a member
+       here. Supabase answers identically for the same reason. */
+    forgotSentTitle: "Elküldtük, ha van ilyen fiók",
+    forgotSentBody: (email: string) =>
+      `Ha tartozik fiók a(z) ${email} címhez, már úton van rá a link. Egy óráig érvényes.`,
+
+    resetTitle: "Új jelszó beállítása",
+    resetBody: "Írd be az új jelszavad. Utána egyből be leszel jelentkezve.",
+    newPasswordLabel: "Új jelszó",
+    newPasswordAgainLabel: "Új jelszó még egyszer",
+    resetButton: "Jelszó mentése",
+    resetSaving: "Mentés…",
+    resetDone: "Kész. Az új jelszavaddal vagy bejelentkezve.",
+    /* The link carries a short-lived session. Landing here without one means
+       it expired, was already used, or was opened on a different device from
+       the one that asked — all of which look the same and have one answer. */
+    resetNoLinkTitle: "Ez a link már nem érvényes",
+    resetNoLinkBody:
+      "Lejárt, vagy már használtad. Kérj egy újat, és nyisd meg ugyanezen az eszközön.",
+    resetTooShort: "A jelszó legyen legalább 8 karakter.",
+    resetMismatch: "A két jelszó nem egyezik.",
   },
 
   addPlay: {

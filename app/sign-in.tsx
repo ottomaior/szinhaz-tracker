@@ -85,6 +85,20 @@ export default function SignInScreen() {
             a second sign-in request. */}
         <Button label={strings.auth.signInButton} onPress={handleSubmit} loading={submitting} disabled={submitting} />
 
+        {/* Above the "create an account" line rather than below it: somebody
+            who cannot get in is far likelier to have forgotten a password than
+            to want a second account, and putting the recovery route under the
+            signup route is how people end up with two diaries. */}
+        <Pressable
+          onPress={() => router.push("/forgot-password")}
+          style={{ alignItems: "center" }}
+          accessibilityRole="button"
+        >
+          <Text variant="bodySmall" style={{ color: colors.gold }}>
+            {strings.auth.forgotPassword}
+          </Text>
+        </Pressable>
+
         <Pressable onPress={() => router.replace("/sign-up")} style={{ alignItems: "center", marginTop: 8 }} accessibilityRole="button">
           <Text variant="bodySmall" tone="faint">
             {strings.auth.noAccount} <Text style={{ color: colors.gold }}>{strings.auth.switchToSignUp}</Text>

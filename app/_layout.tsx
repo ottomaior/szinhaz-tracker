@@ -79,6 +79,11 @@ export default function RootLayout() {
             <Stack.Screen name="add-play" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
             <Stack.Screen name="sign-in" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
             <Stack.Screen name="sign-up" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+            <Stack.Screen name="forgot-password" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+            {/* Reached from a link in an e-mail rather than from inside the app,
+                so like the legal routes it has to work as a plain URL with no
+                history behind it. */}
+            <Stack.Screen name="reset-password" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
           </Stack>
         </SafeAreaProvider>
       </ThemeProvider>

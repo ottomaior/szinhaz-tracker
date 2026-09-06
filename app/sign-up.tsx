@@ -22,6 +22,16 @@ export default function SignUpScreen() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
+  /**
+   * Set when the account exists but nobody is signed in yet.
+   *
+   * Only reachable while the project requires e-mail confirmation, which it
+   * does not at the time of writing — so this branch is dormant rather than
+   * dead. It exists because the alternative is a screen that closes itself and
+   * looks exactly like a successful sign-in the day the setting is turned back
+   * on, leaving people signed out with no idea an e-mail is waiting for them.
+   */
+  const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
 
   async function handleSubmit() {
     if (submitting) return;
@@ -40,8 +50,12 @@ export default function SignUpScreen() {
     setError(undefined);
     setSubmitting(true);
     try {
-      await signUp(email.trim(), password, name.trim());
-      closeModal(router);
+      const { needsEmailConfirmation } = await signUp(email.trim(), password, name.trim());
+      if (needsEmailConfirmation) {
+        setAwaitingConfirmation(true);
+      } else {
+        closeModal(router);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : strings.auth.genericError);
     } finally {
@@ -54,7 +68,23 @@ export default function SignUpScreen() {
       <ModalHeader title={strings.auth.signUpTitle} />
 
       <ContentColumn style={{ padding: gutter, gap: space.lg }}>
-
+        {awaitingConfirmation ? (
+          <>
+            <Text variant="heading">{strings.auth.confirmEmailTitle}</Text>
+            <Text variant="body" tone="dim">
+              {strings.auth.confirmEmailBody(email.trim())}
+            </Text>
+            <Text variant="bodySmall" tone="faint">
+              {strings.auth.confirmEmailSpam}
+            </Text>
+            <Button
+              label={strings.auth.signInButton}
+              variant="outline"
+              onPress={() => router.replace("/sign-in")}
+            />
+          </>
+        ) : (
+          <>
         <TextInput
           value={name}
           onChangeText={setName}
@@ -102,6 +132,8 @@ export default function SignUpScreen() {
             {strings.auth.haveAccount} <Text style={{ color: colors.gold }}>{strings.auth.switchToSignIn}</Text>
           </Text>
         </Pressable>
+          </>
+        )}
       </ContentColumn>
     </View>
   );
