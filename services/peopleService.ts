@@ -26,6 +26,22 @@ export type PersonProfile = {
   directedCount: number;
 };
 
+/**
+ * A person as a search result: enough for a row, and no more.
+ *
+ * The same numbers the person page prints in its header, because they are what
+ * makes one Nagy distinguishable from another before you have opened either.
+ */
+export type PersonSearchResult = {
+  slug: string;
+  displayName: string;
+  creditCount: number;
+  venueCount: number;
+  directedCount: number;
+  firstYear?: number;
+  lastYear?: number;
+};
+
 export type PersonCredit = {
   play: Play;
   /** What the source said they did. Empty for the 814 cast rows with no role. */
@@ -106,4 +122,43 @@ function byNewestPremiere(a: PersonCredit, b: PersonCredit): number {
   if (ad) return -1;
   if (bd) return 1;
   return a.play.title.localeCompare(b.play.title, "hu");
+}
+
+/**
+ * The people a search term finds, best match first.
+ *
+ * Not to be confused with `followService.searchPeople`, which searches the
+ * app's own members. This one searches the catalogue: performers and directors,
+ * who have no account and exist only as names on 6,397 credits.
+ *
+ * It is a second request alongside `searchPlays` rather than one combined RPC,
+ * because the two answers have nothing in common — a person is a row and a
+ * production is a poster tile — and because the play search must not wait on
+ * the people search to render.
+ */
+export async function searchPeople(query: string, limit = 5): Promise<PersonSearchResult[]> {
+  const trimmed = query.trim();
+  if (!trimmed) return [];
+  const { data, error } = await supabase.rpc("search_people", {
+    search_term: trimmed,
+    limit_count: limit,
+  });
+  if (error) throw error;
+  return ((data ?? []) as {
+    slug: string;
+    display_name: string;
+    credit_count: number;
+    venue_count: number;
+    directed_count: number;
+    first_year: number | null;
+    last_year: number | null;
+  }[]).map((row) => ({
+    slug: row.slug,
+    displayName: row.display_name,
+    creditCount: row.credit_count ?? 0,
+    venueCount: row.venue_count ?? 0,
+    directedCount: row.directed_count ?? 0,
+    firstYear: row.first_year ?? undefined,
+    lastYear: row.last_year ?? undefined,
+  }));
 }

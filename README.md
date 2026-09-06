@@ -16,7 +16,7 @@ npx expo install --fix
 
 Then create a [Supabase](https://supabase.com) project (free tier is
 enough), run every file in `supabase/migrations/` **in order** (`0001_init.sql`
-through `0034_ancillary_events.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
+through `0035_search_finds_people.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
 URL/anon key from the project's Settings → API page:
 
 ```bash
@@ -108,7 +108,8 @@ services/supabase.ts      the Supabase client (reads EXPO_PUBLIC_SUPABASE_*)
 services/playsService.ts  the ONLY thing screens import play/venue/user
                           data from — queries Supabase
 services/peopleService.ts one performer's credits, over play_cast and
-                          plays.director together
+                          plays.director together — and the people a search
+                          term finds
 services/listsService.ts  lists and their entries, user-made and editorial
 services/profileService.ts  the editable half of a profile — avatar upload,
                           bio, and the public URL for a stored avatar
@@ -560,6 +561,42 @@ indistinguishable from a performer nobody has credited. `utils/people.test.ts`
 pins the TypeScript side against a table of real names from this catalogue, and
 the same table is run through the SQL function, so a drift on either side is
 caught rather than assumed away.
+
+### Searching for a performer returned everything but the performer
+
+The person page existed and search ranked a cast match, and between them they
+left a gap that is obvious the first time you use the box: typing "Für Anikó"
+returned the eleven productions she is in, and not her. Every result was a
+production, so the only route to a person page ran through opening one of her
+plays and pressing her name in the cast strip.
+
+`0035_search_finds_people.sql` adds `search_people()`, which answers the same
+term with people, and Discover lists them above the poster grid under
+"Alkotók" — makers, not "színészek", because directors are in the list too. It
+reads both sources the person page reads, `play_cast` and the names inside
+`plays.director`: 945 productions name a director and only 122 of those
+directors appear in the cast table, so a people search built on `play_cast`
+alone would miss seven eighths of the directing work in the catalogue.
+
+Its ranking is not `search_rank()`'s. A name has no author or venue to fall
+through to, and Hungarian prints the family name first, so a term that begins a
+*word* of the name — a given name, typed on its own — has a band of its own
+above "merely contains", and equal matches are separated by credit count. The
+same trigram net as 0019 sits underneath at the same 0.6, so "macsay" still
+finds Mácsai Pál.
+
+The counts in each row are the ones the person page prints in its header, which
+is what tells two people with the same surname apart before either page is open.
+They are computed from the matched rows rather than by calling
+`person_profile()` per result — that function scans every production computing
+`director_names()`, which is fine once for a page and ruinous for two hundred
+candidates. Three things make the query fast enough to sit behind a search box:
+the term is read through scalar subqueries rather than a join, so it becomes a
+one-off `InitPlan` that the trigram index from 0019 can be scanned with; the
+fuzzy test is spelled `%>` so it is indexable; and the CTEs are `MATERIALIZED`
+so the slug regular expressions run over the matched rows instead of all 6,397.
+Written the obvious way the same query takes 870ms, against 127ms for this one —
+`search_plays()` answers the same term in 96ms.
 
 ## A diary that does not start empty
 

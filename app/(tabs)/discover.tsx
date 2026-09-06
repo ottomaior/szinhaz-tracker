@@ -23,9 +23,11 @@ import {
 import { getLists, type ListSummary } from "@/services/listsService";
 import { getFriendsRecentPlays } from "@/services/friendsService";
 import { searchPlays, type SortKey } from "@/services/searchService";
+import { searchPeople, type PersonSearchResult } from "@/services/peopleService";
 import type { Play, Venue, VenueType } from "@/data/types";
 import { SearchIcon, PlusIcon, CloseIcon } from "@/components/icons/Icons";
 import { MaskIcon } from "@/components/icons/MaskIcon";
+import { Avatar } from "@/components/ui/Avatar";
 import { Chip } from "@/components/ui/Chip";
 import { SelectChip, type SelectOption } from "@/components/ui/SelectChip";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -38,6 +40,7 @@ import { ProgramView } from "@/components/ui/ProgramView";
 import { Grid } from "@/components/ui/Grid";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
+import { personInitials } from "@/utils/people";
 
 const FILTERS = [strings.discover.filterAll, strings.discover.filterKoszinhaz, strings.discover.filterFuggetlen, strings.discover.filterSzabadteri];
 
@@ -142,6 +145,7 @@ export default function DiscoverScreen() {
   const [premieres, setPremieres] = useState<Play[]>([]);
   const [trending, setTrending] = useState<Play[]>([]);
   const [searchResults, setSearchResults] = useState<Play[]>([]);
+  const [searchPeopleResults, setSearchPeopleResults] = useState<PersonSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const { recent, remember, clear: clearRecent } = useRecentSearches();
@@ -424,6 +428,33 @@ export default function DiscoverScreen() {
     return () => clearTimeout(handle);
   }, [query, venueType, city, venueId, genre, searchSort, isSearching]);
 
+  /**
+   * The same term, asked of the catalogue's people.
+   *
+   * Its own effect, keyed on the query alone, because the chips and the sort
+   * key describe productions: a person has no premiere date to sort by and is
+   * not in one city, so re-running this when the sort changes would be a round
+   * trip that cannot change its own answer.
+   *
+   * Nor do the filters narrow it. Somebody who has typed a name is asking about
+   * a person, and hiding her because the genre chip says "opera" would answer a
+   * question about her work with a claim about her.
+   */
+  useEffect(() => {
+    if (!isSearching) {
+      setSearchPeopleResults([]);
+      return;
+    }
+    const handle = setTimeout(() => {
+      searchPeople(query)
+        .then(setSearchPeopleResults)
+        // A failed people query leaves the productions to answer alone, which
+        // is what this screen did before there was a people query at all.
+        .catch(() => setSearchPeopleResults([]));
+    }, 300);
+    return () => clearTimeout(handle);
+  }, [query, isSearching]);
+
   const hasBrowseContent = nowPlaying.length > 0 || premieres.length > 0 || trending.length > 0;
   // Editorial lists are written about the whole catalogue and cannot answer a
   // city or genre filter, so the section steps aside once one is on rather
@@ -614,6 +645,29 @@ export default function DiscoverScreen() {
 
         {isSearching ? (
           <ScrollView contentContainerStyle={styles.scrollBody} keyboardShouldPersistTaps="handled">
+            {/* The people first, and above the count that heads the grid.
+                Typing a performer's name used to return the eleven productions
+                she is in and never her, so the only route to a person page ran
+                through opening one of her plays and pressing her name in the
+                cast strip. Held back while the productions are still loading:
+                the two queries share a debounce, and a list of people from the
+                previous keystroke sitting above a grid of skeletons would be
+                answering a question that has already been retyped. */}
+            {!searching && searchPeopleResults.length > 0 && (
+              <View style={{ gap: space.sm }}>
+                <Text variant="subheading">{strings.discover.peopleResultsTitle}</Text>
+                {searchPeopleResults.map((person) => (
+                  <PersonResultRow
+                    key={person.slug}
+                    person={person}
+                    onPress={() => {
+                      remember(query);
+                      router.push(`/person/${person.slug}`);
+                    }}
+                  />
+                ))}
+              </View>
+            )}
             <View style={{ gap: space.xs }}>
               <Text variant="subheading">
                 {searching ? strings.discover.searching : strings.discover.searchResultsTitle(searchResults.length)}
@@ -651,7 +705,10 @@ export default function DiscoverScreen() {
                 ))}
               </Grid>
             )}
-            {!searching && searchResults.length === 0 && (
+            {/* "Nothing found — add it yourself" would be a lie under a list of
+                people the search did find, and the invitation it carries is to
+                create a duplicate production. */}
+            {!searching && searchResults.length === 0 && searchPeopleResults.length === 0 && (
               <View style={styles.noResults}>
                 <Text variant="body" tone="dim">
                   {strings.discover.noResultsTitle}
@@ -891,7 +948,54 @@ function TrendingCard({ play, onPress }: { play: Play; onPress: () => void }) {
   );
 }
 
+/**
+ * One person in the search results.
+ *
+ * A row rather than a tile, and deliberately unlike the poster grid below it:
+ * these two lists answer the same term with different kinds of thing, and a
+ * person rendered as a poster-shaped card would read as a production.
+ *
+ * The line under the name is what tells two people with the same surname apart
+ * before either page is open — how much work the catalogue holds for them,
+ * where, and over what span.
+ */
+function PersonResultRow({ person, onPress }: { person: PersonSearchResult; onPress: () => void }) {
+  const parts = [strings.discover.personCredits(person.creditCount)];
+  if (person.directedCount > 0) parts.push(strings.discover.personDirected(person.directedCount));
+  if (person.venueCount > 0) parts.push(strings.person.venueCount(person.venueCount));
+  // Absent for somebody all of whose productions are undated, and collapsed to
+  // one year when the first and last coincide — "2025–2025" looks like a bug.
+  if (person.firstYear && person.lastYear) {
+    parts.push(
+      person.firstYear === person.lastYear ? `${person.firstYear}` : `${person.firstYear}–${person.lastYear}`
+    );
+  }
+
+  return (
+    <Pressable
+      onPress={onPress}
+      style={styles.personRow}
+      accessibilityRole="button"
+      accessibilityLabel={person.displayName}
+    >
+      <Avatar initials={personInitials(person.displayName)} size={44} serif />
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text variant="body">{person.displayName}</Text>
+        <Text variant="caption" tone="faint" numberOfLines={1}>
+          {parts.join(" · ")}
+        </Text>
+      </View>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
+  personRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: space.md,
+    paddingVertical: space.sm,
+  },
   header: {
     paddingHorizontal: gutter,
     paddingBottom: space.lg,

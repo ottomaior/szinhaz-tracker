@@ -97,6 +97,26 @@ export function personSlug(rawName: string): string {
 }
 
 /**
+ * The monogram drawn in a performer's avatar circle.
+ *
+ * Hungarian name order is family name first, so the first letter of each of the
+ * first two words already gives the right pair — "Für Anikó" is FA — with none
+ * of the reordering a Western name would need.
+ *
+ * Distinct from `profileInitials` below, which the database computes for a
+ * member's stored profile. This one is derived on the spot from a catalogue
+ * name, because performers have no profile row to hold it.
+ */
+export function personInitials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
+/**
  * A label for what somebody did on a production.
  *
  * Roles arrive already deduplicated case-insensitively from `person_credits()`,

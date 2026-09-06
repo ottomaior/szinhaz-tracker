@@ -16,7 +16,7 @@ import { ContentColumn } from "@/components/ui/Screen";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
-import { creditLabel } from "@/utils/people";
+import { creditLabel, personInitials } from "@/utils/people";
 
 /**
  * One performer or director, and everything the catalogue has them on.
@@ -114,7 +114,7 @@ export default function PersonScreen() {
           {loaded && !failed && !!profile && (
             <>
               <View style={styles.header}>
-                <Avatar initials={initialsOf(profile.displayName)} size={64} serif />
+                <Avatar initials={personInitials(profile.displayName)} size={64} serif />
                 <View style={{ flex: 1, gap: 4 }}>
                   <Text variant="title">{profile.displayName}</Text>
                   <Text variant="bodySmall" tone="faint">
@@ -212,21 +212,6 @@ function summaryLine(profile: PersonProfile): string {
 
 function yearOf(premiereDate?: string): string | undefined {
   return premiereDate ? premiereDate.slice(0, 4) : undefined;
-}
-
-/**
- * Initials for the avatar.
- *
- * Hungarian name order is family name first, so the first two words already
- * give the right pair — no reordering, unlike a Western name.
- */
-function initialsOf(name: string): string {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? "")
-    .join("");
 }
 
 function Stat({ value, label, gold = false }: { value: number; label: string; gold?: boolean }) {

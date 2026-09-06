@@ -110,6 +110,19 @@ export const strings = {
     loadMore: "Továbbiak betöltése",
     loadingMore: "Betöltés…",
     searchResultsTitle: (n: number) => `${n} találat`,
+    /**
+     * The people a search found, listed above the productions.
+     *
+     * Searching a performer's name used to return only the productions they
+     * are in, which answers a question nobody asked: type a name, get the
+     * person. The heading says "alkotók" — makers — rather than "színészek",
+     * because the list holds directors too, and a director shown under a
+     * heading that says "actors" has been miscredited.
+     */
+    peopleResultsTitle: "Alkotók",
+    /** "12 közreműködés · 3 színház · 1998–2024", as much of it as is known. */
+    personCredits: (n: number) => `${n} közreműködés`,
+    personDirected: (n: number) => `${n} rendezés`,
     /** The grid heading once it is no longer ordered by rating. */
     allPlaysTitle: "Előadások",
     searching: "Keresés…",

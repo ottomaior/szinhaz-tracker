@@ -18,7 +18,7 @@ npx expo install --fix
 
 Ezután hozz létre egy [Supabase](https://supabase.com) projektet (az ingyenes
 csomag bőven elég), futtasd le a `supabase/migrations/` **összes** fájlját
-**sorrendben** (`0001_init.sql`-től a `0034_ancillary_events.sql`-ig) a projekt
+**sorrendben** (`0001_init.sql`-től a `0035_search_finds_people.sql`-ig) a projekt
 SQL-szerkesztőjében, majd másold a `.env.example`-t `.env`-re, és töltsd ki a
 projekt Settings → API oldaláról az URL-t és az anon kulcsot:
 
@@ -114,7 +114,8 @@ services/supabase.ts      a Supabase kliens (az EXPO_PUBLIC_SUPABASE_*-ot olvass
 services/playsService.ts  a képernyők KIZÁRÓLAG innen kapnak előadás/helyszín/
                           felhasználó adatot — Supabase lekérdezésekkel
 services/peopleService.ts egy alkotó közreműködései, a play_cast és a
-                          plays.director táblát együtt olvasva
+                          plays.director táblát együtt olvasva — és a
+                          keresőkifejezésre illeszkedő alkotók
 services/listsService.ts  listák és a bejegyzéseik, felhasználói és
                           szerkesztői egyaránt
 services/profileService.ts  a profil szerkeszthető fele — profilkép feltöltése,
@@ -592,6 +593,45 @@ közreműködése. Az `utils/people.test.ts` a TypeScript oldalt a katalógus va
 neveinek táblájához köti, és ugyanez a tábla átmegy az SQL függvényen is, így a
 bármelyik oldalon bekövetkező elcsúszás kiderül, nem pedig feltételezzük, hogy
 nincs.
+
+### Egy színészre keresve minden előjött, csak ő nem
+
+Az alkotói oldal megvolt, a keresés pedig rangsorolta a szereposztás-találatot,
+és kettejük között ott maradt egy hiány, ami a keresőmező első használatakor
+szembeötlő: a „Für Anikó" beírására megjött az a tizenegy előadás, amelyben
+játszik — ő maga nem. Minden találat egy produkció volt, így az alkotói oldalra
+egyetlen út vezetett: megnyitni valamelyik előadását, és a szereposztásban
+rákoppintani a nevére.
+
+A `0035_search_finds_people.sql` hozza a `search_people()`-t, ami ugyanarra a
+kifejezésre emberekkel válaszol, a Felfedezés pedig a plakátrács fölött, az
+„Alkotók" cím alatt sorolja fel őket — alkotók, nem „színészek", mert a
+listában rendezők is vannak. Ugyanazt a két forrást olvassa, amit az alkotói
+oldal: a `play_cast`-ot és a `plays.director` mezőben álló neveket. 945
+produkció nevez meg rendezőt, és közülük csak 122 szerepel a szereposztás
+táblában is, tehát egy csak `play_cast`-ra épülő keresés a katalógus rendezői
+munkájának hét nyolcadát nem találná meg.
+
+A rangsorolása nem a `search_rank()`-é. Egy névnek nincs szerzője vagy
+helyszíne, amire visszaeshetne, a magyar pedig elöl írja a családnevet, így
+annak a kifejezésnek, amely a név egyik *szavát* kezdi — egy önmagában beírt
+keresztnévnek — saját sávja van a „csak tartalmazza" fölött, az azonos sávba
+esőket pedig a közreműködések száma választja szét. Alatta ugyanaz a 0019-es
+trigram-háló ül ugyanazon a 0.6-os küszöbön, így a „macsay" továbbra is
+megtalálja Mácsai Pált.
+
+A sorokban álló számok ugyanazok, amiket az alkotói oldal fejléce ír ki: ez
+különbözteti meg a két azonos vezetéknevű embert, mielőtt bármelyik oldal
+megnyílna. Nem a `person_profile()` eredményéből jönnek, hanem a találati
+sorokból — az a függvény minden produkciót végigolvas a `director_names()`
+számításával, ami egy oldalhoz egyszer rendben van, kétszáz jelölthöz viszont
+elfogadhatatlan. Három dolog teszi elég gyorssá a lekérdezést ahhoz, hogy egy
+keresőmező mögött álljon: a kifejezést skalár alkérdéseken keresztül olvassa, így
+egyszeri `InitPlan` lesz belőle, amivel a 0019 trigram-indexe bejárható; a
+fuzzy vizsgálat `%>` alakban áll, ami indexelhető; a CTE-k pedig
+`MATERIALIZED`-ek, így a slug reguláris kifejezései a találati sorokon futnak, és
+nem mind a 6 397-en. A kézenfekvő módon megírva ugyanez a lekérdezés 870 ms, így
+127 ms — a `search_plays()` 96 ms alatt válaszol ugyanerre a kifejezésre.
 
 ## Napló, ami nem üresen indul
 
