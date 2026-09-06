@@ -92,6 +92,10 @@ create policy "users delete their own avatar"
 create or replace function public.profiles_guard_avatar_path()
 returns trigger
 language plpgsql
+-- Pinned rather than left to the caller's search_path, which is what the
+-- database linter's `function_search_path_mutable` asks for. Cheap on a new
+-- function; the older ones in this schema still carry the warning.
+set search_path = public
 as $function$
 begin
   if new.avatar_path is not null
@@ -123,6 +127,7 @@ create or replace function public.profile_initials(full_name text)
 returns text
 language sql
 immutable
+set search_path = public
 as $function$
   select coalesce(
     nullif(
@@ -151,6 +156,7 @@ $function$;
 create or replace function public.profiles_sync_initials()
 returns trigger
 language plpgsql
+set search_path = public
 as $function$
 begin
   if tg_op = 'INSERT' or new.name is distinct from old.name then
