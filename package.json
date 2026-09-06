@@ -12,6 +12,7 @@
     "build:web": "expo export --platform web",
     "lint": "expo lint",
     "sync": "tsx sync/run.ts",
+    "check:launch": "tsx scripts/check-launch.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

@@ -4,7 +4,7 @@ import { gutter, space } from "@/theme/tokens";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { ContentColumn } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
-import type { LegalDocument } from "@/i18n/legal";
+import { operatorDetailsComplete, pendingNotice, type LegalDocument } from "@/i18n/legal";
 
 /**
  * One legal document, rendered.
@@ -24,6 +24,12 @@ import type { LegalDocument } from "@/i18n/legal";
  * needs to read it is the one deciding whether to create an account, and the
  * Play Console's account-deletion URL requirement later needs the same thing:
  * a page a former user can open from the open web.
+ *
+ * What they do read is whether the operator details exist yet. Until somebody
+ * has decided whether this is published by a person or a company, every
+ * document would name `TODO_OPERATOR_NAME` as its data controller, so the
+ * screen says the document is still being drafted instead of showing it. The
+ * route stays; only the contents wait.
  */
 export function LegalScreen({ document }: { document: LegalDocument }) {
   return (
@@ -32,46 +38,59 @@ export function LegalScreen({ document }: { document: LegalDocument }) {
 
       <ScrollView contentContainerStyle={styles.scroll}>
         <ContentColumn style={{ gap: space["2xl"] }}>
-          <Text variant="bodySmall" tone="faint">
-            {document.lead}
-          </Text>
-
-          {document.sections.map((section) => (
-            <View key={section.heading} style={{ gap: space.md }}>
-              {/* `accessibilityRole="header"` is what lets a screen-reader user
-                  jump between sections instead of reading three thousand words
-                  in a straight line — which is the only realistic way anyone
-                  navigates a document this long. */}
+          {!operatorDetailsComplete() ? (
+            <View style={{ gap: space.md }}>
               <Text variant="heading" accessibilityRole="header">
-                {section.heading}
+                {pendingNotice.heading}
+              </Text>
+              <Text variant="body" tone="dim">
+                {pendingNotice.body}
+              </Text>
+            </View>
+          ) : (
+            <>
+              <Text variant="bodySmall" tone="faint">
+                {document.lead}
               </Text>
 
-              {section.blocks.map((block, i) =>
-                block.kind === "p" ? (
-                  <Text key={i} variant="body" tone="dim">
-                    {block.text}
+              {document.sections.map((section) => (
+                <View key={section.heading} style={{ gap: space.md }}>
+                  {/* `accessibilityRole="header"` is what lets a screen-reader user
+                      jump between sections instead of reading three thousand words
+                      in a straight line — which is the only realistic way anyone
+                      navigates a document this long. */}
+                  <Text variant="heading" accessibilityRole="header">
+                    {section.heading}
                   </Text>
-                ) : (
-                  <View key={i} style={{ gap: space.sm }}>
-                    {block.items.map((item) => (
-                      // A real two-column row rather than a "• " prefix inside
-                      // the string: with the bullet in the text, a wrapped line
-                      // returns to the left margin and the list stops looking
-                      // like a list.
-                      <View key={item} style={styles.bulletRow}>
-                        <Text variant="body" tone="faint" style={styles.bullet}>
-                          •
-                        </Text>
-                        <Text variant="body" tone="dim" style={{ flex: 1 }}>
-                          {item}
-                        </Text>
+
+                  {section.blocks.map((block, i) =>
+                    block.kind === "p" ? (
+                      <Text key={i} variant="body" tone="dim">
+                        {block.text}
+                      </Text>
+                    ) : (
+                      <View key={i} style={{ gap: space.sm }}>
+                        {block.items.map((item) => (
+                          // A real two-column row rather than a "• " prefix inside
+                          // the string: with the bullet in the text, a wrapped line
+                          // returns to the left margin and the list stops looking
+                          // like a list.
+                          <View key={item} style={styles.bulletRow}>
+                            <Text variant="body" tone="faint" style={styles.bullet}>
+                              •
+                            </Text>
+                            <Text variant="body" tone="dim" style={{ flex: 1 }}>
+                              {item}
+                            </Text>
+                          </View>
+                        ))}
                       </View>
-                    ))}
-                  </View>
-                )
-              )}
-            </View>
-          ))}
+                    )
+                  )}
+                </View>
+              ))}
+            </>
+          )}
         </ContentColumn>
       </ScrollView>
     </View>

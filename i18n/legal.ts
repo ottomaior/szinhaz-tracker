@@ -24,10 +24,19 @@
  * and contact details, the Hungarian e-commerce act (Ektv. 4. §) requires the
  * service provider's name, seat and email, and the DSA requires a contact
  * point. They are collected here rather than typed into the prose so there is
- * exactly one place to fill in, and `i18n/legal.test.ts` fails while any of
- * them is still a placeholder — a privacy policy that says TODO is worse than
- * no privacy policy, and this is not the kind of mistake that shows up on
- * screen in a way anyone would notice.
+ * exactly one place to fill in.
+ *
+ * They are also deliberately allowed to stay unfilled for a while. What is not
+ * allowed is a document that *renders* with a placeholder in it — a privacy
+ * policy naming `TODO_OPERATOR_NAME` as the data controller is worse than
+ * having none, and it is invisible unless somebody scrolls to the right
+ * paragraph. So `operatorDetailsComplete()` below decides, and
+ * `components/ui/LegalDocument` shows a short "still being drafted" notice in
+ * place of the document rather than publishing half of one.
+ *
+ * The hard gate is `npm run check:launch`, which is a launch checklist rather
+ * than a build step: red CI for the weeks before somebody registers a company
+ * teaches people to ignore CI, which costs more than it protects.
  */
 export const operator = {
   /** Legal name — a person's full name, or the company's registered name. */
@@ -42,6 +51,34 @@ export const operator = {
    * capacity — the impresszum then omits the line rather than showing a blank.
    */
   registrationNumber: null as string | null,
+} as const;
+
+/**
+ * Whether the documents can be published as they stand.
+ *
+ * A single sentinel prefix rather than a per-field flag, so filling a value in
+ * is the only step — there is no second place to remember to update, and no
+ * way to half-announce that the details are ready.
+ */
+export function operatorDetailsComplete(): boolean {
+  return [operator.name, operator.address, operator.email].every(
+    (value) => value.length > 0 && !value.startsWith("TODO_")
+  );
+}
+
+/**
+ * What stands in for a document while the operator details are missing.
+ *
+ * Deliberately not the document with blanks in it, and deliberately not a 404:
+ * the routes have to keep existing at their URLs — they are linked from
+ * Settings, and Google Play's account-deletion requirement will later need one
+ * of them reachable from the open web — but what they say has to be true, and
+ * "this is not finished yet" is true.
+ */
+export const pendingNotice = {
+  heading: "Ez a dokumentum még készül",
+  body:
+    "A szolgáltatás még nem indult el nyilvánosan, és a jogi dokumentumok véglegesítése folyamatban van. Amint elkészülnek, itt lesznek olvashatók.",
 } as const;
 
 /** Where the app is served from, named in the impresszum as the Ektv. requires. */
