@@ -68,6 +68,13 @@ export default function RootLayout() {
             <Stack.Screen name="inbox" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
             <Stack.Screen name="edit-profile" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
             <Stack.Screen name="settings" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+            {/* The legal documents. Modals like the rest of the chrome, but
+                they are also the app’s only routes that get linked to from
+                outside it, so they must stay reachable at a plain URL with no
+                session and no history behind them. */}
+            <Stack.Screen name="legal/adatvedelem" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+            <Stack.Screen name="legal/feltetelek" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+            <Stack.Screen name="legal/impresszum" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
             <Stack.Screen name="checkin" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
             <Stack.Screen name="add-play" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
             <Stack.Screen name="sign-in" options={{ presentation: "modal", animation: "slide_from_bottom" }} />

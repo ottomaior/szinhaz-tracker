@@ -632,6 +632,15 @@ export const strings = {
       minimalLight: "Világos és semleges, minden dísz nélkül.",
       modernDark: "Hűvös, szürke sötét mód.",
     },
+    /* The legal documents, reachable from here because Settings is the one
+       screen a person opens when they want to know what they agreed to. */
+    legal: "Jogi tudnivalók",
+    legalPrivacy: "Adatkezelési tájékoztató",
+    legalPrivacyHint: "Mit tárolunk rólad, mi ebből nyilvános, és hogyan kérheted a törlését.",
+    legalTerms: "Felhasználási feltételek",
+    legalTermsHint: "Mit vállalunk a szolgáltatással, és mit kérünk cserébe.",
+    legalImprint: "Impresszum",
+    legalImprintHint: "Ki üzemelteti az alkalmazást, és hol éred el.",
   },
 
   editProfile: {

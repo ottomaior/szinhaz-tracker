@@ -1,8 +1,9 @@
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Link, type Href } from "expo-router";
 import { colors } from "@/theme/colors";
 import { gutter, radius, space } from "@/theme/tokens";
 import { themes, THEME_ORDER, type ThemeId } from "@/theme/themes";
-import { CheckIcon } from "@/components/icons/Icons";
+import { CheckIcon, ChevronRightIcon } from "@/components/icons/Icons";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
@@ -13,8 +14,11 @@ import { strings } from "@/i18n/hu";
  * Everything that is a preference rather than a profile.
  *
  * Kept separate from `edit-profile`, which is about who other people see; a
- * theme is about this device. For now the screen holds one section, but it is
- * the surface the settings gear on the profile header has been missing.
+ * theme is about this device.
+ *
+ * It is also where anything that is not a screen of its own ends up: the legal
+ * documents are linked from here because this is where somebody looks when
+ * they want to know what they agreed to.
  */
 export default function SettingsScreen() {
   const { preference, resolved, hydrated, setPreference } = useTheme();
@@ -51,6 +55,28 @@ export default function SettingsScreen() {
               blurb={strings.settings.themeSystemNow(strings.settings.themes[resolved])}
               selected={hydrated && preference === "system"}
               onPress={() => setPreference("system")}
+            />
+          </View>
+
+          <View style={{ gap: space.xs }}>
+            <Text variant="heading">{strings.settings.legal}</Text>
+          </View>
+
+          <View style={{ gap: space.sm }}>
+            <LinkRow
+              href="/legal/adatvedelem"
+              label={strings.settings.legalPrivacy}
+              blurb={strings.settings.legalPrivacyHint}
+            />
+            <LinkRow
+              href="/legal/feltetelek"
+              label={strings.settings.legalTerms}
+              blurb={strings.settings.legalTermsHint}
+            />
+            <LinkRow
+              href="/legal/impresszum"
+              label={strings.settings.legalImprint}
+              blurb={strings.settings.legalImprintHint}
             />
           </View>
         </ScrollView>
@@ -108,6 +134,42 @@ function ThemeRow({
 
       {selected ? <CheckIcon /> : <View style={{ width: 16 }} />}
     </Pressable>
+  );
+}
+
+/**
+ * A row that opens a document.
+ *
+ * The only place in the app that navigates with `Link` rather than
+ * `router.push`, and deliberately so: on the web `Link` renders a real
+ * anchor, and these three are the routes somebody actually wants to
+ * middle-click, open in a second tab and read alongside the form they are
+ * filling in. Everywhere else in the app a row is a control, not an address.
+ *
+ * `asChild` hands the href and the press handler to the Pressable below rather
+ * than wrapping it in a second element, so the row keeps its own layout.
+ */
+function LinkRow({
+  href,
+  label,
+  blurb,
+}: {
+  href: Href;
+  label: string;
+  blurb: string;
+}) {
+  return (
+    <Link href={href} asChild>
+      <Pressable accessibilityRole="link" accessibilityLabel={label} style={styles.row}>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text variant="subheading">{label}</Text>
+          <Text variant="caption" tone="faint">
+            {blurb}
+          </Text>
+        </View>
+        <ChevronRightIcon />
+      </Pressable>
+    </Link>
   );
 }
 
