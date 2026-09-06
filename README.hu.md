@@ -1079,6 +1079,96 @@ kell hely, ahol elolvasható; a kártya a számokat viszi, és odavezet. Ugyanez
 érvelés küldi a tetszés- és hozzászólás-értesítést a bejegyzésre, nem a produkció
 adatlapjára, ami ennek a rossz vége.
 
+## Egy harmadik számláló, ami sosem volt igaz — és a kijárat az alkalmazásból
+
+A `0032` őszintévé tette a kedvelés- és hozzászólás-számlálókat, és le is írta,
+miért voltak rosszak: a trigger annak a nevében fut, aki megnyomta a gombot, a
+sor pedig, amit frissítenie kell, valaki máshoz tartozik — és **az az UPDATE,
+amit az RLS nullára szűkít, nem hiba**. Ugyanez a mondat írja le a
+`recompute_play_rating()` függvényt is, amit viszont senki nem nézett vissza.
+
+Az soha, egyetlen egyszer sem frissített értékelést. Annak a nevében fut, aki a
+kritikát írta, a `plays_update_own` pedig a `0001_init.sql` óta a
+`created_by = auth.uid()` sorokra korlátozza az UPDATE-et — így minden olyan
+naplózás, amit nem az előadás felvevője írt, csendben nem csinált semmit. A
+javítás előtt mérve: az értékelést hordozó 14 kritikából **13 olyan előadáson
+ült, amelyik továbbra is `rating_overall = 0.0` és `rating_count = 0` értéket
+mutatott**. Az előadásoldal pontszáma, a naplózás gombja fölötti hisztogram és a
+`rating_overall` szerint rendező „Népszerű" sáv mind egy olyan oszlopot
+olvasott, amelyet a rendes használat soha nem írt.
+
+Az az egyetlen sor, amelyiken mégis volt értékelés, épp ezt takarta el: egy
+olyan előadás, amelynek az értékelője egyben a felvevője is — pontosan az az
+eset, amit a szabály átenged.
+
+A `0036_ratings_that_move_and_accounts_that_close.sql` `security definer`-ré
+teszi — ez nem optimalizálás, hanem az egyetlen módja annak, hogy egy trigger
+származtatott értéket tartson karban egy olyan soron, amit a végrehajtója nem
+írhat, márpedig egy nyilvános átlag definíció szerint ilyen —, visszavonja az
+`EXECUTE` jogot, hogy ne legyen belőle RPC, és visszatölti a meglévő sorokat.
+Ma már semmi nem mond ellent a kritikáknak, és 17 előadáson van értékelés a
+korábbi 4 helyett.
+
+### Úgy került elő, hogy valaki távozni akart
+
+Az alkalmazás nem tudott fiókot törölni, ami a weben GDPR-kötelezettség, és
+mindkét alkalmazásbolt kemény követelménye. A
+`supabase/functions/delete-account` a projekt első Edge Functionje, és egyetlen
+okból létezik: az `auth.admin.deleteUser` a service-role kulcsot igényli, az
+pedig nem szállítható egy olyan bundle-ben, amit bárki elolvashat.
+
+Alig van benne törlő kód. Az idegen kulcsok a `0001` óta helyesek — a
+`profiles`, `reviews`, `watchlist_entries`, `follows`, `subject_follows`,
+`lists`, `review_likes`, `review_comments` és `notifications` mind
+kaszkádol —, így az auth-felhasználó törlése az egészet elviszi. **A tárhely az,
+amihez kód kell**, mert a tárolt objektumoknak nincs idegen kulcsuk az
+`auth.users` felé, és csendben túlélnék a fiókot. Ez a `stubs` esetében
+számít a legtöbbet: egy nyilvános tároló, tele jegyfotókkal, amiken név és
+foglalási azonosító van, az az egyetlen hely itt, ahol az „elfelejtettük
+kitakarítani" adatvédelmi incidens, nem pedig rendetlenség.
+
+Egy tárolót szándékosan békén hagyunk. A `posters` a `user/<uid>/…` alatt
+olyan borítóképet tart, amelyik egy őt túlélő előadáshoz tartozik — a
+`plays.created_by` `on delete set null`, mert mások naplóbejegyzései
+hivatkoznak ezekre a sorokra —, így a kép törlése ugyanaz a hiba lenne, mint
+magának az előadásnak a törlése. A megerősítő szöveg ki is mondja, mert ha
+valaki utólag szembesülne vele, az úgy hatna, mintha a törlés nem működött volna.
+
+És így került elő az értékelési hiba. Egy auth-felhasználó törlése kaszkádol a
+`reviews` és a `lists` felé, a GoTrue pedig ezt `supabase_auth_admin`
+néven végzi — egy olyan szerep nevében, amelynek semmilyen joga nincs a
+`public` sémában. Mindkét DELETE-re elsülő trigger egy olyan táblát próbált
+frissíteni, amihez nem nyúlhat, így a törlés visszagördült, **„Database error
+deleting user"** üzenettel — ami a réteget nevezi meg, mást semmit. Ugyanezt a
+sort kézzel, `postgres` néven törölve tökéletesen működött, és pont ettől tűnt
+úgy, mintha a hiba a függvényben lenne, nem a sémában. A
+`list_items_touch_list()` ugyanebben a hibában szenvedett, csak észre sem
+vette senki, mert a rendes úton a lista tulajdonosa és a végrehajtó ugyanaz.
+
+### És a többi ajtó, ami nem volt ott
+
+Még három dolog, amit egy fiók nem tudott — mind előfeltétel, nem funkció:
+
+- **Elvinni magával az adatait.** A `services/accountService.ts` egyetlen
+  JSON-fájlba írja ki a naplót, az értékeléseket, a listákat, a kívánságlistát és
+  a követéseket. Csak böngészőben, és ezt ki is mondja, ugyanúgy, ahogy a
+  megosztókártya teszi.
+- **Visszaszerezni egy jelszót.** Itt nincs OAuth-szolgáltató, nincs varázslink
+  és nincs második faktor, így egy elfelejtett jelszó megszüntette a fiókot. A
+  `forgot-password` és a `reset-password` ezt zárja le. A jelszóváltó képernyő
+  nem olvas tokent: az e-mailben küldött link hordoz egyet, a
+  `detectSessionInUrl` ezt még a képernyő megjelenése előtt rövid életű
+  munkamenetre váltja, és ami marad, az egy hétköznapi jelszóváltás.
+- **Elolvasni, mihez járult hozzá.** Az `app/legal/` tartalmazza az
+  adatkezelési tájékoztatót, a felhasználási feltételeket és az impresszumot, a
+  szöveg pedig az `i18n/legal.ts`-ben él. Ezek rendes route-ok, így az
+  `expo export` előrendereli őket, az nginx pedig sima URL-en, munkamenet
+  nélkül szolgálja ki — amire a Google Play fióktörlési URL-követelményének is
+  szüksége lesz majd. Az adatkezelési tájékoztató azzal kezd, amit egy sablon
+  soha nem mondana ki: hogy a `reviews_select_all` a `0001` óta bárki számára
+  olvashatóvá tesz minden naplóbejegyzést, és hogy egy jegyfotón általában rajta
+  van a neved és a foglalási azonosítód, egy nyilvános tárolóban.
+
 ## Az évadot számoljuk, nem a naptári évet
 
 Senki nem naptári években számolja a színházba járását. A magyar évad

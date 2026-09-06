@@ -1025,6 +1025,90 @@ conversation needs somewhere to be read; the card carries the counts and leads
 there. The same reasoning sends a like or comment notification to the entry
 rather than to the production page, which is the wrong end of it.
 
+## A third counter that was never true, and the way out of the app
+
+`0032` made the like and comment counters honest and wrote down why they had
+been wrong: the trigger fires as the person who pressed the button, the row it
+must update belongs to somebody else, and **an UPDATE that RLS narrows to zero
+rows is not an error**. The same sentence turned out to describe
+`recompute_play_rating()`, which nobody went back and checked.
+
+It has never once updated a rating. It fires as whoever wrote the review, and
+`plays_update_own` from `0001_init.sql` restricts UPDATE to `created_by =
+auth.uid()` — so every check-in by somebody who did not add the production
+themselves silently changed nothing. Measured before the fix: of the 14 reviews
+carrying a rating, **13 sat on productions still reading `rating_overall = 0.0`
+and `rating_count = 0`**. Play Detail's score, the histogram above the log
+button, and the "Népszerű" rail that sorts by `rating_overall` were all reading
+a column that ordinary use had never written.
+
+The one row that did have a rating is what hid it: a production whose rater also
+created it, which is precisely the case the policy lets through.
+
+`0036_ratings_that_move_and_accounts_that_close.sql` makes it `security
+definer` — not an optimisation, but the only way a trigger can maintain a
+derived value on a row its actor may not write, which is what a public average
+is by definition — revokes `EXECUTE` so it does not become an RPC, and
+backfills. Nothing now disagrees with the reviews, and 17 productions carry a
+rating where 4 did.
+
+### It was found by trying to leave
+
+The app had no way to delete an account, which is a GDPR obligation on the web
+and a hard requirement of both app stores. `supabase/functions/delete-account`
+is the first Edge Function in this project, and it exists for one reason:
+`auth.admin.deleteUser` needs the service-role key, which cannot ship in a
+bundle anyone can read.
+
+Almost nothing in it is deletion code. The foreign keys have been right since
+`0001` — `profiles`, `reviews`, `watchlist_entries`, `follows`,
+`subject_follows`, `lists`, `review_likes`, `review_comments` and
+`notifications` all cascade — so removing the auth user removes the lot.
+**Storage is the part that needs code**, because objects have no foreign key to
+`auth.users` and would outlive the account in silence. That matters most for
+`stubs`: a public bucket of ticket photographs with names and booking codes on
+them is the one place here where forgetting to clean up is a breach rather than
+untidiness.
+
+One bucket is deliberately left alone. `posters` holds `user/<uid>/…` cover
+art belonging to a production that *survives* its author — `plays.created_by`
+is `on delete set null`, because other people's diary entries point at those
+rows — so deleting the artwork would be the same mistake as deleting the play.
+The confirmation says so in as many words, since finding it out afterwards would
+feel like the deletion had not worked.
+
+And this is how the rating bug surfaced. Deleting an auth user cascades into
+`reviews` and `lists`, and GoTrue performs that as `supabase_auth_admin`, a
+role with no grants at all in `public`. Both triggers that fire on DELETE tried
+to update a table it cannot touch, so the delete rolled back as **"Database
+error deleting user"** — a message naming the layer and nothing else. Deleting
+the same row by hand as `postgres` worked perfectly, which is exactly what made
+it look like a bug in the function rather than in the schema.
+`list_items_touch_list()` had the same fault and had simply never been noticed,
+because on the ordinary path the list's owner and the actor are the same person.
+
+### And the other doors that were not there
+
+Three more things an account could not do, all of them prerequisites rather than
+features:
+
+- **Leave with its data.** `services/accountService.ts` writes the diary,
+  ratings, lists, watchlist and follows out as one JSON file. Web only, and it
+  says so, the same way the share card does.
+- **Recover a password.** There is no OAuth provider, no magic link and no
+  second factor here, so a forgotten password ended the account. `forgot-password`
+  and `reset-password` close that. The reset screen reads no token: the emailed
+  link carries one, `detectSessionInUrl` exchanges it for a short-lived session
+  before the screen renders, and what remains is an ordinary password change.
+- **Read what it agreed to.** `app/legal/` carries the privacy policy, the
+  terms and the impresszum, with the copy in `i18n/legal.ts`. They are ordinary
+  routes so `expo export` pre-renders them and nginx serves them at a plain URL
+  with no session — which is also what Google Play's account-deletion URL
+  requirement will need. The privacy policy leads with the thing a template
+  would never say: that `reviews_select_all` has made every diary entry
+  world-readable since `0001`, and that a ticket stub usually carries your name
+  and booking code into a public bucket.
+
 ## Counting the évad, not the calendar year
 
 Nobody counts their theatregoing in calendar years. The Hungarian season runs
