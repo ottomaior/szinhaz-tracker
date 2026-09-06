@@ -141,6 +141,16 @@ but wrong.
 
 ## Phase 5 — Launch readiness
 
+- **5.0 React still fails to hydrate on every route.** Found while verifying the Phase 1 deploy:
+  production throws `Minified React error #425` (text content did not match), then #418 and #422,
+  on **every** page — including `/discover`, which Phase 1 never touched, so this is long-standing
+  rather than new. `nginx.conf` carries a long comment explaining that the `try_files $uri.html`
+  fix cured exactly these errors; it evidently cured only the *routing* half, and something in the
+  render still differs between server and client. The cost is that static rendering is being paid
+  for and thrown away on first paint — the thing that comment says must not happen. Worth
+  diagnosing with a non-minified build before Phase 5.4 touches per-route `<Head>`, since that
+  works in the same area. Likely suspects: something reading the viewport during render
+  (`useSafeAreaInsets`, `hooks/useBreakpoint.ts`) or a font-dependent measurement.
 - **5.1 Error monitoring.** There is none — no Sentry, no PostHog, nothing but `console.log` in the sync script. Do this *before* the first real users.
 - **5.2 Product gaps.** A venue/theatre detail screen (followed venues currently route to a filtered Discover because no venue page exists). Playwright names are not linkable, though performers and directors are.
 - **5.3 Adopt the Supabase CLI.** 36 migrations have been applied by hand, and the README tells a new developer to run them all in order. `supabase link` + `supabase db push`, plus generated `database.types.ts`.

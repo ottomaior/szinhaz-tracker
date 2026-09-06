@@ -147,6 +147,17 @@ alapján született, amik nemcsak kevesek, hanem hibásak is voltak.
 
 ## 5. fázis — Indulási készenlét
 
+- **5.0 A React máig nem tud hidratálni egyetlen route-on sem.** Az 1. fázis telepítésének
+  ellenőrzésekor derült ki: az éles oldal `Minified React error #425` (a szöveges tartalom nem
+  egyezett), majd #418 és #422 hibát dob **minden** oldalon — beleértve a `/discover`-t is, amihez
+  az 1. fázis hozzá sem nyúlt, tehát ez régi, nem új probléma. Az `nginx.conf` hosszan magyarázza,
+  hogy a `try_files $uri.html` javítás pontosan ezeket a hibákat szüntette meg; láthatóan csak az
+  *útválasztási* felét gyógyította meg, és a renderben marad valami, ami eltér a szerver és a
+  kliens között. A költsége az, hogy a statikus renderelést megfizetjük, majd az első festéskor
+  eldobjuk — épp az, amiről az a komment azt mondja, hogy nem szabad megtörténnie. Érdemes egy nem
+  minifikált buildtel megvizsgálni, mielőtt az 5.4 hozzányúl a route-onkénti `<Head>`-hez, mert az
+  ugyanezt a területet érinti. Valószínű gyanúsítottak: valami, ami render közben olvassa a
+  nézetablakot (`useSafeAreaInsets`, `hooks/useBreakpoint.ts`), vagy egy betűtípustól függő mérés.
 - **5.1 Hibafigyelés.** Semmi nincs — se Sentry, se PostHog, csak `console.log` a szinkronizáló szkriptben. Ezt *az első valódi felhasználók előtt* kell megcsinálni.
 - **5.2 Termékhiányok.** Játszóhely-/színházoldal (a követett színházak ma szűrt Felfedezésre visznek, mert nincs saját oldaluk). A szerzők neve nem kattintható, pedig a színészeké és a rendezőké igen.
 - **5.3 A Supabase CLI bevezetése.** 36 migráció ment fel kézzel, és a README azt mondja egy új fejlesztőnek, hogy futtassa le mindet sorban. `supabase link` + `supabase db push`, plusz generált `database.types.ts`.
