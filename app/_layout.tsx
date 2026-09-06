@@ -1,11 +1,13 @@
 import { useEffect } from "react";
 import { Stack } from "expo-router";
+import Head from "expo-router/head";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useAppFontsSettled } from "@/hooks/useAppFonts";
 import { colors } from "@/theme/colors";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { strings } from "@/i18n/hu";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -39,31 +41,38 @@ export default function RootLayout() {
     <AuthProvider>
       <ThemeProvider>
         <SafeAreaProvider>
-        <StatusBar style="light" />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: colors.bg },
-          }}
-        >
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="play/[id]" options={{ animation: "slide_from_right" }} />
-          <Stack.Screen name="user/[id]" options={{ animation: "slide_from_right" }} />
-          <Stack.Screen name="person/[slug]" options={{ animation: "slide_from_right" }} />
-          <Stack.Screen name="list/[id]" options={{ animation: "slide_from_right" }} />
-          <Stack.Screen name="entry/[id]" options={{ animation: "slide_from_right" }} />
-          <Stack.Screen name="season/[start]" options={{ animation: "slide_from_right" }} />
-          <Stack.Screen name="lists" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
-          <Stack.Screen name="onboarding" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
-          <Stack.Screen name="people" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
-          <Stack.Screen name="inbox" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
-          <Stack.Screen name="edit-profile" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
-          <Stack.Screen name="settings" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
-          <Stack.Screen name="checkin" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
-          <Stack.Screen name="add-play" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
-          <Stack.Screen name="sign-in" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
-          <Stack.Screen name="sign-up" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
-        </Stack>
+          {/* app/+html.tsx already titles the served document, which is what a
+              crawler and the loading tab see. This is for after hydration:
+              expo-router mounts react-helmet, which inserts its own empty
+              <title> and wins on document.title unless something claims it. */}
+          <Head>
+            <title>{strings.appName}</title>
+          </Head>
+          <StatusBar style="light" />
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: colors.bg },
+            }}
+          >
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="play/[id]" options={{ animation: "slide_from_right" }} />
+            <Stack.Screen name="user/[id]" options={{ animation: "slide_from_right" }} />
+            <Stack.Screen name="person/[slug]" options={{ animation: "slide_from_right" }} />
+            <Stack.Screen name="list/[id]" options={{ animation: "slide_from_right" }} />
+            <Stack.Screen name="entry/[id]" options={{ animation: "slide_from_right" }} />
+            <Stack.Screen name="season/[start]" options={{ animation: "slide_from_right" }} />
+            <Stack.Screen name="lists" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+            <Stack.Screen name="onboarding" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+            <Stack.Screen name="people" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+            <Stack.Screen name="inbox" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+            <Stack.Screen name="edit-profile" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+            <Stack.Screen name="settings" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+            <Stack.Screen name="checkin" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+            <Stack.Screen name="add-play" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+            <Stack.Screen name="sign-in" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+            <Stack.Screen name="sign-up" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+          </Stack>
         </SafeAreaProvider>
       </ThemeProvider>
     </AuthProvider>
