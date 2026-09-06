@@ -75,6 +75,7 @@ export function SelectChip({
         onPress={() => setOpen(true)}
         accessibilityRole="button"
         accessibilityLabel={`${name}: ${selected?.label ?? strings.discover.filterAll}`}
+        aria-expanded={open}
         accessibilityState={{ expanded: open }}
         style={[styles.chip, active ? styles.chipActive : styles.chipIdle]}
       >
@@ -130,6 +131,7 @@ export function SelectChip({
                       setOpen(false);
                     }}
                     accessibilityRole="button"
+                    aria-pressed={isSelected}
                     accessibilityState={{ selected: isSelected }}
                     style={styles.option}
                   >

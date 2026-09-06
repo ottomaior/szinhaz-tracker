@@ -34,6 +34,7 @@ export function Button({
       disabled={isBlocked}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
+      aria-busy={loading}
       accessibilityState={{ disabled: isBlocked, busy: loading }}
       style={[styles.base, isPrimary ? styles.primary : styles.outline, isBlocked && styles.blocked, style]}
     >
@@ -73,6 +74,7 @@ export function IconButton({
       disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
+      aria-pressed={active}
       accessibilityState={{ disabled, selected: active }}
       hitSlop={6}
       style={[

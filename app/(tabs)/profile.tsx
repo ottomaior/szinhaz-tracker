@@ -136,6 +136,7 @@ export default function ProfileScreen() {
                 style={styles.headerBtn}
                 onPress={() => setConfirmingSignOut((s) => !s)}
                 accessibilityRole="button"
+                aria-expanded={confirmingSignOut}
                 accessibilityState={{ expanded: confirmingSignOut }}
               >
                 <Text variant="label" tone="dim">{strings.auth.signOut}</Text>
@@ -215,6 +216,7 @@ export default function ProfileScreen() {
                 key={t}
                 onPress={() => setActiveTab(t)}
                 accessibilityRole="tab"
+                aria-selected={activeTab === t}
                 accessibilityState={{ selected: activeTab === t }}
                 style={[styles.tabItem, activeTab === t && styles.tabItemActive]}
               >

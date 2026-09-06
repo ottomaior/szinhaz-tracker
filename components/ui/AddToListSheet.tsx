@@ -124,6 +124,8 @@ export function AddToListSheet({
                   onPress={() => toggle(list)}
                   disabled={!!busyId}
                   accessibilityRole="button"
+                  aria-pressed={isIn}
+                  aria-busy={busyId === list.id}
                   accessibilityState={{ selected: isIn, busy: busyId === list.id }}
                   style={[styles.option, busyId === list.id && { opacity: 0.5 }]}
                 >

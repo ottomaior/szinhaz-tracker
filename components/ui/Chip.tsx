@@ -18,6 +18,7 @@ export function Chip({
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={label}
+      aria-pressed={active}
       accessibilityState={{ selected: active }}
       style={[styles.base, active ? styles.active : styles.inactive]}
     >

@@ -538,6 +538,7 @@ export default function DiscoverScreen() {
                   onPress={() => setMode(value)}
                   style={[styles.segment, mode === value && styles.segmentActive]}
                   accessibilityRole="tab"
+                  aria-selected={mode === value}
                   accessibilityState={{ selected: mode === value }}
                   accessibilityLabel={label}
                 >

@@ -198,6 +198,7 @@ export default function AddPlayScreen() {
             hitSlop={12}
             disabled={submitting}
             accessibilityRole="button"
+            aria-busy={submitting}
             accessibilityState={{ disabled: submitting, busy: submitting }}
           >
             <Text variant="label" tone="accent" style={{ opacity: submitting ? 0.55 : 1 }}>
@@ -239,6 +240,7 @@ export default function AddPlayScreen() {
               disabled={uploadingPoster}
               hitSlop={8}
               accessibilityRole="button"
+              aria-busy={uploadingPoster}
               accessibilityState={{ disabled: uploadingPoster, busy: uploadingPoster }}
             >
               <Text variant="label" tone="accent" style={{ opacity: uploadingPoster ? 0.55 : 1 }}>

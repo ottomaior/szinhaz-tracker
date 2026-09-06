@@ -80,6 +80,7 @@ export function MaskRatingRow({
             hitSlop={6}
             accessibilityRole="radio"
             accessibilityLabel={`${i + 1}/5`}
+            aria-checked={filled === i + 1}
             accessibilityState={{ checked: filled === i + 1 }}
           >
             <MaskIcon state={i < filled ? "on" : "off"} size={size} />

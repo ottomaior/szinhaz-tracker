@@ -143,6 +143,7 @@ export function ReviewSocial({
           disabled={busy}
           hitSlop={8}
           accessibilityRole="button"
+          aria-pressed={liked}
           accessibilityState={{ selected: liked }}
           accessibilityLabel={session ? strings.social.like : strings.social.signInToLike}
           style={styles.likeButton}

@@ -174,21 +174,22 @@ export default function OnboardingScreen() {
                     key={play.id}
                     onPress={() => toggle(play.id)}
                     /*
-                     * ARIA props throughout, and deliberately not mixed with
-                     * the `accessibility*` ones the rest of the app uses.
+                     * ARIA props throughout.
                      *
-                     * `accessibilityState={{ checked }}` renders nothing on web
-                     * with this react-native-web: the DOM came out as
-                     * role="checkbox" with no checked state, so the only thing
-                     * saying a tile was ticked was the gold overlay — visible,
-                     * and invisible to a screen reader. Adding `aria-checked`
-                     * beside the legacy props was worse still: this version
-                     * accepts one convention or the other, and the mixture made
-                     * it drop the role and the label as well, leaving sixty
-                     * unlabelled divs.
+                     * `accessibilityState={{ checked }}` renders nothing on web:
+                     * react-native-web 0.19 has no handling for the object at
+                     * all, so the DOM came out as role="checkbox" with no
+                     * checked state, and the only thing saying a tile was ticked
+                     * was the gold overlay — visible, and invisible to a screen
+                     * reader.
                      *
-                     * React Native 0.71+ accepts `role` and `aria-*` natively,
-                     * so one set of props serves both platforms.
+                     * This comment used to claim that mixing `aria-*` with the
+                     * `accessibility*` props made it drop the role and label too.
+                     * That is not what this version does: createDOMProps resolves
+                     * every pair as `aria ?? accessibility`, so the two spellings
+                     * coexist and the ARIA one simply wins. The rest of the app
+                     * now passes both, because React Native 0.71+ accepts
+                     * `aria-*` natively and the legacy props still carry native.
                      */
                     role="checkbox"
                     aria-checked={isSelected}

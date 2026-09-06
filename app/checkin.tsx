@@ -455,6 +455,7 @@ export default function CheckInScreen() {
             hitSlop={12}
             disabled={saving}
             accessibilityRole="button"
+            aria-busy={saving}
             accessibilityState={{ disabled: saving, busy: saving }}
           >
             <Text variant="label" tone="accent" style={{ opacity: saving ? 0.55 : 1 }}>

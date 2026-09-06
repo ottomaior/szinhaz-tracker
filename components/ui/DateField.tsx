@@ -86,6 +86,7 @@ export function DateField({
         }}
         accessibilityRole="button"
         accessibilityLabel={`${label}: ${chipLabel}`}
+        aria-expanded={open}
         accessibilityState={{ expanded: open }}
         style={styles.chip}
       >
@@ -155,6 +156,7 @@ export function DateField({
                     disabled={isFuture}
                     onPress={() => choose(dayKey)}
                     accessibilityRole="button"
+                    aria-pressed={isSelected}
                     accessibilityState={{ selected: isSelected, disabled: isFuture }}
                     accessibilityLabel={formatLongDate(`${dayKey}T12:00:00Z`)}
                     style={[styles.cell, styles.dayCell, isSelected && styles.dayCellSelected]}
@@ -183,6 +185,7 @@ function QuickPick({ label, active, onPress }: { label: string; active: boolean;
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
+      aria-pressed={active}
       accessibilityState={{ selected: active }}
       style={[styles.quick, active ? styles.quickActive : styles.quickIdle]}
     >
@@ -190,7 +193,7 @@ function QuickPick({ label, active, onPress }: { label: string; active: boolean;
         style={{
           fontFamily: bodyFont(fontsLoaded, active ? "bold" : "medium"),
           fontSize: 12.5,
-          color: active ? colors.bg : colors.textDim,
+          color: active ? colors.onAccent : colors.textDim,
         }}
       >
         {label}

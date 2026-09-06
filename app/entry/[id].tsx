@@ -318,6 +318,7 @@ export default function DiaryEntryScreen() {
               <Pressable
                 onPress={() => setConfirmingDelete((s) => !s)}
                 accessibilityRole="button"
+                aria-expanded={confirmingDelete}
                 accessibilityState={{ expanded: confirmingDelete }}
                 style={styles.ownerButton}
               >
