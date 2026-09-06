@@ -1,20 +1,31 @@
-import { Children, useState, type ReactNode } from "react";
-import { View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from "react-native";
+import { Children, type ReactNode } from "react";
+import { View, type StyleProp, type ViewStyle } from "react-native";
 import { space } from "@/theme/tokens";
 import { useResponsive } from "@/hooks/useBreakpoint";
 
 /**
  * A responsive tile grid.
  *
- * Column count comes from the viewport, but the tile width is computed from
- * the grid's own measured width rather than from a percentage. That matters
- * because percentages and `gap` fight each other — four tiles at 25% plus
- * three gaps overflows the row — and because the grid sits inside a
- * width-capped Screen, so the window width is not what it is dividing up.
+ * Column count comes from the viewport; the gutter is a percentage-safe one
+ * rather than flex `gap`.
  *
- * The old layout hardcoded `width: "47.5%"`, which on a desktop browser gave
- * two tiles roughly 580 points wide: a browsing thumbnail rendered larger than
- * the play detail hero.
+ * The layout this replaced hardcoded `width: "47.5%"`, which on a desktop
+ * browser gave two tiles roughly 580 points wide — a browsing thumbnail
+ * rendered larger than the play detail hero. The fix for that measured the
+ * grid's own width with `onLayout` and divided it, holding the tiles back until
+ * the first layout pass so they would not flash at full width and reflow.
+ *
+ * That traded a flash for something worse: **a grid that renders nothing at all
+ * if the layout event never arrives**, which is exactly what the onboarding
+ * grid did inside a modal — a 335pt-wide container with zero children and no
+ * skeleton, no empty state and no error, because as far as the component was
+ * concerned it had not been measured yet.
+ *
+ * So there is no measurement any more. Percentages and `gap` fight each other —
+ * four tiles at 25% plus three gaps overflow the row — so the gutter is applied
+ * as padding *inside* each tile's wrapper, with a negative margin on the
+ * container to pull the outer edges back flush. That is exact at any width,
+ * needs nothing measured, and cannot fail to draw.
  */
 export function Grid({
   children,
@@ -28,23 +39,21 @@ export function Grid({
   columns?: { compact: number; medium?: number; expanded?: number; wide?: number };
   style?: StyleProp<ViewStyle>;
 }) {
-  const [width, setWidth] = useState(0);
   const cols = useResponsive(columns ?? { compact: 2, medium: 3, expanded: 4, wide: 5 });
-
-  const onLayout = (e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width);
-  const tileWidth = width > 0 ? (width - gap * (cols - 1)) / cols : undefined;
+  const half = gap / 2;
 
   return (
-    <View onLayout={onLayout} style={[{ flexDirection: "row", flexWrap: "wrap", gap }, style]}>
-      {/* Until the first layout pass there is no width to divide, so tiles are
-          held back rather than flashing at full width and reflowing. */}
-      {tileWidth === undefined
-        ? null
-        : Children.map(children, (child, i) => (
-            <View key={i} style={{ width: tileWidth }}>
-              {child}
-            </View>
-          ))}
+    <View
+      style={[
+        { flexDirection: "row", flexWrap: "wrap", marginHorizontal: -half },
+        style,
+      ]}
+    >
+      {Children.map(children, (child, i) => (
+        <View key={i} style={{ width: `${100 / cols}%`, paddingHorizontal: half, paddingBottom: gap }}>
+          {child}
+        </View>
+      ))}
     </View>
   );
 }

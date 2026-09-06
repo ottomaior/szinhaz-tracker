@@ -11,15 +11,18 @@ import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
 import {
   countUserEntriesForPlay,
+  findBlankEntryForPlay,
   getPerformancesOnDay,
   getPlayById,
+  getReviewById,
   getVenueById,
   submitReview,
+  updateReview,
   uploadStub,
 } from "@/services/playsService";
 import { searchPlays } from "@/services/searchService";
 import { useAuth } from "@/contexts/AuthContext";
-import type { Performance, Play, SeenCastMember, Venue } from "@/data/types";
+import type { Performance, Play, Review, SeenCastMember, Venue } from "@/data/types";
 import { parseTicketPrice } from "@/utils/money";
 import { personSlug } from "@/utils/people";
 import { PinIcon, SearchIcon } from "@/components/icons/Icons";
@@ -37,7 +40,11 @@ import { closeModal } from "@/utils/navigation";
 const MOMENT_TAGS = [strings.checkin.tagStandingOvation, strings.checkin.tagCried, strings.checkin.tagRecommend];
 
 export default function CheckInScreen() {
-  const { playId } = useLocalSearchParams<{ playId?: string }>();
+  // `reviewId` puts the form in edit mode. One screen rather than two, because
+  // logging an evening and correcting one you logged are the same set of
+  // questions — and a second screen asking them slightly differently is how the
+  // two drift.
+  const { playId, reviewId } = useLocalSearchParams<{ playId?: string; reviewId?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const fontsLoaded = useAppFonts();
@@ -47,6 +54,15 @@ export default function CheckInScreen() {
   const [saving, setSaving] = useState(false);
   const [playLoadFailed, setPlayLoadFailed] = useState(false);
   const [error, setError] = useState<string>();
+
+  // The entry being written to. Set from the route in edit mode, and set on its
+  // own when the chosen production already has a blank entry from onboarding —
+  // see `adoptBlankEntry` below.
+  const [editingId, setEditingId] = useState<string | undefined>(reviewId);
+  // Whether that id was adopted rather than asked for, which is the only case
+  // the screen has to explain itself in.
+  const [adoptedBlank, setAdoptedBlank] = useState(false);
+  const [prefilled, setPrefilled] = useState(false);
 
   // The evening being logged. Defaults to today, which is what most check-ins
   // are, and is now a real value the user can move rather than the wall clock
@@ -84,6 +100,78 @@ export default function CheckInScreen() {
       router.replace({ pathname: "/sign-in" });
     }
   }, [loading, session, router]);
+
+  /**
+   * Edit mode: load the entry and the production it belongs to, and put the
+   * form where the person left it.
+   *
+   * Guarded by `prefilled` rather than by the effect's deps alone, because the
+   * fields below are the same state the user is now typing into — re-running
+   * this would throw their edits away mid-sentence.
+   */
+  useEffect(() => {
+    if (!reviewId || prefilled || !session) return;
+    let active = true;
+    getReviewById(reviewId)
+      .then(async (review) => {
+        if (!active || !review) {
+          if (active) setPlayLoadFailed(true);
+          return;
+        }
+        const found = await getPlayById(review.playId);
+        if (!active) return;
+        if (!found) {
+          setPlayLoadFailed(true);
+          return;
+        }
+        setPlay(found);
+        applyEntry(review, found);
+        setPrefilled(true);
+      })
+      .catch(() => {
+        if (active) setPlayLoadFailed(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, [reviewId, prefilled, session]);
+
+  /**
+   * Fills the form from an existing entry.
+   *
+   * Shared by edit mode and by the blank-entry adoption below, so the two put
+   * the same review on screen the same way.
+   */
+  function applyEntry(review: Review, forPlay: Play) {
+    if (review.seenAt) setSeenAt(review.seenAt);
+    setPerformanceId(review.performanceId);
+    // `?? ` and not `||`: a real rating is never 0, but leaving these at the
+    // form's defaults for an entry that deliberately has none is the honest
+    // starting point — the save writes whatever is on screen.
+    if (review.ratingOverall !== undefined) setOverall(review.ratingOverall);
+    if (review.ratingActing !== undefined) setActing(review.ratingActing);
+    if (review.ratingDirecting !== undefined) setDirecting(review.ratingDirecting);
+    if (review.ratingSetDesign !== undefined) setSetDesign(review.ratingSetDesign);
+    setSelectedTags(review.tags);
+    setReviewText(review.text);
+    setSeat(review.seat ?? "");
+    setPrice(review.priceHuf !== undefined ? String(review.priceHuf) : "");
+    if (review.stubUrl) setStubPreview(review.stubUrl);
+
+    // The cast splits back into ticked and typed the way the form holds it.
+    const published = new Map(
+      (forPlay.cast ?? []).map((m) => [personSlug(m.name), m.name] as const)
+    );
+    const ticked = new Set<string>();
+    const typed: SeenCastMember[] = [];
+    for (const member of review.castSeen ?? []) {
+      const slug = personSlug(member.name);
+      if (!member.isAlternate && slug && published.has(slug)) ticked.add(slug);
+      else typed.push(member);
+    }
+    setSeenSlugs(ticked);
+    setAlternates(typed);
+  }
 
   useEffect(() => {
     // No playId means the user opened this straight from the tab bar plus
@@ -130,6 +218,35 @@ export default function CheckInScreen() {
       active = false;
     };
   }, [play]);
+
+  /**
+   * Adopt the blank entry onboarding left for this production, if there is one.
+   *
+   * Ticking something in the first-run flow writes a real diary row with no
+   * date and no rating — "seen it, cannot say when". Logging that same
+   * production properly then inserted a *second* row, so the diary and the feed
+   * showed it twice and neither copy could be corrected. Filling the blank one
+   * in is what the person meant.
+   *
+   * Not applied in edit mode, where the entry to write is already decided, and
+   * not applied to a real entry: seeing a production twice is ordinary here and
+   * `is_rewatch` exists for it. Only the placeholder is adopted.
+   */
+  useEffect(() => {
+    if (!play || reviewId || !session) return;
+    let active = true;
+    findBlankEntryForPlay(play.id)
+      .then((blank) => {
+        if (!active || !blank) return;
+        setEditingId(blank.id);
+        setAdoptedBlank(true);
+        applyEntry(blank, play);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [play, reviewId, session]);
 
   // Which of that day's showtimes it was. Asked about only when the catalogue
   // holds more than one — a production usually plays once on a given evening,
@@ -270,8 +387,7 @@ export default function CheckInScreen() {
     setError(undefined);
     setSaving(true);
     try {
-      await submitReview({
-        playId: play.id,
+      const entry = {
         seenAt,
         performanceId,
         ratingOverall: overall,
@@ -289,8 +405,18 @@ export default function CheckInScreen() {
             .map((c): SeenCastMember => ({ name: c.name, role: c.role, isAlternate: false })),
           ...alternates,
         ],
-      });
-      closeModal(router);
+      };
+
+      // One form, two writes. `editingId` is set in edit mode and when a blank
+      // onboarding entry was adopted; in both cases there is already a row for
+      // this evening and inserting a second is the bug, not the feature.
+      if (editingId) await updateReview(editingId, entry);
+      else await submitReview({ playId: play.id, ...entry });
+
+      // Back to where the entry lives rather than wherever the modal was opened
+      // from: somebody who has just corrected an entry wants to see it, and the
+      // diary is where they will look.
+      closeModal(router, editingId ? "/(tabs)/profile" : undefined);
     } catch (e) {
       // Without this catch the failed insert became an unhandled rejection and
       // the screen just sat there, making Save look like it did nothing.
@@ -322,7 +448,7 @@ export default function CheckInScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ModalHeader
-        title={strings.checkin.headerTitle}
+        title={editingId ? strings.checkin.editTitle : strings.checkin.headerTitle}
         action={
           <Pressable
             onPress={handleSave}
@@ -376,8 +502,21 @@ export default function CheckInScreen() {
             </View>
           </View>
 
-          {priorCount > 0 && (
-            <Text variant="caption" tone="accent">{strings.checkin.rewatchNotice(priorCount)}</Text>
+          {/* Said out loud, because the screen is quietly doing something other
+              than what the button that opened it implied: this is not a new
+              entry, it is the one already sitting in the diary with no date on
+              it. Filling it in silently would leave somebody wondering why
+              their diary did not grow. */}
+          {adoptedBlank && (
+            <Text variant="caption" tone="accent">{strings.checkin.completingBlank}</Text>
+          )}
+
+          {/* The rewatch line counts other entries, so it does not fire for the
+              blank one this form has adopted. */}
+          {!adoptedBlank && priorCount > (editingId ? 1 : 0) && (
+            <Text variant="caption" tone="accent">
+              {strings.checkin.rewatchNotice(priorCount - (editingId ? 1 : 0))}
+            </Text>
           )}
 
           {showtimes.length > 1 && (

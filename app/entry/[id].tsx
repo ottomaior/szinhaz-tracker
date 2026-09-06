@@ -4,7 +4,9 @@ import { Image } from "expo-image";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
 import { gutter, radius, space } from "@/theme/tokens";
-import { getDiaryEntry } from "@/services/playsService";
+import { deleteReview, getDiaryEntry } from "@/services/playsService";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/Button";
 import type { Performance, Play, Review, Venue } from "@/data/types";
 import { ChevronRightIcon } from "@/components/icons/Icons";
 import { MaskRatingRow } from "@/components/icons/MaskIcon";
@@ -36,6 +38,7 @@ import { personSlug } from "@/utils/people";
 export default function DiaryEntryScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const router = useRouter();
+  const { session } = useAuth();
 
   const [entry, setEntry] = useState<{
     review: Review;
@@ -47,6 +50,9 @@ export default function DiaryEntryScreen() {
   const [failed, setFailed] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [shareError, setShareError] = useState<string>();
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string>();
 
   useFocusEffect(
     useCallback(() => {
@@ -71,6 +77,22 @@ export default function DiaryEntryScreen() {
       };
     }, [id])
   );
+
+  async function handleDelete() {
+    if (!entry || deleting) return;
+    setDeleteError(undefined);
+    setDeleting(true);
+    try {
+      await deleteReview(entry.review.id);
+      // Straight to the diary, which is the list this row has just left — going
+      // "back" would land on whatever opened the screen, possibly a feed still
+      // showing the card that no longer exists.
+      router.replace("/(tabs)/profile");
+    } catch (e) {
+      setDeleteError(e instanceof Error ? e.message : strings.entry.deleteFailed);
+      setDeleting(false);
+    }
+  }
 
   async function handleShare() {
     if (!entry || sharing) return;
@@ -109,6 +131,7 @@ export default function DiaryEntryScreen() {
   if (!entry) return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
 
   const { review, play, venue, performance } = entry;
+  const isMine = !!session && session.user?.id === review.userId;
   const cast = review.castSeen ?? [];
   const hasEvening = cast.length > 0 || !!review.seat || review.priceHuf !== undefined || !!review.stubUrl;
 
@@ -277,6 +300,62 @@ export default function DiaryEntryScreen() {
             <Text variant="bodySmall" tone="faint">{strings.entry.nothingRecorded}</Text>
           )}
 
+          {/* Yours to change. The app could write a diary entry from three
+              places and unwrite one from none — the watchlist has had a remove
+              control since the beginning, and the diary, which is the harder
+              thing to undo, had none. */}
+          {isMine && (
+            <View style={styles.ownerActions}>
+              <Pressable
+                onPress={() =>
+                  router.push({ pathname: "/checkin", params: { reviewId: review.id } })
+                }
+                accessibilityRole="button"
+                style={styles.ownerButton}
+              >
+                <Text variant="label">{strings.entry.edit}</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setConfirmingDelete((s) => !s)}
+                accessibilityRole="button"
+                accessibilityState={{ expanded: confirmingDelete }}
+                style={styles.ownerButton}
+              >
+                <Text variant="label" tone="dim">{strings.entry.delete}</Text>
+              </Pressable>
+            </View>
+          )}
+
+          {/* Confirmed, unlike the watchlist's remove. A watchlist entry is one
+              row you can re-add in a tap; a diary entry can carry a date, a
+              cast, a seat, a price, a photograph and a conversation, and
+              deleting it takes all of them. */}
+          {isMine && confirmingDelete && (
+            <View style={styles.confirmCard}>
+              <Text variant="subheading">{strings.entry.deleteConfirmTitle}</Text>
+              <Text variant="bodySmall" tone="dim">{strings.entry.deleteConfirmBody}</Text>
+              {!!deleteError && (
+                <Text accessibilityRole="alert" variant="bodySmall" tone="accent">
+                  {deleteError}
+                </Text>
+              )}
+              <View style={{ flexDirection: "row", gap: space.md }}>
+                <Button
+                  label={strings.common.cancel}
+                  variant="outline"
+                  style={{ flex: 1 }}
+                  onPress={() => setConfirmingDelete(false)}
+                />
+                <Button
+                  label={deleting ? strings.entry.deleting : strings.entry.delete}
+                  style={{ flex: 1 }}
+                  disabled={deleting}
+                  onPress={handleDelete}
+                />
+              </View>
+            </View>
+          )}
+
           {/* The social half. It lives here rather than on the feed card
               because a conversation needs somewhere to be read, and the card is
               a summary — the feed's counters lead here for the same reason. */}
@@ -317,6 +396,22 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: space.lg,
     backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: space.md,
+  },
+  ownerActions: { flexDirection: "row", gap: space.sm, flexWrap: "wrap" },
+  ownerButton: {
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    borderRadius: 999,
+    paddingVertical: 9,
+    paddingHorizontal: 18,
+  },
+  confirmCard: {
+    gap: space.md,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.hairline,
     borderRadius: radius.lg,
     padding: space.md,
   },

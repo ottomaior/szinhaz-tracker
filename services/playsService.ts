@@ -988,6 +988,140 @@ export async function submitReview(input: {
 }
 
 /**
+ * The fields a diary entry holds that a person can change afterwards.
+ *
+ * Shared by `submitReview` and `updateReview` so the two cannot drift into
+ * accepting different things — which is exactly what would happen the next time
+ * a column is added and only the insert path learns about it.
+ */
+export type DiaryEntryInput = {
+  /** `YYYY-MM-DD` in Budapest — the evening, not the moment of writing. */
+  seenAt?: string;
+  /**
+   * The showtime, when the caller knows which one.
+   *
+   * Left undefined by the check-in form for anything with no matching date in
+   * the catalogue; resolved on write when exactly one performance of this
+   * production falls on `seenAt`.
+   */
+  performanceId?: string;
+  /** Omitted for a "seen it, not rating it" entry — see 0026. */
+  ratingOverall?: number;
+  ratingActing?: number;
+  ratingDirecting?: number;
+  ratingSetDesign?: number;
+  text: string;
+  tags: string[];
+  /** Where they sat, as they would say it. */
+  seat?: string;
+  /** Forints. Zero is a real answer, so this is checked for `undefined`, not falsiness. */
+  priceHuf?: number;
+  /** Path in the `stubs` bucket, already uploaded by `uploadStub`. */
+  stubPath?: string;
+  /** Who was on that night. */
+  castSeen?: SeenCastMember[];
+};
+
+/**
+ * Rewrites an entry somebody has already made.
+ *
+ * The app had no edit path at all, which mattered most for the entries it
+ * writes on the user's behalf: onboarding ticks a production with no date and
+ * no rating, and there was then no way to say when you had been or what you
+ * thought — the one screen that could have offered it only knew how to insert.
+ *
+ * `play_id` and `user_id` are deliberately not accepted. Moving an entry to a
+ * different production is not editing it, and the RLS policy would refuse the
+ * second in any case.
+ */
+export async function updateReview(reviewId: string, input: DiaryEntryInput): Promise<Review> {
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
+  if (!authUser) throw new Error("Sign in required");
+
+  const performanceId =
+    input.performanceId ?? (input.seenAt ? await solePerformanceOnForReview(reviewId, input.seenAt) : undefined);
+
+  const { data, error } = await supabase
+    .from("reviews")
+    .update({
+      seen_at: input.seenAt ?? null,
+      performance_id: performanceId ?? null,
+      rating_overall: input.ratingOverall ?? null,
+      rating_acting: input.ratingActing ?? null,
+      rating_directing: input.ratingDirecting ?? null,
+      rating_set_design: input.ratingSetDesign ?? null,
+      text: input.text,
+      tags: input.tags,
+      seat: input.seat?.trim() || null,
+      price_huf: input.priceHuf ?? null,
+      stub_path: input.stubPath ?? null,
+    })
+    .eq("id", reviewId)
+    // Belt and braces over `reviews_update_own`: an update RLS filters to zero
+    // rows is not an error, so without this a wrong id would report success.
+    .eq("user_id", authUser.id)
+    .select("*")
+    .single();
+  if (error) throw error;
+
+  // Replaced wholesale rather than diffed. The cast of one evening is a set of
+  // at most a dozen names, and working out which to add and which to remove
+  // costs more than rewriting it — and gets the "I ticked the wrong person"
+  // case wrong more often.
+  const { error: clearError } = await supabase.from("review_cast").delete().eq("review_id", reviewId);
+  if (clearError) throw clearError;
+
+  const cast = (input.castSeen ?? []).filter((c) => c.name.trim().length > 0);
+  if (cast.length > 0) {
+    await supabase.from("review_cast").insert(
+      cast.map((c) => ({
+        review_id: reviewId,
+        name: c.name.trim(),
+        role: c.role?.trim() || null,
+        is_alternate: c.isAlternate,
+      }))
+    );
+  }
+
+  return { ...toReview(data as ReviewRow), castSeen: cast };
+}
+
+/**
+ * Removes a diary entry.
+ *
+ * `reviews_delete_own` from 0001 has always allowed this and nothing ever
+ * called it, so an entry logged by mistake — or the duplicate you get by
+ * logging something you had already ticked — was permanent. The watchlist has
+ * had a remove control since the beginning; the diary is the harder thing to
+ * undo and had none.
+ *
+ * Likes, comments and `review_cast` all cascade, and `recompute_play_rating()`
+ * fires on delete, so the production's public average corrects itself.
+ */
+export async function deleteReview(reviewId: string): Promise<void> {
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
+  if (!authUser) throw new Error("Sign in required");
+
+  const { error } = await supabase
+    .from("reviews")
+    .delete()
+    .eq("id", reviewId)
+    .eq("user_id", authUser.id);
+  if (error) throw error;
+}
+
+/** The sole performance on a day, resolved from the review's own production. */
+async function solePerformanceOnForReview(reviewId: string, dayKey: string): Promise<string | undefined> {
+  const { data } = await supabase.from("reviews").select("play_id").eq("id", reviewId).maybeSingle();
+  const playId = (data?.play_id as string | undefined) ?? undefined;
+  return playId ? solePerformanceOn(playId, dayKey) : undefined;
+}
+
+/**
  * Puts a picked photo in the `stubs` bucket and returns its path.
  *
  * Always `<uid>/<file>`, which is the only shape the storage policy accepts and
@@ -1130,6 +1264,49 @@ export async function markManyAsSeen(playIds: string[]): Promise<number> {
   );
   if (error) throw error;
   return toInsert.length;
+}
+
+/**
+ * An entry this user already has for this production that says nothing yet.
+ *
+ * Precisely the shape onboarding writes — seen, no date, no rating, no text —
+ * and nothing else produces it, because the check-in form always records at
+ * least a rating. Logging such a production properly should fill that entry in
+ * rather than leave a blank one sitting beside a real one in the diary, which
+ * is what happens today and reads as a duplicate.
+ *
+ * Only the first is returned. Two blanks for one production cannot arise:
+ * `tickSeenPlays` skips anything already logged.
+ */
+export async function findBlankEntryForPlay(playId: string): Promise<Review | undefined> {
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
+  if (!authUser) return undefined;
+
+  const { data, error } = await supabase
+    .from("reviews")
+    .select("*")
+    .eq("play_id", playId)
+    .eq("user_id", authUser.id)
+    .is("seen_at", null)
+    .is("rating_overall", null)
+    .order("created_at", { ascending: true })
+    .limit(1);
+  if (error) throw error;
+  const row = (data ?? [])[0];
+  return row ? toReview(row as ReviewRow) : undefined;
+}
+
+/** One diary entry by id, for the edit form. */
+export async function getReviewById(reviewId: string): Promise<Review | undefined> {
+  const { data, error } = await supabase
+    .from("reviews")
+    .select("*, review_cast (name, role, is_alternate)")
+    .eq("id", reviewId)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? toReview(data as ReviewRow) : undefined;
 }
 
 /** How many times this user has already logged this production. */

@@ -38,6 +38,10 @@ export const strings = {
   feed: {
     /** Only shown when the evening differs from the day the entry was posted. */
     seenOn: (date: string) => `látta: ${date}`,
+    /* An entry ticked during onboarding: seen, but the date is not known. Said
+       rather than left blank, so the card does not read as though the person
+       went today. */
+    seenUndated: "dátum nélkül",
     checkedIn: "megnézte",
     wantsToSee: "szeretné megnézni",
     addedToWatchlist: "hozzáadva a kívánságlistához",
@@ -263,6 +267,11 @@ export const strings = {
 
   checkin: {
     headerTitle: "Előadás naplózása",
+    editTitle: "Bejegyzés szerkesztése",
+    /* Shown when the form has adopted the blank entry onboarding wrote, rather
+       than starting a new one — see the effect in app/checkin.tsx. */
+    completingBlank:
+      "Ezt már bejelölted a naplódban dátum nélkül — most kiegészíted, nem új bejegyzés lesz.",
     save: "Mentés",
     saving: "Mentés…",
     overallRating: "Összesített értékelés",
@@ -446,6 +455,15 @@ export const strings = {
     share: "Megosztás",
     sharing: "Kép készítése…",
     shareFailed: "Nem sikerült képet készíteni. Próbáld újra.",
+    edit: "Szerkesztés",
+    delete: "Törlés",
+    deleting: "Törlés…",
+    deleteConfirmTitle: "Törlöd ezt a bejegyzést?",
+    /* Named, because a diary entry is not one row: the date, a szereposztás, a
+       hely, a jegyár, egy fotó és a hozzászólások mind vele mennek. */
+    deleteConfirmBody:
+      "A dátum, a szereposztás, a hely, a jegyár, a fotó és a hozzászólások is törlődnek. Ezt nem lehet visszavonni.",
+    deleteFailed: "Nem sikerült törölni a bejegyzést. Próbáld újra.",
     rewatch: "Újranézés",
     castHeading: "Akiket aznap este láttál",
     castAlternateBadge: "beugró",

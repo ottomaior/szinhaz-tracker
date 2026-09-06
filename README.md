@@ -311,6 +311,54 @@ cannot drift, and it moves `is_archived` and `status` together: a production the
 source files under its archive is archived, and one whose status decayed to
 `ended` because its last date passed is not, and neither belongs in "what is on".
 
+### A diary you could write but not rewrite
+
+Four faults reported from a phone in one sitting, and they turned out to share
+a root: the app could *create* a diary entry from three places and could not
+change or remove one from any.
+
+**A grid that rendered nothing, forever.** `Grid` measured its own width with
+`onLayout` and held every tile back until that fired — "rather than flashing at
+full width and reflowing", which is a reasonable intent with an unreasonable
+worst case. Inside the onboarding modal the layout event never arrived, so a
+335pt-wide container sat there with zero children: no tiles, no skeleton, no
+empty state, no error. There is no measurement any more. The gutter is padding
+inside each tile's wrapper with a negative margin on the container to pull the
+outer edges flush, which is exact at any width, needs nothing measured, and
+cannot fail to draw.
+
+**"látta: Invalid Date".** `seen_at` has been nullable since 0026 — undefined
+means "seen it, cannot say when", which is exactly what onboarding writes — and
+the feed byline only compared it against the write date. So a ticked entry
+formatted `undefinedT12:00:00Z` and the card said Invalid Date. Three cases now,
+not two, and the third says "dátum nélkül".
+
+**No way to edit.** Check-in only ever inserted, so the entries the app writes
+*on your behalf* were the ones you could least correct: onboarding leaves a row
+with no date and no rating, and there was no screen that would let you say when
+you had been. The same form takes a `reviewId` now and updates instead. One
+screen rather than two, because logging an evening and correcting one are the
+same set of questions, and a second screen asking them slightly differently is
+how the two drift.
+
+**Duplicates.** Logging a production properly after ticking it in onboarding
+inserted a *second* row, so the diary and the feed showed it twice and neither
+copy could be fixed. Check-in now adopts the blank entry — precisely the shape
+onboarding writes, and nothing else produces it — and says so on screen, because
+silently filling one in would leave somebody wondering why their diary did not
+grow. A real second entry is still a second entry: seeing a production twice is
+ordinary here and `is_rewatch` exists for it.
+
+**No way to delete.** `reviews_delete_own` has existed since 0001 and nothing
+ever called it. The watchlist has had a remove control from the beginning; the
+diary, which is the harder thing to undo, had none — so an entry logged by
+mistake was permanent. It is confirmed rather than instant, and the confirmation
+names what goes with it: a watchlist row is one tap to re-add, while a diary
+entry can carry a date, a cast, a seat, a price, a photograph and a
+conversation. Likes, comments and `review_cast` cascade, and
+`recompute_play_rating()` fires on delete, so the production's public average
+corrects itself.
+
 ### The badge explained itself in English
 
 `plays.status_reason` is written by `recompute_play_status()` for whoever is

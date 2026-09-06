@@ -169,6 +169,25 @@ export default function FeedScreen() {
 }
 
 /**
+ * The "when were they there" half of a feed byline, or nothing.
+ *
+ * The card leads with how long ago the entry was *posted*, because the feed is
+ * a record of activity. This is the second half, and it is only worth printing
+ * when the two facts disagree:
+ *
+ *  - posted today about tonight — the time-ago line already said it;
+ *  - posted today about an evening last March — the card would otherwise claim
+ *    they had just been;
+ *  - ticked during onboarding, with no date at all — which is a real answer
+ *    since 0026, and the one that used to render as "Invalid Date".
+ */
+function seenNote(review: Review): string | undefined {
+  if (!review.seenAt) return strings.feed.seenUndated;
+  if (review.seenAt === budapestDayKey(review.createdAt)) return undefined;
+  return strings.feed.seenOn(formatLongDate(`${review.seenAt}T12:00:00Z`));
+}
+
+/**
  * Stable identity for a feed row. This used to be the array index, so any
  * refresh that reordered the feed re-mounted every card below the change and
  * threw away its already-loaded play/user data.
@@ -265,9 +284,12 @@ function CheckinCard({
         action={strings.feed.checkedIn}
         meta={[
           formatTimeAgo(review.createdAt),
-          review.seenAt !== budapestDayKey(review.createdAt)
-            ? strings.feed.seenOn(formatLongDate(`${review.seenAt}T12:00:00Z`))
-            : undefined,
+          // Three cases, not two. `seenAt` has been nullable since 0026 —
+          // undefined means "seen it, cannot say when", which is what
+          // onboarding writes — and this line only tested it against the write
+          // date, so a ticked entry rendered `undefinedT12:00:00Z` and the card
+          // said "látta: Invalid Date".
+          seenNote(review),
           venue?.name,
         ]
           .filter(Boolean)

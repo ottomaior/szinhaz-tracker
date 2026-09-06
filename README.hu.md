@@ -331,6 +331,56 @@ forrás az archívumába sorol, archivált, az pedig, aminek a státusza azért 
 `ended`-re, mert lejárt az utolsó dátuma, nem az — és egyik sem tartozik abba,
 hogy „mi megy most".
 
+### Egy napló, amit írni lehetett, átírni nem
+
+Négy hiba egyetlen telefonos ülésből, és kiderült, hogy közös gyökerük van: az
+app három helyről tudott naplóbejegyzést *létrehozni*, megváltoztatni vagy
+törölni viszont sehonnan.
+
+**Egy rács, ami soha nem rajzolt ki semmit.** A `Grid` az `onLayout`-tal mérte a
+saját szélességét, és minden csempét visszatartott, amíg az meg nem érkezett —
+„ahelyett, hogy teljes szélességben felvillanna és újratördelne", ami észszerű
+szándék, észszerűtlen legrosszabb esettel. Az onboarding modálban a
+layout-esemény sosem jött meg, így egy 335 pont széles konténer ült ott nulla
+gyerekkel: se csempe, se csontváz, se üres állapot, se hiba. Mérés már nincs. Az
+elválasztás minden csempe burkolatán belüli padding, a konténeren negatív
+margóval, hogy a külső élek visszasimuljanak — ez bármilyen szélességen pontos,
+semmit nem kell mérnie, és nem tud kimaradni a rajzolás.
+
+**„látta: Invalid Date".** A `seen_at` a 0026 óta nullozható — az undefined azt
+jelenti, „láttam, de nem tudom megmondani, mikor", és pontosan ezt írja az
+onboarding —, a hírfolyam sora viszont csak az írás dátumához hasonlította. Így
+egy bejelölt bejegyzés `undefinedT12:00:00Z`-t formázott, és a kártya azt írta
+ki, hogy Invalid Date. Most három eset van, nem kettő, és a harmadik azt mondja:
+„dátum nélkül".
+
+**Nem lehetett szerkeszteni.** A naplózó űrlap csak beszúrt, így épp azok a
+bejegyzések voltak a legkevésbé javíthatók, amiket az app *helyetted* ír: az
+onboarding dátum és értékelés nélküli sort hagy, és nem volt képernyő, ahol
+megmondhattad volna, mikor voltál ott. Ugyanaz az űrlap most átvesz egy
+`reviewId`-t, és frissít. Egy képernyő, nem kettő, mert egy este naplózása és
+egy bejegyzés javítása ugyanaz a kérdéssor — két képernyő, ami kicsit másképp
+kérdezi, épp így csúszik el egymástól.
+
+**Duplikátumok.** Ha az onboardingban bejelölt produkciót rendesen is
+lenaplóztad, az egy *második* sort szúrt be, így a napló és a hírfolyam kétszer
+mutatta, és egyik példányt sem lehetett javítani. A naplózó űrlap most átveszi
+az üres bejegyzést — pontosan azt az alakot, amit az onboarding ír, és mást
+semmi nem állít elő —, és ezt ki is mondja a képernyőn, mert csendben kitölteni
+azt hagyná, hogy valaki azon tűnődjön, miért nem nőtt a naplója. Egy valódi
+második bejegyzés továbbra is második bejegyzés: kétszer látni egy produkciót
+itt hétköznapi dolog, és az `is_rewatch` épp ezért van.
+
+**Nem lehetett törölni.** A `reviews_delete_own` a 0001 óta létezik, és soha
+semmi nem hívta. A kívánságlistának a kezdetektől van eltávolító vezérlője; a
+naplónak, ami a nehezebben visszavonható dolog, egy sem — így egy tévedésből
+naplózott bejegyzés végleges volt. Megerősítéshez kötött, nem azonnali, és a
+megerősítés meg is nevezi, mi megy vele: egy kívánságlista-sor egy koppintás
+visszatenni, egy naplóbejegyzés viszont dátumot, szereposztást, helyet, jegyárat,
+fotót és beszélgetést hordozhat. A tetszések, a hozzászólások és a `review_cast`
+kaszkádolnak, a `recompute_play_rating()` pedig töröléskor is lefut, így a
+produkció nyilvános átlaga magától helyreáll.
+
 ### A jelvény angolul magyarázta magát
 
 A `plays.status_reason`-t a `recompute_play_status()` írja annak, aki az
