@@ -13,12 +13,22 @@ export type NotificationKind =
   | "dates_published"
   | "playing_tomorrow"
   | "venue_new_play"
-  | "person_new_play";
+  | "person_new_play"
+  | "review_liked"
+  | "review_commented";
 
 export type AppNotification = {
   id: string;
   kind: NotificationKind;
   playId: string;
+  /**
+   * The diary entry this is about, for the two engagement kinds.
+   *
+   * Absent for the four the sync generates, which are about a production rather
+   * than about something somebody wrote — which is also what decides where a
+   * row leads when it is tapped.
+   */
+  reviewId?: string;
   playTitle: string;
   poster?: Poster;
   createdAt: string;
@@ -41,7 +51,7 @@ export type AppNotification = {
     room?: string;
     /** `venue_new_play`: the theatre. */
     venue?: string;
-    /** `person_new_play`: the performer. */
+    /** `person_new_play`, `review_liked`, `review_commented`: who it was. */
     person?: string;
   };
 };
@@ -50,6 +60,7 @@ type NotificationRow = {
   id: string;
   kind: NotificationKind;
   play_id: string;
+  review_id: string | null;
   payload: AppNotification["payload"] | null;
   created_at: string;
   read_at: string | null;
@@ -60,7 +71,7 @@ type NotificationRow = {
 // inbox does not show a cast list, and joining `play_cast` for twenty rows to
 // display none of it is the pattern `getVenuesByIds` exists to avoid.
 const NOTIFICATION_SELECT =
-  "id, kind, play_id, payload, created_at, read_at, " +
+  "id, kind, play_id, review_id, payload, created_at, read_at, " +
   "plays (title, poster_url, poster_path, poster_thumb_path, poster_blurhash, poster_credit, poster_width, poster_height)";
 
 function toNotification(row: NotificationRow): AppNotification | undefined {
@@ -73,6 +84,7 @@ function toNotification(row: NotificationRow): AppNotification | undefined {
     id: row.id,
     kind: row.kind,
     playId: row.play_id,
+    reviewId: row.review_id ?? undefined,
     playTitle: playRow.title,
     poster: toPoster(playRow),
     createdAt: row.created_at,

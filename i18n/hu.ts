@@ -3,6 +3,8 @@
  * Screens import from here rather than hardcoding strings, so a future
  * second language (or a copy change) touches this file only.
  */
+import { elapsedSince } from "@/utils/datetime";
+
 export const strings = {
   appName: "Színház Tracker",
 
@@ -380,8 +382,30 @@ export const strings = {
       room ? `Holnap játsszák, ${time} — ${room}` : `Holnap játsszák, ${time}`,
     venueNewPlay: (venue: string) => `Új bemutató: ${venue}`,
     personNewPlay: (person: string) => `${person} új előadásban játszik`,
+    reviewLiked: (person: string) => `${person} kedveli a bejegyzésedet`,
+    reviewCommented: (person: string) => `${person} hozzászólt a bejegyzésedhez`,
     unreadBadge: (n: number) => (n > 9 ? "9+" : String(n)),
     openNotifications: "Értesítések",
+  },
+
+  /** Likes and comments — see 0032, which made the two counters true. */
+  social: {
+    like: "Tetszik",
+    liked: "Tetszik",
+    likeCount: (n: number) => (n === 1 ? "1 tetszés" : `${n} tetszés`),
+    signInToLike: "Jelentkezz be a tetszéshez",
+    commentsHeading: "Hozzászólások",
+    commentPlaceholder: "Írj hozzá valamit…",
+    send: "Küldés",
+    sending: "Küldés…",
+    signInToComment: "Jelentkezz be a hozzászóláshoz",
+    commentsEmpty: "Még senki nem szólt hozzá.",
+    delete: "Törlés",
+    deleteFailed: "Nem sikerült törölni a hozzászólást.",
+    sendFailed: "Nem sikerült elküldeni a hozzászólást.",
+    edited: "szerkesztve",
+    tooLong: (max: number) => `A hozzászólás legfeljebb ${max} karakter lehet.`,
+    remaining: (left: number) => `${left} karakter maradt`,
   },
 
   /** One evening, read back: what the diary holds about a single night. */
@@ -630,3 +654,29 @@ export const strings = {
     emptyBody: "A szűrőkhöz nem találunk előadást a következő két hónapban. Próbálj tágabb szűrést.",
   },
 };
+
+/**
+ * "3 órája", "tegnap" — the wording for `elapsedSince` in `utils/datetime.ts`.
+ *
+ * Split from the arithmetic because the two fail differently: the arithmetic is
+ * testable and is, while this is a lookup table for four cases. It sits here
+ * rather than in the util so that `utils/` keeps no dependency on the copy, and
+ * outside the `strings` object so the object does not have to refer to itself
+ * while TypeScript is still inferring its type.
+ *
+ * Until now this lived as a private `timeAgo` inside the feed screen, which is
+ * how this project previously ended up with four different `formatDate`s.
+ */
+export function formatTimeAgo(iso: string): string {
+  const elapsed = elapsedSince(iso);
+  switch (elapsed.unit) {
+    case "now":
+      return strings.time.justNow;
+    case "hours":
+      return strings.time.hoursAgo(elapsed.value);
+    case "yesterday":
+      return strings.time.yesterday;
+    case "days":
+      return strings.time.daysAgo(elapsed.value);
+  }
+}

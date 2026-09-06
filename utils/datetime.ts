@@ -58,6 +58,36 @@ export function formatShortDayForSuffix(dayKey: string): string {
     .replace(/\.\s*$/, "");
 }
 
+/**
+ * How long ago something happened, as a shape rather than a sentence.
+ *
+ * The arithmetic and the wording are split because they fail differently. The
+ * arithmetic is testable and was, until now, a private function inside the feed
+ * screen — which is exactly how this project ended up with four different
+ * `formatDate`s. The wording needs `strings` and belongs beside the rest of the
+ * copy, so it lives in `i18n/hu.ts` as `formatTimeAgo`.
+ *
+ * Deliberately coarse. A feed card saying "3 perce" is not more useful than one
+ * saying "épp most", and the finer the unit the more often the card is wrong by
+ * the time somebody reads it.
+ */
+export type Elapsed =
+  | { unit: "now" }
+  | { unit: "hours"; value: number }
+  | { unit: "yesterday" }
+  | { unit: "days"; value: number };
+
+export function elapsedSince(iso: string, now: Date = new Date()): Elapsed {
+  const diffMs = now.getTime() - new Date(iso).getTime();
+  // A clock skewed a few seconds ahead of the server should read "just now",
+  // not "-1 hours ago".
+  const hours = Math.max(0, Math.floor(diffMs / 3_600_000));
+  if (hours < 1) return { unit: "now" };
+  if (hours < 24) return { unit: "hours", value: hours };
+  const days = Math.floor(hours / 24);
+  return days === 1 ? { unit: "yesterday" } : { unit: "days", value: days };
+}
+
 /** "csütörtök" — the weekday alone, spelled out. */
 export function formatWeekday(iso: string): string {
   return new Date(iso).toLocaleDateString("hu-HU", { timeZone: ZONE, weekday: "long" });

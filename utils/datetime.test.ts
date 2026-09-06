@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   budapestDayKey,
+  elapsedSince,
   budapestMonthKey,
   dayKeyOffset,
   formatDayLabel,
@@ -157,5 +158,30 @@ describe("formatShortDayForSuffix", () => {
     // a date parsed as UTC midnight and formatted in a zone behind it.
     expect(formatShortDayForSuffix("2026-01-01")).toBe("jan. 1");
     expect(formatShortDayForSuffix("2026-06-30")).toBe("jún. 30");
+  });
+});
+
+describe("elapsedSince", () => {
+  const now = new Date("2026-09-06T12:00:00Z");
+
+  it("stays coarse: anything under an hour is just now", () => {
+    // A card saying "3 perce" is not more useful than one saying "épp most",
+    // and the finer the unit the more often the card is stale by the time
+    // somebody reads it.
+    expect(elapsedSince("2026-09-06T11:59:00Z", now)).toEqual({ unit: "now" });
+    expect(elapsedSince("2026-09-06T11:01:00Z", now)).toEqual({ unit: "now" });
+  });
+
+  it("counts hours up to a day, then days", () => {
+    expect(elapsedSince("2026-09-06T09:00:00Z", now)).toEqual({ unit: "hours", value: 3 });
+    expect(elapsedSince("2026-09-05T13:00:00Z", now)).toEqual({ unit: "hours", value: 23 });
+    expect(elapsedSince("2026-09-05T12:00:00Z", now)).toEqual({ unit: "yesterday" });
+    expect(elapsedSince("2026-09-01T12:00:00Z", now)).toEqual({ unit: "days", value: 5 });
+  });
+
+  it("reads a clock running ahead of the server as just now", () => {
+    // Not "-1 órája". The device's clock is not authoritative and a card must
+    // not report a negative age when it is a few seconds out.
+    expect(elapsedSince("2026-09-06T12:00:30Z", now)).toEqual({ unit: "now" });
   });
 });

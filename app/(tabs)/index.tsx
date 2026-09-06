@@ -9,14 +9,14 @@ import { getUnreadCount } from "@/services/notificationService";
 import type { FeedItem, Play, User, Venue, Review, WatchlistEntry } from "@/data/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { Chip } from "@/components/ui/Chip";
-import { BellIcon } from "@/components/icons/Icons";
+import { BellIcon, CommentIcon, HeartIcon } from "@/components/icons/Icons";
 import { MaskIcon, MaskRatingRow } from "@/components/icons/MaskIcon";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { Avatar } from "@/components/ui/Avatar";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
-import { strings } from "@/i18n/hu";
+import { formatTimeAgo, strings } from "@/i18n/hu";
 import { budapestDayKey, formatLongDate } from "@/utils/datetime";
 
 export default function FeedScreen() {
@@ -132,7 +132,14 @@ export default function FeedScreen() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.gold} />}
         >
           {items.map((item) => (
-            <FeedCardRouter key={feedItemKey(item)} item={item} onOpenPlay={(id) => router.push(`/play/${id}`)} />
+            <FeedCardRouter
+              key={feedItemKey(item)}
+              item={item}
+              onOpenPlay={(id) => router.push(`/play/${id}`)}
+              onOpenEntry={(reviewId) =>
+                router.push({ pathname: "/entry/[id]", params: { id: reviewId } })
+              }
+            />
           ))}
 
           {/* An empty "Követettek" feed means "follow someone", not "nobody has
@@ -170,8 +177,18 @@ function feedItemKey(item: FeedItem) {
   return item.kind === "checkin" ? `review:${item.review.id}` : `watchlist:${item.entry.playId}:${item.entry.addedByUserId}`;
 }
 
-function FeedCardRouter({ item, onOpenPlay }: { item: FeedItem; onOpenPlay: (id: string) => void }) {
-  if (item.kind === "checkin") return <CheckinCard review={item.review} onOpenPlay={onOpenPlay} />;
+function FeedCardRouter({
+  item,
+  onOpenPlay,
+  onOpenEntry,
+}: {
+  item: FeedItem;
+  onOpenPlay: (id: string) => void;
+  /** The evening itself, where the likes and the conversation live. */
+  onOpenEntry: (reviewId: string) => void;
+}) {
+  if (item.kind === "checkin")
+    return <CheckinCard review={item.review} onOpenPlay={onOpenPlay} onOpenEntry={onOpenEntry} />;
   return <WatchlistCard entry={item.entry} onOpenPlay={onOpenPlay} />;
 }
 
@@ -209,7 +226,15 @@ function CardByline({ user, action, meta }: { user: User; action: string; meta: 
   );
 }
 
-function CheckinCard({ review, onOpenPlay }: { review: Review; onOpenPlay: (id: string) => void }) {
+function CheckinCard({
+  review,
+  onOpenPlay,
+  onOpenEntry,
+}: {
+  review: Review;
+  onOpenPlay: (id: string) => void;
+  onOpenEntry: (reviewId: string) => void;
+}) {
   const [play, setPlay] = useState<Play>();
   const [user, setUser] = useState<User>();
   const [venue, setVenue] = useState<Venue>();
@@ -239,7 +264,7 @@ function CheckinCard({ review, onOpenPlay }: { review: Review; onOpenPlay: (id: 
         user={user}
         action={strings.feed.checkedIn}
         meta={[
-          timeAgo(review.createdAt),
+          formatTimeAgo(review.createdAt),
           review.seenAt !== budapestDayKey(review.createdAt)
             ? strings.feed.seenOn(formatLongDate(`${review.seenAt}T12:00:00Z`))
             : undefined,
@@ -265,15 +290,39 @@ function CheckinCard({ review, onOpenPlay }: { review: Review; onOpenPlay: (id: 
         </View>
       </Pressable>
 
-      {/* The heart and speech-bubble counters that used to sit opposite the
-          rating are gone. `reviews.like_count` and `comment_count` are real
-          columns and no code path has ever incremented either, so both drew a
-          permanent zero beside an icon that did nothing when tapped — which
-          teaches a first-time visitor that the app is a mockup. They come back
-          when liking and commenting exist. */}
-      {/* Absent for a "seen it, not rating it" entry. Rendering a zero-mask row
-          would read as one star out of five rather than as no opinion. */}
-      {review.ratingOverall !== undefined && <MaskRatingRow rating={review.ratingOverall} size={15} />}
+      <View style={styles.cardFooter}>
+        {/* Absent for a "seen it, not rating it" entry. Rendering a zero-mask
+            row would read as one star out of five rather than as no opinion. */}
+        {review.ratingOverall !== undefined ? (
+          <MaskRatingRow rating={review.ratingOverall} size={15} />
+        ) : (
+          <View />
+        )}
+
+        {/* Back, and true this time. These counters existed as columns from
+            0001 with nothing writing to them, so they drew a permanent zero
+            beside an icon that did nothing when tapped — which is why they were
+            removed. 0032 maintains them, and both now lead to the evening,
+            where the conversation actually is: a feed card is a summary, and a
+            thread read inside one would be a thread nobody can reply to
+            without losing their place. */}
+        <Pressable
+          onPress={() => onOpenEntry(review.id)}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={strings.social.commentsHeading}
+          style={styles.counters}
+        >
+          <View style={styles.counter}>
+            <HeartIcon size={15} color={colors.textFaint} />
+            <Text variant="caption" tone="faint">{review.likeCount}</Text>
+          </View>
+          <View style={styles.counter}>
+            <CommentIcon size={15} color={colors.textFaint} />
+            <Text variant="caption" tone="faint">{review.commentCount}</Text>
+          </View>
+        </Pressable>
+      </View>
 
       {!!review.text && (
         <Text variant="bodySmall" tone="dim">{`„${review.text}”`}</Text>
@@ -305,7 +354,7 @@ function WatchlistCard({ entry, onOpenPlay }: { entry: WatchlistEntry; onOpenPla
 
   return (
     <View style={{ gap: space.md }}>
-      <CardByline user={user} action={strings.feed.wantsToSee} meta={`${timeAgo(entry.addedAt)} · ${strings.feed.addedToWatchlist}`} />
+      <CardByline user={user} action={strings.feed.wantsToSee} meta={`${formatTimeAgo(entry.addedAt)} · ${strings.feed.addedToWatchlist}`} />
       <Pressable onPress={() => onOpenPlay(play.id)} style={styles.watchlistRow} accessibilityRole="button" accessibilityLabel={play.title}>
         <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} width={64} height={96} radius={radius.sm} preferThumb />
         <View style={{ flex: 1, gap: space.xs }}>
@@ -327,15 +376,6 @@ function WatchlistCard({ entry, onOpenPlay }: { entry: WatchlistEntry; onOpenPla
   );
 }
 
-function timeAgo(iso: string) {
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const hours = Math.floor(diffMs / 3600000);
-  if (hours < 1) return strings.time.justNow;
-  if (hours < 24) return strings.time.hoursAgo(hours);
-  const days = Math.floor(hours / 24);
-  return days === 1 ? strings.time.yesterday : strings.time.daysAgo(days);
-}
-
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("hu-HU", { month: "short", day: "numeric" });
 }
@@ -351,6 +391,14 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.hairlineSoft,
   },
   topBarActions: { flexDirection: "row", alignItems: "center", gap: space.lg },
+  cardFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: space.md,
+  },
+  counters: { flexDirection: "row", alignItems: "center", gap: space.lg },
+  counter: { flexDirection: "row", alignItems: "center", gap: 5 },
   // `overflow: visible` matters: the badge is positioned outside the bell's own
   // box, and clipping it would leave a bell that never looks like it has
   // anything in it.

@@ -18,7 +18,7 @@ npx expo install --fix
 
 Ezután hozz létre egy [Supabase](https://supabase.com) projektet (az ingyenes
 csomag bőven elég), futtasd le a `supabase/migrations/` **összes** fájlját
-**sorrendben** (`0001_init.sql`-től a `0031_the_evad.sql`-ig) a projekt
+**sorrendben** (`0001_init.sql`-től a `0032_likes_and_comments.sql`-ig) a projekt
 SQL-szerkesztőjében, majd másold a `.env.example`-t `.env`-re, és töltsd ki a
 projekt Settings → API oldaláról az URL-t és az anon kulcsot:
 
@@ -80,7 +80,8 @@ app/                     expo-router képernyők (fájlalapú útvonalak)
 components/
   icons/                  kézzel rajzolt SVG ikonok, köztük az álarc-értékelő jel
   ui/                     Button, Chip, SelectChip, DateField, Avatar,
-                          FollowSubjectButton, PosterPlaceholder, TabBar
+                          FollowSubjectButton, PosterPlaceholder, ReviewSocial,
+                          TabBar
 
 theme/                    tervezési tokenek — a „Velvet Curtain" vizuális
                           rendszer egyetlen forrása
@@ -120,7 +121,10 @@ services/searchService.ts rangsorolt, ékezetfüggetlen keresés elgépelés-tű
                           előadásokban/helyszínekben/szereplők közt
                           (Postgres RPC)
 services/notificationService.ts  az értesítések — az appból csak olvasható, a
-                          sorokat kizárólag az éjszakai feladat írja
+                          sorokat az éjszakai feladat és a reakció-triggerek
+                          írják, kérés soha
+services/socialService.ts tetszések és hozzászólások egy naplóbejegyzésen;
+                          számlálót soha nem ír, azt triggerek tartják karban
 services/authService.ts   regisztráció / belépés / kilépés
 
 supabase/migrations/      séma, RLS szabályok, triggerek és RPC-k (kézzel kell
@@ -682,6 +686,73 @@ azután, hogy a bejegyzés már bent van, a `submitReview` akkor is visszaadja a
 bejegyzést. Az este már el van mentve, és elveszíteni azért, mert a
 szereplőlista nem ment be, sokkal rosszabb csere lenne, mint egy bejegyzés, ami
 rögzíti az estét, de azt nem, ki játszott.
+
+## Két számláló, ami sosem volt igaz
+
+A `reviews.like_count` és a `comment_count` a `0001_init.sql` óta létezik, és
+egyik kódút sem növelte soha egyiket sem. Minden hírfolyam-kártyán állandó
+nullaként jelentek meg egy ikon mellett, ami koppintásra nem csinált semmit —
+amíg egy későbbi commit le nem vette őket azzal, hogy egy vezérlő, ami sosem
+működött, azt tanítja meg az első látogatónak, hogy az app makett.
+
+A `0032_likes_and_comments.sql` a másik megoldás erre: legyenek igazak. Két
+tábla, triggerek, amik becsületesen tartják a számlálókat, és a számlálók vissza
+a kártyán — most már vezetnek is valahová.
+
+**A számlálókat újraszámoljuk, nem növeljük.** Egy `+1/-1` számláló egyetlen
+elmaradt visszagörgetésre van attól, hogy véglegesen hibás legyen anélkül, hogy
+bárki észrevenné, mert nincs második forrás, ami ellentmondana neki. A sorokból
+újraszámolni egyetlen indexolvasás, és nem tud elcsúszni. A
+`services/socialService.ts` egyáltalán nem ír számlálót: azokat a
+tetszés-sorokat olvassa, amiket amúgy is olvas ahhoz, hogy megválaszolja, „én
+kedveltem-e".
+
+**Két hiba, amit érdemes feljegyezni, mert mindkettő sikernek látszott.**
+
+Az első: az értesítő trigger `case` kifejezéssel építette a dedupe-kulcsot, és
+abban szerepelt a `new.id`. A `review_likes`-nak nincs `id` oszlopa — a kulcsa
+`(review_id, user_id)` —, a PL/pgSQL pedig minden mezőhivatkozást feloldott egy
+kifejezésben, akkor is, ha az az ág nem fut le: így *minden tetszés* elhasalt
+`record "new" has no field "id"` hibával, beleértve azt az ágat is, ami hozzá sem
+nyúl. `if`-re bontva csak azt oldja fel, amit ki is értékel.
+
+A második halkabb volt, és ez a hasznosabb. Az újraszámoló trigger annak a
+nevében fut, aki megnyomta a szívet, a sor pedig, amit frissítenie kell, valaki
+máséhoz tartozik — így a `reviews_update_own` nulla sorra szűkítette az UPDATE-et.
+**Az az UPDATE, amit az RLS semmire szűkít, nem hiba.** A tetszés elmentődött, az
+értesítés megérkezett, a képernyő azt mutatta, amit kellett, a számláló pedig
+nullán állt úgy, hogy sehol semmi nem jelzett hibát. Mindkét újraszámoló függvény
+most `security definer`, ami nem optimalizáció, hanem az egyetlen mód, ahogy egy
+trigger karbantarthat egy származtatott értéket olyan soron, amit a
+kezdeményezője nem írhat.
+
+**A drága trigger már nem fut le olcsó dolgokra.** A 0001
+`reviews_recompute_rating`-je *bármilyen* review-frissítésre lefutott, a
+`recompute_play_rating()` pedig a produkció minden értékelését átlagolja
+felhasználónként, majd felhasználók között. Egy számláló karbantartása a
+`reviews` frissítésével tehát minden egyes szívkoppintásra újraszámolta volna egy
+előadás nyilvános értékelését. Most külön insert/delete triggerre és egy
+`update of ... when (...)` triggerre bomlik, így az aggregálás csak akkor fut, ha
+tényleg változott valami, amit olvas.
+
+**A tetszés postaládába érkezik.** A 0030 megépített egyet, így a 0032
+reakció-értesítései ugyanazon a táblán és képernyőn mennek át. A trigger, ami
+írja őket, `security definer` — a 0030 szándékosan nem adott a
+`notifications`-nek insert szabályt —, és az teszi biztonságossá, hogy semmi nem
+a hívótól jön: a címzettet és a produkciót a bejegyzésből olvassuk, a
+kezdeményező pedig az `auth.uid()`. Nincs út a kérés törzsétől egy oszlopig.
+
+**A hozzászólásoknak pontosan egy moderációs szabályuk van.** Ketten törölhetnek
+egyet: aki írta, és akié az este, ami alatt áll. A második nem udvariasság — ez
+az egyetlen moderáció, amivel ez az app rendelkezik, és annak a szerzőnek, aki
+nem tud eltávolítani valamit a saját naplóbejegyzéséről, egyáltalán nincs kiútja
+belőle. Harmadik fél egyiket sem teheti meg, amit mindhárom megszemélyesítésével
+ellenőriztünk.
+
+A szál az este képernyőjén él, nem a hírfolyam-kártyán, mert egy beszélgetésnek
+kell hely, ahol elolvasható; a kártya a számokat viszi, és odavezet. Ugyanez az
+érvelés küldi a tetszés- és hozzászólás-értesítést a bejegyzésre, nem a produkció
+adatlapjára, ami ennek a rossz vége.
 
 ## Az évadot számoljuk, nem a naptári évet
 

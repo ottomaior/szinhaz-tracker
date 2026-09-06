@@ -83,7 +83,14 @@ export default function InboxScreen() {
               <NotificationRow
                 key={n.id}
                 notification={n}
-                onPress={() => router.push(`/play/${n.playId}`)}
+                // A like or a comment is about your evening, so it opens the
+                // evening — the production page would be the wrong end of it,
+                // and the thread the notice is announcing is not on it.
+                onPress={() =>
+                  n.reviewId
+                    ? router.push({ pathname: "/entry/[id]", params: { id: n.reviewId } })
+                    : router.push(`/play/${n.playId}`)
+                }
               />
             ))}
 
@@ -162,6 +169,10 @@ function describe(n: AppNotification): string {
       return strings.inbox.venueNewPlay(n.payload.venue ?? "");
     case "person_new_play":
       return strings.inbox.personNewPlay(n.payload.person ?? "");
+    case "review_liked":
+      return strings.inbox.reviewLiked(n.payload.person ?? "");
+    case "review_commented":
+      return strings.inbox.reviewCommented(n.payload.person ?? "");
   }
 }
 

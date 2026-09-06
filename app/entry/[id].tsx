@@ -13,6 +13,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { ContentColumn } from "@/components/ui/Screen";
+import { ReviewSocial } from "@/components/ui/ReviewSocial";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 import { formatTime } from "@/utils/datetime";
@@ -220,6 +221,13 @@ export default function DiaryEntryScreen() {
           {!hasEvening && (
             <Text variant="bodySmall" tone="faint">{strings.entry.nothingRecorded}</Text>
           )}
+
+          {/* The social half. It lives here rather than on the feed card
+              because a conversation needs somewhere to be read, and the card is
+              a summary — the feed's counters lead here for the same reason. */}
+          <View style={styles.socialBlock}>
+            <ReviewSocial reviewId={review.id} reviewOwnerId={review.userId} />
+          </View>
         </ContentColumn>
       </ScrollView>
     </View>
@@ -256,6 +264,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: space.md,
+  },
+  socialBlock: {
+    borderTopWidth: 1,
+    borderTopColor: colors.hairlineSoft,
+    paddingTop: space.lg,
   },
   stub: {
     width: "100%",

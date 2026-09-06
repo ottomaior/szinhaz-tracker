@@ -16,7 +16,7 @@ npx expo install --fix
 
 Then create a [Supabase](https://supabase.com) project (free tier is
 enough), run every file in `supabase/migrations/` **in order** (`0001_init.sql`
-through `0031_the_evad.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
+through `0032_likes_and_comments.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
 URL/anon key from the project's Settings → API page:
 
 ```bash
@@ -76,7 +76,8 @@ app/                     expo-router screens (file-based routing)
 components/
   icons/                  hand-drawn SVG icons, incl. the mask rating glyph
   ui/                     Button, Chip, SelectChip, DateField, Avatar,
-                          FollowSubjectButton, PosterPlaceholder, TabBar
+                          FollowSubjectButton, PosterPlaceholder, ReviewSocial,
+                          TabBar
 
 theme/                    design tokens — the single source of truth for
                           the "Velvet Curtain" visual system
@@ -112,7 +113,10 @@ services/profileService.ts  the editable half of a profile — avatar upload,
 services/searchService.ts ranked, accent-insensitive search with a typo
                           fallback, over plays/venues/cast (Postgres RPC)
 services/notificationService.ts  the inbox — read-only from the app; rows are
-                          written by the nightly job alone
+                          written by the nightly job and by the engagement
+                          triggers, never by a request
+services/socialService.ts likes and comments on a diary entry; never writes a
+                          counter, since triggers maintain both
 services/authService.ts   sign up / sign in / sign out
 
 supabase/migrations/      schema, RLS policies, triggers, and RPCs (run
@@ -649,6 +653,68 @@ One thing deliberately not rethrown: if the `review_cast` insert fails after the
 review is in, `submitReview` returns the review anyway. The evening is already
 saved, and losing it because a cast list would not go in is a far worse trade
 than an entry that records the night but not who was in it.
+
+## Two counters that were never true
+
+`reviews.like_count` and `comment_count` have existed since `0001_init.sql` and
+no code path ever incremented either. They were drawn on every feed card as a
+permanent zero beside an icon that did nothing when tapped, until a later commit
+took them off on the grounds that a control which has never worked teaches a
+first-time visitor that the app is a mockup.
+
+`0032_likes_and_comments.sql` is the other way to resolve that: make them true.
+Two tables, triggers that keep the counters honest, and the counters back on the
+card — now leading somewhere.
+
+**The counters are recounted, not incremented.** A `+1/-1` counter is one missed
+rollback away from being permanently wrong with nothing to notice, because there
+is no second source to disagree with it. Recomputing from the rows is one index
+scan and cannot drift. `services/socialService.ts` never writes a counter at
+all; it reads the like rows it is already reading to answer "have I liked this".
+
+**Two bugs worth recording, because both looked like success.**
+
+The first: the notify trigger built its dedupe key with a `case` expression
+referencing `new.id`. `review_likes` has no `id` column — it is keyed
+`(review_id, user_id)` — and PL/pgSQL resolves every field reference in an
+expression whether or not that branch runs, so *every like* failed with
+`record "new" has no field "id"`, including the branch that never touches it.
+Split into an `if`, it resolves only what it evaluates.
+
+The second was quieter and is the more useful one. The recount trigger fires as
+the person who pressed the heart, and the row it has to update belongs to
+somebody else — so `reviews_update_own` filtered the UPDATE to zero rows. **An
+UPDATE that RLS narrows to nothing is not an error.** The like was stored, the
+notification arrived, the screen said what it should, and the counter sat at
+zero with nothing anywhere reporting a failure. Both recount functions are
+`security definer` now, which is not an optimisation but the only way a trigger
+can maintain a derived value on a row its actor may not write.
+
+**The expensive trigger stopped firing on cheap things.** `reviews_recompute_rating`
+from 0001 ran on *any* update to a review, and `recompute_play_rating()` averages
+every rating on the production per user and then across users. Maintaining a
+counter with an update to `reviews` would have recomputed a play's public rating
+on every single heart tap. It is now split into an insert/delete trigger and an
+`update of ... when (...)` one, so the aggregate runs only when something it
+reads actually changed.
+
+**A like lands in an inbox.** 0030 built one, so 0032's engagement notices go
+through the same table and screen. The trigger that writes them is
+`security definer` — 0030 deliberately gave `notifications` no insert policy —
+and what makes that safe is that nothing in it comes from the caller: the
+recipient and the production are read from the review, and the actor is
+`auth.uid()`. There is no path from a request body to a column.
+
+**Comments have exactly one moderation rule.** Two people may delete one:
+whoever wrote it, and whoever owns the evening it is sitting under. The second is
+not politeness — it is the only moderation this app has, and an author who cannot
+remove something from their own diary entry has no way out of it at all. A third
+party can do neither, which was checked by impersonating all three.
+
+The thread lives on the evening screen rather than on the feed card, because a
+conversation needs somewhere to be read; the card carries the counts and leads
+there. The same reasoning sends a like or comment notification to the entry
+rather than to the production page, which is the wrong end of it.
 
 ## Counting the évad, not the calendar year
 
