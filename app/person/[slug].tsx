@@ -11,6 +11,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { PlayRow } from "@/components/ui/PlayRow";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { FollowSubjectButton } from "@/components/ui/FollowSubjectButton";
 import { ContentColumn } from "@/components/ui/Screen";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
@@ -121,6 +122,12 @@ export default function PersonScreen() {
                   </Text>
                 </View>
               </View>
+
+              {/* Above the statistics rather than below the credit list: the
+                  reason to be on this page at all is often "I want to know
+                  when they are next on", and burying that under sixty rows of
+                  past work answers a different question. */}
+              {!!slug && <FollowSubjectButton type="person" subjectKey={slug} />}
 
               <View style={styles.statsRow}>
                 <Stat value={profile.creditCount} label={strings.person.credits} />

@@ -27,6 +27,7 @@ import { ChevronLeftIcon, ExternalLinkIcon, ShareIcon, TicketIcon, PlusIcon } fr
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { ShowtimeList } from "@/components/ui/ShowtimeList";
 import { AddToListSheet } from "@/components/ui/AddToListSheet";
+import { FollowSubjectButton } from "@/components/ui/FollowSubjectButton";
 import { formatLongDate, formatShowtime } from "@/utils/datetime";
 import { personSlug } from "@/utils/people";
 import { strings } from "@/i18n/hu";
@@ -374,6 +375,19 @@ export default function PlayDetailScreen() {
               router.push("/lists");
             }}
           />
+
+          {/* The theatre, not the production. This is the one place in the app
+              a house can be subscribed to, and it belongs here rather than on a
+              venue page of its own: there is no such screen, and the moment
+              somebody wants "more like this" is while they are looking at one
+              of its productions. The hint is suppressed — this column is
+              already dense — and lives on the person page instead. */}
+          {!!venue && (
+            <View style={{ gap: space.sm }}>
+              <Text variant="label" tone="dim">{venue.name}</Text>
+              <FollowSubjectButton type="venue" subjectKey={venue.id} showHint={false} />
+            </View>
+          )}
 
           {!!notice && (
             <Text accessibilityRole="alert" variant="bodySmall" tone="accent">

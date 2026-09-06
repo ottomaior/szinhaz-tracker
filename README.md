@@ -16,7 +16,7 @@ npx expo install --fix
 
 Then create a [Supabase](https://supabase.com) project (free tier is
 enough), run every file in `supabase/migrations/` **in order** (`0001_init.sql`
-through `0028_the_evening_itself.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
+through `0029_standing_follows.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
 URL/anon key from the project's Settings → API page:
 
 ```bash
@@ -74,7 +74,7 @@ app/                     expo-router screens (file-based routing)
 components/
   icons/                  hand-drawn SVG icons, incl. the mask rating glyph
   ui/                     Button, Chip, SelectChip, DateField, Avatar,
-                          PosterPlaceholder, TabBar
+                          FollowSubjectButton, PosterPlaceholder, TabBar
 
 theme/                    design tokens — the single source of truth for
                           the "Velvet Curtain" visual system
@@ -642,6 +642,47 @@ One thing deliberately not rethrown: if the `review_cast` insert fails after the
 review is in, `submitReview` returns the review anyway. The evening is already
 saved, and losing it because a cast list would not go in is a far worse trade
 than an entry that records the night but not who was in it.
+
+## A standing subscription, not a saved production
+
+The watchlist answers "am I going to this": one production, one decision. What
+people actually want from an app like this is open-ended — tell me when Örkény
+announces something new, tell me when Für Anikó opens a production — and
+nothing in the app could express it. That mattered more than it sounds, because
+the nightly sync is the only part of this project that *produces news*, and it
+had nobody to deliver any to.
+
+`0029_standing_follows.sql` adds `subject_follows`, which is 0014's idea over a
+different kind of subject. It deliberately does not extend `follows`: that
+table's `followee_id` is a foreign key into `auth.users`, and a theatre is not a
+user.
+
+One polymorphic table rather than `person_follows` and `venue_follows`, so
+"everything I am waiting on" is one query and the alerts job that will read this
+walks one table. The cost of that is a `subject_key` holding two different kinds
+of identifier — a `person_slug()` for a performer, a uuid for a theatre — which
+a check constraint pins down per type. The person branch is the interesting
+half: it tests `subject_key = person_slug(subject_key)`, and since the function
+is idempotent on its own output, a raw "Máthé Zsolt m.v." fails there instead of
+quietly becoming a second, unreachable identity for somebody already followed.
+
+Resolving those keys back into names is `followed_subjects()`, because doing it
+from the client would be a query per row against two different tables. A slug
+nobody matches keeps its slug as a label: a follow that has stopped resolving
+should look wrong rather than render as a blank row.
+
+The button lives on the performer page and on Play Detail beside the theatre —
+Play Detail because there is no venue screen, and because the moment somebody
+wants more from a house is while they are looking at one of its productions.
+Both say what they actually do today: the subscription is recorded and nothing
+sends anything yet. A control that promises mail nobody will receive teaches
+people the app is a mockup, which is the same reasoning that took the
+never-incremented like and comment counters off the feed cards.
+
+The Watchlist tab carries the result, under the saved productions, because it is
+the same question in a different tense. A followed theatre has nowhere of its
+own to open, so it opens Discover filtered to that house — which is what a venue
+page would have shown anyway.
 
 ## A profile worth looking at
 

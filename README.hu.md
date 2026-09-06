@@ -18,7 +18,7 @@ npx expo install --fix
 
 Ezután hozz létre egy [Supabase](https://supabase.com) projektet (az ingyenes
 csomag bőven elég), futtasd le a `supabase/migrations/` **összes** fájlját
-**sorrendben** (`0001_init.sql`-től a `0028_the_evening_itself.sql`-ig) a projekt
+**sorrendben** (`0001_init.sql`-től a `0029_standing_follows.sql`-ig) a projekt
 SQL-szerkesztőjében, majd másold a `.env.example`-t `.env`-re, és töltsd ki a
 projekt Settings → API oldaláról az URL-t és az anon kulcsot:
 
@@ -78,7 +78,7 @@ app/                     expo-router képernyők (fájlalapú útvonalak)
 components/
   icons/                  kézzel rajzolt SVG ikonok, köztük az álarc-értékelő jel
   ui/                     Button, Chip, SelectChip, DateField, Avatar,
-                          PosterPlaceholder, TabBar
+                          FollowSubjectButton, PosterPlaceholder, TabBar
 
 theme/                    tervezési tokenek — a „Velvet Curtain" vizuális
                           rendszer egyetlen forrása
@@ -675,6 +675,48 @@ azután, hogy a bejegyzés már bent van, a `submitReview` akkor is visszaadja a
 bejegyzést. Az este már el van mentve, és elveszíteni azért, mert a
 szereplőlista nem ment be, sokkal rosszabb csere lenne, mint egy bejegyzés, ami
 rögzíti az estét, de azt nem, ki játszott.
+
+## Állandó feliratkozás, nem elmentett előadás
+
+A kívánságlista arra válaszol, hogy „elmegyek-e erre": egy előadás, egy döntés.
+Amit egy ilyen apptól valójában várnak az emberek, az nyitott — szólj, ha az
+Örkény új bemutatót hirdet, szólj, ha Für Anikó új előadásban lép színpadra —, és
+ezt semmi nem tudta kifejezni az appban. Ez többet számított, mint amennyire
+hangzik, mert az éjszakai szinkron az egyetlen része ennek a projektnek, ami
+*hírt termel*, és nem volt kinek átadnia.
+
+A `0029_standing_follows.sql` felveszi a `subject_follows` táblát, ami a 0014
+ötlete más típusú alanyra. Szándékosan nem a `follows`-t bővíti: annak a
+`followee_id`-ja idegen kulcs az `auth.users`-be, egy színház pedig nem
+felhasználó.
+
+Egy polimorf tábla, nem `person_follows` meg `venue_follows`, hogy a „mindaz,
+amire várok" egyetlen lekérdezés legyen, és az értesítő feladat, ami majd ezt
+olvassa, egy táblát járjon be. Ennek az ára egy `subject_key`, ami kétféle
+azonosítót tárol — `person_slug()`-ot egy alkotóhoz, uuid-t egy színházhoz —,
+amit típusonként egy check megszorítás rögzít. Az alkotói ág az érdekesebb fele:
+azt vizsgálja, hogy `subject_key = person_slug(subject_key)`, és mivel a függvény
+idempotens a saját kimenetén, egy nyers „Máthé Zsolt m.v." itt elhasal ahelyett,
+hogy csendben második, elérhetetlen identitássá válna valakinek, akit már
+követnek.
+
+Ezeket a kulcsokat a `followed_subjects()` fordítja vissza névre, mert kliens
+oldalról soronként egy lekérdezés lenne, két különböző táblán. Egy slug, amire
+nincs találat, megtartja a slugot címkeként: egy követés, ami már nem oldódik
+fel, tűnjön hibásnak, ne pedig üres sornak.
+
+A gomb az alkotó oldalán és az előadás adatlapján, a színház mellett él — az
+adatlapon azért, mert nincs önálló helyszín-képernyő, és mert az a pillanat,
+amikor valaki többet szeretne egy háztól, épp az, amikor annak egyik produkcióját
+nézi. Mindkettő kimondja, mit csinál ma: a feliratkozást feljegyezzük, és még
+semmi nem küld semmit. Egy vezérlő, ami olyan levelet ígér, amit senki nem fog
+megkapni, azt tanítja meg, hogy az app makett — ugyanaz az érvelés, ami levette
+a sosem növelt like- és kommentszámlálókat a hírfolyam kártyáiról.
+
+Az eredményt a Kívánságlista fül hordozza, az elmentett előadások alatt, mert
+ugyanaz a kérdés más igeidőben. Egy követett színháznak nincs hová megnyílnia, így
+a Felfedezést nyitja meg arra a házra szűrve — amit egy helyszínoldal is
+mutatott volna.
 
 ## Egy profil, amit érdemes megnézni
 

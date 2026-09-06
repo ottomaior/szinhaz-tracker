@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { View, ScrollView, StyleSheet, Pressable, TextInput } from "react-native";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
 import { inputFontSize } from "@/theme/type";
@@ -120,6 +120,11 @@ export default function DiscoverScreen() {
   const insets = useSafeAreaInsets();
   const fontsLoaded = useAppFonts();
   const router = useRouter();
+  // Set when something else in the app means "show me this theatre" — today
+  // that is a followed venue on the watchlist, which has no page of its own to
+  // open. Applied once, in an effect below, so the chip stays the user's to
+  // change afterwards rather than being reasserted on every render.
+  const { venueId: venueIdParam } = useLocalSearchParams<{ venueId?: string }>();
   const [mode, setMode] = useState<DiscoverMode>("browse");
   const [activeFilter, setActiveFilter] = useState(strings.discover.filterAll);
   const [cities, setCities] = useState<string[]>([]);
@@ -212,6 +217,17 @@ export default function DiscoverScreen() {
       active = false;
     };
   }, []);
+
+  // A theatre named in the route. Applied when the venue list has loaded and
+  // actually contains it — setting an id the chip list cannot show would filter
+  // every rail to nothing with no visible chip explaining why, which is the
+  // failure the city-change reconciliation below already guards against.
+  useEffect(() => {
+    if (!venueIdParam) return;
+    if (!venues.some((v) => v.id === venueIdParam)) return;
+    setActiveVenueId(venueIdParam);
+    setMode("browse");
+  }, [venueIdParam, venues]);
 
   // Scoped to the selected city, so picking Debrecen offers Debrecen's
   // theatres rather than all of them.

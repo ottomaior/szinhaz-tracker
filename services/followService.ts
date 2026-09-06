@@ -119,3 +119,109 @@ export async function searchPeople(term: string): Promise<PersonSummary[]> {
   const me = await currentUserId();
   return (data ?? []).map((r: ProfileRow) => toPerson(r)).filter((p: PersonSummary) => p.id !== me);
 }
+
+/**
+ * Following a performer or a theatre, rather than an account.
+ *
+ * The watchlist answers "am I going to this", one production at a time. These
+ * are standing and open-ended — tell me when Örkény announces something new,
+ * tell me when Für Anikó opens a production — which is the only shape in which
+ * the nightly sync's output ever reaches a person.
+ *
+ * Kept in this file rather than a new one because it is the same verb over a
+ * different subject, and a screen that shows both should not have to know it is
+ * talking to two services.
+ */
+export type FollowSubjectType = "person" | "venue";
+
+export type FollowedSubject = {
+  type: FollowSubjectType;
+  /** A `person_slug()` for a performer; the venue's uuid for a theatre. */
+  key: string;
+  label: string;
+  /** The city, for a theatre. Absent for a performer. */
+  detail?: string;
+  /** Credits for a performer; currently-running productions for a theatre. */
+  itemCount: number;
+  followedAt: string;
+};
+
+/**
+ * Everything one account is waiting on, with names rather than keys.
+ *
+ * Resolved by `followed_subjects()` in 0029 rather than here: the rows hold a
+ * slug and a uuid, and turning those into labels from the client would be a
+ * query per row against two different tables.
+ */
+export async function getFollowedSubjects(userId?: string): Promise<FollowedSubject[]> {
+  const id = userId ?? (await currentUserId());
+  if (!id) return [];
+  const { data, error } = await supabase.rpc("followed_subjects", { follower: id });
+  if (error) throw error;
+  return ((data ?? []) as {
+    subject_type: FollowSubjectType;
+    subject_key: string;
+    label: string;
+    detail: string | null;
+    item_count: number;
+    followed_at: string;
+  }[]).map((r) => ({
+    type: r.subject_type,
+    key: r.subject_key,
+    label: r.label,
+    detail: r.detail ?? undefined,
+    itemCount: r.item_count ?? 0,
+    followedAt: r.followed_at,
+  }));
+}
+
+export async function isFollowingSubject(type: FollowSubjectType, key: string): Promise<boolean> {
+  const me = await currentUserId();
+  if (!me) return false;
+  const { data, error } = await supabase
+    .from("subject_follows")
+    .select("subject_key")
+    .eq("user_id", me)
+    .eq("subject_type", type)
+    .eq("subject_key", key)
+    .maybeSingle();
+  if (error) throw error;
+  return !!data;
+}
+
+export async function followSubject(type: FollowSubjectType, key: string): Promise<void> {
+  const me = await currentUserId();
+  if (!me) throw new Error("not signed in");
+  // Upsert rather than insert, for the reason `followUser` gives: the button
+  // can be pressed again before the first request has come back.
+  const { error } = await supabase
+    .from("subject_follows")
+    .upsert(
+      { user_id: me, subject_type: type, subject_key: key },
+      { onConflict: "user_id,subject_type,subject_key" }
+    );
+  if (error) throw error;
+}
+
+export async function unfollowSubject(type: FollowSubjectType, key: string): Promise<void> {
+  const me = await currentUserId();
+  if (!me) throw new Error("not signed in");
+  const { error } = await supabase
+    .from("subject_follows")
+    .delete()
+    .eq("user_id", me)
+    .eq("subject_type", type)
+    .eq("subject_key", key);
+  if (error) throw error;
+}
+
+/** How many people are waiting on this performer or theatre. */
+export async function countSubjectFollowers(type: FollowSubjectType, key: string): Promise<number> {
+  const { count, error } = await supabase
+    .from("subject_follows")
+    .select("user_id", { count: "exact", head: true })
+    .eq("subject_type", type)
+    .eq("subject_key", key);
+  if (error) throw error;
+  return count ?? 0;
+}

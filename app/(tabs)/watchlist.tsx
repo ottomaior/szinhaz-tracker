@@ -5,9 +5,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
 import { gutter, radius, space } from "@/theme/tokens";
 import { getVenueById, getWatchlist } from "@/services/playsService";
+import { getFollowedSubjects, type FollowedSubject } from "@/services/followService";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Play, Venue } from "@/data/types";
-import { CalendarIcon, PinIcon } from "@/components/icons/Icons";
+import { CalendarIcon, ChevronRightIcon, PinIcon } from "@/components/icons/Icons";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Screen } from "@/components/ui/Screen";
@@ -19,16 +20,26 @@ export default function WatchlistScreen() {
   const router = useRouter();
   const { session, loading: authLoading } = useAuth();
   const [items, setItems] = useState<{ play: Play; addedAt: string }[]>([]);
+  // The standing half of this screen: performers and theatres rather than
+  // productions. Same tab because it answers the same question — what am I
+  // waiting on — and a second tab for six rows would be a navigation problem
+  // invented to hold them.
+  const [followed, setFollowed] = useState<FollowedSubject[]>([]);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
 
   const load = useCallback(async () => {
     setFailed(false);
     try {
-      setItems(await getWatchlist());
+      // Fetched together: one of them being empty is the normal case, and two
+      // sequential round trips would show the screen filling in twice.
+      const [watchlist, subjects] = await Promise.all([getWatchlist(), getFollowedSubjects()]);
+      setItems(watchlist);
+      setFollowed(subjects);
     } catch {
       setFailed(true);
       setItems([]);
+      setFollowed([]);
     } finally {
       setLoading(false);
     }
@@ -41,6 +52,7 @@ export default function WatchlistScreen() {
     useCallback(() => {
       if (!session) {
         setItems([]);
+        setFollowed([]);
         setLoading(false);
         return;
       }
@@ -48,7 +60,12 @@ export default function WatchlistScreen() {
     }, [session, load])
   );
 
-  const showEmpty = !loading && !authLoading && items.length === 0;
+  // The empty state belongs to the whole screen, not to the watchlist alone:
+  // somebody following two theatres and saving no productions has not arrived
+  // at an empty screen, and telling them it is empty would be wrong.
+  const showEmpty = !loading && !authLoading && items.length === 0 && followed.length === 0;
+  const people = followed.filter((f) => f.type === "person");
+  const venues = followed.filter((f) => f.type === "venue");
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -64,6 +81,55 @@ export default function WatchlistScreen() {
           {items.map(({ play }) => (
             <WatchlistRow key={play.id} play={play} onPress={() => router.push(`/play/${play.id}`)} />
           ))}
+
+          {/* Under the productions, because a saved production is a decision
+              about a specific evening and a follow is an open question. */}
+          {!!session && followed.length > 0 && (
+            <View style={{ gap: space.lg, marginTop: items.length > 0 ? space.xl : 0 }}>
+              <Text variant="heading">{strings.watchlist.followingHeading}</Text>
+
+              {people.length > 0 && (
+                <View style={{ gap: space.md }}>
+                  <Text variant="label" tone="dim">{strings.watchlist.followingPeople}</Text>
+                  {people.map((f) => (
+                    <SubjectRow
+                      key={`${f.type}:${f.key}`}
+                      label={f.label}
+                      detail={strings.watchlist.personItems(f.itemCount)}
+                      onPress={() => router.push({ pathname: "/person/[slug]", params: { slug: f.key } })}
+                    />
+                  ))}
+                </View>
+              )}
+
+              {venues.length > 0 && (
+                <View style={{ gap: space.md }}>
+                  <Text variant="label" tone="dim">{strings.watchlist.followingVenues}</Text>
+                  {venues.map((f) => (
+                    <SubjectRow
+                      key={`${f.type}:${f.key}`}
+                      label={f.label}
+                      detail={[f.detail, strings.watchlist.venueItems(f.itemCount)].filter(Boolean).join(" · ")}
+                      // There is no venue screen, so this opens Discover
+                      // filtered to the house — which is what a theatre page
+                      // would have shown anyway.
+                      onPress={() =>
+                        router.push({ pathname: "/(tabs)/discover", params: { venueId: f.key } })
+                      }
+                    />
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* Only once the productions list is empty too — a screen with two
+              theatres on it is not empty. */}
+          {!!session && !loading && items.length === 0 && followed.length > 0 && (
+            <Text variant="bodySmall" tone="faint" style={{ marginTop: space.lg }}>
+              {strings.watchlist.emptyBody}
+            </Text>
+          )}
 
           {showEmpty && (
             <EmptyState
@@ -113,6 +179,23 @@ function WatchlistRow({ play, onPress }: { play: Play; onPress: () => void }) {
   );
 }
 
+/**
+ * A followed performer or theatre. Deliberately plainer than `WatchlistRow`:
+ * these have no poster to show, and inventing a monogram tile for a theatre
+ * would give six rows more visual weight than the productions above them.
+ */
+function SubjectRow({ label, detail, onPress }: { label: string; detail: string; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} style={styles.subjectRow} accessibilityRole="button" accessibilityLabel={label}>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text variant="body" numberOfLines={1}>{label}</Text>
+        <Text variant="caption" tone="faint" numberOfLines={1}>{detail}</Text>
+      </View>
+      <ChevronRightIcon size={15} color={colors.textFaint} />
+    </Pressable>
+  );
+}
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("hu-HU", { month: "short", day: "numeric" });
 }
@@ -127,5 +210,14 @@ const styles = StyleSheet.create({
   },
   body: { padding: gutter, paddingBottom: 100, gap: space.lg },
   row: { flexDirection: "row", gap: space.md },
+  subjectRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: space.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    paddingVertical: space.md,
+    paddingHorizontal: space.md,
+  },
   metaRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
 });

@@ -171,6 +171,16 @@ export const strings = {
     emptyBody: "A darab oldalán a könyvjelző gombbal tehetsz ide előadásokat.",
     emptyAction: "Felfedezés",
     signInPrompt: "Jelentkezz be, hogy lásd a kívánságlistád",
+
+    /* The second half of this screen: not "which production", but "which
+       people and which houses". */
+    followingHeading: "Akiket követsz",
+    followingPeople: "Alkotók",
+    followingVenues: "Színházak",
+    followingEmpty:
+      "Egy alkotó vagy egy színház oldalán kérhetsz értesítést, ha új bemutatójuk lesz.",
+    personItems: (n: number) => `${n} közreműködés`,
+    venueItems: (n: number) => `${n} futó előadás`,
   },
 
   playDetail: {
@@ -402,6 +412,27 @@ export const strings = {
     venueCount: (n: number) => `${n} színház`,
     notFoundTitle: "Nem találjuk ezt az alkotót.",
     notFoundBody: "Lehet, hogy elgépelt a cím, vagy a katalógusban más néven szerepel.",
+  },
+
+  /**
+   * Standing subscriptions — a performer or a theatre, rather than one
+   * production. The wording is deliberately "értesítést kérek" and not just
+   * "követés": what this buys you is news, and 0029 is the table the nightly
+   * sync will read to send it.
+   */
+  follow: {
+    followPerson: "Értesítést kérek",
+    followingPerson: "Értesítést kérsz",
+    followVenue: "Értesítést kérek",
+    followingVenue: "Értesítést kérsz",
+    signInToFollow: "Jelentkezz be az értesítésekhez",
+    followerCount: (n: number) => (n === 1 ? "1 néző követi" : `${n} néző követi`),
+    personHint: "Szólunk, ha új előadásban lép színpadra.",
+    venueHint: "Szólunk, ha új bemutatót hirdet.",
+    /* Said plainly: nothing sends these yet, and a promise the app cannot keep
+       is worse than a feature that says what it is. */
+    notYetSending:
+      "Az értesítéseket még nem küldjük ki — egyelőre azt jegyezzük fel, mire vagy kíváncsi.",
   },
 
   profile: {
