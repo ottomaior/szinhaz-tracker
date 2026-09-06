@@ -325,8 +325,14 @@ export type VenueFilters = {
  * grid that claimed to include the archive and still hid most of it.
  */
 function applyBrowseScope(query: any, filters?: VenueFilters) {
-  if (filters?.includeArchived) return query;
-  return query.eq("is_archived", false).in("status", BROWSABLE_STATUSES);
+  // Events are excluded from every scope, including the archive one. A theatre
+  // publishes talks, tours and workshops alongside its productions and the
+  // adapters cannot always tell them apart, so 0034 flags them — and unlike
+  // `is_archived`, this is not a state a production passes through. A workshop
+  // does not become a play by widening the range of years on screen.
+  const scoped = query.eq("is_event", false);
+  if (filters?.includeArchived) return scoped;
+  return scoped.eq("is_archived", false).in("status", BROWSABLE_STATUSES);
 }
 
 function applyVenueFilters(query: any, filters?: VenueFilters) {
@@ -389,6 +395,7 @@ export async function getNowPlaying(filters?: VenueFilters): Promise<Play[]> {
     .from("plays")
     .select(select)
     .eq("is_archived", false)
+    .eq("is_event", false)
     .eq("status", "running")
     .not("next_perf_at", "is", null)
     .order("next_perf_at", { ascending: true })
@@ -459,6 +466,7 @@ export async function getPremieres(filters?: VenueFilters): Promise<Play[]> {
     .from("plays")
     .select(select)
     .eq("is_archived", false)
+    .eq("is_event", false)
     .in("status", BROWSABLE_STATUSES)
     .gte("premiere_date", today)
     .order("premiere_date", { ascending: true });

@@ -517,6 +517,7 @@ async function main() {
   if (!DRY_RUN) {
     await recomputeStatuses();
     await recomputeGenres();
+    await recomputeEvents();
     // Last, because it reads what the two passes above have just settled: a
     // production's dates and whether it is archived both decide whether it is
     // worth telling anybody about.
@@ -564,6 +565,30 @@ async function recomputeGenres() {
     console.log("[genre] recomputed genres, festival flags and stages");
   } catch (e) {
     console.error("[genre] recompute failed (catalog rows are still up to date):", errorMessageOf(e));
+  }
+}
+
+/**
+ * Flags the rows that are not productions — see
+ * supabase/migrations/0034_ancillary_events.sql.
+ *
+ * A theatre's repertoire list carries its talks, tours and workshops alongside
+ * its plays. Csokonai's adapter can tell them apart at the source, because that
+ * theatre tags real productions with a genre term and tags its events with
+ * none; the other sources publish nothing equivalent, so the remaining ones are
+ * caught by title here.
+ *
+ * Run on every sync rather than once, because the vocabulary changes and a new
+ * event arrives with every season announcement. It never reclassifies something
+ * somebody has already logged.
+ */
+async function recomputeEvents() {
+  try {
+    const { data, error } = await getSupabaseAdmin().rpc("recompute_play_events");
+    if (error) throw error;
+    console.log(`[events] flagged ${data ?? 0} row(s) as non-productions`);
+  } catch (e) {
+    console.error("[events] recompute failed (catalog rows are still up to date):", errorMessageOf(e));
   }
 }
 

@@ -18,7 +18,7 @@ npx expo install --fix
 
 Ezután hozz létre egy [Supabase](https://supabase.com) projektet (az ingyenes
 csomag bőven elég), futtasd le a `supabase/migrations/` **összes** fájlját
-**sorrendben** (`0001_init.sql`-től a `0033_friends_ratings.sql`-ig) a projekt
+**sorrendben** (`0001_init.sql`-től a `0034_ancillary_events.sql`-ig) a projekt
 SQL-szerkesztőjében, majd másold a `.env.example`-t `.env`-re, és töltsd ki a
 projekt Settings → API oldaláról az URL-t és az anon kulcsot:
 
@@ -380,6 +380,53 @@ visszatenni, egy naplóbejegyzés viszont dátumot, szereposztást, helyet, jegy
 fotót és beszélgetést hordozhat. A tetszések, a hozzászólások és a `review_cast`
 kaszkádolnak, a `recompute_play_rating()` pedig töröléskor is lefut, így a
 produkció nyilvános átlaga magától helyreáll.
+
+### Amit egy színház csinál, de nem előadás
+
+Egy színház nem csak darabokat hirdet: beszélgetéseket, házbejárásokat,
+workshopokat, könyvbemutatókat, kiállításokat, pedagógusesteket is. Ezek
+ugyanabban a repertoárlistában vannak, amit az adapterek olvasnak, így `plays`
+sorként érkeznek meg, és utána megjelennek a Felfedezésen, a keresésben és az
+onboardingban, mintha meg lehetne őket nézni — a böngészőrács a „Workshop:
+Országkórus"-t kínálja amellett a produkció mellett, amihez a workshop tartozik.
+
+**A Csokonai adaptere ezt már a forrásnál megoldja, méghozzá rendesen.** Az a
+színház a valódi produkciókat műfaj-taxonómiacímkével látja el, a kísérő
+eseményeit pedig nem — így a „Csokonai Társalgó", a „Színházbejárás", a
+„Csokonai közTér" és a „PEDAGÓGUSTÉR" soha nem is lesz play. Élőben
+ellenőrizve, miközben ennek utánanéztünk: a szeptemberi naptár hét „Izzik a
+galagonya" tételt sorol fel, a katalógus pedig azt az ötöt tartja, amelyik
+előadás — a bemutató előtti este 18 órás Társalgó és egy pedagógusesemény
+egyaránt helyesen hiányzik.
+
+A többi forrásnál nincs ilyesmi. Az Örkénynél egy workshop és egy valódi
+produkció **megkülönböztethetetlen az adatban**: egyiknek sincs szereposztása,
+játékideje, időpontja, a műfajukat pedig nem a színház adta, hanem ez a projekt
+a `venue_default`-ból. A maradékot tehát a cím alapján fogjuk meg, ami
+heurisztika — a `0034_ancillary_events.sql` pedig úgy van megírva, hogy az
+elkerülhetetlen tévedés olcsó legyen:
+
+- a besorolás **tárolt**, a `plays.is_event`-ben, nem minden lekérdezésen belül
+  fut le, tehát megnézhető, kézzel javítható és újraszámolható;
+- a sorokat **megtartjuk**, nem töröljük, így semmi nem vész el, ha rossz volt a
+  döntés;
+- a `recompute_play_events()` soha nem sorol át olyan produkciót, amit **valaki
+  már lenaplózott** — ha valaki feljegyezte, hogy ott volt egy beszélgetésen, az
+  egy valóban megtörtént estéje, és elrejteni azt a naplóbejegyzésével együtt
+  vinné el;
+- a szókészlet szándékosan **szűk**, és a commit előtt mind az 1205 címre le lett
+  futtatva: hat sorra illeszkedik, egyetlen produkcióra sem. Azok a szavak,
+  amikkel egy darab címe is kezdődhetne, kimaradtak, még ott is, ahol egy adott
+  sor eseménynek látszik. A legvilágosabb példa a `felolvasószínház`: egy
+  felolvasószínházi est valóban megnézhető és naplózható, és az Örkény műfajként
+  is használja.
+
+A jelzőt a böngészés, a Műsor, a keresés és az onboarding is kizárja. Érdemes
+megjegyezni, hogy az archívum-terjedelemből is: az `is_archived` egy produkció
+életének egy szakaszát írja le, egy workshop viszont nem lesz darab attól, hogy
+kiszélesítjük a képernyőn látható évek körét. Az onboarding számított itt a
+legtöbbet — mind a hat eseménynek van plakátja, ami épp a *legjobban* minősített
+jelöltekké tette őket azon a képernyőn.
 
 ### A jelvény angolul magyarázta magát
 

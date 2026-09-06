@@ -16,7 +16,7 @@ npx expo install --fix
 
 Then create a [Supabase](https://supabase.com) project (free tier is
 enough), run every file in `supabase/migrations/` **in order** (`0001_init.sql`
-through `0033_friends_ratings.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
+through `0034_ancillary_events.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
 URL/anon key from the project's Settings → API page:
 
 ```bash
@@ -358,6 +358,48 @@ entry can carry a date, a cast, a seat, a price, a photograph and a
 conversation. Likes, comments and `review_cast` cascade, and
 `recompute_play_rating()` fires on delete, so the production's public average
 corrects itself.
+
+### Things a theatre puts on that are not plays
+
+A theatre publishes more than plays: talks, building tours, workshops, book
+launches, exhibitions, teachers' evenings. They sit in the same repertoire lists
+the adapters read, so they arrive as `plays` rows and then appear in Discover,
+in search and in onboarding as though you could go and watch them — a browse
+grid offering "Workshop: Országkórus" beside the production it is a workshop
+*for*.
+
+**Csokonai's adapter already solves this at the source, and solves it properly.**
+That theatre tags real productions with a genre taxonomy term and tags its
+ancillary events with none, so "Csokonai Társalgó", "Színházbejárás", "Csokonai
+közTér" and "PEDAGÓGUSTÉR" never become plays at all. Checked live while
+investigating this: the September calendar lists seven "Izzik a galagonya"
+entries and the catalogue holds the five that are performances — the Társalgó
+talk at 18:00 the night before the premiere, and a teachers' event, are both
+correctly absent.
+
+Nothing equivalent exists for the other sources. At Örkény a workshop and a real
+production are **indistinguishable in the data**: both have no cast, no runtime,
+no showtimes, and a genre this project supplied from `venue_default` rather than
+from the theatre. So the rest are caught by title, which is a heuristic, and
+`0034_ancillary_events.sql` is written to keep the inevitable mistake cheap:
+
+- the classification is **stored** in `plays.is_event`, not applied inside every
+  query, so it can be inspected, corrected by hand, and recomputed;
+- the rows are **kept**, not deleted, so nothing is lost if the call was wrong;
+- `recompute_play_events()` never reclassifies a production **somebody has
+  already logged** — if a person recorded attending a talk, that is a real
+  evening they had, and hiding it would take their diary entry with it;
+- the vocabulary is deliberately **narrow**, and was checked against all 1,205
+  titles before being committed: it matches six rows and no production. Words
+  that could plausibly title a play are left out even where a particular row
+  looks like an event. `felolvasószínház` is the clearest example — a staged
+  reading is a real thing to attend and log, and Örkény publishes it as a genre.
+
+The flag is excluded from browse, the programme, search and onboarding. Note
+that it is excluded from the archive scope too: `is_archived` describes a stage
+of a production's life, but a workshop does not become a play by widening the
+range of years on screen. Onboarding mattered most here — all six events carry
+posters, which made them among the *best*-qualified candidates that screen had.
 
 ### The badge explained itself in English
 
