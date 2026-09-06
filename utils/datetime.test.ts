@@ -8,6 +8,7 @@ import {
   formatMonthHeading,
   formatRuntimeMinutes,
   formatShortDate,
+  formatShortDayForSuffix,
   formatShowtime,
   formatTime,
   formatWeekday,
@@ -139,5 +140,22 @@ describe("formatRuntimeMinutes", () => {
 
   it("drops the minutes when the runtime is a whole number of hours", () => {
     expect(formatRuntimeMinutes(120)).toBe("2 óra");
+  });
+});
+
+describe("formatShortDayForSuffix", () => {
+  it("drops the trailing full stop so a case suffix can be glued on", () => {
+    // Hungarian abbreviates the date with a closing period, but that period is
+    // part of the abbreviation — "okt. 28.-ig" is wrong, "okt. 28-ig" is right.
+    expect(formatShortDayForSuffix("2026-10-28")).toBe("okt. 28");
+    expect(`${formatShortDayForSuffix("2026-10-28")}-ig`).toBe("okt. 28-ig");
+  });
+
+  it("reads a bare day key as that day in Budapest, not the evening before", () => {
+    // Midnight UTC on the 1st is still 01:00 on the 1st in Budapest, but the
+    // failure this guards against is the reverse case the diary already hit:
+    // a date parsed as UTC midnight and formatted in a zone behind it.
+    expect(formatShortDayForSuffix("2026-01-01")).toBe("jan. 1");
+    expect(formatShortDayForSuffix("2026-06-30")).toBe("jún. 30");
   });
 });

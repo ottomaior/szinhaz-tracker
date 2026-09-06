@@ -18,7 +18,7 @@ npx expo install --fix
 
 Ezután hozz létre egy [Supabase](https://supabase.com) projektet (az ingyenes
 csomag bőven elég), futtasd le a `supabase/migrations/` **összes** fájlját
-**sorrendben** (`0001_init.sql`-től a `0029_standing_follows.sql`-ig) a projekt
+**sorrendben** (`0001_init.sql`-től a `0030_alerts.sql`-ig) a projekt
 SQL-szerkesztőjében, majd másold a `.env.example`-t `.env`-re, és töltsd ki a
 projekt Settings → API oldaláról az URL-t és az anon kulcsot:
 
@@ -68,6 +68,7 @@ app/                     expo-router képernyők (fájlalapú útvonalak)
   list/[id].tsx           Egy lista és a tartalma
   entry/[id].tsx          Egy este: kiket láttál, hol ültél, mennyibe került
   lists.tsx               Szerkesztői listák és a sajátjaid (modál)
+  inbox.tsx               Amit az éjszakai szinkron megtudott, és te kérdezted
   checkin.tsx             Előadás rögzítése — dátum, értékelés, vélemény (modál)
   onboarding.tsx          "Mit láttál már?" — első indítás rácsa a színházak
                           archívuma fölött (modál)
@@ -114,6 +115,8 @@ services/profileService.ts  a profil szerkeszthető fele — profilkép feltölt
 services/searchService.ts rangsorolt, ékezetfüggetlen keresés elgépelés-tűréssel,
                           előadásokban/helyszínekben/szereplők közt
                           (Postgres RPC)
+services/notificationService.ts  az értesítések — az appból csak olvasható, a
+                          sorokat kizárólag az éjszakai feladat írja
 services/authService.ts   regisztráció / belépés / kilépés
 
 supabase/migrations/      séma, RLS szabályok, triggerek és RPC-k (kézzel kell
@@ -675,6 +678,66 @@ azután, hogy a bejegyzés már bent van, a `submitReview` akkor is visszaadja a
 bejegyzést. Az este már el van mentve, és elveszíteni azért, mert a
 szereplőlista nem ment be, sokkal rosszabb csere lenne, mint egy bejegyzés, ami
 rögzíti az estét, de azt nem, ki játszott.
+
+## A kör bezárása
+
+Tíz adapter fut minden éjjel, és az adatbázis megtud dolgokat — egy előadás,
+amit elmentettél, kiírta a tavaszi időpontjait, valami a listádról holnap megy, a
+színház, amit követsz, új bemutatót hirdetett. Mindez a `plays`-be és a
+`performances`-be került, és ott meg is állt. Ez volt az app leggyakoribb oka
+arra, hogy valaki visszanyissa — és nem létezett.
+
+A `0030_alerts.sql` felveszi a `notifications` táblát és a feladatot, ami
+megtölti. Szándékosan appon belüli postaláda, nem push: nincs eszközazonosító,
+nincs APNs- vagy FCM-beállítás, nincs mit konfigurálni az első verzió előtt, és
+az e-mail később ugyanezekre a sorokra ülhet rá anélkül, hogy bármi változna.
+
+**A sorok szerkezetet hordoznak, nem mondatokat.** A `payload` egy `jsonb`, amiben
+a dátum, a helyszín neve, az előadó van — a magyar szöveget az `app/inbox.tsx`
+állítja elő. Egy kész prózával teli értesítéstábla második, láthatatlan helye
+lenne az app hangjának, méghozzá az, amit soha senki nem gondol átírni.
+
+**A feladat felépítésénél fogva idempotens.** Nincs emlékezete az előző futásáról,
+ezért minden sor, amit létrehozhat, kap egy `dedupe_key`-t, ami arra a tényre
+nézve állandó, és megváltozik, ha a tény változik — a `(user_id, dedupe_key)`
+egyedi index mellett. Ha kétszer fut egy éjjel, vagy három nap kiesés után hoz
+be lemaradást, mindent pontosan egyszer küld el.
+
+A kulcsokba ment a gondolkodás. Az „időpontok kiírva" a jelenleg meghirdetett
+**legtávolabbi** dátumra kulcsol, tehát akkor szólal meg, ha egy színház
+meghosszabbítja a szériát — és nem minden alkalommal, amikor a legkorábbi dátum
+átcsúszik a múltba, ami a minimumra kulcsolva minden éjjel megtörtént volna. A
+„holnap játsszák" az előadásra kulcsol, nem a napra, mert a délutáni és az esti
+előadás két külön döntés.
+
+**Semmi nem szólal meg arról, amit már tudtál.** A
+`performances.created_at > watchlist.added_at` és a
+`plays.created_at > subject_follows.created_at` a hír definíciója: új, *amióta
+kérted*. Nélkülük az első futás mindenkinek elmondja azokat az időpontokat,
+amiket már látott, amikor elmentette, egyetlen Örkény-követés pedig mind a 76
+produkciót kiküldi. Van egy 30 napos alsó korlát második, tompább védelemként —
+és őszintén ki kell mondani, hogy ma semmit nem ér: az egész katalógus az elmúlt
+hónapban került be, tehát a korlát minden sor fölött van. Akkor kezd működni,
+amikor az import kiöregszik, ami pontosan az a pillanat, amikor egy sorokat
+újralétrehozó szinkronváltozás máskülönben megkülönböztethetetlen lenne egy
+évadhirdetéstől.
+
+**Bejelentkezve semmi nem írhat ilyet.** Egyáltalán nincs insert szabály: a sorok
+az éjszakai feladattól jönnek, ami service role-ként fut, a
+`generate_notifications()`-től pedig el van véve az `EXECUTE` az `anon` és az
+`authenticated` szerepektől. Mindkettőt valódi belépett kérés megszemélyesítésével
+ellenőriztük — `set local role authenticated` plusz `request.jwt.claims`, ugyanaz a
+technika, amivel a 0025 kiemelt-lista őrét elkaptuk —, és mindkettő elutasításra
+kerül. A `follows`-szal és a `subject_follows`-szal ellentétben ezek a sorok nem
+is olvashatók nyilvánosan: egy követés egy előadóról szóló állítás, egy postaláda
+viszont valakinek a teljes kívánságlistája, érdeklődési sorrendben.
+
+A feladat a `sync/run.ts` végén fut, a státusz- és műfaj-újraszámolás után, mert
+az, hogy egy produkció archivált-e, és hogy milyen dátumai vannak, egyaránt
+bemenete annak, hogy „érdemes-e erről bárkinek szólni". SQL-ben van megírva, nem
+az adapterekben, ugyanazért, amiért azok a menetek is: egy színház tíz adapter
+bármelyikén keresztül közzétehet egy dátumot, és arra, hogy „érdekli-e ez
+bárkit", ugyanaz a válasz.
 
 ## Állandó feliratkozás, nem elmentett előadás
 

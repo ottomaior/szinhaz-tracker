@@ -37,6 +37,27 @@ export function formatShortDate(iso: string): string {
   });
 }
 
+/**
+ * "okt. 9" — the compact form with the trailing full stop removed, for when a
+ * Hungarian case suffix is about to be glued on.
+ *
+ * Hungarian abbreviates a date with a closing period ("okt. 9."), and that
+ * period is part of the abbreviation rather than punctuation ending a sentence.
+ * Append "-ig" to it and you get "okt. 9.-ig", which is simply wrong: the
+ * suffix attaches to the numeral, so it is "okt. 9-ig". Any caller adding
+ * `-ig`, `-én`, `-tól` and so on wants this rather than `formatShortDate`.
+ *
+ * Takes a `YYYY-MM-DD` day key rather than an instant, because the things that
+ * get a suffix are days — a run "through" a date, a season "from" one — and
+ * parsing at midday is what keeps a bare date from reading as the evening
+ * before in Budapest.
+ */
+export function formatShortDayForSuffix(dayKey: string): string {
+  return new Date(`${dayKey}T12:00:00Z`)
+    .toLocaleDateString("hu-HU", { timeZone: ZONE, month: "short", day: "numeric" })
+    .replace(/\.\s*$/, "");
+}
+
 /** "csütörtök" — the weekday alone, spelled out. */
 export function formatWeekday(iso: string): string {
   return new Date(iso).toLocaleDateString("hu-HU", { timeZone: ZONE, weekday: "long" });

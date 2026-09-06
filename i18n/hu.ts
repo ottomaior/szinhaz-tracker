@@ -314,6 +314,30 @@ export const strings = {
     stubUploadFailed: "A fotó feltöltése nem sikerült. Próbáld újra.",
   },
 
+  /**
+   * The inbox. What the nightly sync learned that somebody was waiting to
+   * hear — see 0030_alerts.sql for what produces each of the four kinds.
+   */
+  inbox: {
+    headerTitle: "Értesítések",
+    empty: "Nincs új értesítésed.",
+    emptyBody:
+      "Tegyél előadásokat a kívánságlistádra, vagy kérj értesítést egy alkotótól vagy színháztól — itt szólunk, ha történik velük valami.",
+    signInPrompt: "Jelentkezz be az értesítéseidhez",
+    /* One line per kind. The production's title is the row's heading, so these
+       say what happened to it rather than repeating the name. */
+    datesPublished: (through: string, count: number) =>
+      count === 1
+        ? `Új játszási időpont, ${through}-ig.`
+        : `${count} új játszási időpont, ${through}-ig.`,
+    playingTomorrow: (time: string, room?: string) =>
+      room ? `Holnap játsszák, ${time} — ${room}` : `Holnap játsszák, ${time}`,
+    venueNewPlay: (venue: string) => `Új bemutató: ${venue}`,
+    personNewPlay: (person: string) => `${person} új előadásban játszik`,
+    unreadBadge: (n: number) => (n > 9 ? "9+" : String(n)),
+    openNotifications: "Értesítések",
+  },
+
   /** One evening, read back: what the diary holds about a single night. */
   entry: {
     headerTitle: "Napló bejegyzés",

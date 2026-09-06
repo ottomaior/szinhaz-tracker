@@ -16,7 +16,7 @@ npx expo install --fix
 
 Then create a [Supabase](https://supabase.com) project (free tier is
 enough), run every file in `supabase/migrations/` **in order** (`0001_init.sql`
-through `0029_standing_follows.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
+through `0030_alerts.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
 URL/anon key from the project's Settings → API page:
 
 ```bash
@@ -64,6 +64,7 @@ app/                     expo-router screens (file-based routing)
   list/[id].tsx           One list and what is on it
   entry/[id].tsx          One evening: who was on, where you sat, what it cost
   lists.tsx               Editorial lists, and yours (modal)
+  inbox.tsx               What the nightly sync learned that you asked about
   checkin.tsx             Log a Performance — date, rating, review (modal)
   onboarding.tsx          "Which of these have you seen?" — a first-run grid
                           over the theatres' archives (modal)
@@ -106,6 +107,8 @@ services/profileService.ts  the editable half of a profile — avatar upload,
                           bio, and the public URL for a stored avatar
 services/searchService.ts ranked, accent-insensitive search with a typo
                           fallback, over plays/venues/cast (Postgres RPC)
+services/notificationService.ts  the inbox — read-only from the app; rows are
+                          written by the nightly job alone
 services/authService.ts   sign up / sign in / sign out
 
 supabase/migrations/      schema, RLS policies, triggers, and RPCs (run
@@ -642,6 +645,63 @@ One thing deliberately not rethrown: if the `review_cast` insert fails after the
 review is in, `submitReview` returns the review anyway. The evening is already
 saved, and losing it because a cast list would not go in is a far worse trade
 than an entry that records the night but not who was in it.
+
+## Closing the loop
+
+Ten adapters run every night and the database learns things — a production you
+saved just published its spring dates, something you saved plays tomorrow, a
+theatre you follow announced a production. All of it landed in `plays` and
+`performances` and stopped there. That was the app's highest-frequency reason
+to reopen, and it did not exist.
+
+`0030_alerts.sql` adds `notifications` and the job that fills it. An in-app
+inbox rather than push, deliberately: no device tokens, no APNs or FCM setup,
+nothing to configure before a first version ships, and email can sit on the same
+rows later without changing any of it.
+
+**The rows carry structure, not sentences.** `payload` is a `jsonb` holding the
+date, the venue name, the performer — and `app/inbox.tsx` renders the Hungarian.
+A notifications table full of rendered prose is a second, invisible place where
+the app's voice lives, and the one nobody remembers to edit.
+
+**The job is idempotent by construction.** It has no memory of its last run, so
+every row it could produce is named by a `dedupe_key` that is stable for that
+fact and changes when the fact does, against a unique index on
+`(user_id, dedupe_key)`. Running it twice in a night, or catching up after three
+days down, sends each thing exactly once.
+
+The keys are where the thought went. "Dates published" keys on the **furthest-out**
+date currently announced, so it fires when a theatre extends a run and not every
+time the earliest date rolls into the past — which is what keying on the minimum
+would have done, nightly, forever. "Playing tomorrow" keys on the performance
+rather than the day, because a matinee and an evening show are two decisions.
+
+**Nothing fires for what you already knew.** `performances.created_at > watchlist.added_at`
+and `plays.created_at > subject_follows.created_at` are the definition of news:
+new *since you asked*. Without them the first run tells everybody about the
+showtimes they could already see, and a single follow of Örkény mails somebody
+all 76 of its productions. There is a 30-day floor as a second, blunter guard —
+worth saying plainly that it buys nothing today, since the whole catalogue was
+imported within the last month and the floor sits above every row. It starts
+working once the import ages out, which is exactly when a sync change that
+recreated rows rather than updating them would otherwise be indistinguishable
+from a season announcement.
+
+**Nothing signed in can write one.** There is no insert policy at all: rows come
+from the nightly job running as the service role, and `generate_notifications()`
+has `EXECUTE` revoked from `anon` and `authenticated`. Both were checked by
+impersonating a real signed-in request — `set local role authenticated` plus a
+`request.jwt.claims` setting, the same technique 0025's featured-list guard was
+caught with — and both are refused. Unlike `follows` and `subject_follows`,
+these rows are also not publicly readable: a follow is a statement about a
+performer, but an inbox is somebody's whole watchlist in order of interest.
+
+The job runs at the end of `sync/run.ts`, after the status and genre passes,
+because whether a production is archived and what dates it has are both inputs
+to "is this worth telling anybody". It is written in SQL rather than in the
+adapters for the same reason those passes are: a theatre can publish a date
+through any of ten adapters, and the answer to "does anybody care" is the same
+either way.
 
 ## A standing subscription, not a saved production
 

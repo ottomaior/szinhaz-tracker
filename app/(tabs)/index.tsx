@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 import { View, ScrollView, StyleSheet, Pressable, RefreshControl } from "react-native";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
 import { gutter, radius, space } from "@/theme/tokens";
 import { getFeed, getPlayById, getUserById, getVenueById, type FeedScope } from "@/services/playsService";
+import { getUnreadCount } from "@/services/notificationService";
 import type { FeedItem, Play, User, Venue, Review, WatchlistEntry } from "@/data/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { Chip } from "@/components/ui/Chip";
+import { BellIcon } from "@/components/icons/Icons";
 import { MaskIcon, MaskRatingRow } from "@/components/icons/MaskIcon";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { Avatar } from "@/components/ui/Avatar";
@@ -26,6 +28,7 @@ export default function FeedScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const { session } = useAuth();
   const [scope, setScope] = useState<FeedScope>("everyone");
+  const [unread, setUnread] = useState(0);
 
   const load = useCallback(async () => {
     setFailed(false);
@@ -44,6 +47,26 @@ export default function FeedScreen() {
     load();
   }, [load]);
 
+  // Refreshed on focus rather than only on mount, so the badge clears when the
+  // user comes back from the inbox having read everything.
+  useFocusEffect(
+    useCallback(() => {
+      if (!session) {
+        setUnread(0);
+        return;
+      }
+      let active = true;
+      getUnreadCount()
+        .then((n) => {
+          if (active) setUnread(n);
+        })
+        .catch(() => undefined);
+      return () => {
+        active = false;
+      };
+    }, [session])
+  );
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await load();
@@ -58,9 +81,33 @@ export default function FeedScreen() {
             <MaskIcon state="on" size={22} />
             <Text variant="heading">{strings.appName}</Text>
           </View>
-          <Pressable onPress={() => router.push("/people")} hitSlop={8} accessibilityRole="button">
-            <Text variant="label" tone="accent">{strings.feed.findPeople}</Text>
-          </Pressable>
+          <View style={styles.topBarActions}>
+            <Pressable onPress={() => router.push("/people")} hitSlop={8} accessibilityRole="button">
+              <Text variant="label" tone="accent">{strings.feed.findPeople}</Text>
+            </Pressable>
+            {/* Only when signed in: an inbox is per account, and a bell that
+                can only ever be empty is a control that teaches you to ignore
+                it. The badge is a count, not a dot, because "3 dates published"
+                and "1" are different decisions about whether to look now. */}
+            {!!session && (
+              <Pressable
+                onPress={() => router.push("/inbox")}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel={strings.inbox.openNotifications}
+                style={styles.bell}
+              >
+                <BellIcon />
+                {unread > 0 && (
+                  <View style={styles.badge}>
+                    <Text variant="caption" style={styles.badgeText}>
+                      {strings.inbox.unreadBadge(unread)}
+                    </Text>
+                  </View>
+                )}
+              </Pressable>
+            )}
+          </View>
         </View>
 
         {/* Only offered when signed in: "Követettek" for a signed-out visitor
@@ -303,6 +350,24 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.hairlineSoft,
   },
+  topBarActions: { flexDirection: "row", alignItems: "center", gap: space.lg },
+  // `overflow: visible` matters: the badge is positioned outside the bell's own
+  // box, and clipping it would leave a bell that never looks like it has
+  // anything in it.
+  bell: { position: "relative", overflow: "visible" },
+  badge: {
+    position: "absolute",
+    top: -5,
+    right: -7,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    paddingHorizontal: 4,
+    backgroundColor: colors.gold,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  badgeText: { color: colors.bg, fontWeight: "700", fontSize: 10, lineHeight: 16 },
   scopeRow: {
     flexDirection: "row",
     gap: space.sm,

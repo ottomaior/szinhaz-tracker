@@ -517,6 +517,10 @@ async function main() {
   if (!DRY_RUN) {
     await recomputeStatuses();
     await recomputeGenres();
+    // Last, because it reads what the two passes above have just settled: a
+    // production's dates and whether it is archived both decide whether it is
+    // worth telling anybody about.
+    await generateNotifications();
   }
 
   if (failures.length) {
@@ -560,6 +564,30 @@ async function recomputeGenres() {
     console.log("[genre] recomputed genres, festival flags and stages");
   } catch (e) {
     console.error("[genre] recompute failed (catalog rows are still up to date):", errorMessageOf(e));
+  }
+}
+
+/**
+ * Turns what this run learned into things people are waiting to hear — see
+ * supabase/migrations/0030_alerts.sql. Dates published for a production
+ * somebody saved, something on a watchlist playing tomorrow, a new production
+ * at a followed theatre or by a followed performer.
+ *
+ * The whole decision lives in `generate_notifications()` rather than here,
+ * because "is this worth telling somebody" is a question about the database
+ * and not about what one adapter returned: a theatre can publish a date
+ * through any of ten adapters and the answer is the same either way. It is
+ * idempotent, so a re-run or a catch-up after downtime sends nothing twice.
+ */
+async function generateNotifications() {
+  try {
+    const { data, error } = await getSupabaseAdmin().rpc("generate_notifications");
+    if (error) throw error;
+    console.log(`[alerts] created ${data ?? 0} notification(s)`);
+  } catch (e) {
+    // Same rule as the two passes above: the catalog is already written and
+    // correct, and tomorrow's run generates whatever this one missed.
+    console.error("[alerts] generation failed (catalog rows are still up to date):", errorMessageOf(e));
   }
 }
 

@@ -53,6 +53,7 @@ export default function RootLayout() {
           <Stack.Screen name="lists" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
           <Stack.Screen name="onboarding" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
           <Stack.Screen name="people" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+          <Stack.Screen name="inbox" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
           <Stack.Screen name="edit-profile" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
           <Stack.Screen name="checkin" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
           <Stack.Screen name="add-play" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
