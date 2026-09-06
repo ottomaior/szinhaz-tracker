@@ -149,7 +149,9 @@ export default function UserProfileScreen() {
                   <PlayRow
                     key={entry.review.id}
                     play={entry.play}
-                    onPress={() => router.push(`/play/${entry.play.id}`)}
+                    // Somebody else's evening is worth reading too — that is
+                    // the whole point of recording who was on.
+                    onPress={() => router.push({ pathname: "/entry/[id]", params: { id: entry.review.id } })}
                     meta={
                       <Text variant="caption" tone="faint" numberOfLines={1}>
                         {venues.get(entry.play.venueId)?.name ?? entry.play.author}

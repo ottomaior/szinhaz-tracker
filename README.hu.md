@@ -18,7 +18,7 @@ npx expo install --fix
 
 Ezután hozz létre egy [Supabase](https://supabase.com) projektet (az ingyenes
 csomag bőven elég), futtasd le a `supabase/migrations/` **összes** fájlját
-**sorrendben** (`0001_init.sql`-től a `0027_profile_identity.sql`-ig) a projekt
+**sorrendben** (`0001_init.sql`-től a `0028_the_evening_itself.sql`-ig) a projekt
 SQL-szerkesztőjében, majd másold a `.env.example`-t `.env`-re, és töltsd ki a
 projekt Settings → API oldaláról az URL-t és az anon kulcsot:
 
@@ -66,6 +66,7 @@ app/                     expo-router képernyők (fájlalapú útvonalak)
   play/[id].tsx           Előadás részletei
   person/[slug].tsx       Egy alkotó, és minden, amiben szerepel
   list/[id].tsx           Egy lista és a tartalma
+  entry/[id].tsx          Egy este: kiket láttál, hol ültél, mennyibe került
   lists.tsx               Szerkesztői listák és a sajátjaid (modál)
   checkin.tsx             Előadás rögzítése — dátum, értékelés, vélemény (modál)
   onboarding.tsx          "Mit láttál már?" — első indítás rácsa a színházak
@@ -97,6 +98,8 @@ utils/calendar.ts         a dátumválasztó hónaprács-számításai, a kompon
                           kívül tartva, hogy tesztelhető legyen
 utils/datetime.ts         magyar dátum- és időformázás, Europe/Budapest
                           zónára rögzítve
+utils/money.ts            forintösszeg kiolvasása szövegmezőből, és a különbség
+                          a tiszteletjegy meg a „nem adta meg" között
 
 data/types.ts             domain típusok (Play, Venue, Review, User, …)
 services/supabase.ts      a Supabase kliens (az EXPO_PUBLIC_SUPABASE_*-ot olvassa)
@@ -594,6 +597,84 @@ megőrzi. Két kivétel érdemel említést:
   így nincs az API-ból levezethető útvonal. Egy megtippelt URL-minta a "Jegyek"
   gomb mögött rosszabb, mint ha nem lenne gomb: azt küldi 404-re, aki már
   eldöntötte, hogy megy.
+
+## Amit egy filmvetítés nem tud
+
+Egy film minden vetítése ugyanaz a fájl. Egy előadás nem: változik a szereposztás,
+a hely a tiéd, a jegynek ára volt, és utána ott marad a csonk a kabátzsebedben. A
+`0022_diary_dates.sql` óta a napló tudja, *melyik este* volt — magáról az estéről
+viszont semmit.
+
+A `0028_the_evening_itself.sql` négy dolgot ad hozzá, mindet opcionálisan, így
+minden korábbi bejegyzés érvényes marad, és az a bejegyzés is teljes értékű, ami
+egyikre sem válaszol.
+
+**Kik játszottak.** Ez a lényeg, és ezért létezik önálló oldalként az
+[understudies.org](https://understudies.org): a szereposztást aznap este kiteszik
+az előtérbe, és utána sehol nem publikálják — vagyis a nézői feljegyzés az
+egyetlen feljegyzés, ami valaha lesz róla. A `review_cast` külön tábla, nem
+`text[]` a `reviews`-on, mert épp az a cél, hogy visszafelé is meg lehessen
+kérdezni — ki ugrott be ehhez az előadóhoz, hány estéjét látta ez a néző —, egy
+tömb pedig egyiket sem válaszolja meg anélkül, hogy minden olvasásnál kibontanánk.
+
+A nevek szabad szövegek, mint a `play_cast`-ban, az azonosság pedig a slug: a
+0024 `person_slug()`-ja a „Máthé Zsolt"-ot és a „Máthé Zsolt m.v."-t egy emberre
+hozza, és egy generált `name_slug` oszlop viszi ezt tovább az egyedi indexbe, így
+egy este nem rögzítheti kétféleképpen ugyanazt a színészt. A naplózó űrlap is
+slug szerint jelöl, és a megjelenítés előtt kiszűri az ismétlődéseket az előadás
+publikált szereplőlistájából — a `play_cast` szerepenként egyszer krediteli az
+embert, tehát aki játszik is meg átdolgozott is, két csempeként érkezett egyetlen
+emberre.
+
+Az `is_alternate` az az oszlop, amiért az egész készült. A megjelölt név a
+katalógusból jött; a begépelt nem, tehát beugró, helyettesítő vagy egy estére
+érkező vendég. Ha valaki mégis a publikált szereplőlistában van, a begépelés őt
+jelöli meg, nem beugróként veszi fel — így az egyetlen jelentéssel bíró jelző
+megőrzi a jelentését.
+
+**Hely és ár.** A helynél szabad szöveg: a magyar színházak tucatféleképpen
+jelölik — „Erkély bal 2. sor 14.", „Földszint jobb oldalpáholy", „Stúdió, szabad
+ülőhely" —, három oszlop pedig mindet olyan alakba kényszerítené, ami nem az
+övék. Semmi, amire ez való, nem igényli a szöveg elemzését.
+
+A `price_huf` a pénznemét viseli a nevében, mert egy magyar appon a jelöletlen
+`price` az az oszlop, amibe egyszer valaki eurót fog írni. A nulla valódi válasz
+— tiszteletjegy, iskolai előadás, valakinek a szabad helye —, ezért a teljes út
+a `utils/money.ts`-től a `submitReview`-n át a bejegyzés képernyőjéig
+`undefined`-ra vizsgál, nem hamis értékre. A `parseTicketPrice` a `utils/`-ban
+lakik, és ott is van tesztelve: a „4500", a „4 500", a „4.500" és a beillesztett
+`toLocaleString("hu-HU")` nem törhető szóköze ugyanaz a szám, a „kb 4000"-t
+viszont visszautasítjuk, nem pedig ráhúzzuk egy számra — ez ugyanis egyike annak
+a két értéknek, amit az évadösszegző majd összead, és egy szám, amit senki nem
+gépelt be, láthatatlan marad egy végösszegben. A felső korlát nem a jegyárakról
+mond ítéletet: egy elgépelt plusz számjegyet fog meg.
+
+**A jegy fotója.** Bejegyzésenként egy kép — a jegy, a műsorfüzet, a taps. A
+vezetékek már megvoltak, csak máshová mutattak: az `expo-image-picker`
+függőség, a 0013 pedig mappánkénti szabályt adott a felhasználói feltöltéseknek,
+tehát ez egy második bucket, nem új infrastruktúra. Nyilvános, mint a `posters`
+és az `avatars`, mert a napló bejegyzése is nyilvános — a `reviews_select_all` a
+0001 óta bárkinek engedi olvasni a szöveget. Ez valódi következmény, nem
+mellékes, ezért a naplózó űrlap ki is mondja, *mielőtt* elővennéd a kamerát: egy
+jegyen általában rajta van a neved és a foglalási kódod. A tulajdonlást itt is
+két helyen érvényesítjük, a tárhely RLS-ével a feltöltésnél és a
+`reviews_guard_stub_path`-szal a soron — ugyanazzal az érveléssel, amit a 0027
+az `avatar_path`-ról ír.
+
+**És egy képernyő, ahol mindez visszaolvasható.** Semmit nem érte volna meg
+leírni, ha soha többé nem mutatja meg neked semmi. Az `entry/[id].tsx` egyetlen
+este: az előadás, a dátum és a kezdés, kik játszottak, a hely, az ár, a jegy, a
+vélemény. A napló sorai már ide mutatnak, nem a katalógus adatlapjára — a napló
+egy sora egy este emléke, és a produkcióról szóló közvélekedéshez küldeni azt
+jelentette, hogy eldobjuk az estét. Valaki más estéje ugyanígy nyílik meg, és
+épp ezért érdemes egyáltalán rögzíteni, ki lépett színpadra; a szereplőcsempék
+az előadók oldalára visznek.
+
+Egy dolgot szándékosan nem dobunk tovább: ha a `review_cast` beszúrása elhasal
+azután, hogy a bejegyzés már bent van, a `submitReview` akkor is visszaadja a
+bejegyzést. Az este már el van mentve, és elveszíteni azért, mert a
+szereplőlista nem ment be, sokkal rosszabb csere lenne, mint egy bejegyzés, ami
+rögzíti az estét, de azt nem, ki játszott.
 
 ## Egy profil, amit érdemes megnézni
 

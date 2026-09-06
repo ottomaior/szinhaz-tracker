@@ -236,8 +236,40 @@ export interface Review {
   ratingSetDesign?: number;
   text: string;
   tags: string[];
+  /**
+   * Where they sat, in their own words — "Erkély bal 2. sor 14.".
+   *
+   * Free text rather than section/row/number, because Hungarian theatres label
+   * seats a dozen different ways and none of what this is for needs it parsed.
+   */
+  seat?: string;
+  /** What the ticket cost, in forints. Zero is a real answer; undefined is not recorded. */
+  priceHuf?: number;
+  /** The stub, the műsorfüzet, the curtain call. Public, like the entry itself. */
+  stubUrl?: string;
+  /**
+   * Who was actually on that night.
+   *
+   * Empty for every entry that did not answer, which is most of them —
+   * `undefined` is the same thing here, since the rows are fetched only where
+   * the screen is going to show them.
+   */
+  castSeen?: SeenCastMember[];
   likeCount: number;
   commentCount: number;
+}
+
+/** One person somebody recorded as having been on stage the night they went. */
+export interface SeenCastMember {
+  name: string;
+  /** The part, when the catalogue knew it. Absent for a name typed in by hand. */
+  role?: string;
+  /**
+   * Not in the production's published cast — an understudy, a replacement, a
+   * guest for one night. The reason this record is worth keeping at all: it is
+   * exactly what no theatre publishes after the fact.
+   */
+  isAlternate: boolean;
 }
 
 export interface WatchlistEntry {

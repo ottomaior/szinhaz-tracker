@@ -16,7 +16,7 @@ npx expo install --fix
 
 Then create a [Supabase](https://supabase.com) project (free tier is
 enough), run every file in `supabase/migrations/` **in order** (`0001_init.sql`
-through `0027_profile_identity.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
+through `0028_the_evening_itself.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
 URL/anon key from the project's Settings → API page:
 
 ```bash
@@ -62,6 +62,7 @@ app/                     expo-router screens (file-based routing)
   play/[id].tsx           Play Detail
   person/[slug].tsx       One performer or director, and everything they are on
   list/[id].tsx           One list and what is on it
+  entry/[id].tsx          One evening: who was on, where you sat, what it cost
   lists.tsx               Editorial lists, and yours (modal)
   checkin.tsx             Log a Performance — date, rating, review (modal)
   onboarding.tsx          "Which of these have you seen?" — a first-run grid
@@ -91,6 +92,8 @@ utils/calendar.ts         month-grid arithmetic for the date picker, kept out
                           of the component so it can be tested
 utils/datetime.ts         Hungarian date/time formatting, pinned to
                           Europe/Budapest
+utils/money.ts            reading a forint amount out of a text field, and the
+                          difference between a free ticket and no answer
 
 data/types.ts             domain types (Play, Venue, Review, User, …)
 services/supabase.ts      the Supabase client (reads EXPO_PUBLIC_SUPABASE_*)
@@ -564,6 +567,81 @@ Two exceptions worth knowing:
   derivable from what the API gives us. A guessed URL pattern behind a "Jegyek"
   button is worse than no button: it sends somebody who has already decided to
   go to a 404.
+
+## What a screening does not have
+
+Every showing of a film is the same file. A performance is not: the cast
+changes, the seat is yours, the ticket had a price, and there is a stub in your
+coat pocket afterwards. Since `0022_diary_dates.sql` the diary has known which
+*night* — and nothing whatever about the night.
+
+`0028_the_evening_itself.sql` adds four things, all optional, so every entry
+written before it stays valid and an entry that answers none of them is still a
+perfectly good entry.
+
+**Who was on.** This is the one that matters, and the reason
+[understudies.org](https://understudies.org) exists as a site of its own: a cast
+sheet is posted in the foyer on the night and published nowhere afterwards, so
+an audience record is the only record there will ever be. `review_cast` is its
+own table rather than a `text[]` on `reviews`, because the whole point is to ask
+it backwards — who did this performer go on for, how many of their nights has
+this person seen — and an array answers neither without unnesting it on every
+read.
+
+Names are free text, matching `play_cast`, and the identity is the slug: 0024's
+`person_slug()` already folds "Máthé Zsolt" and "Máthé Zsolt m.v." to one
+person, and a generated `name_slug` column carries that into the unique index,
+so one night cannot record two spellings of one actor. The check-in form ticks
+by slug for the same reason, and deduplicates the production's published cast
+before showing it — `play_cast` credits a person once per role, so somebody who
+both acts and adapts arrived as two tiles for one human being.
+
+`is_alternate` is the column the feature exists for. A ticked name came from the
+catalogue; a typed one did not, and is therefore an understudy, a replacement or
+a guest. Typing somebody who *is* in the published cast ticks them instead of
+adding them as a beugró, so the one meaningful flag stays meaningful.
+
+**Seat and price.** Free text for the seat: Hungarian theatres label them a
+dozen different ways — "Erkély bal 2. sor 14.", "Földszint jobb oldalpáholy",
+"Stúdió, szabad ülőhely" — and three columns would force every one of them into
+a shape it does not have. Nothing this is for needs the string parsed.
+
+`price_huf` is named for its currency, because an unlabelled `price` on a
+Hungarian app is a column somebody will one day put euros in. Zero is a real
+answer — a press ticket, a school performance, a friend's spare — which is why
+the whole path from `utils/money.ts` through `submitReview` to the entry screen
+checks for `undefined` rather than for falsiness. `parseTicketPrice` lives in
+`utils/` and is tested there: "4500", "4 500", "4.500" and a pasted
+`toLocaleString("hu-HU")` non-breaking space are the same number, but "kb 4000"
+is refused rather than coerced, since this is one of two values the season page
+will eventually add up and a number nobody typed would be invisible in a total.
+The upper bound is not a judgement about ticket prices; it catches a stray digit.
+
+**The stub.** A photo per entry — the ticket, the műsorfüzet, the curtain call.
+The plumbing already existed and pointed elsewhere: `expo-image-picker` is a
+dependency and 0013 gave user uploads a per-folder policy, so this is a second
+bucket rather than new infrastructure. It is public, like `posters` and
+`avatars`, because a diary entry is public — `reviews_select_all` has let anyone
+read the text since 0001. That is a real consequence rather than an incidental
+one, so the check-in form says it in as many words *before* the camera comes
+out: a ticket usually has your name and booking code printed on it. Ownership is
+enforced in both places, storage RLS on the upload and
+`reviews_guard_stub_path` on the row, for the reason 0027 gives about
+`avatar_path`.
+
+**And a screen to read it back on.** None of this was worth writing while
+nothing would ever show it to you again. `entry/[id].tsx` is one evening: the
+production, the date and curtain time, who was on, the seat, the price, the
+stub, the review. Diary rows point at it now instead of at the catalogue page —
+a diary row is a record of a night out, and sending it to everybody's opinion of
+the production threw the night away. Somebody else's evening opens the same way,
+which is the point of recording who went on at all; the cast chips lead to the
+performers' pages.
+
+One thing deliberately not rethrown: if the `review_cast` insert fails after the
+review is in, `submitReview` returns the review anyway. The evening is already
+saved, and losing it because a cast list would not go in is a far worse trade
+than an entry that records the night but not who was in it.
 
 ## A profile worth looking at
 

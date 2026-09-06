@@ -49,6 +49,7 @@ export default function RootLayout() {
           <Stack.Screen name="user/[id]" options={{ animation: "slide_from_right" }} />
           <Stack.Screen name="person/[slug]" options={{ animation: "slide_from_right" }} />
           <Stack.Screen name="list/[id]" options={{ animation: "slide_from_right" }} />
+          <Stack.Screen name="entry/[id]" options={{ animation: "slide_from_right" }} />
           <Stack.Screen name="lists" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
           <Stack.Screen name="onboarding" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
           <Stack.Screen name="people" options={{ presentation: "modal", animation: "slide_from_bottom" }} />

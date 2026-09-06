@@ -273,6 +273,54 @@ export const strings = {
      */
     rewatchNotice: (count: number) =>
       count === 1 ? "Ezt már láttad egyszer — ez a második alkalom." : `Ezt már ${count}-szer láttad.`,
+
+    /* Who was on that night — the one question a film log never has to ask. */
+    castLabel: "Kiket láttál?",
+    castHint: "Koppints azokra, akik aznap este játszottak. Ha beugró volt, vedd fel a nevét.",
+    castNoneKnown: "Ehhez az előadáshoz nincs szereplőlistánk. Írd be, akire emlékszel.",
+    castAddAlternate: "Beugró hozzáadása",
+    castAlternatePlaceholder: "Ki ugrott be?",
+    castAdd: "Hozzáadás",
+    castAlternateBadge: "beugró",
+    castSelectedCount: (n: number) => `${n} kiválasztva`,
+
+    seatLabel: "Hol ültél?",
+    seatPlaceholder: "Pl. Erkély bal, 2. sor 14.",
+    priceLabel: "Mennyibe került?",
+    pricePlaceholder: "Ft",
+    priceHint: "A 0 is válasz — tiszteletjegy, iskolai előadás, valakinek a szabad helye.",
+    priceInvalid: "A jegyár csak szám lehet, 0 és 1 000 000 Ft között.",
+
+    stubLabel: "Jegy vagy fotó",
+    stubAdd: "Fotó hozzáadása",
+    stubReplace: "Fotó cseréje",
+    stubRemove: "Fotó eltávolítása",
+    stubUploading: "Feltöltés…",
+    /* Said before the camera comes out, not after. A ticket usually has a name
+       and a booking code printed on it, and this entry is public. */
+    stubHint:
+      "A napló bejegyzései nyilvánosak, így ez a fotó is az lesz. Egy jegyen általában rajta van a neved és a foglalási kódod — takard ki, ha nem szeretnéd megosztani.",
+    stubPermission: "A fotó feltöltéséhez engedélyt kell adnod a galériához.",
+    stubUploadFailed: "A fotó feltöltése nem sikerült. Próbáld újra.",
+  },
+
+  /** One evening, read back: what the diary holds about a single night. */
+  entry: {
+    headerTitle: "Napló bejegyzés",
+    notFound: "Ez a bejegyzés nem található.",
+    seenOn: (date: string) => `Megnézve: ${date}`,
+    seenUndated: "Dátum nélkül naplózva",
+    rewatch: "Újranézés",
+    castHeading: "Akiket aznap este láttál",
+    castAlternateBadge: "beugró",
+    seatHeading: "Hely",
+    priceHeading: "Jegyár",
+    priceValue: (huf: number) => (huf === 0 ? "Tiszteletjegy" : `${huf.toLocaleString("hu-HU")} Ft`),
+    stubHeading: "Jegy",
+    reviewHeading: "Vélemény",
+    openPlay: "Az előadás adatlapja",
+    nothingRecorded:
+      "Ehhez az estéhez még nem rögzítettél helyet, jegyárat vagy szereplőket.",
   },
 
   /**

@@ -12,6 +12,7 @@ import type {
   ProgramDay,
   ProgramEntry,
   Review,
+  SeenCastMember,
   User,
   Venue,
   VenueType,
@@ -88,9 +89,15 @@ type ReviewRow = {
   rating_set_design: number | null;
   text: string;
   tags: string[];
+  seat: string | null;
+  price_huf: number | null;
+  stub_path: string | null;
   like_count: number;
   comment_count: number;
+  review_cast?: ReviewCastRow[];
 };
+
+type ReviewCastRow = { name: string; role: string | null; is_alternate: boolean };
 
 type PerformanceRow = { id: string; play_id: string; venue_id: string; room: string | null; starts_at: string };
 
@@ -108,6 +115,11 @@ export type PosterColumns = {
 /** Public CDN URL for a path inside the `posters` bucket. */
 function posterUrl(path: string): string {
   return `${SUPABASE_URL.replace(/\/+$/, "")}/storage/v1/object/public/posters/${path}`;
+}
+
+/** Public CDN URL for a path inside the `stubs` bucket. */
+function stubUrl(path: string): string {
+  return `${SUPABASE_URL.replace(/\/+$/, "")}/storage/v1/object/public/stubs/${path}`;
 }
 
 /**
@@ -196,6 +208,17 @@ function toReview(row: ReviewRow): Review {
     ratingSetDesign: row.rating_set_design ?? undefined,
     text: row.text,
     tags: row.tags,
+    seat: row.seat ?? undefined,
+    // `?? undefined` rather than `|| undefined`: a free ticket is 0 forints and
+    // is a real thing to have recorded, so it must not fall through to "not
+    // recorded" the way a falsy check would send it.
+    priceHuf: row.price_huf ?? undefined,
+    stubUrl: row.stub_path ? stubUrl(row.stub_path) : undefined,
+    castSeen: row.review_cast?.map((c) => ({
+      name: c.name,
+      role: c.role ?? undefined,
+      isAlternate: c.is_alternate,
+    })),
     likeCount: row.like_count,
     commentCount: row.comment_count,
   };
@@ -815,6 +838,21 @@ export async function submitReview(input: {
   ratingSetDesign?: number;
   text: string;
   tags: string[];
+  /** Where they sat, as they would say it. */
+  seat?: string;
+  /** Forints. Zero is a real answer, so this is checked for `undefined`, not falsiness. */
+  priceHuf?: number;
+  /** Path in the `stubs` bucket, already uploaded by `uploadStub`. */
+  stubPath?: string;
+  /**
+   * Who was on that night.
+   *
+   * Written as a second statement rather than through an RPC: the rows hang off
+   * a review id that does not exist until the insert above returns, and the
+   * cast is the one part of a check-in that can fail without the evening being
+   * lost — see the comment at the write itself.
+   */
+  castSeen?: SeenCastMember[];
 }): Promise<Review> {
   const {
     data: { user: authUser },
@@ -846,11 +884,104 @@ export async function submitReview(input: {
       rating_set_design: input.ratingSetDesign ?? null,
       text: input.text,
       tags: input.tags,
+      seat: input.seat?.trim() || null,
+      // `?? null` and not `|| null`, so a 0 Ft press ticket is recorded as free
+      // rather than as unanswered.
+      price_huf: input.priceHuf ?? null,
+      stub_path: input.stubPath ?? null,
     })
     .select("*")
     .single();
   if (error) throw error;
-  return toReview(data as ReviewRow);
+
+  const review = toReview(data as ReviewRow);
+
+  const cast = (input.castSeen ?? []).filter((c) => c.name.trim().length > 0);
+  if (cast.length > 0) {
+    const { error: castError } = await supabase.from("review_cast").insert(
+      cast.map((c) => ({
+        review_id: review.id,
+        name: c.name.trim(),
+        role: c.role?.trim() || null,
+        is_alternate: c.isAlternate,
+      }))
+    );
+    // Deliberately not rethrown. The evening is already saved, and losing it
+    // because the cast list would not go in — a duplicate name, a dropped
+    // connection — would be a much worse trade than an entry that records the
+    // night but not who was on. The screen closes either way; the entry can be
+    // opened again and the cast added.
+    if (castError) return review;
+  }
+
+  return { ...review, castSeen: cast };
+}
+
+/**
+ * Puts a picked photo in the `stubs` bucket and returns its path.
+ *
+ * Always `<uid>/<file>`, which is the only shape the storage policy accepts and
+ * the only shape `reviews_guard_stub_path` will let into the row.
+ */
+export async function uploadStub(uri: string): Promise<string> {
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
+  if (!authUser) throw new Error("Sign in required");
+
+  const res = await fetch(uri);
+  const blob = await res.blob();
+  const ext = (blob.type.split("/")[1] || "jpg").replace(/[^a-z0-9]/gi, "").toLowerCase();
+  const path = `${authUser.id}/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
+
+  const { error } = await supabase.storage.from("stubs").upload(path, blob, {
+    contentType: blob.type || "image/jpeg",
+    upsert: false,
+  });
+  if (error) throw error;
+  return path;
+}
+
+/**
+ * One diary entry, with everything the evening screen puts on it.
+ *
+ * The cast is joined here and nowhere else. The diary list draws a row per
+ * entry and shows none of it, so pulling `review_cast` for every row would be
+ * a join nothing on that screen reads.
+ */
+export async function getDiaryEntry(reviewId: string): Promise<
+  { review: Review; play: Play; venue?: Venue; performance?: Performance } | undefined
+> {
+  const { data, error } = await supabase
+    .from("reviews")
+    .select(`*, plays (${PLAY_SELECT}), review_cast (name, role, is_alternate)`)
+    .eq("id", reviewId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return undefined;
+
+  const playRow = Array.isArray(data.plays) ? data.plays[0] : data.plays;
+  if (!playRow) return undefined;
+  const play = toPlay(playRow as PlayRow);
+  const review = toReview(data as ReviewRow);
+
+  const [venue, performance] = await Promise.all([
+    getVenueById(play.venueId).catch(() => undefined),
+    review.performanceId ? getPerformanceById(review.performanceId).catch(() => undefined) : Promise.resolve(undefined),
+  ]);
+
+  return { review, play, venue, performance };
+}
+
+/** One showtime by id — the evening a diary entry points at. */
+export async function getPerformanceById(id: string): Promise<Performance | undefined> {
+  const { data, error } = await supabase
+    .from("performances")
+    .select("id, play_id, venue_id, room, starts_at")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? toPerformance(data as PerformanceRow) : undefined;
 }
 
 /**

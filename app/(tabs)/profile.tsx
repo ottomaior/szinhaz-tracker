@@ -218,7 +218,11 @@ export default function ProfileScreen() {
                 <PlayRow
                   key={entry.review.id}
                   play={entry.play}
-                  onPress={() => router.push(`/play/${entry.play.id}`)}
+                  // The evening, not the production. A diary row is a record of
+                  // a night out — which cast, which seat, what it cost — and
+                  // sending it to the catalogue page threw all of that away and
+                  // landed you on a screen about everybody's opinion instead.
+                  onPress={() => router.push({ pathname: "/entry/[id]", params: { id: entry.review.id } })}
                   meta={
                     <>
                       <Text variant="caption" tone="faint" numberOfLines={1}>
@@ -272,7 +276,7 @@ export default function ProfileScreen() {
                 <PlayRow
                   key={entry.review.id}
                   play={entry.play}
-                  onPress={() => router.push(`/play/${entry.play.id}`)}
+                  onPress={() => router.push({ pathname: "/entry/[id]", params: { id: entry.review.id } })}
                   meta={
                     <>
                       <View style={styles.reviewMeta}>

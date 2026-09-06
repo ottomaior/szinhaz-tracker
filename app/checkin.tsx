@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { View, ScrollView, StyleSheet, Pressable, TextInput } from "react-native";
+import { Image } from "expo-image";
+import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
@@ -13,10 +15,13 @@ import {
   getPlayById,
   getVenueById,
   submitReview,
+  uploadStub,
 } from "@/services/playsService";
 import { searchPlays } from "@/services/searchService";
 import { useAuth } from "@/contexts/AuthContext";
-import type { Performance, Play, Venue } from "@/data/types";
+import type { Performance, Play, SeenCastMember, Venue } from "@/data/types";
+import { parseTicketPrice } from "@/utils/money";
+import { personSlug } from "@/utils/people";
 import { PinIcon, SearchIcon } from "@/components/icons/Icons";
 import { MaskRatingRow } from "@/components/icons/MaskIcon";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
@@ -57,6 +62,22 @@ export default function CheckInScreen() {
   const [setDesign, setSetDesign] = useState(4);
   const [selectedTags, setSelectedTags] = useState<string[]>([strings.checkin.tagStandingOvation]);
   const [reviewText, setReviewText] = useState("");
+
+  // The evening itself — see 0028. All four are optional, and an entry that
+  // answers none of them is still a perfectly good entry.
+  //
+  // Ticked cast is held as a set of slugs rather than of names, so that the
+  // ticked "Máthé Zsolt m.v." and a typed-in "Máthé Zsolt" cannot both end up
+  // on the same night as two people. `person_slug()` in the database folds them
+  // the same way.
+  const [seenSlugs, setSeenSlugs] = useState<Set<string>>(new Set());
+  const [alternates, setAlternates] = useState<SeenCastMember[]>([]);
+  const [alternateDraft, setAlternateDraft] = useState("");
+  const [seat, setSeat] = useState("");
+  const [price, setPrice] = useState("");
+  const [stubPath, setStubPath] = useState<string>();
+  const [stubPreview, setStubPreview] = useState<string>();
+  const [uploadingStub, setUploadingStub] = useState(false);
 
   useEffect(() => {
     if (!loading && !session) {
@@ -143,8 +164,109 @@ export default function CheckInScreen() {
     setSelectedTags((cur) => (cur.includes(tag) ? cur.filter((t) => t !== tag) : [...cur, tag]));
   }
 
+  // The production's published cast, deduplicated by slug. `play_cast` credits
+  // a person once per role, so somebody who both acts and adapts appears twice
+  // — two tiles for one human being, and a night that would record them twice.
+  const castOptions = useMemo(() => {
+    const bySlug = new Map<string, { name: string; role?: string }>();
+    for (const member of play?.cast ?? []) {
+      const slug = personSlug(member.name);
+      if (!slug) continue;
+      const existing = bySlug.get(slug);
+      if (!existing) {
+        bySlug.set(slug, { name: member.name, role: member.role || undefined });
+      } else if (!existing.role && member.role) {
+        existing.role = member.role;
+      }
+    }
+    return [...bySlug.entries()].map(([slug, m]) => ({ slug, ...m }));
+  }, [play]);
+
+  function toggleSeen(slug: string) {
+    setSeenSlugs((cur) => {
+      const next = new Set(cur);
+      if (next.has(slug)) next.delete(slug);
+      else next.add(slug);
+      return next;
+    });
+  }
+
+  function addAlternate() {
+    const name = alternateDraft.trim();
+    if (!name) return;
+    const slug = personSlug(name);
+    // Somebody who is in the published cast is not a beugró, however they were
+    // typed. Ticking them instead keeps the one meaningful flag meaningful.
+    const listed = slug ? castOptions.find((c) => c.slug === slug) : undefined;
+    if (listed) {
+      setSeenSlugs((cur) => new Set(cur).add(listed.slug));
+      setAlternateDraft("");
+      return;
+    }
+    if (slug && alternates.some((a) => personSlug(a.name) === slug)) {
+      setAlternateDraft("");
+      return;
+    }
+    setAlternates((cur) => [...cur, { name, isAlternate: true }]);
+    setAlternateDraft("");
+  }
+
+  function removeAlternate(name: string) {
+    setAlternates((cur) => cur.filter((a) => a.name !== name));
+  }
+
+  async function handlePickStub() {
+    if (uploadingStub) return;
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      setError(strings.checkin.stubPermission);
+      return;
+    }
+    const picked = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.85,
+      // No fixed aspect: a ticket stub is a long thin thing and a curtain call
+      // is landscape, and cropping either to a square loses the half that
+      // matters.
+      allowsEditing: false,
+    });
+    if (picked.canceled || !picked.assets?.[0]) return;
+
+    const asset = picked.assets[0];
+    setStubPreview(asset.uri);
+    setError(undefined);
+    setUploadingStub(true);
+    try {
+      setStubPath(await uploadStub(asset.uri));
+    } catch {
+      setStubPreview(undefined);
+      setStubPath(undefined);
+      setError(strings.checkin.stubUploadFailed);
+    } finally {
+      setUploadingStub(false);
+    }
+  }
+
+  function removeStub() {
+    setStubPreview(undefined);
+    setStubPath(undefined);
+  }
+
+  const seenCount = seenSlugs.size + alternates.length;
+
   async function handleSave() {
-    if (!play || saving) return;
+    if (!play || saving || uploadingStub) return;
+
+    // Parsed before anything is written, and refused rather than guessed at —
+    // see `utils/money.ts`, which is where the separator handling and the
+    // difference between "free" and "not recorded" are pinned down.
+    const parsedPrice = parseTicketPrice(price);
+    if (parsedPrice.kind === "invalid") {
+      setError(strings.checkin.priceInvalid);
+      return;
+    }
+    const priceHuf = parsedPrice.kind === "value" ? parsedPrice.huf : undefined;
+
     setError(undefined);
     setSaving(true);
     try {
@@ -158,6 +280,15 @@ export default function CheckInScreen() {
         ratingSetDesign: setDesign,
         text: reviewText.trim(),
         tags: selectedTags,
+        seat,
+        priceHuf,
+        stubPath,
+        castSeen: [
+          ...castOptions
+            .filter((c) => seenSlugs.has(c.slug))
+            .map((c): SeenCastMember => ({ name: c.name, role: c.role, isAlternate: false })),
+          ...alternates,
+        ],
       });
       closeModal(router);
     } catch (e) {
@@ -278,6 +409,136 @@ export default function CheckInScreen() {
           <SubRatingRow label={strings.checkin.acting} value={acting} onChange={setActing} />
           <SubRatingRow label={strings.checkin.directing} value={directing} onChange={setDirecting} />
           <SubRatingRow label={strings.checkin.setAndCostume} value={setDesign} onChange={setSetDesign} />
+        </View>
+
+        {/* Who was on. The single most-asked question in theatre logging, and
+            the reason understudies.org exists as a site of its own: a cast
+            sheet is posted in the foyer on the night and published nowhere
+            afterwards, so an audience record is the only record there is. */}
+        <View style={{ gap: 10 }}>
+          <View style={styles.rowBetween}>
+            <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.checkin.castLabel}</Text>
+            {seenCount > 0 && (
+              <Text variant="caption" tone="accent">{strings.checkin.castSelectedCount(seenCount)}</Text>
+            )}
+          </View>
+          <Text variant="caption" tone="dim">
+            {castOptions.length > 0 ? strings.checkin.castHint : strings.checkin.castNoneKnown}
+          </Text>
+
+          {castOptions.length > 0 && (
+            <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
+              {castOptions.map((member) => (
+                <Chip
+                  key={member.slug}
+                  label={member.name}
+                  active={seenSlugs.has(member.slug)}
+                  onPress={() => toggleSeen(member.slug)}
+                />
+              ))}
+            </View>
+          )}
+
+          {alternates.length > 0 && (
+            <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
+              {alternates.map((a) => (
+                <Chip
+                  key={a.name}
+                  label={`${a.name} · ${strings.checkin.castAlternateBadge}`}
+                  active
+                  // Tapping it takes it off again: the only way back out of a
+                  // name typed by mistake.
+                  onPress={() => removeAlternate(a.name)}
+                />
+              ))}
+            </View>
+          )}
+
+          <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+            <TextInput
+              value={alternateDraft}
+              onChangeText={setAlternateDraft}
+              placeholder={strings.checkin.castAlternatePlaceholder}
+              placeholderTextColor={colors.textFaint}
+              accessibilityLabel={strings.checkin.castAddAlternate}
+              onSubmitEditing={addAlternate}
+              returnKeyType="done"
+              style={[styles.field, { flex: 1, fontFamily: bodyFont(fontsLoaded), fontSize: inputFontSize, color: colors.text }]}
+            />
+            <Pressable
+              onPress={addAlternate}
+              disabled={!alternateDraft.trim()}
+              accessibilityRole="button"
+              style={[styles.addButton, { opacity: alternateDraft.trim() ? 1 : 0.4 }]}
+            >
+              <Text variant="label">{strings.checkin.castAdd}</Text>
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Seat and price. Two nullable columns with a surprising payoff: the
+            season page can eventually say what the évad cost and which part of
+            the house you always end up in. */}
+        <View style={{ gap: 10 }}>
+          <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.checkin.seatLabel}</Text>
+          <TextInput
+            value={seat}
+            onChangeText={setSeat}
+            placeholder={strings.checkin.seatPlaceholder}
+            placeholderTextColor={colors.textFaint}
+            accessibilityLabel={strings.checkin.seatLabel}
+            style={[styles.field, { fontFamily: bodyFont(fontsLoaded), fontSize: inputFontSize, color: colors.text }]}
+          />
+
+          <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.checkin.priceLabel}</Text>
+          <TextInput
+            value={price}
+            onChangeText={setPrice}
+            placeholder={strings.checkin.pricePlaceholder}
+            placeholderTextColor={colors.textFaint}
+            accessibilityLabel={strings.checkin.priceLabel}
+            keyboardType="number-pad"
+            style={[styles.field, { fontFamily: bodyFont(fontsLoaded), fontSize: inputFontSize, color: colors.text }]}
+          />
+          <Text variant="caption" tone="dim">{strings.checkin.priceHint}</Text>
+        </View>
+
+        {/* The stub. The plumbing was already built and pointed elsewhere:
+            expo-image-picker is a dependency and 0013 gave uploads a
+            per-user policy — this is a second bucket, not new infrastructure. */}
+        <View style={{ gap: 10 }}>
+          <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.checkin.stubLabel}</Text>
+          {stubPreview && (
+            <Image
+              source={{ uri: stubPreview }}
+              style={styles.stubPreview}
+              contentFit="cover"
+              transition={150}
+              accessibilityIgnoresInvertColors
+            />
+          )}
+          <View style={{ flexDirection: "row", gap: space.lg, alignItems: "center" }}>
+            <Pressable
+              onPress={handlePickStub}
+              disabled={uploadingStub}
+              accessibilityRole="button"
+              style={styles.addButton}
+            >
+              <Text variant="label">
+                {uploadingStub
+                  ? strings.checkin.stubUploading
+                  : stubPreview
+                    ? strings.checkin.stubReplace
+                    : strings.checkin.stubAdd}
+              </Text>
+            </Pressable>
+            {stubPreview && !uploadingStub && (
+              <Pressable onPress={removeStub} hitSlop={8} accessibilityRole="button">
+                <Text variant="label" tone="dim">{strings.checkin.stubRemove}</Text>
+              </Pressable>
+            )}
+          </View>
+          <Text variant="caption" tone="dim">{strings.checkin.stubHint}</Text>
         </View>
 
         <View style={{ gap: 8 }}>
@@ -456,6 +717,29 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     letterSpacing: 0.2,
+  },
+  rowBetween: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: space.md,
+  },
+  addButton: {
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    borderRadius: 999,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+  // 3:2, like the add-play preview: what people photograph is a ticket on a
+  // table or a lit stage, and neither belongs in a 2:3 poster slot.
+  stubPreview: {
+    width: "100%",
+    aspectRatio: 3 / 2,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    backgroundColor: colors.surface,
   },
   textArea: {
     backgroundColor: colors.surface,
