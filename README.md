@@ -7,6 +7,11 @@ they've seen — built with Expo + React Native + TypeScript, using
 [expo-router](https://docs.expo.dev/router/introduction/) for file-based
 navigation.
 
+> **Where this is going:** [BACKLOG.md](BACKLOG.md) holds the current state and
+> the plan to launch — what is done, what is outstanding, and what each
+> remaining phase involves. This README explains *why* each existing piece
+> works the way it does; the backlog is what to pick up next.
+
 ## Setup
 
 ```bash

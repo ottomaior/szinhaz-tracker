@@ -9,6 +9,11 @@ Mobilalkalmazás magyar színházba járóknak: rögzítsd, pontozd és írd meg
 láttál. Expo + React Native + TypeScript alapon, a navigáció fájlalapú,
 [expo-router](https://docs.expo.dev/router/introduction/)-rel.
 
+> **Merre tart ez:** a [BACKLOG.hu.md](BACKLOG.hu.md) tartalmazza az aktuális
+> állapotot és a bemutatóig vezető tervet — mi van kész, mi van nyitva, és mit
+> jelent a hátralévő fázisok mindegyike. Ez a README azt magyarázza, *miért* úgy
+> működik minden meglévő darab, ahogy; a backlog azt, hogy mit kell folytatni.
+
 ## Beállítás
 
 ```bash
