@@ -30,13 +30,40 @@ RUN npm run build
 # byte, in production only. A per-route line here is a step that has to be
 # remembered, and it was not.
 #
-# `ls` at the end is the guard: if the export ever stops emitting bracketed
-# filenames, this fails the build rather than shipping a site whose dynamic
-# routes silently serve the wrong document.
-RUN for f in $(find dist -maxdepth 2 -name '*.html' | grep -F '['); do \
+# `ls` was the guard: if the export ever stops emitting bracketed filenames,
+# the build fails rather than shipping a site whose dynamic routes silently
+# serve the wrong document.
+#
+# It was half a guard, and the missing half is the one that mattered. Checking
+# that a shell was *written* says nothing about whether nginx ever *asks* for
+# it, and that is precisely where this went wrong: `entry` and `season` had
+# shells here and no matching line in nginx.conf, so both were served
+# /index.html — the feed's markup, byte for byte — for as long as they had
+# existed. The comment above says a per-route line "has to be remembered, and
+# it was not", and then the same thing happened again in the other file.
+#
+# So the guard now compares the two halves. Every shell this step writes must
+# appear in the alternation in nginx.conf's dynamic-route location, or the
+# build stops here. Adding a dynamic route without touching nginx is now a
+# failed build instead of a page that quietly hydrates against the wrong
+# document in production only.
+RUN set -e; \
+    for f in $(find dist -maxdepth 2 -name '*.html' | grep -F '['); do \
       cp "$f" "$(dirname "$f")/_shell.html"; \
-    done \
- && ls -1 dist/*/_shell.html
+    done; \
+    ls -1 dist/*/_shell.html; \
+    routes=$(grep -oE '\^/\([a-z|]+\)/' nginx.conf | tr -d '^/()'); \
+    echo "nginx routes dynamic shells for: $routes"; \
+    for d in dist/*/_shell.html; do \
+      name=$(basename "$(dirname "$d")"); \
+      echo "$routes" | tr '|' '\n' | grep -qx "$name" || { \
+        echo "FAIL: /$name/<id> has a pre-rendered shell that nginx.conf does not route to."; \
+        echo "      It would be served /index.html instead, and React would fail to hydrate it."; \
+        echo "      Add '$name' to the alternation in nginx.conf's dynamic-route location."; \
+        exit 1; \
+      }; \
+    done; \
+    echo "every dynamic route's shell is routed by nginx"
 
 FROM nginx:1.27-alpine
 
