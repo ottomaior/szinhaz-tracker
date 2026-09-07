@@ -47,6 +47,8 @@ type Shot = {
 type Script = {
   voice: string;
   piperVoice?: string;
+  elevenVoiceId?: string;
+  elevenModel?: string;
   rate?: string;
   gap: number;
   tailHold: number;
@@ -68,6 +70,18 @@ const ffprobe = ffmpeg.replace(/ffmpeg(\.exe)?$/i, (m) => m.replace("ffmpeg", "f
 const piper = arg("piper", "piper");
 const voices = arg("voices", "voices");
 const only = process.argv.includes("--only") ? process.argv[process.argv.indexOf("--only") + 1] : null;
+
+/**
+ * Which voice speaks. Explicit --tts wins; otherwise whichever key is in
+ * .env, and Piper when there is none, so the pipeline still runs offline.
+ */
+const engine = process.argv.includes("--tts")
+  ? process.argv[process.argv.indexOf("--tts") + 1]
+  : process.env.ELEVENLABS_API_KEY
+    ? "eleven"
+    : process.env.AZURE_SPEECH_KEY
+      ? "azure"
+      : "piper";
 
 const work = resolve(`${tmpdir()}/vastaps-tour`);
 const outDir = resolve("promo/out");
@@ -146,6 +160,75 @@ function escapeXml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
+/**
+ * Speak one line with ElevenLabs.
+ *
+ * The best-sounding of the options, and the least work to get at: an account
+ * takes a Google sign-in and no card. The licensing is the thing to know —
+ * output generated on the free plan is non-commercial and must be attributed,
+ * so a film promoting the app has to be generated on a paid plan. Judging the
+ * voice on the free plan first and regenerating after upgrading is fine, and
+ * costs 1,800 characters of the allowance.
+ *
+ * `eleven_multilingual_v2` is the model that actually speaks Hungarian;
+ * the English-only models will read the text with an English accent.
+ */
+async function speakEleven(text: string, file: string, script: Script): Promise<void> {
+  const key = process.env.ELEVENLABS_API_KEY;
+  if (!key) {
+    console.error(
+      "Missing ELEVENLABS_API_KEY in .env.\n\n" +
+        "Sign in at https://elevenlabs.io, then Developers → API Keys → Create Key."
+    );
+    process.exit(1);
+  }
+  if (!script.elevenVoiceId) {
+    console.error('No "elevenVoiceId" in promo/tour-script.json. Run with --list-voices to see what the account has.');
+    process.exit(1);
+  }
+
+  const res = await fetch(
+    `https://api.elevenlabs.io/v1/text-to-speech/${script.elevenVoiceId}?output_format=mp3_44100_128`,
+    {
+      method: "POST",
+      headers: { "xi-api-key": key, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text,
+        model_id: script.elevenModel ?? "eleven_multilingual_v2",
+        // Stability high enough that eleven separate lines sound like one
+        // read; style low, because a narrator selling something quietly is
+        // more convincing than one performing.
+        voice_settings: { stability: 0.5, similarity_boost: 0.75, style: 0.15, use_speaker_boost: true },
+      }),
+    }
+  );
+
+  if (!res.ok) {
+    console.error(`ElevenLabs refused the request (${res.status}): ${(await res.text()).slice(0, 400)}`);
+    process.exit(1);
+  }
+  writeFileSync(file, Buffer.from(await res.arrayBuffer()));
+}
+
+/** Print the voices the account can use, so one can be pinned in the script. */
+async function listElevenVoices(): Promise<void> {
+  const key = process.env.ELEVENLABS_API_KEY;
+  if (!key) {
+    console.error("Missing ELEVENLABS_API_KEY in .env.");
+    process.exit(1);
+  }
+  const res = await fetch("https://api.elevenlabs.io/v2/voices?page_size=100", { headers: { "xi-api-key": key } });
+  if (!res.ok) {
+    console.error(`ElevenLabs refused the request (${res.status}): ${(await res.text()).slice(0, 300)}`);
+    process.exit(1);
+  }
+  const body = (await res.json()) as { voices: { voice_id: string; name: string; labels?: Record<string, string> }[] };
+  for (const v of body.voices) {
+    const labels = Object.values(v.labels ?? {}).join(", ");
+    console.log(`${v.voice_id}  ${v.name.padEnd(22)} ${labels}`);
+  }
+}
+
 /** Speak one line with Piper, the offline fallback. */
 function speakPiper(text: string, wav: string, script: Script): void {
   const model = resolve(voices, `${script.piperVoice ?? script.voice}.onnx`);
@@ -176,15 +259,13 @@ async function buildTimeline(script: Script) {
   let clock = 0;
   const parts: string[] = [];
 
-  const engine =
-    process.argv.includes("--tts") ? process.argv[process.argv.indexOf("--tts") + 1]
-    : process.env.AZURE_SPEECH_KEY ? "azure"
-    : "piper";
-  console.log(`Speaking with ${engine === "azure" ? script.voice : script.piperVoice} (${engine}).`);
+  const named = engine === "eleven" ? script.elevenVoiceId : engine === "azure" ? script.voice : script.piperVoice;
+  console.log(`Speaking with ${named} (${engine}).`);
 
   for (const [i, shot] of script.shots.entries()) {
-    const wav = `${work}/vo/${String(i).padStart(2, "0")}-${shot.id}.wav`;
-    if (engine === "azure") await speakAzure(shot.say, wav, script);
+    const wav = `${work}/vo/${String(i).padStart(2, "0")}-${shot.id}.${engine === "eleven" ? "mp3" : "wav"}`;
+    if (engine === "eleven") await speakEleven(shot.say, wav, script);
+    else if (engine === "azure") await speakAzure(shot.say, wav, script);
     else speakPiper(shot.say, wav, script);
 
     const spoken = duration(wav);
@@ -355,6 +436,10 @@ async function renderFrame(timeline: any, orientation: "landscape" | "portrait")
 }
 
 async function main() {
+  if (process.argv.includes("--list-voices")) {
+    await listElevenVoices();
+    return;
+  }
   mkdirSync(outDir, { recursive: true });
   const script = JSON.parse(readFileSync("promo/tour-script.json", "utf8")) as Script;
 

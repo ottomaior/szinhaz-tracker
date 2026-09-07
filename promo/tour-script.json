@@ -1,6 +1,8 @@
 {
   "voice": "hu-HU-NoemiNeural",
   "piperVoice": "hu_HU-anna-medium",
+  "elevenVoiceId": "",
+  "elevenModel": "eleven_multilingual_v2",
   "rate": "-4%",
   "gap": 0.5,
   "tailHold": 2.2,
@@ -30,7 +32,12 @@
       "id": "calendar",
       "shot": "musor",
       "head": "Nem darabok listája. Estéké.",
-      "chips": ["Nap", "Terem", "Hossz", "Műfaj"],
+      "chips": [
+        "Nap",
+        "Terem",
+        "Hossz",
+        "Műfaj"
+      ],
       "say": "És nem darabokat sorol, hanem estéket. Napokra bontva. Mi hol megy, hánykor kezdődik, melyik teremben. Meddig tart, és milyen műfaj."
     },
     {
@@ -43,7 +50,11 @@
       "id": "log",
       "shot": "play",
       "head": "Naplózd, amit láttál",
-      "chips": ["Színészi játék", "Rendezés", "Díszlet"],
+      "chips": [
+        "Színészi játék",
+        "Rendezés",
+        "Díszlet"
+      ],
       "say": "Aztán ha voltál, naplózod. Melyik este. Hol ültél. Mennyibe került a jegy. A színészi játékot, a rendezést és a díszletet külön értékeled. És leírhatod, mit gondoltál róla."
     },
     {
