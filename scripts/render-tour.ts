@@ -26,6 +26,9 @@ import { spawn, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { tmpdir } from "node:os";
+import { config } from "dotenv";
+
+config();
 
 const FPS = 30;
 const PORT_BASE = 9334;
@@ -41,7 +44,14 @@ type Shot = {
   end: number;
 };
 
-type Script = { voice: string; gap: number; tailHold: number; shots: Shot[] };
+type Script = {
+  voice: string;
+  piperVoice?: string;
+  rate?: string;
+  gap: number;
+  tailHold: number;
+  shots: Shot[];
+};
 
 function arg(name: string, fallback?: string): string {
   const i = process.argv.indexOf(`--${name}`);
@@ -77,34 +87,105 @@ function duration(file: string): number {
 }
 
 /**
- * Speak every line, measure it, and lay the shots end to end.
+ * Speak one line with Azure AI Speech.
  *
- * A shot lasts exactly as long as its sentence takes to say, plus a gap for
- * breath. The last shot also holds past the end of the voice so the URL is
- * on screen in silence rather than cutting the moment the narrator stops.
+ * The Hungarian neural voices — hu-HU-NoemiNeural and hu-HU-TamasNeural —
+ * are a large step up from an offline model: they carry sentence-level
+ * intonation, which is exactly what a flat read lacks. Free tier is 500,000
+ * characters a month and this whole narration is under two thousand, so the
+ * cost of a re-render is nil.
+ *
+ * SSML rather than plain text because it buys the two things that make a
+ * read sound composed: a slightly slower rate, and a real pause between
+ * sentences rather than whatever the model decides.
  */
-function buildTimeline(script: Script) {
-  const model = resolve(voices, `${script.voice}.onnx`);
+async function speakAzure(text: string, wav: string, script: Script): Promise<void> {
+  const key = process.env.AZURE_SPEECH_KEY;
+  const region = process.env.AZURE_SPEECH_REGION;
+  if (!key || !region) {
+    console.error(
+      "Missing AZURE_SPEECH_KEY and/or AZURE_SPEECH_REGION in .env.\n\n" +
+        "Create a Speech resource at https://portal.azure.com (free F0 tier is enough),\n" +
+        "then copy a key and its region from the resource's Keys and Endpoint page."
+    );
+    process.exit(1);
+  }
+
+  // A break after each sentence: the model pauses at a full stop, but not for
+  // as long as a person telling you something would.
+  const spoken = text
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((s) => escapeXml(s))
+    .join('<break time="260ms"/>');
+
+  const ssml =
+    `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="hu-HU">` +
+    `<voice name="${script.voice}"><prosody rate="${script.rate ?? "0%"}">${spoken}</prosody></voice></speak>`;
+
+  const res = await fetch(`https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`, {
+    method: "POST",
+    headers: {
+      "Ocp-Apim-Subscription-Key": key,
+      "Content-Type": "application/ssml+xml",
+      "X-Microsoft-OutputFormat": "riff-48khz-16bit-mono-pcm",
+      "User-Agent": "vastaps-tour",
+    },
+    body: ssml,
+  });
+
+  if (!res.ok) {
+    console.error(`Azure Speech refused the request (${res.status}): ${(await res.text()).slice(0, 400)}`);
+    process.exit(1);
+  }
+  writeFileSync(wav, Buffer.from(await res.arrayBuffer()));
+}
+
+function escapeXml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+/** Speak one line with Piper, the offline fallback. */
+function speakPiper(text: string, wav: string, script: Script): void {
+  const model = resolve(voices, `${script.piperVoice ?? script.voice}.onnx`);
   if (!existsSync(model)) {
     console.error(`No voice at ${model}. Pass --voices with the directory holding the .onnx files.`);
     process.exit(1);
   }
+  const say = spawnSync(piper, ["--model", `"${model}"`, "--output_file", `"${wav}"`], {
+    input: text,
+    encoding: "utf8",
+    shell: process.platform === "win32",
+  });
+  if (say.status !== 0 || !existsSync(wav)) {
+    console.error(`Piper failed:\n${say.stderr?.slice(-800)}`);
+    process.exit(1);
+  }
+}
 
+/**
+ * Speak every line, measure it, and lay the shots end to end.
+ *
+ * A shot lasts exactly as long as its sentence takes to say, plus a gap for
+ * breath. The last shot also holds past the end of the voice, so the URL sits
+ * on screen in silence rather than cutting the moment the narrator stops.
+ */
+async function buildTimeline(script: Script) {
   mkdirSync(`${work}/vo`, { recursive: true });
   let clock = 0;
   const parts: string[] = [];
 
-  script.shots.forEach((shot, i) => {
+  const engine =
+    process.argv.includes("--tts") ? process.argv[process.argv.indexOf("--tts") + 1]
+    : process.env.AZURE_SPEECH_KEY ? "azure"
+    : "piper";
+  console.log(`Speaking with ${engine === "azure" ? script.voice : script.piperVoice} (${engine}).`);
+
+  for (const [i, shot] of script.shots.entries()) {
     const wav = `${work}/vo/${String(i).padStart(2, "0")}-${shot.id}.wav`;
-    const say = spawnSync(piper, ["--model", `"${model}"`, "--output_file", `"${wav}"`], {
-      input: shot.say,
-      encoding: "utf8",
-      shell: process.platform === "win32",
-    });
-    if (say.status !== 0 || !existsSync(wav)) {
-      console.error(`Piper failed on "${shot.id}":\n${say.stderr?.slice(-800)}`);
-      process.exit(1);
-    }
+    if (engine === "azure") await speakAzure(shot.say, wav, script);
+    else speakPiper(shot.say, wav, script);
 
     const spoken = duration(wav);
     const gap = i === script.shots.length - 1 ? script.tailHold : script.gap;
@@ -113,18 +194,10 @@ function buildTimeline(script: Script) {
     clock = shot.end;
     parts.push(wav);
     console.log(`  ${shot.id.padEnd(9)} ${spoken.toFixed(2)}s  →  ${shot.start.toFixed(2)}–${shot.end.toFixed(2)}`);
-  });
+  }
 
-  // One narration track, each line padded out to its shot so the audio and
-  // the picture cannot drift apart over three minutes.
-  const list = script.shots
-    .map((shot, i) => {
-      const pad = (shot.end - shot.start - duration(parts[i])).toFixed(3);
-      return `file '${parts[i].replace(/\\/g, "/")}'\noutpoint ${(shot.end - shot.start).toFixed(3)}\n# pad ${pad}`;
-    })
-    .join("\n");
-  writeFileSync(`${work}/concat.txt`, list);
-
+  // One narration track, each line padded out to the length of its shot so
+  // the voice and the picture cannot drift apart over two minutes.
   const voiceTrack = `${work}/narration.wav`;
   const filters = parts
     .map((_, i) => `[${i}:a]apad=whole_dur=${(script.shots[i].end - script.shots[i].start).toFixed(3)}[a${i}]`)
@@ -291,8 +364,8 @@ async function main() {
     timeline = JSON.parse(readFileSync(process.argv[reuse + 1], "utf8"));
     console.log(`Reusing a ${timeline.total.toFixed(1)}s narration.`);
   } else {
-    console.log(`Narrating ${script.shots.length} shots with ${script.voice}…`);
-    timeline = buildTimeline(script);
+    console.log(`Narrating ${script.shots.length} shots…`);
+    timeline = await buildTimeline(script);
     console.log(`Film is ${timeline.total.toFixed(1)}s.`);
     writeFileSync(`${outDir}/tour-timeline.json`, JSON.stringify(timeline, null, 2));
   }

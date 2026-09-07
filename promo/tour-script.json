@@ -1,79 +1,81 @@
 {
-  "voice": "hu_HU-anna-medium",
-  "gap": 0.55,
+  "voice": "hu-HU-NoemiNeural",
+  "piperVoice": "hu_HU-anna-medium",
+  "rate": "-4%",
+  "gap": 0.5,
   "tailHold": 2.2,
-  "note": "One entry per shot. `say` is what the narrator reads and decides how long the shot lasts — nothing here is timed by hand. `shot` names a file in ../landing/shots, or null for a full-frame card. `head` is the line on screen, kept short because the narration carries the detail.",
+  "note": "One entry per shot. `say` is what the narrator reads and decides how long the shot lasts — nothing here is timed by hand, so rewriting a sentence re-times the film around it. Written for the ear rather than the page: short sentences, one idea each, and full stops where a person would breathe. `shot` names a file in ../landing/shots, or null for a full-frame card.",
   "shots": [
     {
       "id": "open",
       "shot": null,
       "kind": "logo",
       "head": null,
-      "say": "A Vastaps egy magyar színházi napló."
+      "say": "Ez a Vastaps. Egy magyar színházi napló."
     },
     {
       "id": "problem",
       "shot": null,
       "kind": "card",
       "head": "Emlékszel, mit láttál tavaly?",
-      "say": "Minden évadban megnézel néhány előadást. Aztán eltelik egy év, és már csak arra emlékszel, hogy jó volt. Arra nem, hogy melyik este, és hogy min múlt."
+      "say": "Évente megnézel néhány előadást. Aztán eltelik egy év. És már csak annyi marad meg, hogy jó volt. Az nem, hogy melyik este. Az sem, hogy min múlt."
     },
     {
       "id": "listings",
       "shot": "discover",
       "head": "Ami ma este megy",
-      "say": "A Vastaps ott kezdi, ahol egy színházi este: a műsornál. Budapest és Debrecen színházainak repertoárja egy helyen, közvetlenül a színházak saját oldaláról, minden éjjel újraolvasva."
+      "say": "A Vastaps ott kezdi, ahol egy színházi este. A műsornál. Budapest és Debrecen színházai, egy helyen. Nem jegyirodán át: a színházak saját oldaláról, minden éjjel."
     },
     {
       "id": "calendar",
       "shot": "musor",
       "head": "Nem darabok listája. Estéké.",
       "chips": ["Nap", "Terem", "Hossz", "Műfaj"],
-      "say": "A Műsor nézet nem darabokat sorol, hanem estéket. Napokra bontva mutatja, mi hol és hánykor kezdődik, teremmel, hosszal és műfajjal együtt."
+      "say": "És nem darabokat sorol, hanem estéket. Napokra bontva. Mi hol megy, hánykor kezdődik, melyik teremben. Meddig tart, és milyen műfaj."
     },
     {
       "id": "search",
       "shot": "search",
       "head": "Keresés ékezetek nélkül is",
-      "say": "Kereshetsz darabra, színházra vagy alkotóra, ékezetek nélkül is. A találatok közt ott van az is, amit már rég levettek a műsorról: közel kilencszáz régi produkció."
+      "say": "Keresel egy darabra. Egy színházra. Egy színészre. Ékezetek nélkül is megtalálja. És ott van az is, amit már rég levettek: közel kilencszáz régi előadás."
     },
     {
       "id": "log",
       "shot": "play",
       "head": "Naplózd, amit láttál",
       "chips": ["Színészi játék", "Rendezés", "Díszlet"],
-      "say": "Ha voltál egy előadáson, naplózod. Beírod, melyik estén voltál, hol ültél, mennyibe került a jegy. A színészi játékot, a rendezést és a díszletet külön értékeled, és megírhatod, mit gondoltál róla."
+      "say": "Aztán ha voltál, naplózod. Melyik este. Hol ültél. Mennyibe került a jegy. A színészi játékot, a rendezést és a díszletet külön értékeled. És leírhatod, mit gondoltál róla."
     },
     {
       "id": "season",
       "shot": "feed",
       "head": "Az évad, nem a naptári év",
-      "say": "Ha másodszor is megnézed ugyanazt, az külön bejegyzés lesz, külön értékeléssel, mert nem ugyanaz az este volt. A Vastaps pedig évadokban számol: szeptembertől augusztusig, ahogy a színházak."
+      "say": "Ha másodszor is megnézed, az külön bejegyzés lesz. Mert nem ugyanaz az este volt. A Vastaps pedig évadokban számol. Szeptembertől augusztusig, ahogy a színházak."
     },
     {
       "id": "profile",
       "shot": "user",
       "head": "A profilod egy műsorfüzet",
-      "say": "Minden megnézett előadás egy lapon, plakáttal, dátummal és értékeléssel. Az évad végén összeáll, hány estét töltöttél színházban, mibe került, és kiket láttál a legtöbbször színpadon."
+      "say": "A profilod pedig egy műsorfüzet. Minden előadás egy lapon, plakáttal és értékeléssel. Az évad végén meg kiderül, hány estét töltöttél színházban, mibe került, és kiket láttál a legtöbbet."
     },
     {
       "id": "people",
       "shot": "person",
       "head": "Ki volt az a színésznő?",
-      "say": "Rákeresel egy színészre, és előjön minden előadás, amiben játszott, szereppel és évszámmal. Ha bejelentkezel, szólunk, amikor új darabban lép színpadra."
+      "say": "Rákeresel egy színészre, és előjön minden, amiben játszott. Szereppel, évszámmal. És ha kéred, szólunk, amikor új darabban lép színpadra."
     },
     {
       "id": "lists",
       "shot": "list",
       "head": "Saját listák, megosztva",
-      "say": "Készíthetsz saját listákat bármilyen téma köré: egy rendező kézjegye, a gyerekekkel megnézhető darabok, az évad legjobb estéi. Megosztod egy linkkel, és a barátaid fiók nélkül is megnyitják. Amit még meg akarsz nézni, a kívánságlistádra kerül."
+      "say": "Listákat is csinálhatsz. Bármiről. Egy rendező kézjegye. Amit a gyerekekkel érdemes megnézni. Az évad legjobb estéi. Megosztod egy linkkel, és a barátaid fiók nélkül is megnyitják."
     },
     {
       "id": "close",
       "shot": null,
       "kind": "end",
       "head": null,
-      "say": "Jegyet nem itt veszel: egy koppintás kivisz a színház saját oldalára. A Vastaps arra való, hogy évek múlva is tudd, mit láttál. Próbáld ki, a cím itt van a képernyőn."
+      "say": "Jegyet nem itt veszel. Egy koppintás, és ott vagy a színház oldalán. A Vastaps arra való, hogy évek múlva is tudd, mit láttál. Nézd meg. A cím itt van a képernyőn."
     }
   ]
 }
