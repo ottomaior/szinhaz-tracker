@@ -13,7 +13,15 @@ export function closeModal(
   // `/(tabs)/profile` was added for onboarding: the payoff of ticking fifteen
   // productions is seeing them in the diary, so that flow lands there rather
   // than back on Discover.
-  fallback: "/(tabs)/discover" | "/(tabs)" | "/(tabs)/profile" = "/(tabs)/discover"
+  //
+  // `/settings` is the odd one out, and the only non-tab destination here: the
+  // blocked-users list is a modal opened from another modal, and closing it
+  // onto a tab would throw away the screen the reader was actually working in.
+  fallback:
+    | "/(tabs)/discover"
+    | "/(tabs)"
+    | "/(tabs)/profile"
+    | "/settings" = "/(tabs)/discover"
 ) {
   if (router.canGoBack()) {
     router.back();

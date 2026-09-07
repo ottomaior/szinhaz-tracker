@@ -529,6 +529,56 @@ export const strings = {
     remaining: (left: number) => `${left} karakter maradt`,
   },
 
+  /**
+   * Bejelentés és letiltás.
+   *
+   * A hangnem szándékosan tárgyilagos. Aki ezeket a szövegeket olvassa, annak
+   * épp rossz napja van, és az utolsó dolog, amire szüksége van, az egy vidám
+   * alkalmazás. Semmi felkiáltójel, semmi biztatás, és sehol nem ígérünk olyat
+   * — „megvizsgáljuk", „24 órán belül" —, amit egy egyszemélyes üzemeltetés nem
+   * tud betartani.
+   */
+  moderation: {
+    report: "Bejelentés",
+    reported: "Bejelentve",
+    reportTitleReview: "Bejegyzés bejelentése",
+    reportTitleComment: "Hozzászólás bejelentése",
+    reportTitleProfile: "Felhasználó bejelentése",
+    reportLead:
+      "Mi a baj ezzel a tartalommal? A bejelentés névtelen: akit bejelentesz, nem tudja meg, hogy te tetted.",
+    reasons: {
+      harassment: "Zaklatás vagy célzott támadás",
+      hate: "Gyűlöletkeltés",
+      spam: "Kéretlen tartalom vagy reklám",
+      sexual: "Szexuális tartalom",
+      violence: "Erőszak vagy önveszélyes tartalom",
+      misinformation: "Megtévesztő állítás",
+      other: "Egyéb",
+    } as const,
+    notePlaceholder: "Ha szeretnéd, írd le röviden (nem kötelező)",
+    submit: "Bejelentés elküldése",
+    submitting: "Küldés…",
+    /* Nincs benne határidő. Egy ember nézi át, és jobb nem ígérni semmit. */
+    submitted: "Köszönjük. A bejelentést megkaptuk, és átnézzük.",
+    alreadyReported: "Ezt már bejelentetted.",
+    failed: "Nem sikerült elküldeni a bejelentést.",
+    signInToReport: "Jelentkezz be a bejelentéshez",
+
+    block: "Felhasználó letiltása",
+    unblock: "Letiltás feloldása",
+    blocked: "Letiltva",
+    blockConfirmTitle: (name: string) => `Letiltod őt: ${name}?`,
+    blockConfirmBody:
+      "Nem fogjátok látni egymás bejegyzéseit és hozzászólásait, és a köztetek lévő követés megszűnik. Erről nem kap értesítést. Bármikor feloldhatod a Beállításokban.",
+    blockConfirm: "Letiltás",
+    blockFailed: "Nem sikerült letiltani.",
+    unblockFailed: "Nem sikerült feloldani a letiltást.",
+
+    blockedListTitle: "Letiltott felhasználók",
+    blockedListEmpty: "Még senkit nem tiltottál le.",
+    blockedListLead: "Az ő bejegyzéseiket és hozzászólásaikat nem látod, és ők sem a tieidet.",
+  },
+
   /** One evening, read back: what the diary holds about a single night. */
   entry: {
     headerTitle: "Napló bejegyzés",
@@ -713,6 +763,11 @@ export const strings = {
     legalTermsHint: "Mit vállalunk a szolgáltatással, és mit kérünk cserébe.",
     legalImprint: "Impresszum",
     legalImprintHint: "Ki üzemelteti az alkalmazást, és hol éred el.",
+    /* Biztonság. A jogi blokk alatt, de a fiókműveletek fölött: nem jogi
+       szöveg, de nem is olyasmi, amit véletlenül kell megtalálni. */
+    safety: "Biztonság",
+    blockedUsers: "Letiltott felhasználók",
+    blockedUsersHint: "Kit nem látsz, és ki nem lát téged. Bármikor feloldható.",
 
     /* The account's own two controls. Only shown to somebody signed in —
        there is nothing to export or delete otherwise — which is why they sit

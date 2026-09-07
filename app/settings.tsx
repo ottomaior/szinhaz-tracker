@@ -92,6 +92,25 @@ export default function SettingsScreen() {
             />
           </View>
 
+          {/* A block list belongs to an account, so there is nothing here to
+              show a signed-out visitor — and unlike the appearance section
+              above, this is not a device preference that has to be reachable
+              without one. */}
+          {session ? (
+            <>
+              <View style={{ gap: space.xs }}>
+                <Text variant="heading">{strings.settings.safety}</Text>
+              </View>
+              <View style={{ gap: space.sm }}>
+                <LinkRow
+                  href="/blocked"
+                  label={strings.settings.blockedUsers}
+                  blurb={strings.settings.blockedUsersHint}
+                />
+              </View>
+            </>
+          ) : null}
+
           {/* Nothing to export and nothing to delete without an account, so the
               whole section is absent rather than present-and-disabled. */}
           {session ? <AccountSection /> : null}

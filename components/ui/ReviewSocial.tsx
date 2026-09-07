@@ -19,6 +19,7 @@ import {
 } from "@/services/socialService";
 import { HeartIcon } from "@/components/icons/Icons";
 import { Avatar } from "@/components/ui/Avatar";
+import { ReportSheet } from "@/components/ui/ReportSheet";
 import { Text } from "@/components/ui/Text";
 import { formatTimeAgo, strings } from "@/i18n/hu";
 
@@ -55,6 +56,14 @@ export function ReviewSocial({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string>();
   const [loaded, setLoaded] = useState(false);
+
+  // Which comment the report sheet is open for, and the ones already reported
+  // by this viewer in this session. The set is local rather than fetched: a
+  // thread of thirty comments would otherwise be thirty queries to answer a
+  // question about a control almost nobody presses, and `reportContent` is
+  // idempotent, so being wrong about it costs nothing.
+  const [reporting, setReporting] = useState<ReviewComment>();
+  const [reported, setReported] = useState<Set<string>>(new Set());
 
   const load = useCallback(async () => {
     const [state, thread] = await Promise.all([getLikeState(reviewId), getComments(reviewId)]);
@@ -181,14 +190,32 @@ export function ReviewSocial({
                 )}
               </View>
               <Text variant="bodySmall">{c.body}</Text>
-              {/* Offered to the author and to whoever owns the evening. The
-                  policy in 0032 is what actually decides; this only avoids
-                  showing a control that would be refused. */}
-              {(c.userId === myId || reviewOwnerId === myId) && (
-                <Pressable onPress={() => remove(c)} hitSlop={6} accessibilityRole="button">
-                  <Text variant="caption" tone="dim">{strings.social.delete}</Text>
-                </Pressable>
-              )}
+              <View style={styles.commentActions}>
+                {/* Offered to the author and to whoever owns the evening. The
+                    policy in 0032 is what actually decides; this only avoids
+                    showing a control that would be refused. */}
+                {(c.userId === myId || reviewOwnerId === myId) && (
+                  <Pressable onPress={() => remove(c)} hitSlop={6} accessibilityRole="button">
+                    <Text variant="caption" tone="dim">{strings.social.delete}</Text>
+                  </Pressable>
+                )}
+                {/* Not offered on your own writing — reporting yourself is
+                    noise in the queue — and not to signed-out readers, since
+                    `reports.reporter_id` has to be somebody. */}
+                {!!myId && c.userId !== myId && (
+                  <Pressable
+                    onPress={() => setReporting(c)}
+                    disabled={reported.has(c.id)}
+                    hitSlop={6}
+                    accessibilityRole="button"
+                    accessibilityState={{ disabled: reported.has(c.id) }}
+                  >
+                    <Text variant="caption" tone={reported.has(c.id) ? "faint" : "dim"}>
+                      {reported.has(c.id) ? strings.moderation.reported : strings.moderation.report}
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
             </View>
           </View>
         ))}
@@ -240,6 +267,22 @@ export function ReviewSocial({
           </Text>
         )}
       </View>
+
+      {/* One sheet for the whole thread rather than one per comment: mounting a
+          Modal under every row costs a Modal per row on native, and only one
+          can be open at a time by definition. */}
+      {!!reporting && (
+        <ReportSheet
+          target="comment"
+          targetId={reporting.id}
+          visible
+          onClose={() => setReporting(undefined)}
+          onReported={() => {
+            const id = reporting.id;
+            setReported((current) => new Set(current).add(id));
+          }}
+        />
+      )}
     </View>
   );
 }
@@ -258,6 +301,7 @@ const styles = StyleSheet.create({
   },
   comment: { flexDirection: "row", gap: space.md, alignItems: "flex-start" },
   commentMeta: { flexDirection: "row", alignItems: "center", gap: space.sm, flexWrap: "wrap" },
+  commentActions: { flexDirection: "row", alignItems: "center", gap: space.lg, marginTop: 2 },
   input: {
     backgroundColor: colors.surface,
     borderWidth: 1,

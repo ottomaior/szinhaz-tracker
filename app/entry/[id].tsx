@@ -15,6 +15,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { ContentColumn } from "@/components/ui/Screen";
+import { ReportSheet } from "@/components/ui/ReportSheet";
 import { ReviewSocial } from "@/components/ui/ReviewSocial";
 import { isShareCardSupported, shareCard } from "@/services/shareCardService";
 import { Text } from "@/components/ui/Text";
@@ -53,6 +54,8 @@ export default function DiaryEntryScreen() {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string>();
+  const [reporting, setReporting] = useState(false);
+  const [reported, setReported] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -363,8 +366,38 @@ export default function DiaryEntryScreen() {
           <View style={styles.socialBlock}>
             <ReviewSocial reviewId={review.id} reviewOwnerId={review.userId} />
           </View>
+
+          {/* Somebody else's evening, and something is wrong with it.
+              Last on the screen and set as quiet caption text: this is the
+              least-used control here and should not compete with reading the
+              entry. Absent on your own, where it would only ever be a mistake,
+              and absent without a session, since `reports.reporter_id` has to
+              be somebody. */}
+          {!!session && !isMine && (
+            <View style={styles.reportRow}>
+              <Pressable
+                onPress={() => setReporting(true)}
+                disabled={reported}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityState={{ disabled: reported }}
+              >
+                <Text variant="caption" tone={reported ? "faint" : "dim"}>
+                  {reported ? strings.moderation.reported : strings.moderation.report}
+                </Text>
+              </Pressable>
+            </View>
+          )}
         </ContentColumn>
       </ScrollView>
+
+      <ReportSheet
+        target="review"
+        targetId={review.id}
+        visible={reporting}
+        onClose={() => setReporting(false)}
+        onReported={() => setReported(true)}
+      />
     </View>
   );
 }
@@ -415,6 +448,12 @@ const styles = StyleSheet.create({
     borderColor: colors.hairline,
     borderRadius: radius.lg,
     padding: space.md,
+  },
+  reportRow: {
+    flexDirection: "row",
+    paddingTop: space.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.hairlineSoft,
   },
   socialBlock: {
     borderTopWidth: 1,

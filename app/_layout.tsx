@@ -68,6 +68,7 @@ export default function RootLayout() {
             <Stack.Screen name="inbox" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
             <Stack.Screen name="edit-profile" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
             <Stack.Screen name="settings" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+            <Stack.Screen name="blocked" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
             {/* The legal documents. Modals like the rest of the chrome, but
                 they are also the app’s only routes that get linked to from
                 outside it, so they must stay reachable at a plain URL with no
