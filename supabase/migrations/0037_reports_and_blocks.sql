@@ -98,10 +98,39 @@ create policy "users remove their own blocks"
 -- every product that has learned this the hard way ended up doing.
 --
 -- `security definer` because the caller cannot read rows of `user_blocks`
--- belonging to somebody else, and this deliberately asks about exactly those.
--- `search_path` pinned for the reason 0027 sets out — it is what the database
--- linter's `function_search_path_mutable` rule asks for, and cheap to do now.
-create or replace function public.blocked_between(other uuid)
+-- belonging to somebody else — the select policy above is `blocker_id =
+-- auth.uid()` — and this deliberately asks about exactly those. `search_path`
+-- pinned for the reason 0027 sets out: it is what the database linter's
+-- `function_search_path_mutable` rule asks for, and cheap to do now.
+--
+-- ### Why this lives in `private` rather than `public`
+--
+-- Because the function reads a table the caller cannot, it must not also be
+-- callable as an RPC with an argument of the caller's choosing: `POST
+-- /rest/v1/rpc/blocked_between` would answer "has this person blocked me?" for
+-- any id, which is the one thing a block is not supposed to announce. Nobody is
+-- told they have been blocked — being told is itself a form of contact.
+--
+-- The obvious way to close that is `revoke execute ... from anon, authenticated`,
+-- and it is wrong. **An RLS policy expression is evaluated with the privileges
+-- of the role running the query, not the table's owner.** Revoking execute
+-- therefore does not merely remove the endpoint; it breaks every policy that
+-- calls the function. Applying it that way took the live database down for
+-- signed-in readers instantly — `select * from reviews` became "permission
+-- denied for function blocked_between" — while leaving anonymous visitors
+-- working perfectly, which is the half of production nobody watches.
+--
+-- So the grant has to exist, and the endpoint must not. PostgREST only exposes
+-- functions in its configured schemas (`public`, `graphql_public`, `storage`).
+-- A schema outside that list is reachable from a policy and unreachable over
+-- HTTP, which is exactly the split this needs.
+create schema if not exists private;
+
+-- Usage on the schema so a policy running as `authenticated` can resolve the
+-- name. Nothing else is granted in here, so this opens nothing else.
+grant usage on schema private to anon, authenticated, service_role;
+
+create or replace function private.blocked_between(other uuid)
 returns boolean
 language sql
 stable
@@ -117,12 +146,7 @@ as $$
      );
 $$;
 
--- The function reads a table the caller cannot, so it must not also be callable
--- as an arbitrary RPC with a chosen argument. Revoking execute from the API
--- roles leaves it usable from inside a policy — policies are evaluated by the
--- owner — while making `POST /rpc/blocked_between` a 404. 0036 had to close
--- exactly this hole on `handle_new_user` after the fact.
-revoke execute on function public.blocked_between(uuid) from public, anon, authenticated;
+grant execute on function private.blocked_between(uuid) to anon, authenticated;
 
 -- ---------------------------------------------------------------------------
 -- 3. Reports
@@ -197,7 +221,7 @@ create policy reviews_select_all
     -- takedown should remove it from the public half without quietly deleting
     -- somebody's memory of a night at the theatre.
     user_id = auth.uid()
-    or (not is_hidden and not public.blocked_between(user_id))
+    or (not is_hidden and not private.blocked_between(user_id))
   );
 
 drop policy if exists "review comments are readable by everyone" on public.review_comments;
@@ -206,7 +230,7 @@ create policy "review comments are readable unless hidden or blocked"
   on public.review_comments for select
   using (
     user_id = auth.uid()
-    or (not is_hidden and not public.blocked_between(user_id))
+    or (not is_hidden and not private.blocked_between(user_id))
   );
 
 -- Profiles stay readable when hidden content is not: a blocked person's profile
@@ -240,7 +264,7 @@ create policy "users comment as themselves, on entries open to them"
     user_id = auth.uid()
     and exists (
       select 1 from public.reviews r
-      where r.id = review_id and not public.blocked_between(r.user_id)
+      where r.id = review_id and not private.blocked_between(r.user_id)
     )
   );
 
@@ -252,7 +276,7 @@ create policy "users like as themselves, on entries open to them"
     user_id = auth.uid()
     and exists (
       select 1 from public.reviews r
-      where r.id = review_id and not public.blocked_between(r.user_id)
+      where r.id = review_id and not private.blocked_between(r.user_id)
     )
   );
 
@@ -260,7 +284,7 @@ drop policy if exists "users manage their own follows" on public.follows;
 
 create policy "users follow accounts open to them"
   on public.follows for insert
-  with check (follower_id = auth.uid() and not public.blocked_between(followee_id));
+  with check (follower_id = auth.uid() and not private.blocked_between(followee_id));
 
 -- ---------------------------------------------------------------------------
 -- Blocking undoes the following that already existed
@@ -300,19 +324,21 @@ create trigger user_blocks_drop_follows
 -- ---------------------------------------------------------------------------
 --
 -- `search_profiles` is from 0014 and unchanged apart from the last line of the
--- where clause. It becomes `security definer` for one reason: `blocked_between`
--- has had execute revoked, deliberately — granting it would hand anybody an
--- endpoint answering "has this person blocked me?", which is precisely the
--- thing a block is not supposed to announce. A definer function may call it;
--- the caller may not.
+-- where clause.
 --
--- Bypassing RLS on `profiles` as a side effect costs nothing: that table's
--- select policy is `true` and this migration leaves it that way.
+-- It stays `security invoker`. There was a version of this that made it a
+-- definer so that it could reach a `blocked_between` nobody else was allowed to
+-- call, and putting that function in `private` instead removed the need: the
+-- grant is back, so an ordinary invoker function calls it fine. Which is worth
+-- keeping, because the database linter flags every definer function reachable
+-- at /rest/v1/rpc (lints 0028 and 0029) and is right to — a definer bypasses
+-- RLS on everything it touches, and this needs to bypass nothing. `profiles` is
+-- readable by everyone anyway.
 create or replace function public.search_profiles(search_term text)
 returns setof public.profiles
 language sql
 stable
-security definer
+security invoker
 set search_path = public, pg_temp
 as $$
   with pattern as (
@@ -322,7 +348,7 @@ as $$
   from public.profiles pr
   cross join pattern
   where (pr.name ilike pattern.p escape '\' or pr.handle ilike pattern.p escape '\')
-    and not public.blocked_between(pr.id)
+    and not private.blocked_between(pr.id)
   order by pr.name
   limit 20;
 $$;
