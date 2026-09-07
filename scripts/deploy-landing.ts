@@ -51,22 +51,62 @@ if (!existsSync(`${DIRECTORY}/index.html`)) {
   process.exit(1);
 }
 
-// `--commit-dirty` because this deploys whatever is on disk on purpose: the
-// page is edited and published directly, not built from a tagged commit, and
-// without the flag wrangler stops to ask about the working tree.
-const result = spawnSync(
-  "npx",
-  [
-    "--yes",
-    "wrangler@3",
-    "pages",
-    "deploy",
-    DIRECTORY,
-    `--project-name=${PROJECT}`,
-    "--branch=main",
-    "--commit-dirty=true",
-  ],
-  { stdio: "inherit", shell: process.platform === "win32" }
-);
+/**
+ * Create the Pages project if it does not exist yet.
+ *
+ * `wrangler pages deploy` offers to create a missing project when it is run
+ * from a terminal a person is sitting at, and fails with "Project not found"
+ * when it is not — which is every run of this script. One idempotent API call
+ * up front is what makes the first deploy work the same way as the hundredth.
+ */
+async function ensureProject(): Promise<void> {
+  const base = `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/pages/projects`;
+  const auth = { Authorization: `Bearer ${process.env.CLOUDFLARE_API_TOKEN}` };
 
-process.exit(result.status ?? 1);
+  const existing = await fetch(`${base}/${PROJECT}`, { headers: auth });
+  if (existing.ok) return;
+
+  const created = await fetch(base, {
+    method: "POST",
+    headers: { ...auth, "Content-Type": "application/json" },
+    body: JSON.stringify({ name: PROJECT, production_branch: "main" }),
+  });
+
+  if (!created.ok) {
+    const body = (await created.json().catch(() => null)) as { errors?: { message: string }[] } | null;
+    const detail = body?.errors?.map((e) => e.message).join("; ") ?? `HTTP ${created.status}`;
+    console.error(`Could not create the "${PROJECT}" Pages project: ${detail}`);
+    process.exit(1);
+  }
+
+  console.log(`Created the "${PROJECT}" Pages project.`);
+}
+
+// Wrapped rather than awaited at the top level: `package.json` has no
+// `"type": "module"`, so tsx transpiles this to CommonJS, where a top-level
+// await is a syntax error rather than a slow start.
+async function main(): Promise<never> {
+  await ensureProject();
+
+  // `--commit-dirty` because this deploys whatever is on disk on purpose: the
+  // page is edited and published directly, not built from a tagged commit, and
+  // without the flag wrangler stops to ask about the working tree.
+  const result = spawnSync(
+    "npx",
+    [
+      "--yes",
+      "wrangler@3",
+      "pages",
+      "deploy",
+      DIRECTORY,
+      `--project-name=${PROJECT}`,
+      "--branch=main",
+      "--commit-dirty=true",
+    ],
+    { stdio: "inherit", shell: process.platform === "win32" }
+  );
+
+  process.exit(result.status ?? 1);
+}
+
+main();
