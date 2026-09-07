@@ -1327,6 +1327,134 @@ in. The form does not use `maxLength` at all: silently swallowing keystrokes
 reads as a broken keyboard, so it shows a counter once fewer than sixty
 characters remain and refuses the save if it is over.
 
+## A block that only hides is half a feature
+
+Reviews and comments here are public writing by strangers. Until recently the
+only moderation rule in the whole system was one policy from `0032`: a diary
+owner could delete a comment from under their own evening. There was no way to
+report anything, no way to avoid anybody, and no way for the operator to take a
+row down short of deleting it from the SQL editor.
+
+That is a real safety gap on the live web product — and separately, App Store
+Guideline 1.2, the most likely reason this app would be rejected at review.
+`0037_reports_and_blocks.sql` closes it.
+
+### Why the rules are policies rather than queries
+
+Every filter here is a row-level security policy, not a condition in
+`services/`. The distinction is the whole design.
+
+A `.neq("user_id", blockedId)` in a service file is a *suggestion*. PostgREST
+will happily answer a request that omits it, so the protection holds only for
+queries that remember to ask for it — and every screen added afterwards has to
+remember, forever, including the ones nobody has written yet. A policy is the
+answer to every query anybody will ever write. It is the difference between a
+rule and a convention.
+
+The cost is that policies are harder to read and much harder to test. Which is
+why the two things below were both found by *running* them rather than by
+reading them.
+
+### Hiding somebody's writing does not stop them writing
+
+The obvious half of blocking is the select policy: your entry becomes invisible
+to the person you blocked. That much was easy and it is not enough.
+
+Nothing about `with check (user_id = auth.uid())` on `review_comments` asks
+*whose* evening is being commented on. So the blocked account could still POST a
+comment naming your review's id — the row would be created, the trigger would
+bump your comment count, and you would have lost only the ability to *see* it
+happen. A block that removes the evidence of harassment rather than the
+harassment is worse than no block, because the person using it believes they are
+protected.
+
+So the insert policies on comments, likes and follows all check for a block now,
+and a trigger drops any follow that already existed in both directions — because
+`generate_notifications()` reads `follows` and would otherwise keep telling a
+blocked account about every evening you record.
+
+The block is symmetric for the same reason. A one-way block would leave the
+other person free to read, quote and reply to everything you wrote.
+
+### An RLS policy runs as the querying role, not the table owner
+
+This one broke production, briefly, and is the most useful thing in this
+section.
+
+`blocked_between(other uuid)` reads `user_blocks` rows belonging to other
+people, so it has to be `security definer`. That makes it dangerous in a
+specific way: as a `public` function it would be reachable at
+`POST /rest/v1/rpc/blocked_between`, answering *"has this person blocked me?"*
+for any id. Nobody is told they have been blocked — being told is itself a form
+of contact, and it is exactly what someone who has just blocked another person
+is trying to avoid.
+
+The obvious fix is `revoke execute ... from public, anon, authenticated`, and it
+is wrong. **A policy expression is evaluated with the privileges of the role
+running the query, not the privileges of the table's owner.** Revoking execute
+did not remove an endpoint; it broke every policy that called the function.
+Applying it turned `select * from reviews` into
+
+```
+ERROR: 42501: permission denied for function blocked_between
+```
+
+for every reader on the site — signed in or not. `blocked_between` returns false
+immediately for an anonymous viewer, but the policy still has to *call* it to
+find that out, and calling is the thing that was no longer permitted.
+
+That last sentence is a correction. The first write-up of this said the outage
+had only hit signed-in readers and that anonymous visitors were fine — which was
+inferred from the single error actually observed, and never checked. Reproducing
+the exact shape on a throwaway table shows `anon` failing identically. Worth
+recording, because inventing a plausible detail to round out an explanation is
+the same failure as the structural check below: both produce something that
+looks like knowledge and is not.
+
+The grant has to exist. What must not exist is the endpoint, and those are
+separable: PostgREST only exposes functions in its configured schemas (`public`,
+`graphql_public`, `storage`). A function in a `private` schema is reachable from
+a policy and unreachable over HTTP. That is the fix, and the public copy is
+dropped rather than left behind, because a second definition of the same rule
+that nothing evaluates is how the next person gets this wrong again.
+
+It was caught by a behavioural test — eleven assertions in a transaction that
+gets rolled back, covering both directions of a block, the follow-dropping
+trigger, the write policies, and an author still seeing their own hidden review.
+A structural check of "is the grant revoked, is `search_path` pinned" passed
+happily and would have shipped it. That is worth remembering the next time
+something looks verified.
+
+### Hiding, not deleting
+
+`is_hidden` on `reviews` and `review_comments` is the operator's takedown, and
+it is reversible on purpose. A report can be wrong, a deletion cannot be undone,
+and a row that has been removed is also gone as the evidence of *why* it was
+removed.
+
+The author still sees their own hidden review. A diary entry here is somebody's
+record of an evening as much as it is a public post, and a takedown should
+remove the public half without quietly deleting the private one.
+
+### No admin app
+
+`supabase/moderation.sql` is six queries: the open queue with the reported text
+inline, the same reports grouped by target so that five people reporting one
+comment reads as one problem, how to hide something, how to close every report
+about the same target at once, who is filing reports and how many get dismissed,
+and what is currently hidden.
+
+That is the whole moderation surface, deliberately. Editorial lists are already
+curated by hand in the SQL editor, there is one operator, and an admin interface
+built before there are any users is a second product to maintain that nobody has
+asked to use. `npm run check:launch -- --stores` checks that the three surfaces
+showing a stranger's writing each still offer a way to report it — by name,
+because the failure mode is a screen added later that quietly ships without one.
+
+The one thing the repository cannot check is whether the migration has been
+applied to the database a given build is talking to. Without it the controls are
+decoration and every write is a 400.
+
 ## Building something a store will take
 
 This has always been a real React Native app rather than a website in a
@@ -1461,17 +1589,12 @@ answer.
 
 ### What is still missing
 
-`npm run check:launch -- --stores` is the list, and enforces what it can:
+`npm run check:launch -- --stores` is the list, and enforces what it can. Moderation used to head it and no longer does — see *[A block that only hides is half a feature](#a-block-that-only-hides-is-half-a-feature)*:
 
 - **The EAS project link.** `npx eas-cli init` writes `extra.eas.projectId`, and
   needs an Expo account. This is the first step that cannot be taken from the
   repository.
 - **The two verification files**, which need the credentials above.
-- **Moderation.** Reviews and comments are public writing by strangers, and the
-  only rule today is that a diary owner may delete a comment on their own entry.
-  There is no way to report anything and no way to block anybody. That is a real
-  safety gap on the web and App Store Guideline 1.2 at review — the single most
-  likely reason this app is rejected. Phase 3 in [BACKLOG.md](BACKLOG.md).
 - **The share card**, which draws an evening onto a canvas and so does nothing at
   all in a native build.
 

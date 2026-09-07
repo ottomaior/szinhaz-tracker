@@ -18,18 +18,18 @@ Utoljára frissítve: 2026. szeptember 7.
 
 Négy döntés, ami mindent meghatároz alább:
 
-- **Előbb a web.** A webes termék az, ami elindul; az alkalmazásboltok egy mögötte futó második sáv ([„A" rész](#a-rész--a-boltos-sáv)). Ez a sáv már nem csak dokumentált — az SDK-frissítés és a natív konfiguráció elkészült, és egy build immár technikailag lehetséges. Ami hátravan belőle: a moderáció, egy Expo-fiók és pénz.
+- **Előbb a web.** A webes termék az, ami elindul; az alkalmazásboltok egy mögötte futó második sáv ([„A" rész](#a-rész--a-boltos-sáv)). Ez a sáv már nem csak dokumentált — az SDK-frissítés, a natív konfiguráció és a moderáció is elkészült, és van telepíthető Android-build. Semmi mérnöki jellegű nincs hátra rajta: ami maradt, az egy fizetős fejlesztői fiók, az üzemeltető személyéről szóló döntés, és naptári idő.
 - **Budapest és Debrecen, rendesen.** Nem országos — az később jön. A már lefedett két város *teljes és pontos* lefedettséget kap, amitől az adatminőség önálló munkafolyam lesz, nem az adapterek hozzáadásának mellékhatása.
 - **A push-értesítések benne vannak a bemutatóban.** A weben ez PWA-t és Web Pusht jelent, ami egyben a natív push alapozása is.
 - **Az üzemeltető személye eldöntetlen** — magánszemély vagy cég. Ez csak az első boltos beadást gátolja. A mérlegelés az „A" részben.
 
-> **Hol vegyük fel a fonalat.** Az „A" rész A.1-e soron kívül készült el, így az
-> alábbi fázisok már nem szigorúan egymás utániak. **A 3. fázis (moderáció) most
-> a közös következő lépés**: ez a boltos sáv utolsó mérnöki akadálya *és* egyben
-> valós biztonsági hiányosság a weben ma, tehát ez az egyetlen munka, ami
-> mindkettőt előbbre viszi. A 2. fázis (PWA és Web Push) továbbra is az, amire
-> magának a webes terméknek szüksége van, és az A.1-ből semmi nem változtatott
-> azon, hogy az mit jelent.
+> **Hol vegyük fel a fonalat.** Az „A" rész A.1-e és a 3. fázis is soron kívül
+> készült el, így az alábbi fázisok már nem egymás utániak. **A boltos sávon nem
+> maradt mérnöki akadály** — ami hátravan belőle, az egy fizetős fejlesztői
+> fiók, az üzemeltető személyéről szóló döntés és a Google háromhetes zárt
+> tesztje, és ezek egyike sem kód. Így a következő *megépítendő* dolog a 2.
+> fázis (PWA és Web Push) a webes termékhez, a következő *elindítandó* pedig a
+> Play tesztóra, mert ez az egyetlen tétel, aminek az ára naptári idő.
 
 ---
 
@@ -97,7 +97,7 @@ EU-ban a DMA miatt, majd márciusban visszavonta — Magyarországon működnek.
 
 - **2.1** `public/manifest.webmanifest`, `display: "standalone"`, 192/512/maskable ikonok az `assets/images/icon.png`-ből generálva (a `sharp` már devDependency). `<link rel="manifest">` és `apple-touch-icon` az `app/+html.tsx`-be.
 - **2.2** Kézzel írt `public/sw.js` — app-shell gyorsítótár, `push` és `notificationclick`. Az `nginx.conf`-ba kell `Service-Worker-Allowed: /` és `Cache-Control: no-cache` a `/sw.js`-re, mert az `/assets/` egy évig `immutable`, egy beragadt service worker pedig visszafordíthatatlan.
-- **2.3** `0037_push_subscriptions.sql` migráció — `push_subscriptions` tábla (`user_id`, egyedi `endpoint`, `p256dh`, `auth`, `user_agent`, időbélyegek) tulajdonosra szűkített RLS-sel, plusz `pushed_at` a `notifications`-ön.
+- **2.3** `0038_push_subscriptions.sql` migráció — `push_subscriptions` tábla (`user_id`, egyedi `endpoint`, `p256dh`, `auth`, `user_agent`, időbélyegek) tulajdonosra szűkített RLS-sel, plusz `pushed_at` a `notifications`-ön.
 - **2.4** VAPID kulcspár a Supabase secretsben; `send-push` Edge Function, ami a `pushed_at is null` sorokat olvassa, a magyar szöveget **az `i18n/hu.ts`-ből importálva, nem újra begépelve** rendereli (a `0030` épp azért tárol strukturált `payload` jsonb-t, hogy az alkalmazás hangja egy fájlban éljen), `web-push`-sal küld, `pushed_at`-et bélyegez, és kiszórja a 404/410-et adó feliratkozásokat. A `sync/run.ts` végén hívva, a `generate_notifications()` után.
 - **2.5** Feliratkozó felület a Beállításokban: engedélykérés kifejezett gomb mögött (a Push API megköveteli), kapcsolók a hat meglévő `NotificationKind` értékre, és iOS Safarin egy „tedd ki a kezdőképernyőre" kártya, mert ott a `PushManager` egy sima lapon egyszerűen nincs. A `components/ui/FollowSubjectButton.tsx` ma kiírja, hogy még semmi nem megy ki; ez a szöveg ekkor kerül ki.
 
@@ -109,21 +109,69 @@ cserélődik.
 
 ---
 
-## 3. fázis — Moderáció és biztonság · a boltok felé ez következik, a weben pedig már régóta esedékes
+## 3. fázis — Moderáció és biztonság · **kész**
 
-A kritikák és hozzászólások nyilvános, idegenek által írt tartalmak, és ma az
-egyetlen moderációs szabály az, hogy a napló tulajdonosa törölhet egy
-hozzászólást a saját bejegyzése alól. Nincs bejelentés, nincs letiltás, és nincs
-mód a tartalom megnézésére vagy eltávolítására. Valódi biztonsági hiányosság a
-weben, és később szinte biztos App Store-elutasítás (1.2-es irányelv).
+Két commit a `part-a-native` ágon. A kritikák és hozzászólások nyilvános,
+idegenek által írt tartalmak, és eddig az egyetlen moderációs szabály az volt,
+hogy a napló tulajdonosa törölhet egy hozzászólást a saját bejegyzése alól.
+Valódi biztonsági hiányosság az élő webes terméken, és az App Store 1.2-es
+irányelve a felülvizsgálatnál.
 
-- **3.1** Migráció: `reports` (bejelentő, cél típusa ∈ `review|comment|profile`, cél azonosítója, indok, státusz) és `user_blocks`, mindkettő RLS-sel; a letiltott felhasználók kiszűrve a hírfolyamból, a bejegyzések szálaiból és a személykeresésből.
-- **3.2** Bejelentési lehetőség az `app/entry/[id].tsx`, a `components/ui/ReviewSocial.tsx` és az `app/user/[id].tsx` felületén.
-- **3.3** Minimális moderációs felület. A kiemelt listákat ma is kézzel gondozzuk az SQL-szerkesztőben, így dokumentált lekérdezések plusz egy `is_hidden` oszlop a `reviews`/`review_comments` táblán arányos megoldás; admin alkalmazás nem indokolt, amíg nincsenek felhasználók.
-- **3.4** Közzétett kapcsolati cím az impresszumban — a DSA amúgy is megköveteli.
+| | Mi |
+|---|---|
+| 3.1 | `supabase/migrations/0037_reports_and_blocks.sql` — `reports` és `user_blocks`, mindkettő RLS-sel, plusz `is_hidden` a `reviews`/`review_comments` táblán. A letiltott fiókok **házirenddel** vannak kiszűrve a hírfolyamból, a bejegyzések szálaiból és a személykeresésből, nem egy szolgáltatásfájlban lévő feltétellel |
+| 3.2 | Bejelentési lehetőség az `app/entry/[id].tsx`, a `components/ui/ReviewSocial.tsx` és az `app/user/[id].tsx` felületén, egyetlen `components/ui/ReportSheet.tsx`-en át, ami ugyanarra a lapra épül, mint az `AddToListSheet` |
+| 3.3 | `supabase/moderation.sql` — hat dokumentált lekérdezés. Admin alkalmazás nincs, pontosan azért, amiért a terv is mondta: egy üzemeltető van, a kiemelt listákat pedig amúgy is kézzel gondozzuk az SQL-szerkesztőben |
+| 3.4 | Még hátravan — kell hozzá az üzemeltető kapcsolati címe, ami ugyanaz az akadály, mint a jogi dokumentumoknál. Lásd az 1. fázis hátralévő listáját |
+| 3.5 | *(új)* `app/blocked.tsx`, a Beállításokból elérhetően. Nem volt az eredeti tervben, és nem elhagyható: a letiltásnak különben nincs visszavonása, mert épp maga a letiltás az, amitől a másik felhasználót nehéz újra megtalálni |
 
----
+**A két dolog, amit érdemes tudni.**
 
+*Az a letiltás, ami csak elrejt, fél funkció.* Attól, hogy valakinek az írását
+elrejtjük, még írhat. A select-házirendtől a bejegyzésed láthatatlan lesz neki
+az alkalmazásban, de a `user_id = auth.uid()` semmit nem kérdez arról, hogy
+kinek az estéjéhez szól a hozzászólás — a PostgREST tehát továbbra is elfogad
+egy insertet, ami megnevezi az azonosítóját, és a letiltott fiók vidáman
+hozzászól a kritikáid alatt, miközben te elveszíted a képességet, hogy ezt lásd.
+A hozzászólások, a tetszések és a követések insert-házirendje mind ellenőriz
+már, egy trigger pedig eldobja a meglévő követést mindkét irányban, mert a
+`generate_notifications()` a `follows`-ból olvas.
+
+*Egy RLS-házirend kifejezése a lekérdezést futtató szerep jogaival fut, nem a
+tábla tulajdonosáéval.* Az első változat elvette az `execute` jogot a
+`blocked_between`-re a `public`-tól, az `anon`-tól és az `authenticated`-től,
+hogy ne váljon olyan RPC-vé, ami megválaszolja, hogy „letiltott-e engem ez a
+személy". Ez nem egy végpontot szüntetett meg — hanem minden házirendet eltört,
+ami hívta, és a `select * from reviews` jogosultsági hibává vált **minden**
+olvasó számára, bejelentkezve és anélkül is. A függvény most egy `private`
+sémában él: a PostgREST csak a beállított sémáit teszi közzé, tehát a házirend
+eléri, a HTTP nem. Egy viselkedési teszt fogta meg; a „el van-e véve a jog, ki
+van-e tűzve a `search_path`" szerkezeti ellenőrzés átment volna vele.
+
+*És egy helyesbítés, amit érdemes megtartani, mert ugyanaz a hiba egy szinttel
+feljebb.* A fentiek első leírása azt állította, hogy a névtelen látogatókat nem
+érintette a kiesés — hogy az csak a bejelentkezett olvasókat sújtotta. Ez az
+egyetlen ténylegesen megfigyelt hibából volt következtetve, nem tesztelve, és
+nem igaz: a pontos szerkezetet egy eldobható táblán reprodukálva az `anon`
+ugyanúgy elhasal. Egy ellenőrizetlen részlet, amit azért találunk ki, hogy a
+történet kerekebb legyen, pontosan az, amit a szerkezeti ellenőrzés rosszul
+csinált — így nem maradhat benne annak a leírásában, hogy az az ellenőrzés
+tévedett.
+
+### Ellenőrizve
+
+Tizenegy állítás az éles adatbázison, visszagörgetett tranzakcióban — a letiltás
+mindkét iránya, a követést eldobó trigger, az írási házirendek, a szerző, aki
+továbbra is látja a saját elrejtett kritikáját, és a névtelen olvasók, akiket
+mások letiltása nem érint —, plusz további öt, miután a `search_profiles`
+visszakerült `security invoker`-re. A `get_advisors` semmi újat nem jelez.
+Helyben: típusellenőrzés, 299 teszt, tiszta lint, és a statikus export
+hibaüzenet nélkül renderel telefonszélességen, munkamenet nélkül.
+
+Az `npm run check:launch -- --stores` mostantól név szerint ellenőrzi a három
+bejelenthető felületet, nem azt, hogy a funkció „létezik" — mert a tényleges
+hibamód az, hogy egy később hozzáadott képernyő csendben bejelentési lehetőség
+nélkül kerül ki.
 ## 4. fázis — Budapest és Debrecen, teljesen és pontosan · ez a hosszú vég
 
 Nem országos. A szélesség számolható volt, a mélység nem, ezért ennek a
@@ -224,16 +272,41 @@ három letiltott jogosultság, benne van az `autoVerify` intent filter, és
 generál Xcode-projektet, így az adatvédelmi manifestet és az entitlementeket az
 első, macOS-en futó EAS build gyakorolja be először.
 
+### A.1b A projekt az EAS-en, és egy alkalmazás, ami feltelepül · **kész**
+
+- Az EAS projekt a `@ottomaior/szinhaz-tracker`, a **személyes** fiókon, nem a csapatfiókon — ez illeszkedik a GitHub-repóhoz. Az EAS-projektek átvihetők fiókok között, tehát ez nem dönti el előre az üzemeltető személyének kérdését.
+- Az `extra.eas.projectId` kézzel került az `app.config.ts`-be, mert az `eas init` nem hajlandó dinamikus konfigurációt szerkeszteni: létrehozza a projektet, kiírja az azonosítót, és megáll. A sor nélkül minden build új alkalmazásként regisztrálódna, és elveszne a távoli build szám, amire az `appVersionSource: "remote"` épül.
+- Az `EXPO_PUBLIC_SUPABASE_URL` és az `EXPO_PUBLIC_SUPABASE_ANON_KEY` mindhárom EAS-környezetben be van állítva. `env:set`-tel, nem `env:push`-sal, mert az utóbbi egy egész `.env` fájlt olvas be, ez pedig a `SUPABASE_SERVICE_ROLE_KEY`-t is tartalmazza.
+- Az Android kulcstárolót a felhőben generáltuk (helyben nincs `keytool`). Ez az a kulcs, amiből az Android mélylink-fájlhoz kellő SHA-256 származik.
+- **Van telepíthető APK.** `eas build --profile preview --platform android`.
+
+**Amit érdemes tudni:** az első build az *Install dependencies* lépésben bukott
+el, és nem az EAS volt az oka. Az `npm ci` elutasít egy olyan lockfile-t, ami
+nem egyezik a `package.json`-nel, a miénk pedig az SDK-frissítés óta nem egyezett
+— tizenhat csomag hiányzott belőle, köztük a `react-native-gesture-handler`, a
+`react-native-reanimated` és a `react-native-worklets`, amikre egy natív buildnek
+szüksége van. Azért estek ki, mert a frissítés végig `--legacy-peer-deps`-szel
+települt, és a későbbi `npm uninstall` megnyeste az így előállt fát. **A
+`Dockerfile` is `npm ci`-t futtat, tehát ez egyetlen merge-re volt attól, hogy
+eltörje a Railway-telepítést** — és telepítési hibának látszott volna, nem
+valaminek, amit négy committal korábban vittünk be. Helyben semmi nem vette
+észre, mert az `npm install` csendben rendbe teszi az elavult lockfile-t, és itt
+minden ellenőrzés a `node_modules` ellen fut. Sima `npm install` javította, és
+úgy ellenőriztük, ahogy kellett volna: `npm ci` egy üres könyvtárban, amiben csak
+a `package.json` és a lockfile van — pontosan azt csinálja az EAS, a Railway és a
+CI is.
+
 ### A.2 Ami hátravan
+
+Ezen a listán semmi nem mérnöki munka.
 
 | Akadály | Megjegyzés |
 |---|---|
-| Nincs EAS projekt | Az `npx eas-cli init` írja be az `extra.eas.projectId`-t az `app.config.ts`-be. Expo-fiók kell hozzá — ez az első lépés, amit nem lehet a repóból megtenni. Az ikonok 1024×1024-esek, az iOS-es teljesen átlátszatlan, az Android előtér pedig a 66%-os biztonságos zónán belül van, tehát bolti szempontból érvényesek; bolti méretekben viszont továbbra sem *látta* őket senki. |
-| Nincs UGC-moderáció | 3. fázis, változatlanul. Ennél az alkalmazásnál ez a legvalószínűbb elutasítási ok, és az egyetlen hátralévő akadály, ami valódi fejlesztés, nem papírmunka. |
-| A mélylinkek nincsenek igazolva | Az alkalmazás felőli igény be van állítva; a `/.well-known/apple-app-site-association`-höz és a `/.well-known/assetlinks.json`-höz kell az Apple Team ID és az aláíró kulcs ujjlenyomata, és egyik sem létezik, amíg le nem futott egy EAS build. A `scripts/write-well-known.ts` megírja mindkettőt, amint léteznek. |
-| A megosztókártya csak webes | Canvas-alapú; natívhoz `react-native-view-shot` kell. Eszközre készült build nélkül nem ellenőrizhető, tehát megvárja azt. |
+| A mélylinkek nincsenek igazolva | Az alkalmazás felőli igény be van állítva; a `/.well-known/apple-app-site-association`-höz és a `/.well-known/assetlinks.json`-höz kell az Apple Team ID és a Play App Signing ujjlenyomata. A kulcstároló már létezik, tehát az Android fele elérhető, amint van Play Console, ahonnan az aláíró kulcs kiolvasható. A `scripts/write-well-known.ts` megírja mindkettőt. |
+| Az ikonokat bolti méretben nem látta senki | 1024×1024-esek, az iOS-es teljesen átlátszatlan, az Android előtér a 66%-os biztonságos zónán belül — tehát *érvényesek*. Azt viszont senki nem nézte meg, hogy 48 pontosan, más alkalmazások mellett a polcon hogyan festenek. |
+| A megosztókártya csak webes | Canvas-alapú; natívhoz `react-native-view-shot` kell. Most már ellenőrizhető egy valódi eszközre készült buildben, ami korábban nem létezett. |
 | Nincs OTA-frissítés | Az `expo-updates` nincs telepítve. Nem akadály, de egy bolti alkalmazás nélküle minden JavaScript-javításhoz egy teljes felülvizsgálati kört jelent. Érdemes az első beadás *előtt* eldönteni, nem utána. |
-
+| Az iOS-t soha nem fordítottuk le | Az `expo prebuild` Windowsról nem generál Xcode-projektet, így az adatvédelmi manifest és az entitlementek továbbra sincsenek kipróbálva. Az első EAS iOS build az, ahol először tesztelődnek — ahhoz pedig kell az Apple fejlesztői fiók. |
 A fióktörlés és a jogi oldalak **készen vannak** (1. fázis), és mindkét bolt
 követelményét kielégítik, beleértve a Google webről elérhető törlési URL-jét is.
 

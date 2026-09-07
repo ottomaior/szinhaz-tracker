@@ -14,17 +14,18 @@ Last updated: 7 September 2026.
 
 Four calls that shape everything below:
 
-- **Web first.** The web product is what launches; the app stores are a second track ([Part A](#part-a--the-store-track)) running behind it. That track is no longer only documented — the SDK upgrade and the native configuration are done, and a build is now technically possible. What is left of it is moderation, an Expo account, and money.
+- **Web first.** The web product is what launches; the app stores are a second track ([Part A](#part-a--the-store-track)) running behind it. That track is no longer only documented — the SDK upgrade, the native configuration and the moderation work are all done, and an installable Android build exists. Nothing engineering-shaped is left on it: what remains is a paid developer account, a publisher-identity decision, and calendar time.
 - **Budapest and Debrecen, done properly.** Not national — that comes later. The two cities already covered get *complete and accurate* coverage, which makes data quality a workstream rather than a side effect of adding adapters.
 - **Push notifications are in scope for launch.** On web that means PWA + Web Push, which is also the groundwork for native push.
 - **Publisher identity is undecided** — individual or company. It blocks only the first store submission. See the trade-offs in Part A.
 
-> **Where to pick up.** Part A.1 was taken out of order, so the phases below are
-> no longer strictly sequential. **Phase 3 (moderation) is now the shared next
-> step**: it is the last engineering blocker on the store track *and* a real
-> safety gap on the web today, so it is the one piece of work that moves both.
-> Phase 2 (PWA and Web Push) is still the next thing the web product itself
-> needs, and nothing in Part A.1 changed what it involves.
+> **Where to pick up.** Part A.1 and Phase 3 were both taken out of order, so
+> the phases below are no longer sequential. **There is no engineering blocker
+> left on the store track** — what remains of it is a paid developer account, a
+> publisher-identity decision, and Google's three-week closed test, none of
+> which is code. So the next thing to *build* is Phase 2 (PWA and Web Push) for
+> the web product, and the next thing to *start* is the Play test clock, because
+> it is the only item here whose cost is calendar time.
 
 ---
 
@@ -91,7 +92,7 @@ announced removing Home Screen web apps in the EU under the DMA in February
 
 - **2.1** `public/manifest.webmanifest`, `display: "standalone"`, 192/512/maskable icons generated from `assets/images/icon.png` (`sharp` is already a devDependency). Wire `<link rel="manifest">` and `apple-touch-icon` into `app/+html.tsx`.
 - **2.2** A hand-written `public/sw.js` — app-shell cache plus `push` and `notificationclick`. `nginx.conf` needs `Service-Worker-Allowed: /` and `Cache-Control: no-cache` on `/sw.js`, since `/assets/` is served `immutable` for a year and a pinned service worker is unrecoverable.
-- **2.3** Migration `0037_push_subscriptions.sql` — `push_subscriptions` (`user_id`, `endpoint` unique, `p256dh`, `auth`, `user_agent`, timestamps) with owner-scoped RLS, plus `pushed_at` on `notifications`.
+- **2.3** Migration `0038_push_subscriptions.sql` — `push_subscriptions` (`user_id`, `endpoint` unique, `p256dh`, `auth`, `user_agent`, timestamps) with owner-scoped RLS, plus `pushed_at` on `notifications`.
 - **2.4** VAPID keypair in Supabase secrets; Edge Function `send-push` reading `notifications` where `pushed_at is null`, rendering the Hungarian **from `i18n/hu.ts` rather than re-typing it** (`0030` stores structured `payload` jsonb precisely so the app's voice lives in one file), sending via `web-push`, stamping `pushed_at`, pruning subscriptions that 404/410. Called at the end of `sync/run.ts`, after `generate_notifications()`.
 - **2.5** Opt-in UI in Settings: permission behind an explicit button (required by the Push API), per-kind toggles for the six existing `NotificationKind` values, and an "add to Home Screen" card for iOS Safari, where `PushManager` is simply absent in a normal tab. `components/ui/FollowSubjectButton.tsx` currently says nothing is sent yet; that copy comes out when this ships.
 
@@ -102,18 +103,63 @@ copy are reused unchanged when native push arrives; only the sender changes.
 
 ---
 
-## Phase 3 — Moderation and safety · next for the stores, and overdue for the web
+## Phase 3 — Moderation and safety · **done**
 
-Reviews and comments are public UGC written by strangers, and the only
-moderation rule today is that a diary owner can delete a comment on their own
-entry. No way to report, no way to block, no way to see or remove content. A
-real safety gap on the web, and a near-certain App Store rejection later
-(Guideline 1.2).
+Two commits on `part-a-native`. Reviews and comments are public UGC written by
+strangers, and until this the only moderation rule in the system was that a
+diary owner could delete a comment on their own entry. A real safety gap on the
+live web product, and App Store Guideline 1.2 at review.
 
-- **3.1** Migration: `reports` (reporter, target type ∈ `review|comment|profile`, target id, reason, status) and `user_blocks`, both RLS-scoped; blocked users filtered out of the feed, entry threads and people search.
-- **3.2** Report affordances on `app/entry/[id].tsx`, `components/ui/ReviewSocial.tsx`, `app/user/[id].tsx`.
-- **3.3** A minimal moderation surface. Editorial lists are already curated by hand in the SQL editor, so documented queries plus an `is_hidden` flag on `reviews`/`review_comments` is proportionate; an admin app is not warranted before there are users.
-- **3.4** A published contact address in the impresszum — the DSA requires it anyway.
+| | What |
+|---|---|
+| 3.1 | `supabase/migrations/0037_reports_and_blocks.sql` — `reports` and `user_blocks`, both RLS-scoped, plus `is_hidden` on `reviews`/`review_comments`. Blocked accounts are filtered out of the feed, entry threads and people search **by policy**, not by a condition in a service file |
+| 3.2 | Report affordances on `app/entry/[id].tsx`, `components/ui/ReviewSocial.tsx`, `app/user/[id].tsx`, through one `components/ui/ReportSheet.tsx` built on the same sheet as `AddToListSheet` |
+| 3.3 | `supabase/moderation.sql` — six documented queries. No admin app, for the reason the plan already gave: one operator, editorial lists already curated in the SQL editor |
+| 3.4 | Still outstanding — it needs the operator's contact address, which is the same blocker as the legal documents. See Phase 1's outstanding list |
+| 3.5 | *(new)* `app/blocked.tsx`, reached from Settings. Not in the original plan and not optional: a block otherwise has no undo, because the block itself is what makes the other person hard to find again |
+
+**The two finds worth knowing about.**
+
+*A block that only hides is half a feature.* Hiding somebody's writing does not
+stop them writing. The select policy makes an entry invisible to them in the
+app, but nothing about `user_id = auth.uid()` asks whose evening is being
+commented on, so PostgREST still accepts an insert naming its id — and the
+blocked account keeps commenting under your reviews while you lose the ability
+to see it happen. The insert policies on comments, likes and follows all check
+now, and a trigger drops any existing follow in both directions, since
+`generate_notifications()` reads `follows`.
+
+*An RLS policy expression runs as the querying role, not the table owner.* The
+first version revoked `execute` on `blocked_between` from `public`, `anon` and
+`authenticated` to stop it becoming an RPC that answers "has this person blocked
+me?". That did not remove an endpoint — it broke every policy calling it, and
+`select * from reviews` became a permission error for **every** reader, signed
+in or not. The function lives in a `private` schema now: PostgREST exposes only
+its configured schemas, so a policy can reach it and HTTP cannot. Caught by a
+behavioural test; the structural check of "is it revoked, is `search_path`
+pinned" passed and would have shipped it.
+
+*And a correction worth keeping, because it is the same mistake one level up.*
+The first write-up of the above said anonymous visitors had been unaffected —
+that the outage only hit signed-in readers. That was inferred from the one error
+actually observed, not tested, and it is false: reproducing the exact shape on a
+throwaway table shows `anon` failing identically. An unverified detail invented
+to make a story tidier is exactly what the structural check did wrong, so it
+does not get to survive in the write-up of that check being wrong.
+
+### Verified
+
+Eleven assertions against the live database inside a rolled-back transaction —
+both directions of a block, the follow-dropping trigger, the write policies, an
+author still seeing their own hidden review, anonymous readers untouched by
+somebody else's block — plus five more after `search_profiles` went back to
+`security invoker`. `get_advisors` reports nothing new. Locally: typecheck,
+299 tests, lint clean, and the static export renders with no console errors at
+phone width with no session.
+
+`npm run check:launch -- --stores` now checks the three reportable surfaces by
+name rather than checking that the feature "exists", because the failure mode is
+a screen added later that quietly ships without a report control.
 
 ---
 
@@ -215,15 +261,40 @@ with no session, `expo-doctor` 21/21, and a local `expo prebuild` producing an
 project from Windows, so the privacy manifest and the entitlements are first
 exercised by the first EAS build on macOS.
 
+### A.1b The project on EAS, and an app that installs · **done**
+
+- The EAS project is `@ottomaior/szinhaz-tracker`, on the **personal** account rather than the team one, matching the GitHub repo. EAS projects transfer between accounts, so this does not pre-empt the publisher-identity decision.
+- `extra.eas.projectId` is written by hand in `app.config.ts`, because `eas init` refuses to edit a dynamic config — it creates the project, prints the id and stops. Without the line every build registers as a new app and loses the remote build numbers `appVersionSource: "remote"` depends on.
+- `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` are set in all three EAS environments. Set with `env:set` rather than `env:push`, because `env:push` reads a whole `.env` file and this one also holds `SUPABASE_SERVICE_ROLE_KEY`.
+- The Android keystore was generated in the cloud (there is no local `keytool`). It is the source of the SHA-256 the Android deep-link file needs.
+- **An installable APK exists.** `eas build --profile preview --platform android`.
+
+**The find worth knowing about:** the first build failed in *Install
+dependencies*, and it was not EAS. `npm ci` refuses a lockfile that disagrees
+with `package.json`, and ours had disagreed since the SDK upgrade — sixteen
+packages missing, including `react-native-gesture-handler`,
+`react-native-reanimated` and `react-native-worklets`, which a native build
+needs. They were pruned by installing the upgrade with `--legacy-peer-deps` and
+then running `npm uninstall`. **The `Dockerfile` runs `npm ci` too, so this was
+one merge away from breaking the Railway deploy** — and it would have looked
+like a deploy problem rather than something introduced four commits earlier.
+Nothing local noticed, because `npm install` reconciles a stale lockfile in
+silence and every check here runs against `node_modules`. Fixed with a plain
+`npm install`, and verified by running `npm ci` into an empty directory holding
+only `package.json` and the lockfile — which is what EAS, Railway and CI each
+actually do.
+
 ### A.2 What is left
+
+Nothing on this list is engineering.
 
 | Blocker | Notes |
 |---|---|
-| No EAS project | `npx eas-cli init` writes `extra.eas.projectId` into `app.config.ts`. Needs an Expo account — the first step that cannot be taken from the repository. Icons are 1024×1024, the iOS one fully opaque, and the Android foreground sits inside the 66% safe zone, so they are store-valid; they have still never been *seen* at store sizes. |
-| No UGC moderation | Phase 3, unchanged. The most likely rejection reason for this app, and the one remaining blocker that is real engineering rather than paperwork. |
-| Deep links unverified | The app-side claim is configured; `/.well-known/apple-app-site-association` and `/.well-known/assetlinks.json` need the Apple Team ID and the signing key fingerprint, neither of which exists until an EAS build has run. `scripts/write-well-known.ts` writes both once they do. |
-| Share card is web-only | Canvas-based; native needs `react-native-view-shot`. Cannot be verified without a device build, so it waits for one. |
-| No OTA updates | `expo-updates` is not installed. Not a blocker, but a store app without it means a review cycle for every JavaScript fix. Worth deciding before the first submission rather than after. |
+| Deep links unverified | The app-side claim is configured; `/.well-known/apple-app-site-association` and `/.well-known/assetlinks.json` need the Apple Team ID and the Play App Signing fingerprint. The keystore now exists, so the Android half is available as soon as there is a Play Console to read the signing key from. `scripts/write-well-known.ts` writes both. |
+| Icons never seen at store sizes | 1024×1024, the iOS one fully opaque, the Android foreground inside the 66% safe zone — so they are *valid*. Nobody has looked at them at 48pt on a shelf next to other apps. |
+| Share card is web-only | Canvas-based; native needs `react-native-view-shot`. Now checkable against a real device build, which did not exist when this line was written. |
+| No OTA updates | `expo-updates` is not installed. Not a blocker, but a store app without it means a full review cycle for every JavaScript fix. Worth deciding before the first submission rather than after. |
+| iOS never compiled | `expo prebuild` will not generate an Xcode project from Windows, so the privacy manifest and the entitlements are still unexercised. The first EAS iOS build is where they are first tested — and it needs the Apple Developer account. |
 
 Account deletion and the legal pages are **done** (Phase 1) and satisfy both
 stores' requirements, including Google's web-accessible deletion URL.

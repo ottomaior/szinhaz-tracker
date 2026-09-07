@@ -115,10 +115,12 @@ create policy "users remove their own blocks"
 -- and it is wrong. **An RLS policy expression is evaluated with the privileges
 -- of the role running the query, not the table's owner.** Revoking execute
 -- therefore does not merely remove the endpoint; it breaks every policy that
--- calls the function. Applying it that way took the live database down for
--- signed-in readers instantly — `select * from reviews` became "permission
--- denied for function blocked_between" — while leaving anonymous visitors
--- working perfectly, which is the half of production nobody watches.
+-- calls the function. Applying it that way took the live database down
+-- instantly: `select * from reviews` became "permission denied for function
+-- blocked_between" for every reader, signed in or not, since the revoke named
+-- `public` as well as the two API roles. Reproduced afterwards on a throwaway
+-- table to check that claim rather than assume it — the first write-up of this
+-- said anonymous visitors were unaffected, and they were not.
 --
 -- So the grant has to exist, and the endpoint must not. PostgREST only exposes
 -- functions in its configured schemas (`public`, `graphql_public`, `storage`).

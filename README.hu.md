@@ -1395,6 +1395,140 @@ leütéseket némán elnyelni úgy hat, mintha a billentyűzet lenne rossz — e
 hatvan karakternél kevesebb hátralévő helynél számlálót mutat, és mentéskor
 utasítja vissza a túl hosszú szöveget.
 
+## Az a letiltás, ami csak elrejt, fél funkció
+
+A kritikák és a hozzászólások itt idegenek nyilvános írásai. Egészen mostanáig
+az egyetlen moderációs szabály az egész rendszerben egy házirend volt a
+`0032`-ből: egy naplóbejegyzés gazdája törölhetett egy hozzászólást a saját
+estéje alól. Nem volt mód semmit bejelenteni, nem volt mód senkit elkerülni, és
+az üzemeltetőnek sem volt módja levenni egy sort azon kívül, hogy törli az
+SQL-szerkesztőből.
+
+Ez valódi biztonsági hiányosság az élő webes terméken — és ettől függetlenül az
+App Store 1.2-es irányelve, a legvalószínűbb ok, amiért ezt az alkalmazást
+elutasítanák a felülvizsgálatnál. A `0037_reports_and_blocks.sql` ezt zárja be.
+
+### Miért házirendek a szabályok, és nem lekérdezések
+
+Itt minden szűrés row-level security házirend, nem egy feltétel a `services/`
+alatt. Ez a különbség maga a tervezés lényege.
+
+Egy `.neq("user_id", blockedId)` egy szolgáltatásfájlban *javaslat*. A PostgREST
+készséggel válaszol egy olyan kérésre is, amiből kimarad, tehát a védelem csak
+azokra a lekérdezésekre érvényes, amelyek nem felejtik el kérni — és minden
+később hozzáadott képernyőnek emlékeznie kell rá, örökre, beleértve azokat is,
+amiket még senki nem írt meg. Egy házirend viszont válasz minden lekérdezésre,
+amit valaha bárki írni fog. Ez a különbség egy szabály és egy szokás között.
+
+Az ára az, hogy a házirendeket nehezebb olvasni, és sokkal nehezebb tesztelni.
+Épp ezért az alábbi két dolgot a *futtatásuk* hozta felszínre, nem az
+elolvasásuk.
+
+### Attól, hogy valakinek az írását elrejtjük, még írhat
+
+A letiltás kézenfekvő fele a select-házirend: a bejegyzésed láthatatlanná válik
+annak, akit letiltottál. Ez a rész könnyű volt, és nem elég.
+
+A `review_comments` `with check (user_id = auth.uid())` feltétele semmit nem
+kérdez arról, hogy *kinek* az estéjéhez szól a hozzászólás. A letiltott fiók
+tehát továbbra is beküldhetett volna egy hozzászólást a kritikád azonosítójával
+— a sor létrejött volna, a trigger megnövelte volna a hozzászólás-számlálódat,
+te pedig csak azt a képességet vesztetted volna el, hogy *lásd*, ahogy ez
+történik. Az a letiltás, ami a zaklatás bizonyítékát tünteti el a zaklatás
+helyett, rosszabb, mintha nem lenne letiltás, mert aki használja, azt hiszi,
+védve van.
+
+Így a hozzászólások, a tetszések és a követések insert-házirendje mind
+ellenőrzi a letiltást, egy trigger pedig eldobja a már meglévő követést mindkét
+irányban — mert a `generate_notifications()` a `follows`-ból olvas, és különben
+minden rögzített estédről értesítené a letiltott fiókot.
+
+A letiltás ugyanezért szimmetrikus. Az egyirányú letiltás szabadon hagyná a
+másikat, hogy olvassa, idézze és megválaszolja mindazt, amit írtál.
+
+### Egy RLS-házirend a lekérdező szerep jogaival fut, nem a tábla tulajdonosáéval
+
+Ez rövid időre eltörte az élest, és ez a szakasz leghasznosabb része.
+
+A `blocked_between(other uuid)` más emberekhez tartozó `user_blocks` sorokat
+olvas, tehát `security definer`-nek kell lennie. Ettől viszont sajátos módon
+veszélyes: `public` függvényként elérhető lenne a
+`POST /rest/v1/rpc/blocked_between` címen, és bármely azonosítóra megválaszolná,
+hogy *„letiltott-e engem ez a személy"*. Senkinek nem mondjuk meg, hogy
+letiltották — a közlés maga is érintkezés, és pontosan ez az, amit valaki, aki
+épp letiltott valakit, el akar kerülni.
+
+A kézenfekvő javítás a `revoke execute ... from public, anon, authenticated`, és
+téves. **Egy házirend kifejezése a lekérdezést futtató szerep jogaival
+értékelődik ki, nem a tábla tulajdonosának jogaival.** Az execute elvétele nem
+egy végpontot szüntetett meg, hanem minden házirendet eltört, ami hívta a
+függvényt. A `select * from reviews` ettől ez lett:
+
+```
+ERROR: 42501: permission denied for function blocked_between
+```
+
+az oldal *minden* olvasója számára, bejelentkezve és anélkül is. A
+`blocked_between` egy névtelen látogatónál azonnal hamissal tér vissza, de a
+házirendnek akkor is *meg kell hívnia*, hogy ezt megtudja — és épp a hívás volt
+az, ami már nem volt megengedve.
+
+Ez az utolsó mondat helyesbítés. Ennek első leírása azt állította, hogy a kiesés
+csak a bejelentkezett olvasókat érintette, a névtelen látogatókat nem — ami az
+egyetlen ténylegesen megfigyelt hibából volt következtetve, és soha nem lett
+ellenőrizve. A pontos szerkezetet egy eldobható táblán reprodukálva az `anon`
+ugyanúgy elhasal. Érdemes rögzíteni, mert egy hihető részlet kitalálása azért,
+hogy a magyarázat kerek legyen, ugyanaz a hiba, mint az alábbi szerkezeti
+ellenőrzés: mindkettő olyasmit állít elő, ami tudásnak látszik, és nem az.
+
+A jognak léteznie kell. Aminek nem szabad léteznie, az a végpont — és a kettő
+szétválasztható: a PostgREST csak a beállított sémáiban (`public`,
+`graphql_public`, `storage`) teszi közzé a függvényeket. Egy `private` sémában
+lévő függvényt egy házirend elér, a HTTP nem. Ez a javítás, és a `public`
+másolat törlődik, nem marad ott — mert ugyanannak a szabálynak egy második,
+soha ki nem értékelt definíciója pontosan az, amitől a következő ember újra
+elrontja.
+
+Egy viselkedési teszt fogta meg: tizenegy állítás egy visszagörgetett
+tranzakcióban, ami lefedi a letiltás mindkét irányát, a követést eldobó
+triggert, az írási házirendeket, és a szerzőt, aki továbbra is látja a saját
+elrejtett kritikáját. Az „el van-e véve a jog, ki van-e tűzve a `search_path`"
+szerkezeti ellenőrzés vidáman átment volna vele. Ezt érdemes felidézni, amikor
+legközelebb valami ellenőrzöttnek látszik.
+
+### Elrejtés, nem törlés
+
+Az `is_hidden` a `reviews` és a `review_comments` táblán az üzemeltető
+levételi eszköze, és szándékosan visszafordítható. Egy bejelentés lehet téves,
+egy törlés nem vonható vissza, és egy eltávolított sor egyben annak a
+bizonyítéka is odalett, hogy *miért* távolították el.
+
+A szerző továbbra is látja a saját elrejtett kritikáját. Egy naplóbejegyzés itt
+éppúgy valakinek a saját feljegyzése egy estéről, mint nyilvános bejegyzés, és
+egy levételnek a nyilvános felét kell eltüntetnie anélkül, hogy a magánfelét
+csendben törölné.
+
+### Nincs admin alkalmazás
+
+A `supabase/moderation.sql` hat lekérdezés: a nyitott sor a bejelentett
+szöveggel együtt, ugyanezek célonként csoportosítva, hogy öt ember egy
+hozzászólásra tett bejelentése egy problémának látsszon, hogyan rejtsünk el
+valamit, hogyan zárjunk le egyszerre minden ugyanarról a célról szóló
+bejelentést, ki mennyit jelent be és mennyit utasítunk el, és mi van jelenleg
+elrejtve.
+
+Ez a teljes moderációs felület, szándékosan. A kiemelt listákat amúgy is kézzel
+gondozzuk az SQL-szerkesztőben, egy üzemeltető van, egy admin felület pedig,
+amit még felhasználók előtt építünk, egy második karbantartandó termék, aminek a
+használatát senki nem kérte. Az `npm run check:launch -- --stores` ellenőrzi,
+hogy mindhárom felület, ahol idegen írása jelenik meg, továbbra is kínál
+bejelentési lehetőséget — név szerint, mert a tényleges hibamód az, hogy egy
+később hozzáadott képernyő csendben kimarad belőle.
+
+Az egyetlen dolog, amit a repó nem tud ellenőrizni: alkalmazva van-e a migráció
+arra az adatbázisra, amivel egy adott build beszél. Nélküle a vezérlők
+díszletek, és minden írás 400-as hiba.
+
 ## Valami, amit egy bolt is elfogad
 
 Ez mindig is valódi React Native alkalmazás volt, nem egy burokba csomagolt
@@ -1531,18 +1665,12 @@ mindnek ugyanazt a választ kell adnia.
 
 ### Ami még hiányzik
 
-Az `npm run check:launch -- --stores` a lista, és amit tud, azt ki is kényszeríti:
+Az `npm run check:launch -- --stores` a lista, és amit tud, azt ki is kényszeríti. A moderáció korábban ennek az élén állt, most már nem — lásd: *[Az a letiltás, ami csak elrejt, fél funkció](#az-a-letiltás-ami-csak-elrejt-fél-funkció)*:
 
 - **Az EAS projekt összekötése.** Az `npx eas-cli init` írja be az
   `extra.eas.projectId`-t, és Expo-fiók kell hozzá. Ez az első lépés, amit nem
   lehet a repóból megtenni.
 - **A két igazoló fájl**, amikhez a fenti hitelesítők kellenek.
-- **Moderáció.** A kritikák és a hozzászólások idegenek nyilvános írásai, és ma
-  az egyetlen szabály az, hogy egy naplóbejegyzés gazdája törölheti a saját
-  bejegyzésén lévő hozzászólást. Nincs mód semmit bejelenteni, és nincs mód
-  senkit letiltani. Ez valós biztonsági hiányosság a weben, és az App Store
-  1.2-es irányelve a felülvizsgálatnál — messze a legvalószínűbb ok, amiért ezt
-  az alkalmazást elutasítanák. A 3. fázis a [BACKLOG.hu.md](BACKLOG.hu.md)-ben.
 - **A megosztókártya**, ami egy estét rajzol canvasra, és így natív buildben
   egyáltalán nem csinál semmit.
 

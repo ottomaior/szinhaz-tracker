@@ -62,6 +62,12 @@ function readJson(...segments: string[]): unknown {
   }
 }
 
+/** Reads a source file, or undefined if it is not there. Path is repo-relative. */
+function readText(relativePath: string): string | undefined {
+  const path = join(root, ...relativePath.split("/"));
+  return existsSync(path) ? readFileSync(path, "utf8") : undefined;
+}
+
 // ---------------------------------------------------------------- operator
 check(
   "Operator legal name is filled in",
@@ -176,12 +182,52 @@ storeCheck(
     "Apple Developer account. Same silent failure as the Android file above."
 );
 
+// Reviews and comments are public writing by strangers, which makes this App
+// Store Guideline 1.2 and the most likely reason a submission is rejected.
+//
+// A report control is not one thing in one place — it is a control on each
+// surface where a stranger's writing appears, and the failure mode is that a
+// screen is added later, or refactored, and quietly ships without one. So this
+// checks the three surfaces by name rather than checking that the feature
+// "exists": that a file is present proves nothing about whether anything renders
+// it. It cannot see whether the migration has been applied to the database;
+// that is in the reminders below.
+const REPORTABLE_SURFACES = [
+  "app/entry/[id].tsx",
+  "app/user/[id].tsx",
+  "components/ui/ReviewSocial.tsx",
+];
+
+const surfacesWithoutReporting = REPORTABLE_SURFACES.filter(
+  (file) => !readText(file)?.includes("ReportSheet")
+);
+
 storeCheck(
-  "There is a way to report content, and a way to block a user",
-  false,
-  "Phase 3 in BACKLOG.md. Reviews and comments are public writing by strangers and the only " +
-    "moderation rule today is that a diary owner can delete a comment on their own entry. " +
-    "This is App Store Guideline 1.2 and the most likely reason a submission is rejected."
+  "Every screen showing a stranger's writing offers a way to report it",
+  existsSync(join(root, "supabase", "migrations", "0037_reports_and_blocks.sql")) &&
+    surfacesWithoutReporting.length === 0,
+  surfacesWithoutReporting.length > 0
+    ? `No ReportSheet on: ${surfacesWithoutReporting.join(", ")}. A surface that shows ` +
+      "somebody else's writing without a way to report it is the gap a reviewer looks for."
+    : "Migration 0037 is missing. Reporting and blocking are enforced by its RLS policies, " +
+      "not by the service layer, so without it the controls are decoration.",
+);
+
+storeCheck(
+  "There is a way to block another account, and to undo it",
+  !!readText("services/moderationService.ts")?.includes("export async function blockUser") &&
+    existsSync(join(root, "app", "blocked.tsx")),
+  "Blocking needs both halves. Without app/blocked.tsx a block cannot be undone — the block " +
+    "itself is what makes the other person hard to find again — and a block nobody can lift " +
+    "is one people are afraid to use."
+);
+
+storeCheck(
+  "The operator can take content down without deleting it",
+  !!readText("supabase/moderation.sql")?.includes("is_hidden"),
+  "supabase/moderation.sql is the triage queue. Without a documented way to hide a row, the " +
+    "only response to a report is deleting it — which cannot be undone if the report was wrong, " +
+    "and destroys the evidence of why it was actioned."
 );
 
 // ------------------------------------------------- things a human must do
@@ -219,6 +265,13 @@ const storeReminders = [
     "must match `ios.privacyManifests` in app.config.ts and app/legal/adatvedelem.tsx.",
   "The share card is canvas-based and web-only, so it does nothing in a native build. It needs " +
     "react-native-view-shot, which cannot be verified without a device build.",
+  "Migration 0037 is applied to the database the build actually talks to. Reporting and " +
+    "blocking are enforced by its RLS policies rather than by the service layer, so against a " +
+    "database without it the controls are decoration and every write is a 400. Nothing in this " +
+    "repository can see which migrations a given database has had — Phase 5.3 exists to fix " +
+    "exactly that.",
+  "Somebody reads supabase/moderation.sql occasionally. A report queue nobody opens is worse " +
+    "than no reporting at all: it tells people their report went somewhere.",
 ];
 
 // ------------------------------------------------------------------ report
