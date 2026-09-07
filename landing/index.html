@@ -333,25 +333,10 @@ html { scroll-behavior: smooth; }
 .faq details[open] .faq__a { animation: unfold 0.36s cubic-bezier(0.22,0.8,0.3,1); }
 @keyframes unfold { from { opacity: 0; transform: translateY(-8px); } }
 
-/* ── Credit block ────────────────────────────────────────────────────────── */
-.credits { display: grid; gap: clamp(2.5rem, 5vw, 4rem); align-items: start; }
-@media (min-width: 880px) { .credits { grid-template-columns: 1.05fr 1fr; } }
-.playbill-card {
-  border: 1px solid var(--gold-edge); border-radius: 20px;
-  background:
-    radial-gradient(120% 80% at 50% 0%, rgba(219,177,85,0.10), rgba(11,4,3,0) 60%),
-    linear-gradient(170deg, var(--surface-2), var(--ink-2));
-  padding: clamp(1.8rem, 4vw, 2.8rem);
-  text-align: center;
-}
-.playbill-card__rule { width: 44px; height: 1px; background: var(--gold-deep); margin: 1.1rem auto; }
-.playbill-card__title { font-family: var(--display); font-size: var(--step-2); }
-.crew { display: grid; grid-template-columns: auto 1fr; gap: 0.55rem 1.1rem; text-align: left; margin: 1.4rem 0 0; font-size: 0.95rem; }
-.crew dt { color: var(--faint); font-size: var(--step--1); letter-spacing: 0.1em; text-transform: uppercase; padding-top: 0.24rem; }
-.crew dd { margin: 0; font-family: var(--display); font-size: 1.08rem; color: var(--text); }
-
-.contact { display: flex; flex-direction: column; gap: 1.1rem; align-items: flex-start; }
+/* ── The close ───────────────────────────────────────────────────────────── */
+.contact { display: flex; flex-direction: column; gap: 1.15rem; align-items: center; text-align: center; }
 .contact h2 { font-size: var(--step-3); }
+.contact .lede { text-align: center; max-width: 50ch; }
 .mailto {
   display: inline-flex; align-items: center; gap: 0.7rem;
   overflow-wrap: anywhere; min-width: 0;
@@ -747,7 +732,7 @@ html { scroll-behavior: smooth; }
         </details>
         <details>
           <summary><span data-t="faq6Q">Ki csinálja?</span><svg class="faq__sign" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></summary>
-          <div class="faq__a"><p data-t="faq6A">Maior Ottó, egyedül. A tervezéstől az adatbázison és a szinkronon át a szövegekig. Lentebb megtalálod az elérhetőségét.</p></div>
+          <div class="faq__a"><p data-t="faq6A">Maior Ottó. A tervezéstől az adatbázison és a szinkronon át a szövegekig. Lentebb megtalálod az elérhetőségét.</p></div>
         </details>
       </div>
     </div>
@@ -756,33 +741,17 @@ html { scroll-behavior: smooth; }
   <!-- ── Credits & contact ────────────────────────────────────────────── -->
   <section class="bay" id="kapcsolat">
     <div class="shell">
-      <p class="act" data-reveal><span class="act__num">V.</span> <span data-t="act5">Felvonás · A stáblista</span> <span class="act__rule"></span></p>
-      <div class="credits">
-        <div class="playbill-card" data-reveal>
-          <p class="eyebrow" data-t="cardEyebrow">Vastaps</p>
-          <div class="playbill-card__rule"></div>
-          <p class="playbill-card__title" data-t="cardTitle">Egyszemélyes produkció</p>
-          <dl class="crew">
-            <dt data-t="crew1K">Írta és fejlesztette</dt><dd>Maior Ottó</dd>
-            <dt data-t="crew2K">Tervezés</dt><dd>Maior Ottó</dd>
-            <dt data-t="crew3K">Adatbázis és szinkron</dt><dd>Maior Ottó</dd>
-            <dt data-t="crew4K">Szövegek</dt><dd>Maior Ottó</dd>
-            <dt data-t="crew5K">Bemutató</dt><dd data-t="crew5V">2026, Debrecen</dd>
-          </dl>
-        </div>
-
-        <div class="contact" data-reveal>
-          <p class="eyebrow" data-t="contactEyebrow">Kapcsolat</p>
-          <h2 data-t="contactTitle">Írj, ha érdekel.</h2>
-          <p class="body-dim" data-t="contactBody">Színház vagy, és szeretnéd, hogy a műsorod is benne legyen? Sajtó, együttműködés, hibajelentés, vagy csak kíváncsi vagy, hogyan készült? Egy e-mail elég — magyarul vagy angolul.</p>
-          <a class="mailto" href="mailto:ottomaior@protonmail.com?subject=Vastaps">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></svg>
-            ottomaior@protonmail.com
-          </a>
-          <div class="hero__cta" style="margin-top: 0.6rem">
-            <a class="btn btn--gold" href="https://szinhaz-tracker-production.up.railway.app/" data-t="ctaOpen2">Megnyitom az appot</a>
-            <a class="btn btn--ghost" href="https://github.com/ottomaior/szinhaz-tracker" data-t="ctaSource2">Forráskód a GitHubon</a>
-          </div>
+      <p class="act" data-reveal><span class="act__num">V.</span> <span data-t="act5">Felvonás · Kapcsolat</span> <span class="act__rule"></span></p>
+      <div class="contact" data-reveal>
+        <h2 data-t="contactTitle">Írj, ha érdekel.</h2>
+        <p class="lede" data-t="contactBody">Színház vagy, és szeretnéd, hogy a műsorod is benne legyen? Sajtó, együttműködés, hibajelentés, vagy csak kíváncsi vagy, hogyan készült? Egy e-mail elég — magyarul vagy angolul.</p>
+        <a class="mailto" href="mailto:ottomaior@protonmail.com?subject=Vastaps">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></svg>
+          ottomaior@protonmail.com
+        </a>
+        <div class="hero__cta" style="margin-top: 0.4rem">
+          <a class="btn btn--gold" href="https://szinhaz-tracker-production.up.railway.app/" data-t="ctaOpen2">Megnyitom az appot</a>
+          <a class="btn btn--ghost" href="https://github.com/ottomaior/szinhaz-tracker" data-t="ctaSource2">Forráskód a GitHubon</a>
         </div>
       </div>
     </div>
@@ -827,7 +796,7 @@ html { scroll-behavior: smooth; }
     housesNote: "More theatres and more cities are coming — wherever people ask for them next.",
     housesHeading: "Right now in Budapest and Debrecen",
 
-    act1: "Act · Discover",
+    act1: "Discover",
     d1Title: "What is on tonight, on one screen.",
     d1Lede: "The listings of Budapest's and Debrecen's theatres in one place — not through a ticket agency, but read straight from the theatres' own sites, every night.",
     altDiscover: "The Discover screen: an “On now” rail with Anyegin, Káli holtak and A Pál utcai fiúk, and upcoming performances broken down by day.",
@@ -842,7 +811,7 @@ html { scroll-behavior: smooth; }
     stAnnounced: "Before opening night", stRunning: "On now", stDormant: "Dormant", stEnded: "Taken off",
     altMusor: "The listings calendar: 7 September 2026, one performance — Anyegin at 19:30 in the Örkény István Theatre's studio.",
 
-    act2: "Act · The diary",
+    act2: "The diary",
     altPlay: "The page for A Pál utcai fiúk at the Csokonai National Theatre: poster, a 4.0 average, and separate bars for acting, directing and set design.",
     j1Eyebrow: "Logging a performance",
     j1Title: "Five masks, three categories, one evening.",
@@ -857,7 +826,7 @@ html { scroll-behavior: smooth; }
     j2Body2: "At the end of the season Vastaps adds it up: how many evenings you spent at the theatre, which house saw you most, and who you watched on stage most often.",
     altUser: "Maior Ottó's public profile: 14 plays seen, and below it the diary with posters and mask ratings.",
 
-    act3: "Act · People",
+    act3: "People",
     p1Eyebrow: "Performers and directors",
     p1Title: "Who was that actress in the second act?",
     p1Body: "The catalogue starts with 2,424 names. Search for a performer and you get everything they have appeared in across the theatres in the catalogue — with the role, the year and the house. Directors work the same way.",
@@ -881,7 +850,7 @@ html { scroll-behavior: smooth; }
     tallyLabel: "The catalogue in numbers",
     tally1: "Productions", tally2: "People", tally3: "Announced dates", tally4: "The oldest premiere",
 
-    act4: "Act · Behind the curtain",
+    act4: "Behind the curtain",
     techTitle: "Written by one person, and open source.",
     techLede: "It is not only the code that is public: the repository explains the reasoning behind every decision, including the things that did not work the first time.",
     spec1: "One codebase, producing both the web and the native builds.",
@@ -905,14 +874,9 @@ html { scroll-behavior: smooth; }
     faq5Q: "Is there a phone app?",
     faq5A: "The web version is already built for a phone and can be added to your home screen from the browser. App Store and Play Store builds are in progress — the native project and the deep links are already in place.",
     faq6Q: "Who makes it?",
-    faq6A: "Maior Ottó, on his own. From the design through the database and the sync to the copy. His address is just below.",
+    faq6A: "Maior Ottó. From the design through the database and the sync to the copy. His address is just below.",
 
-    act5: "Act · The credits",
-    cardEyebrow: "Vastaps",
-    cardTitle: "A one-person production",
-    crew1K: "Written and built by", crew2K: "Design", crew3K: "Database and sync", crew4K: "Copy", crew5K: "Opened",
-    crew5V: "2026, Debrecen",
-    contactEyebrow: "Contact",
+    act5: "Contact",
     contactTitle: "Write, if this interests you.",
     contactBody: "Are you a theatre that wants its listings in here? Press, partnerships, a bug you found, or just curious how it was built? One email is enough — in Hungarian or in English.",
     ctaOpen2: "Open the app", ctaSource2: "Source on GitHub",
