@@ -1,6 +1,11 @@
 **English** · [Magyarul](README.hu.md)
 
-# Színház Tracker
+# Vastaps
+
+> Named for the applause that brings a company back on stage. The repository,
+> the Expo slug and the bundle identifiers still read `szinhaz-tracker` /
+> `hu.szinhaztracker.app` — those are identifiers rather than names, and
+> changing them breaks deep links and the store identity for no visible gain.
 
 A mobile app for Hungarian theatregoers to log, rate, and review the plays
 they've seen — built with Expo + React Native + TypeScript, using
@@ -95,9 +100,10 @@ app/                     expo-router screens (file-based routing)
   sign-in.tsx / sign-up.tsx  Auth modals
 
 components/
-  icons/                  hand-drawn SVG icons, incl. the mask rating glyph;
-                          maskGeometry.ts holds its paths, shared with the
-                          share card so the two cannot drift
+  icons/                  hand-drawn SVG icons. maskGeometry.ts holds the
+                          mask rating glyph, brandGeometry.ts the logo; both
+                          are shared with the share card and the icon
+                          generator so no two copies can drift
   ui/                     Button, Chip, SelectChip, DateField, Avatar,
                           FollowSubjectButton, PosterPlaceholder, ReviewSocial,
                           TabBar
@@ -966,8 +972,9 @@ cannot reach the page's webfonts, so the card would come out set in Georgia
 while the app is set in Bodoni Moda. Canvas text draws with what the document
 has loaded, so the card and the screen it came from are in the same faces.
 
-The mask comes from `components/icons/maskGeometry.ts`, which `MaskIcon` now
-draws from too. This is the one asset the whole idea rests on, and two copies of
+The mask comes from `components/icons/maskGeometry.ts` and the wordmark's logo
+from `components/icons/brandGeometry.ts`, which `MaskIcon` and `BrandMark` draw
+from too. This is the one asset the whole idea rests on, and two copies of
 those path numbers would drift the moment either was touched — with the drift
 only ever visible on somebody else's screenshot.
 
@@ -1577,6 +1584,36 @@ through React Native 0.86's Gradle version catalogue — to `targetSdk` 36,
 The iOS half is schema-valid and unproven: `expo prebuild` will not generate an
 Xcode project from Windows, so the privacy manifest and the entitlements are
 first exercised by the first EAS build on macOS.
+
+### The mark is generated, not drawn
+
+The app has a logo: a curtain valance, two wings tied back under it, and a star
+in the opening between them. Five files draw it — `icon.png`,
+`adaptive-icon.png`, `splash.png`, `favicon.png` and `assets/logo-source.svg` —
+and all five are outputs. `components/icons/brandGeometry.ts` holds the path
+data, `theme/themes.ts` holds the two colours, and `npm run icons` writes the
+rest.
+
+That rule matters more here than anywhere else in the repo, because a PNG is
+invisible in a diff. A hand-edited launcher icon does not show up in review, and
+the place a stale one surfaces is a store listing or somebody's home screen,
+months later, with no way left to tell which drawing was meant. So: change the
+mark, run the script, commit what it wrote. `assets/logo-source.svg` is written
+by the script for the same reason — it used to be the hand-maintained original,
+and a hand-maintained original is exactly the copy that drifts.
+
+The geometry was settled by rendering it at 22, 32 and 48 points rather than by
+taste. The first draft hung the wings from a stroked rod and set a larger star
+between them; it read as a pennant at 180 points and as a gold blob at 32.
+Everything is a fill now — a stroke has to be scaled by hand in every renderer
+that is not SVG, and on the web a `stroke` that fails to resolve falls back to
+`none` (see `svgPaint.ts`), which would drop the rod silently and leave the wings
+hanging from nothing — and the wings' inner edges bow outwards as they fall, so
+the opening is at its widest exactly where the star sits.
+
+`BrandMark` draws those same constants inside the app, and the share card fills
+them onto its canvas beside the wordmark. Same reasoning as the mask: the
+version that leaves the app has to be the version inside it.
 
 ### One asymmetry to know about
 

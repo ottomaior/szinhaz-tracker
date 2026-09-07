@@ -137,7 +137,7 @@ const naih = {
 
 export const privacyPolicy: LegalDocument = {
   title: "Adatkezelési tájékoztató",
-  lead: `Ez a tájékoztató azt írja le, hogy a Színház Tracker milyen adatokat kezel rólad, miért, meddig, és mit tehetsz ezzel kapcsolatban. Utoljára frissítve: ${legalLastUpdated}`,
+  lead: `Ez a tájékoztató azt írja le, hogy a Vastaps milyen adatokat kezel rólad, miért, meddig, és mit tehetsz ezzel kapcsolatban. Utoljára frissítve: ${legalLastUpdated}`,
   sections: [
     {
       heading: "Ki kezeli az adataidat",
@@ -154,7 +154,7 @@ export const privacyPolicy: LegalDocument = {
       heading: "A legfontosabb, amit érdemes előre tudni",
       blocks: [
         p(
-          "A Színház Tracker nyilvános napló. Amit egy előadásról beírsz — hogy láttad, mikor, hányra értékelted, mit írtál róla, kik léptek fel aznap este, sőt a feltöltött jegyfotó is — bárki számára olvasható, aki megnyitja az alkalmazást, akkor is, ha nincs fiókja. Ez nem mellékhatás, hanem a szolgáltatás lényege: a napló attól ér valamit, hogy mások is olvassák."
+          "A Vastaps nyilvános napló. Amit egy előadásról beírsz — hogy láttad, mikor, hányra értékelted, mit írtál róla, kik léptek fel aznap este, sőt a feltöltött jegyfotó is — bárki számára olvasható, aki megnyitja az alkalmazást, akkor is, ha nincs fiókja. Ez nem mellékhatás, hanem a szolgáltatás lényege: a napló attól ér valamit, hogy mások is olvassák."
         ),
         p(
           "Két dolog következik ebből, amit érdemes elolvasni, mielőtt beírsz valamit. A jegyfotón a legtöbb magyar színházban rajta van a neved és a foglalási azonosítód — ezt a képet nyilvánosnak szánod, amikor feltöltöd. És a naplód együtt olvasva elárulja, mikor nem vagy otthon; ez ugyanaz a megfontolás, mint bármelyik közösségi oldalon."
@@ -284,13 +284,13 @@ export const privacyPolicy: LegalDocument = {
 
 export const termsOfService: LegalDocument = {
   title: "Felhasználási feltételek",
-  lead: `Ezek a feltételek arról szólnak, mit vállalunk a Színház Trackerrel, és mit várunk tőled cserébe. Utoljára frissítve: ${legalLastUpdated}`,
+  lead: `Ezek a feltételek arról szólnak, mit vállalunk a Vastapssal, és mit várunk tőled cserébe. Utoljára frissítve: ${legalLastUpdated}`,
   sections: [
     {
       heading: "Mi ez a szolgáltatás",
       blocks: [
         p(
-          "A Színház Tracker egy ingyenes alkalmazás, amelyben magyar színházi előadásokat kereshetsz, és naplózhatod, mit láttál. Nincs előfizetés, és nem kérünk pénzt semmiért."
+          "A Vastaps egy ingyenes alkalmazás, amelyben magyar színházi előadásokat kereshetsz, és naplózhatod, mit láttál. Nincs előfizetés, és nem kérünk pénzt semmiért."
         ),
         p(
           `A szolgáltatást ${operator.name} üzemelteti. A használatával elfogadod ezeket a feltételeket.`
@@ -301,7 +301,7 @@ export const termsOfService: LegalDocument = {
       heading: "Nem vagyunk kapcsolatban a színházakkal",
       blocks: [
         p(
-          "A Színház Tracker független szolgáltatás. Nem áll kapcsolatban a benne szereplő színházakkal, nem képviseli őket, és nem árul jegyet. A „Jegyek” gomb a színház saját oldalára visz — onnantól a színház, illetve a jegyértékesítője feltételei érvényesek."
+          "A Vastaps független szolgáltatás. Nem áll kapcsolatban a benne szereplő színházakkal, nem képviseli őket, és nem árul jegyet. A „Jegyek” gomb a színház saját oldalára visz — onnantól a színház, illetve a jegyértékesítője feltételei érvényesek."
         ),
       ],
     },

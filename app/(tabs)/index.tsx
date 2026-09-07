@@ -17,7 +17,8 @@ import type { FeedItem, Play, User, Venue, Review, WatchlistEntry } from "@/data
 import { useAuth } from "@/contexts/AuthContext";
 import { Chip } from "@/components/ui/Chip";
 import { BellIcon, CommentIcon, HeartIcon } from "@/components/icons/Icons";
-import { MaskIcon, MaskRatingRow } from "@/components/icons/MaskIcon";
+import { MaskRatingRow } from "@/components/icons/MaskIcon";
+import { BrandMark } from "@/components/icons/BrandMark";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { Avatar } from "@/components/ui/Avatar";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -119,9 +120,14 @@ export default function FeedScreen() {
           {/* The screen names itself rather than the app. Every other tab does,
               the tab bar underneath already says which app this is, and the
               widest line on the first screen is better spent on something the
-              reader does not already know. */}
+              reader does not already know.
+
+              The glyph beside it is the logo, not a rating mask. It used to be
+              a mask, which put the rating glyph next to a heading and made a
+              single filled mask look like it meant something about this
+              screen. */}
           <View style={styles.brand}>
-            <MaskIcon state="on" size={22} />
+            <BrandMark size={24} />
             <Text variant="title">{strings.tabs.feed}</Text>
           </View>
           <View style={styles.topBarActions}>

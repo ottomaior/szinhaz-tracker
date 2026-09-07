@@ -13,6 +13,7 @@
     "lint": "expo lint",
     "sync": "tsx sync/run.ts",
     "check:launch": "tsx scripts/check-launch.ts",
+    "icons": "tsx scripts/generate-icons.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

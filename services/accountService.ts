@@ -107,12 +107,12 @@ export async function downloadMyData(): Promise<void> {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
 
   // Dated, because this is a snapshot and somebody who exports twice should end
-  // up with two files rather than "szinhaz-tracker-adatok (1).json".
+  // up with two files rather than "vastaps-adatok (1).json".
   const day = data.exportedAt.slice(0, 10);
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `szinhaz-tracker-adatok-${day}.json`;
+  link.download = `vastaps-adatok-${day}.json`;
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }

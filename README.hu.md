@@ -3,7 +3,12 @@
 > Ez a magyar változat. Az eredeti az angol `README.md` — ha a kettő valaha
 > ellentmond egymásnak, az angol az érvényes, és azt kell javítani.
 
-# Színház Tracker
+# Vastaps
+
+> A tapsról, amiért visszahívják a társulatot. A repó, az Expo-slug és a
+> csomagazonosítók továbbra is `szinhaz-tracker` / `hu.szinhaztracker.app` —
+> ezek azonosítók, nem nevek, és az átírásuk látható haszon nélkül törné el a
+> mélylinkeket és a bolti identitást.
 
 Mobilalkalmazás magyar színházba járóknak: rögzítsd, pontozd és írd meg, mit
 láttál. Expo + React Native + TypeScript alapon, a navigáció fájlalapú,
@@ -100,9 +105,10 @@ app/                     expo-router képernyők (fájlalapú útvonalak)
   sign-in.tsx / sign-up.tsx  Auth modálok
 
 components/
-  icons/                  kézzel rajzolt SVG ikonok, köztük az álarc-értékelő
-                          jel; a maskGeometry.ts tartja a útvonalait, közösen a
-                          megosztókártyával, hogy a kettő ne csússzon el
+  icons/                  kézzel rajzolt SVG ikonok. A maskGeometry.ts tartja
+                          az álarc-értékelő jelet, a brandGeometry.ts a logót;
+                          mindkettőn osztozik a megosztókártya és az
+                          ikongenerátor, hogy egyik példány se csússzon el
   ui/                     Button, Chip, SelectChip, DateField, Avatar,
                           FollowSubjectButton, PosterPlaceholder, ReviewSocial,
                           TabBar
@@ -1016,8 +1022,9 @@ oldal webfontjait — a kártya tehát Georgiában jönne ki, miközben az app B
 Modában van szedve. A canvas-szöveg azzal rajzol, ami a dokumentumban be van
 töltve, így a kártya és a képernyő, ahonnan jött, ugyanabban a betűben van.
 
-Az álarc a `components/icons/maskGeometry.ts`-ből jön, amit már a `MaskIcon` is
-onnan rajzol. Ez az az egyetlen elem, amin az egész ötlet áll, és a
+Az álarc a `components/icons/maskGeometry.ts`-ből jön, a szóvédjegy logója
+pedig a `components/icons/brandGeometry.ts`-ből — ugyanonnan rajzol a
+`MaskIcon` és a `BrandMark` is. Ez az az egyetlen elem, amin az egész ötlet áll, és a
 útvonalszámok két példánya elcsúszna, amint az egyikhez hozzányúl valaki — az
 elcsúszás pedig csak valaki más képernyőképén lenne látható.
 
@@ -1653,6 +1660,38 @@ A generált manifestből mindhárom letiltott jogosultság kikerül
 Az iOS-fél sémahelyes és bizonyítatlan: az `expo prebuild` Windowsról nem generál
 Xcode-projektet, így az adatvédelmi manifestet és az entitlementeket az első,
 macOS-en futó EAS build gyakorolja be először.
+
+### A jelet a gép rajzolja, nem a kéz
+
+Az appnak van logója: egy függönyszegély, alatta két félrekötött szárny, és a
+köztük lévő nyílásban egy csillag. Öt fájl rajzolja ki — `icon.png`,
+`adaptive-icon.png`, `splash.png`, `favicon.png` és `assets/logo-source.svg` —,
+és mind az öt kimenet. Az útvonaladatokat a
+`components/icons/brandGeometry.ts` tartja, a két színt a `theme/themes.ts`, a
+többit pedig az `npm run icons` írja meg.
+
+Ez a szabály itt fontosabb, mint bárhol máshol a repóban, mert egy PNG
+láthatatlan a diffben. Egy kézzel átszerkesztett ikon nem tűnik fel a
+kódellenőrzésen, és egy elavult példány ott bukkan elő, ahol már nem lehet
+kideríteni, melyik rajz volt a szándékolt: egy bolti listán vagy valaki
+kezdőképernyőjén, hónapokkal később. Tehát: átírod a jelet, lefuttatod a
+szkriptet, commitolod, amit írt. Az `assets/logo-source.svg`-t ugyanezért írja a
+szkript — korábban ez volt a kézzel karbantartott eredeti, márpedig épp a kézzel
+karbantartott eredeti az a példány, amelyik elcsúszik.
+
+A geometriát nem az ízlés döntötte el, hanem az, hogy 22, 32 és 48 pontosan is
+kirajzoltuk. Az első vázlatban a szárnyak egy vonallal húzott rúdról lógtak, és
+nagyobb csillag ült köztük: 180 ponton zászlónak látszott, 32-n arany
+masszának. Most minden kitöltés — egy vonalat minden nem SVG rajzolóban kézzel
+kell skálázni, a weben pedig a fel nem oldódó `stroke` a `none`-ra esik vissza
+(lásd `svgPaint.ts`), ami némán tüntetné el a rudat a lelógó szárnyak alól —, a
+szárnyak belső éle pedig kifelé ível lefelé haladva, így a nyílás pont ott a
+legszélesebb, ahol a csillag ül.
+
+Ugyanezekből a konstansokból rajzol a `BrandMark` az appon belül, és ezeket
+tölti ki a megosztókártya is a vászonra, a szóvédjegy mellé. Ugyanaz az érvelés,
+mint az álarcnál: ami elhagyja az appot, annak ugyanannak kell lennie, ami benne
+van.
 
 ### Egy aszimmetria, amit érdemes tudni
 

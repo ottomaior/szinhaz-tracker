@@ -32,7 +32,7 @@ import type { ExpoConfig } from "expo/config";
  */
 export const PRODUCTION_HOST = "szinhaz-tracker-production.up.railway.app";
 const config: ExpoConfig = {
-  name: "Színház Tracker",
+  name: "Vastaps",
   slug: "szinhaz-tracker",
 
   // The store-facing version, shown to people. `ios.buildNumber` and
@@ -216,7 +216,7 @@ const config: ExpoConfig = {
       "expo-image-picker",
       {
         photosPermission:
-          "A Színház Tracker a fotóidhoz kér hozzáférést, hogy profilképet állíthass be, és borítóképet tölthess fel az általad hozzáadott darabokhoz.",
+          "A Vastaps a fotóidhoz kér hozzáférést, hogy profilképet állíthass be, és borítóképet tölthess fel az általad hozzáadott darabokhoz.",
       },
     ],
   ],

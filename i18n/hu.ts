@@ -6,7 +6,7 @@
 import { elapsedSince } from "@/utils/datetime";
 
 export const strings = {
-  appName: "Színház Tracker",
+  appName: "Vastaps",
 
   /** Derived "is it still on?" state — see supabase/migrations/0006_play_status.sql. */
   status: {

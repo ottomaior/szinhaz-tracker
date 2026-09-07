@@ -1,4 +1,6 @@
 import { Platform } from "react-native";
+import { BRAND_PATHS, BRAND_VIEWBOX } from "@/components/icons/brandGeometry";
+import { strings } from "@/i18n/hu";
 import {
   MASK_BODY_PATH,
   MASK_EYES,
@@ -27,8 +29,9 @@ const card = themes.velvetDark;
  * document has loaded, so the card is set in the same faces as the screen it
  * came from.
  *
- * The mask itself comes from `maskGeometry`, the same constants `MaskIcon`
- * draws — the version that leaves the app has to be the version inside it.
+ * The mask itself comes from `maskGeometry`, and the wordmark's brand mark
+ * from `brandGeometry` — the same constants `MaskIcon` and `BrandMark` draw.
+ * The version that leaves the app has to be the version inside it.
  *
  * The card is painted in the Velvet Curtain palette whatever theme the reader
  * has chosen, for two reasons. The practical one: these are canvas fill and
@@ -97,6 +100,17 @@ function drawMask(
   }
   ctx.strokeStyle = punch;
   ctx.stroke(new Path2D(MASK_MOUTH_PATH));
+  ctx.restore();
+}
+
+/** Draws the brand mark at (x, y), sized `size`, in the card's gold. */
+function drawBrandMark(ctx: CanvasRenderingContext2D, x: number, y: number, size: number) {
+  const scale = size / BRAND_VIEWBOX;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+  ctx.fillStyle = card.gold;
+  for (const d of BRAND_PATHS) ctx.fill(new Path2D(d));
   ctx.restore();
 }
 
@@ -240,10 +254,17 @@ export async function renderShareCard(input: ShareCardInput): Promise<Blob | und
   }
 
   // The wordmark, bottom left, small. This is a card about an evening, not an
-  // advertisement with an evening on it.
+  // advertisement with an evening on it. The mark leads it, at the size it
+  // would be on a tab bar: on a shared image the glyph is what gets recognised
+  // a second time, and the words are what explain it the first time.
+  // `textBaseline` is "top" for the whole card, so the wordmark's 30 points of
+  // type start at `wordmarkTop` and the mark has to be centred against that
+  // band rather than sat on a baseline.
+  const wordmarkMark = 34;
+  drawBrandMark(ctx, margin, wordmarkTop - 2, wordmarkMark);
   ctx.fillStyle = card.gold;
   ctx.font = `600 30px "${fonts.bodySemibold}", system-ui, sans-serif`;
-  ctx.fillText("Színház Tracker", margin, wordmarkTop);
+  ctx.fillText(strings.appName, margin + wordmarkMark + 14, wordmarkTop);
 
   return new Promise((resolve) => canvas.toBlob((blob) => resolve(blob ?? undefined), "image/png"));
 }
@@ -254,7 +275,7 @@ export async function renderShareCard(input: ShareCardInput): Promise<Blob | und
  *
  * Returns false when it managed neither, so the caller can share a link instead.
  */
-export async function shareCard(input: ShareCardInput, fileName = "szinhaz-tracker.png"): Promise<boolean> {
+export async function shareCard(input: ShareCardInput, fileName = "vastaps.png"): Promise<boolean> {
   const blob = await renderShareCard(input);
   if (!blob) return false;
 
