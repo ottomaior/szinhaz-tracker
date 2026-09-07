@@ -220,6 +220,18 @@ const config: ExpoConfig = {
   experiments: {
     typedRoutes: true,
   },
+
+  // Which project on EAS's servers a build belongs to. `npx eas-cli init`
+  // normally writes this itself, but it will not edit a dynamic config — it
+  // prints the id and stops with "Cannot automatically write to dynamic config
+  // at: app.config.ts". The project exists either way; only this line is
+  // manual. Without it every build would register as a brand new app, losing
+  // the remote build numbers that `appVersionSource: "remote"` depends on.
+  extra: {
+    eas: {
+      projectId: "a9344b1d-53ca-4b15-891b-be9a503cf051",
+    },
+  },
 };
 
 export default config;
