@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<title>Vastaps — bemutató</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;0,6..96,600;1,6..96,400&family=Sora:wght@300;400;500;600&display=swap">
+<style>
+/* ── The narrated tour ────────────────────────────────────────────────────
+   One scene, two frames. `html.portrait` is 1080×1920 for a feed, and
+   `html.landscape` is 1920×1080 for YouTube and the site; the renderer sets
+   the class and the viewport, and everything below that differs between them
+   is a layout question — the copy, the timing and the narration are shared.
+
+   As in scene.html, nothing animates in CSS. setFrame(t) writes every moving
+   value, so the renderer can step a clock and get identical frames however
+   long the capture takes. Here the clock is not invented either: the shot
+   timings come from how long the narrator actually takes to say each line,
+   measured after synthesis and handed in by initScene(). */
+:root {
+  --ink: #0b0403;
+  --text: #f5ede4;
+  --dim: #b9a69e;
+  --gold: #dbb155;
+  --gold-lift: #ecd08a;
+  --display: "Bodoni Moda", Didot, "Times New Roman", serif;
+  --sans: "Sora", system-ui, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: #000; }
+body { overflow: hidden; }
+
+#stage {
+  position: relative; overflow: hidden;
+  background: radial-gradient(120% 60% at 50% 8%, #1a0806 0%, var(--ink) 55%), var(--ink);
+  font-family: var(--sans); color: var(--text);
+}
+html.portrait  #stage, html.portrait  body { width: 1080px; height: 1920px; }
+html.landscape #stage, html.landscape body { width: 1920px; height: 1080px; }
+
+/* ── Stage lighting ──────────────────────────────────────────────────────── */
+.beam {
+  position: absolute; background: linear-gradient(to bottom, rgba(219,177,85,0.22), rgba(219,177,85,0.05) 45%, rgba(219,177,85,0) 78%);
+  filter: blur(80px); clip-path: polygon(44% 0, 56% 0, 100% 100%, 0 100%); transform-origin: top center;
+}
+html.portrait  .beam { top: -260px; left: 50%; width: 620px; height: 1500px; }
+html.landscape .beam { top: -420px; left: 50%; width: 760px; height: 1500px; }
+#pool {
+  position: absolute; left: 50%; background: radial-gradient(ellipse at center, rgba(219,177,85,0.26), rgba(178,131,36,0.09) 38%, rgba(11,4,3,0) 70%);
+  filter: blur(44px);
+}
+html.portrait  #pool { top: 300px; width: 1500px; height: 900px; margin-left: -750px; }
+html.landscape #pool { top: 40px; width: 1700px; height: 900px; margin-left: -850px; }
+#vignette {
+  position: absolute; inset: 0;
+  background: radial-gradient(130% 78% at 50% 46%, rgba(11,4,3,0) 42%, rgba(11,4,3,0.74) 100%);
+}
+
+/* ── The phone ───────────────────────────────────────────────────────────── */
+#phone { position: absolute; }
+html.portrait  #phone { left: 270px; top: 470px; width: 540px; }
+html.landscape #phone { left: 1290px; top: 96px; width: 410px; }
+#phoneBody {
+  position: relative; border-radius: 13.6%/6.3%; padding: 2.4%;
+  background: linear-gradient(155deg, #4a3a30, #1a0f0c 34%, #120908 62%, #3b2c25);
+  box-shadow: 0 2px 3px rgba(245,237,228,0.12) inset, 0 70px 130px -40px rgba(0,0,0,0.9), 0 0 130px -30px rgba(219,177,85,0.45);
+}
+#screen { position: relative; border-radius: 11.5%/5.3%; overflow: hidden; background: #120505; aspect-ratio: 810 / 1761; }
+#screen img { position: absolute; inset: 0; width: 100%; height: auto; }
+#glare {
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(118deg, rgba(245,237,228,0.13) 0%, rgba(245,237,228,0.02) 22%, rgba(245,237,228,0) 46%);
+}
+
+/* ── Headlines beside or above the phone ─────────────────────────────────── */
+.head {
+  position: absolute; font-family: var(--display); font-weight: 500;
+  letter-spacing: -0.015em; line-height: 1.1; text-wrap: balance;
+}
+html.portrait .head { left: 80px; right: 80px; top: 208px; text-align: center; font-size: 76px; }
+html.landscape .head { left: 150px; width: 980px; top: 360px; text-align: left; font-size: 86px; }
+.head em { font-style: italic; color: var(--gold); font-weight: 400; }
+
+/* ── Chips, for the shots that name three or four things ─────────────────── */
+.chips { position: absolute; display: flex; gap: 18px; flex-wrap: wrap; }
+html.portrait .chips { left: 70px; right: 70px; top: 1706px; justify-content: center; }
+html.landscape .chips { left: 150px; width: 980px; top: 620px; justify-content: flex-start; }
+.chip {
+  font-size: 32px; font-weight: 500; padding: 16px 30px; border-radius: 999px;
+  border: 1px solid rgba(219,177,85,0.5); background: rgba(219,177,85,0.13); color: var(--gold-lift); white-space: nowrap;
+}
+
+/* ── Full-frame cards, the logo and the end card ─────────────────────────── */
+.centre {
+  position: absolute; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; text-align: center;
+}
+html.portrait  .centre { top: 660px; }
+html.landscape .centre { top: 250px; }
+#lockup { gap: 30px; }
+#mark { width: 178px; height: 178px; }
+#word { font-family: var(--display); font-size: 124px; font-weight: 600; line-height: 1; }
+#tag { font-size: 32px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--gold); font-weight: 500; }
+
+#card { padding: 0 110px; font-family: var(--display); font-size: 92px; font-weight: 500; line-height: 1.14; letter-spacing: -0.02em; text-wrap: balance; }
+
+#end { gap: 26px; }
+#endMark { width: 156px; height: 156px; }
+#endWord { font-family: var(--display); font-size: 116px; font-weight: 600; line-height: 1; }
+#endLine { font-family: var(--display); font-style: italic; font-size: 54px; color: var(--dim); margin-top: 14px; }
+#endUrl {
+  margin-top: 30px; font-size: 44px; font-weight: 600; color: #120505;
+  background: var(--gold); padding: 24px 52px; border-radius: 999px;
+}
+
+/* ── Progress hairline, so a long film shows how much is left ────────────── */
+#progressTrack { position: absolute; left: 0; right: 0; bottom: 0; height: 6px; background: rgba(245,237,228,0.08); }
+#progressFill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--gold); }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="beam" id="beamL"></div>
+  <div class="beam" id="beamR"></div>
+  <div id="pool"></div>
+
+  <div id="phone">
+    <div id="phoneBody">
+      <div id="screen"><div id="glare"></div></div>
+    </div>
+  </div>
+
+  <div class="centre" id="lockup">
+    <svg id="mark" viewBox="0 0 64 64" aria-hidden="true">
+      <path d="M4 9H60V14Q46 23 32 15Q18 23 4 14Z" fill="#dbb155"/>
+      <path d="M6 15H23C20 27 20 41 22 51Q14 56 6 52Z" fill="#dbb155"/>
+      <path d="M58 15H41C44 27 44 41 42 51Q50 56 58 52Z" fill="#dbb155"/>
+      <path d="M32 26.5l2.06 5.67 6.02.2-4.75 3.71 1.67 5.8L32 38.5l-5 3.38 1.67-5.8-4.75-3.71 6.02-.2z" fill="#dbb155"/>
+    </svg>
+    <div id="word">Vastaps</div>
+    <div id="tag">Magyar színházi napló</div>
+  </div>
+
+  <div class="centre" id="card"></div>
+
+  <div class="centre" id="end">
+    <svg id="endMark" viewBox="0 0 64 64" aria-hidden="true">
+      <path d="M4 9H60V14Q46 23 32 15Q18 23 4 14Z" fill="#dbb155"/>
+      <path d="M6 15H23C20 27 20 41 22 51Q14 56 6 52Z" fill="#dbb155"/>
+      <path d="M58 15H41C44 27 44 41 42 51Q50 56 58 52Z" fill="#dbb155"/>
+      <path d="M32 26.5l2.06 5.67 6.02.2-4.75 3.71 1.67 5.8L32 38.5l-5 3.38 1.67-5.8-4.75-3.71 6.02-.2z" fill="#dbb155"/>
+    </svg>
+    <div id="endWord">Vastaps</div>
+    <div id="endLine">Nézd meg, mi megy ma este.</div>
+    <div id="endUrl">vastaps.pages.dev</div>
+  </div>
+
+  <div id="vignette"></div>
+  <div id="progressTrack"><div id="progressFill"></div></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var E = function (id) { return document.getElementById(id); };
+  function p(t, a, b) { return b <= a ? (t >= b ? 1 : 0) : Math.max(0, Math.min(1, (t - a) / (b - a))); }
+  function out(x) { return 1 - Math.pow(1 - x, 3); }
+  function into(x) { return x * x * x; }
+  function mix(a, b, x) { return a + (b - a) * x; }
+
+  var TL = null;          // the timeline handed in by the renderer
+  var heads = [];         // one headline element per shot that has one
+  var chipRows = [];      // one chip row per shot that has chips
+  var imgs = {};          // screenshot elements by shot key
+  var imageShots = [];    // only the shots that put something on the phone
+
+  /**
+   * Build the DOM from the timeline, then report when the fonts and every
+   * screenshot are in. The renderer waits on the returned promise before it
+   * captures frame zero: a first second in a fallback serif, or with a hole
+   * where the phone should be, is permanent once it is in the file.
+   */
+  window.initScene = function (timeline) {
+    TL = timeline;
+    var stage = E("stage");
+    var screen = E("screen");
+    var glare = E("glare");
+
+    TL.shots.forEach(function (s) {
+      if (s.shot && !imgs[s.shot]) {
+        var im = document.createElement("img");
+        im.src = "../landing/shots/" + s.shot + ".webp";
+        im.alt = "";
+        im.style.opacity = "0";
+        screen.insertBefore(im, glare);
+        imgs[s.shot] = im;
+      }
+      if (s.shot) imageShots.push(s);
+
+      if (s.head) {
+        var h = document.createElement("div");
+        h.className = "head";
+        h.innerHTML = s.head;
+        h.style.opacity = "0";
+        stage.insertBefore(h, E("vignette"));
+        heads.push({ shot: s, el: h });
+      }
+      if (s.chips && s.chips.length) {
+        var row = document.createElement("div");
+        row.className = "chips";
+        s.chips.forEach(function (label) {
+          var c = document.createElement("span");
+          c.className = "chip";
+          c.textContent = label;
+          row.appendChild(c);
+        });
+        stage.insertBefore(row, E("vignette"));
+        chipRows.push({ shot: s, el: row, items: Array.prototype.slice.call(row.children) });
+      }
+    });
+
+    var card = TL.shots.filter(function (s) { return s.kind === "card"; })[0];
+    if (card) E("card").innerHTML = card.head;
+
+    return (async function () {
+      await document.fonts.ready;
+      var all = Array.prototype.slice.call(document.images);
+      await Promise.all(all.map(function (im) {
+        return im.complete ? null : new Promise(function (r) { im.onload = im.onerror = r; });
+      }));
+      window.setFrame(0);
+      return all.filter(function (im) { return im.naturalWidth > 0; }).length;
+    })();
+  };
+
+  /** Rise in, hold, fall out — arrivals decelerate, departures accelerate. */
+  function beat(el, t, inA, inB, outA, outB, dy) {
+    var appear = out(p(t, inA, inB));
+    var leave = into(p(t, outA, outB));
+    el.style.opacity = (appear * (1 - leave)).toFixed(4);
+    el.style.transform = "translateY(" + (mix(dy, 0, appear) - dy * 0.6 * leave).toFixed(2) + "px)";
+  }
+
+  window.setFrame = function (t) {
+    if (!TL) return;
+
+    // ── Lighting: bright for the opening, held back once the phone arrives
+    var lit = out(p(t, 0.15, 1.6));
+    var settle = mix(1, 0.6, out(p(t, TL.phoneIn - 1.2, TL.phoneIn + 0.8)));
+    var sway = Math.sin(t * 0.33) * 1.5;
+    E("beamL").style.opacity = (lit * settle).toFixed(4);
+    E("beamR").style.opacity = (lit * settle * 0.9).toFixed(4);
+    E("beamL").style.transform = "translateX(-104%) rotate(" + (-14 + sway) + "deg)";
+    E("beamR").style.transform = "translateX(4%) rotate(" + (14 - sway) + "deg)";
+    E("pool").style.opacity = (out(p(t, 0.3, 2.0)) * mix(1, 0.68, out(p(t, TL.phoneIn - 1.2, TL.phoneIn + 0.8)))).toFixed(4);
+
+    // ── Opening lockup
+    var open = TL.shots[0];
+    var lockIn = out(p(t, 0.4, 1.6));
+    var lockOut = into(p(t, open.end - 0.8, open.end));
+    E("lockup").style.opacity = (lockIn * (1 - lockOut)).toFixed(4);
+    E("lockup").style.transform = "translateY(" + (-32 * lockOut).toFixed(2) + "px) scale(" + mix(0.9, 1, lockIn) + ")";
+    E("word").style.opacity = out(p(t, 1.0, 2.0)).toFixed(4);
+    E("tag").style.opacity = out(p(t, 1.5, 2.5)).toFixed(4);
+
+    // ── The full-frame card
+    var card = TL.shots.filter(function (s) { return s.kind === "card"; })[0];
+    if (card) beat(E("card"), t, card.start + 0.15, card.start + 1.0, card.end - 0.7, card.end, 48);
+
+    // ── The phone: one entrance, one exit, a slow drift in between
+    var ph = E("phone");
+    var phIn = out(p(t, TL.phoneIn - 0.9, TL.phoneIn + 0.4));
+    var phOut = into(p(t, TL.phoneOut, TL.phoneOut + 0.9));
+    var drift = Math.sin((t - TL.phoneIn) * 0.42) * 8;
+    ph.style.opacity = (phIn * (1 - phOut)).toFixed(4);
+    ph.style.transform =
+      "translateY(" + (mix(150, 0, phIn) + drift - 170 * phOut).toFixed(2) + "px) scale(" + mix(0.95, 1, phIn) + ")";
+
+    // ── Screenshots: each holds until the next one has finished covering it
+    var D = 0.5;
+    for (var i = 0; i < imageShots.length; i++) {
+      var mine = p(t, imageShots[i].start - 0.25, imageShots[i].start - 0.25 + D);
+      var next = i + 1 < imageShots.length ? p(t, imageShots[i + 1].start - 0.25, imageShots[i + 1].start - 0.25 + D) : 0;
+      imgs[imageShots[i].shot].style.opacity = ((i === 0 ? 1 : mine) * (1 - next)).toFixed(4);
+    }
+
+    // ── Headlines
+    heads.forEach(function (h) {
+      var s = h.shot;
+      beat(h.el, t, s.start + 0.1, s.start + 0.85, s.end - 0.55, s.end, 38);
+    });
+
+    // ── Chips, dealt one at a time a beat after their headline
+    chipRows.forEach(function (row) {
+      var s = row.shot;
+      row.items.forEach(function (chip, i) {
+        var a = s.start + 1.5 + i * 0.26;
+        beat(chip, t, a, a + 0.6, s.end - 0.5, s.end, 26);
+      });
+    });
+
+    // ── End card, held to the last frame so a thumbnail lands on the URL
+    var close = TL.shots[TL.shots.length - 1];
+    var endIn = out(p(t, close.start + 0.2, close.start + 1.3));
+    E("end").style.opacity = endIn.toFixed(4);
+    E("end").style.transform = "scale(" + mix(0.94, 1, endIn) + ")";
+    E("endLine").style.opacity = out(p(t, close.start + 1.2, close.start + 2.1)).toFixed(4);
+    var urlIn = out(p(t, close.start + 2.0, close.start + 2.9));
+    E("endUrl").style.opacity = urlIn.toFixed(4);
+    E("endUrl").style.transform = "translateY(" + mix(26, 0, urlIn).toFixed(2) + "px)";
+
+    // ── How much is left
+    E("progressFill").style.width = (100 * Math.min(1, t / TL.total)).toFixed(3) + "%";
+  };
+})();
+</script>
+</body>
+</html>

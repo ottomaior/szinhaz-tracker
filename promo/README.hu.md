@@ -70,3 +70,49 @@ A renderben azon a csenden kívül nincs hang, és a film úgy készült, hogy
 anélkül is működjön: minden állítást a képen lévő szöveg visz. Egy alátett
 zene semmivel nem fog ütközni, a vágások pedig 9,2 másodperctől nagyjából
 kétmásodperces rácson vannak.
+
+---
+
+# A narrált bemutató
+
+Két perc hat másodperc, mindkét képarányban — a `vastaps-tour-16x9.mp4` a
+YouTube-ra és a weboldalra, a `vastaps-tour-9x16.mp4` a hírfolyamba —, magyar
+narrációval.
+
+```bash
+npm run tour -- --ffmpeg <eleres> --piper <eleres> --voices <konyvtar>
+```
+
+## Előbb készül a narráció, a filmet pedig ahhoz vágjuk
+
+Ez az egész felépítés lényege. A `tour-script.json` minden sora elhangzik,
+lemérjük a hosszát, és **csak ezután** kap egy jelenet kezdetet és véget.
+Semmi nincs kézzel időzítve, tehát egy mondat átírása újraidőzíti köré a
+filmet ahelyett, hogy a kép kicsúszna a hang alól. Mindkét képarány
+ugyanabból az egy idővonalból és ugyanabból a `tour.html`-ből készül, ami
+osztály alapján vált elrendezést — így mindig ugyanaz a film, nem két külön
+vágás, amit szinkronban kellene tartani.
+
+A hang a [Piper](https://github.com/rhasspy/piper), offline futtatva. Három
+magyar hang létezik hozzá — `hu_HU-anna-medium`, `hu_HU-berta-medium` és
+`hu_HU-imre-medium`, a
+[rhasspy/piper-voices](https://huggingface.co/rhasspy/piper-voices)
+gyűjteményből —, és a köztük váltás a `tour-script.json` tetején lévő `voice`
+mező. A csere megváltoztatja a sorok hosszát, tehát a vágást is; pontosan
+ezért nincs egyetlen időzítés sem leírva sehol.
+
+A Piper sem függősége ennek a tárháznak: a `--piper` kapja a binárist, a
+`--voices` pedig az `.onnx` fájlokat tartalmazó könyvtárat.
+
+## A két képarány egyszerre
+
+A `--only landscape` és a `--only portrait` egy-egy változatot renderel, és
+futhatnak egymás mellett is — mindkettő saját hibakeresési portot és saját
+böngészőprofilt használ. A másodiknak add meg a
+`--timeline promo/out/tour-timeline.json` kapcsolót, hogy újra felhasználja a
+narrációt ahelyett, hogy újra felmondaná: a Piper nem bitre azonos két futás
+között, két menet pedig ok nélkül adna a két képaránynak kicsit eltérő
+időzítést.
+
+Képarányonként nagyjából 3800 képkocka, tehát számolj húsz perccel, egyszerre
+futtatva valamivel többel.
