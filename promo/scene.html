@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<title>Vastaps — promó</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;0,6..96,600;1,6..96,400;1,6..96,500&family=Sora:wght@300;400;500;600&display=swap">
+<style>
+/* ── The promo stage ──────────────────────────────────────────────────────
+   1080×1920, authored at 1:1 so every number here is a real output pixel.
+
+   Nothing animates in CSS. Every moving value is written by setFrame(t) in
+   the script below, because the renderer captures frames by stepping a clock
+   rather than by watching a wall clock: a CSS animation would advance
+   between screenshots at whatever rate the machine happened to manage, and
+   the video would judder. This way frame 417 is identical no matter how long
+   the capture took. */
+:root {
+  --ink: #0b0403;
+  --surface: #1d0c0a;
+  --text: #f5ede4;
+  --dim: #b9a69e;
+  --gold: #dbb155;
+  --gold-lift: #ecd08a;
+  --display: "Bodoni Moda", Didot, "Times New Roman", serif;
+  --sans: "Sora", system-ui, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: #000; }
+body { width: 1080px; height: 1920px; overflow: hidden; }
+
+#stage {
+  position: relative; width: 1080px; height: 1920px; overflow: hidden;
+  background:
+    radial-gradient(120% 60% at 50% 8%, #1a0806 0%, var(--ink) 55%),
+    var(--ink);
+  font-family: var(--sans); color: var(--text);
+}
+
+/* Stage lighting. Two beams from above and a pool on the floor. */
+.beam {
+  position: absolute; top: -260px; left: 50%; width: 620px; height: 1500px;
+  background: linear-gradient(to bottom, rgba(219,177,85,0.26), rgba(219,177,85,0.06) 45%, rgba(219,177,85,0) 78%);
+  filter: blur(70px);
+  clip-path: polygon(44% 0, 56% 0, 100% 100%, 0 100%);
+  transform-origin: top center;
+}
+#beamL { transform: translateX(-104%) rotate(-14deg); }
+#beamR { transform: translateX(4%) rotate(14deg); }
+#pool {
+  position: absolute; left: 50%; top: 300px; width: 1500px; height: 900px;
+  margin-left: -750px;
+  background: radial-gradient(ellipse at center, rgba(219,177,85,0.30), rgba(178,131,36,0.10) 38%, rgba(11,4,3,0) 70%);
+  filter: blur(40px);
+}
+
+/* Vignette, so the corners never compete with the type. */
+#vignette {
+  position: absolute; inset: 0;
+  background: radial-gradient(130% 78% at 50% 46%, rgba(11,4,3,0) 42%, rgba(11,4,3,0.72) 100%);
+}
+
+.layer { position: absolute; inset: 0; }
+
+/* ── Logo lockup, first and last ─────────────────────────────────────────── */
+#lockup {
+  position: absolute; left: 0; right: 0; top: 700px;
+  display: flex; flex-direction: column; align-items: center; gap: 34px;
+}
+#mark { width: 190px; height: 190px; }
+#word { font-family: var(--display); font-size: 132px; font-weight: 600; letter-spacing: -0.01em; line-height: 1; }
+#tag { font-size: 34px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--gold); font-weight: 500; }
+
+/* ── Full-frame statements ───────────────────────────────────────────────── */
+.card {
+  position: absolute; left: 110px; right: 110px; top: 690px;
+  text-align: center;
+  font-family: var(--display); font-size: 92px; font-weight: 500;
+  line-height: 1.14; letter-spacing: -0.02em; text-wrap: balance;
+}
+.card em { font-style: italic; color: var(--gold); font-weight: 400; }
+
+/* ── The phone ───────────────────────────────────────────────────────────── */
+#phone { position: absolute; left: 270px; top: 480px; width: 540px; }
+#phoneBody {
+  position: relative; border-radius: 74px; padding: 13px;
+  background: linear-gradient(155deg, #4a3a30, #1a0f0c 34%, #120908 62%, #3b2c25);
+  box-shadow:
+    0 2px 3px rgba(245,237,228,0.12) inset,
+    0 70px 130px -40px rgba(0,0,0,0.9),
+    0 0 130px -30px rgba(219,177,85,0.5);
+}
+#screen { position: relative; border-radius: 62px; overflow: hidden; background: #120505; height: 1117px; }
+#screen img { position: absolute; inset: 0; width: 100%; height: auto; }
+#glare {
+  position: absolute; inset: 0; border-radius: 62px; pointer-events: none;
+  background: linear-gradient(118deg, rgba(245,237,228,0.13) 0%, rgba(245,237,228,0.02) 22%, rgba(245,237,228,0) 46%);
+}
+
+/* ── Captions above the phone, clear of platform UI ─────────────────────── */
+.cap {
+  position: absolute; left: 90px; right: 90px; top: 214px;
+  text-align: center; font-family: var(--display);
+  font-size: 74px; font-weight: 500; line-height: 1.12; letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+.cap em { font-style: italic; color: var(--gold); font-weight: 400; }
+.note {
+  position: absolute; left: 90px; right: 90px; top: 406px;
+  text-align: center; font-size: 32px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--dim); font-weight: 500;
+}
+
+/* ── Rating chips ────────────────────────────────────────────────────────── */
+#chips { position: absolute; left: 0; right: 0; top: 1690px; display: flex; justify-content: center; gap: 20px; }
+.chip {
+  font-size: 34px; font-weight: 500; padding: 18px 34px; border-radius: 999px;
+  border: 1px solid rgba(219,177,85,0.5); background: rgba(219,177,85,0.14); color: var(--gold-lift);
+  white-space: nowrap;
+}
+
+/* ── End card ────────────────────────────────────────────────────────────── */
+#end { position: absolute; left: 0; right: 0; top: 640px; display: flex; flex-direction: column; align-items: center; gap: 30px; }
+#endMark { width: 168px; height: 168px; }
+#endWord { font-family: var(--display); font-size: 124px; font-weight: 600; line-height: 1; }
+#endLine { font-family: var(--display); font-size: 60px; font-weight: 400; font-style: italic; color: var(--dim); margin-top: 18px; }
+#endUrl {
+  margin-top: 34px; font-size: 46px; font-weight: 600; letter-spacing: 0.02em;
+  color: #120505; background: var(--gold); padding: 26px 56px; border-radius: 999px;
+}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="beam" id="beamL"></div>
+  <div class="beam" id="beamR"></div>
+  <div id="pool"></div>
+
+  <div id="phone">
+    <div id="phoneBody">
+      <div id="screen">
+        <img id="im0" src="../landing/shots/discover.webp" alt="">
+        <img id="im1" src="../landing/shots/musor.webp" alt="">
+        <img id="im2" src="../landing/shots/play.webp" alt="">
+        <img id="im3" src="../landing/shots/user.webp" alt="">
+        <img id="im4" src="../landing/shots/search.webp" alt="">
+        <img id="im5" src="../landing/shots/person.webp" alt="">
+        <div id="glare"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="chips">
+    <span class="chip" id="chip0">Színészi játék</span>
+    <span class="chip" id="chip1">Rendezés</span>
+    <span class="chip" id="chip2">Díszlet</span>
+  </div>
+
+  <div id="lockup">
+    <svg id="mark" viewBox="0 0 64 64" aria-hidden="true">
+      <path d="M4 9H60V14Q46 23 32 15Q18 23 4 14Z" fill="#dbb155"/>
+      <path d="M6 15H23C20 27 20 41 22 51Q14 56 6 52Z" fill="#dbb155"/>
+      <path d="M58 15H41C44 27 44 41 42 51Q50 56 58 52Z" fill="#dbb155"/>
+      <path d="M32 26.5l2.06 5.67 6.02.2-4.75 3.71 1.67 5.8L32 38.5l-5 3.38 1.67-5.8-4.75-3.71 6.02-.2z" fill="#dbb155"/>
+    </svg>
+    <div id="word">Vastaps</div>
+    <div id="tag">Magyar színházi napló</div>
+  </div>
+
+  <div class="card" id="card0">Emlékszel, mit láttál tavaly a színházban?</div>
+  <div class="card" id="card1">És arra, hogy <em>melyik este</em> volt?</div>
+
+  <div class="cap" id="cap0">Budapest és Debrecen műsora,<br>egy képernyőn.</div>
+  <div class="note" id="note0">Éjszakánként frissül</div>
+  <div class="cap" id="cap1">Naplózd, amit láttál.</div>
+  <div class="cap" id="cap2">A profilod egy <em>műsorfüzet</em>.</div>
+  <div class="cap" id="cap3">Ki volt az a színésznő<br>a második felvonásban?</div>
+
+  <div id="end">
+    <svg id="endMark" viewBox="0 0 64 64" aria-hidden="true">
+      <path d="M4 9H60V14Q46 23 32 15Q18 23 4 14Z" fill="#dbb155"/>
+      <path d="M6 15H23C20 27 20 41 22 51Q14 56 6 52Z" fill="#dbb155"/>
+      <path d="M58 15H41C44 27 44 41 42 51Q50 56 58 52Z" fill="#dbb155"/>
+      <path d="M32 26.5l2.06 5.67 6.02.2-4.75 3.71 1.67 5.8L32 38.5l-5 3.38 1.67-5.8-4.75-3.71 6.02-.2z" fill="#dbb155"/>
+    </svg>
+    <div id="endWord">Vastaps</div>
+    <div id="endLine">Nézd meg, mi megy ma este.</div>
+    <div id="endUrl">vastaps.pages.dev</div>
+  </div>
+
+  <div id="vignette"></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var E = function (id) { return document.getElementById(id); };
+
+  /** Progress through [a, b], clamped to 0..1. */
+  function p(t, a, b) { return Math.max(0, Math.min(1, (t - a) / (b - a))); }
+  /** Decelerating: for things arriving. */
+  function out(x) { return 1 - Math.pow(1 - x, 3); }
+  /** Accelerating: for things leaving. */
+  function into(x) { return x * x * x; }
+  function mix(a, b, x) { return a + (b - a) * x; }
+
+  /**
+   * One element's whole life: rise in, hold, fall out.
+   * `dy` is how far below its resting place it starts, and it leaves upward
+   * by two thirds of that — arrivals and departures should not mirror each
+   * other, or the motion reads as a loop rather than a sequence.
+   */
+  function beat(el, t, inA, inB, outA, outB, dy) {
+    dy = dy === undefined ? 44 : dy;
+    var appear = out(p(t, inA, inB));
+    var leave = into(p(t, outA, outB));
+    var o = appear * (1 - leave);
+    var y = mix(dy, 0, appear) - (dy * 0.66) * leave;
+    el.style.opacity = o.toFixed(4);
+    el.style.transform = "translateY(" + y.toFixed(2) + "px)";
+    return o;
+  }
+
+  var SHOTS = ["im0", "im1", "im2", "im3", "im4", "im5"];
+  /** When each screenshot takes over, and how long the dissolve runs. */
+  var CUTS = [9.2, 12.3, 15.0, 18.5, 21.2, 23.4];
+  var DISSOLVE = 0.55;
+
+  function screens(t) {
+    for (var i = 0; i < SHOTS.length; i++) {
+      // Each image is opaque from its own cut until the next one has finished
+      // covering it, so there is never a gap showing the empty screen.
+      var on = p(t, CUTS[i], CUTS[i] + DISSOLVE);
+      var off = i + 1 < CUTS.length ? p(t, CUTS[i + 1], CUTS[i + 1] + DISSOLVE) : 0;
+      E(SHOTS[i]).style.opacity = (i === 0 ? 1 - off : on * (1 - off)).toFixed(4);
+    }
+  }
+
+  window.setFrame = function (t) {
+    // ── Lighting. Bright for the opening, then held back so the phone and
+    //    the type stay the brightest things in the frame.
+    var lit = out(p(t, 0.15, 1.5));
+    var settle = mix(1, 0.62, out(p(t, 3.2, 4.6)));
+    var sway = Math.sin(t * 0.42) * 1.6;
+    E("beamL").style.opacity = (lit * settle).toFixed(4);
+    E("beamR").style.opacity = (lit * settle * 0.92).toFixed(4);
+    E("beamL").style.transform = "translateX(-104%) rotate(" + (-14 + sway) + "deg)";
+    E("beamR").style.transform = "translateX(4%) rotate(" + (14 - sway) + "deg)";
+    E("pool").style.opacity = (out(p(t, 0.3, 1.8)) * mix(1, 0.7, out(p(t, 3.2, 4.6)))).toFixed(4);
+
+    // ── Opening lockup
+    var l = E("lockup");
+    var lockIn = out(p(t, 0.4, 1.5));
+    var lockOut = into(p(t, 3.2, 4.0));
+    l.style.opacity = (lockIn * (1 - lockOut)).toFixed(4);
+    l.style.transform = "translateY(" + (-34 * lockOut).toFixed(2) + "px) scale(" + mix(0.9, 1, lockIn) + ")";
+    E("word").style.opacity = out(p(t, 1.0, 1.9)).toFixed(4);
+    E("tag").style.opacity = out(p(t, 1.5, 2.4)).toFixed(4);
+
+    // ── The hook
+    beat(E("card0"), t, 4.3, 5.2, 6.5, 7.2, 52);
+    beat(E("card1"), t, 7.0, 7.9, 8.7, 9.4, 52);
+
+    // ── The phone: rises once, then drifts for the rest of the film
+    var ph = E("phone");
+    var phIn = out(p(t, 9.2, 10.4));
+    var phOut = into(p(t, 25.0, 25.9));
+    var drift = Math.sin((t - 9.2) * 0.55) * 9;
+    ph.style.opacity = (phIn * (1 - phOut)).toFixed(4);
+    ph.style.transform =
+      "translateY(" + (mix(170, 0, phIn) + drift - 190 * phOut).toFixed(2) + "px)" +
+      " scale(" + mix(0.94, 1, phIn) + ")";
+    screens(t);
+
+    // ── Captions
+    beat(E("cap0"), t, 10.1, 10.9, 14.3, 15.0, 40);
+    beat(E("note0"), t, 12.9, 13.6, 14.3, 14.9, 26);
+    beat(E("cap1"), t, 15.7, 16.5, 18.3, 19.0, 40);
+    beat(E("cap2"), t, 19.3, 20.1, 20.9, 21.5, 40);
+    beat(E("cap3"), t, 22.0, 22.8, 24.7, 25.4, 40);
+
+    // ── Rating chips, dealt one at a time
+    for (var i = 0; i < 3; i++) {
+      beat(E("chip" + i), t, 16.8 + i * 0.28, 17.5 + i * 0.28, 18.3, 18.9, 30);
+    }
+
+    // ── End card, held to the last frame so a thumbnail lands on the URL
+    var e = E("end");
+    var endIn = out(p(t, 25.8, 26.8));
+    e.style.opacity = endIn.toFixed(4);
+    e.style.transform = "scale(" + mix(0.93, 1, endIn) + ")";
+    E("endLine").style.opacity = out(p(t, 26.7, 27.6)).toFixed(4);
+    var urlIn = out(p(t, 27.4, 28.3));
+    E("endUrl").style.opacity = urlIn.toFixed(4);
+    E("endUrl").style.transform = "translateY(" + mix(28, 0, urlIn).toFixed(2) + "px)";
+  };
+
+  /** The renderer waits on this before it captures frame zero. */
+  window.sceneReady = (async function () {
+    await document.fonts.ready;
+    var imgs = Array.prototype.slice.call(document.images);
+    await Promise.all(imgs.map(function (im) {
+      return im.complete ? null : new Promise(function (r) { im.onload = im.onerror = r; });
+    }));
+    window.setFrame(0);
+    return imgs.filter(function (im) { return im.naturalWidth > 0; }).length;
+  })();
+
+  window.setFrame(0);
+})();
+</script>
+</body>
+</html>
