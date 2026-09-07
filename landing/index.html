@@ -1,0 +1,1010 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b0403">
+<title>Vastaps</title>
+<meta name="description" content="Magyar színházi napló — nézd meg, mi megy ma este, és jegyezd fel, amit láttál.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500;6..96,600;6..96,700&family=Sora:wght@300;400;500;600;700&display=swap">
+<style>
+/* ── Tokens ───────────────────────────────────────────────────────────────
+   The palette is the app's own `velvetDark` (theme/themes.ts), one shade
+   deeper at the page ground so the phones read as the lit object on a dark
+   stage. Single theme on purpose: an auditorium is dark, and every colour
+   below is painted explicitly so the page never borrows a host ground. */
+:root {
+  color-scheme: dark;
+
+  --ink:        #0b0403;
+  --ink-2:      #120505;
+  --surface:    #1d0c0a;
+  --surface-2:  #251210;
+  --surface-3:  #331d1a;
+
+  --hairline:      rgba(245,237,228,0.10);
+  --hairline-soft: rgba(245,237,228,0.055);
+
+  --text:  #f5ede4;
+  --dim:   #b9a69e;
+  --faint: #9a8a84;
+
+  --gold:      #dbb155;
+  --gold-deep: #b28324;
+  --gold-lift: #ecd08a;
+  --on-gold:   #120505;
+  --gold-tint:   rgba(219,177,85,0.14);
+  --gold-edge:   rgba(219,177,85,0.42);
+  --gold-glow:   rgba(219,177,85,0.40);
+
+  --display: "Bodoni Moda", "Bodoni MT", "Didot", "Times New Roman", serif;
+  --sans: "Sora", ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+
+  --step--1: clamp(0.78rem, 0.76rem + 0.10vw, 0.84rem);
+  --step-0:  clamp(0.98rem, 0.94rem + 0.18vw, 1.08rem);
+  --step-1:  clamp(1.15rem, 1.06rem + 0.42vw, 1.38rem);
+  --step-2:  clamp(1.45rem, 1.24rem + 0.95vw, 2.05rem);
+  --step-3:  clamp(1.95rem, 1.48rem + 2.10vw, 3.20rem);
+  --step-4:  clamp(2.45rem, 1.70rem + 3.30vw, 4.55rem);
+
+  --gutter: clamp(1.15rem, 4vw, 2.5rem);
+  --bay:    clamp(3.75rem, 6.5vw, 6.25rem);
+  --shell:  1140px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: var(--step-0);
+  font-weight: 400;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+h1, h2, h3 { margin: 0; font-family: var(--display); font-weight: 500; line-height: 1.04; letter-spacing: -0.015em; text-wrap: balance; }
+p { margin: 0; }
+a { color: inherit; }
+img { display: block; }
+button { font: inherit; color: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+[id] { scroll-margin-top: 88px; }
+
+.shell { width: 100%; max-width: var(--shell); margin-inline: auto; padding-inline: var(--gutter); }
+
+.skip {
+  position: absolute; left: 50%; top: 0; transform: translate(-50%, -140%);
+  z-index: 60; background: var(--gold); color: var(--on-gold);
+  padding: 0.6rem 1.1rem; border-radius: 0 0 10px 10px; font-weight: 600; text-decoration: none;
+}
+.skip:focus { transform: translate(-50%, 0); }
+
+/* ── Running-order label ─────────────────────────────────────────────────
+   A programme lists its acts, so the numbering here is real sequence, not
+   ornament: the page walks through the app in the order you would meet it. */
+.act {
+  display: flex; align-items: center; gap: 0.85rem;
+  border-top: 1px solid var(--hairline);
+  padding-top: 1.1rem; margin-bottom: clamp(2rem, 4vw, 3.25rem);
+  font-size: var(--step--1); letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--faint);
+}
+.act__num { font-family: var(--display); font-size: 1.05em; letter-spacing: 0.08em; color: var(--gold); }
+.act__rule { flex: 1; height: 1px; background: var(--hairline-soft); }
+
+.eyebrow {
+  font-size: var(--step--1); letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--gold); font-weight: 500;
+}
+
+.lede { color: var(--dim); font-size: var(--step-1); font-weight: 300; line-height: 1.6; max-width: 40ch; }
+.body-dim { color: var(--dim); max-width: 58ch; }
+
+/* ── Navigation ─────────────────────────────────────────────────────────── */
+.nav {
+  position: sticky; top: 0; z-index: 50;
+  background: color-mix(in srgb, var(--ink) 82%, transparent);
+  backdrop-filter: blur(14px) saturate(140%);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.25s ease, background 0.25s ease;
+}
+.nav.is-stuck { border-bottom-color: var(--hairline-soft); }
+.nav__in { display: flex; align-items: center; gap: 1rem; height: 64px; }
+.brand { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; margin-right: auto; }
+.brand__mark { width: 26px; height: 26px; flex: none; }
+.brand__name { font-family: var(--display); font-size: 1.22rem; font-weight: 600; letter-spacing: 0.005em; }
+.nav__links { display: none; gap: 1.6rem; font-size: 0.9rem; color: var(--dim); }
+.nav__links a { text-decoration: none; transition: color 0.18s ease; }
+.nav__links a:hover { color: var(--text); }
+
+.lang { display: flex; padding: 3px; gap: 2px; border: 1px solid var(--hairline); border-radius: 999px; background: rgba(245,237,228,0.03); }
+.lang__btn {
+  border: 0; background: transparent; cursor: pointer;
+  padding: 0.28rem 0.72rem; border-radius: 999px;
+  font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em;
+  color: var(--faint); transition: color 0.18s ease, background 0.18s ease;
+  min-height: 30px;
+}
+.lang__btn:hover { color: var(--text); }
+.lang__btn[aria-pressed="true"] { background: var(--gold); color: var(--on-gold); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  min-height: 46px; padding: 0.7rem 1.35rem; border-radius: 999px;
+  font-size: 0.95rem; font-weight: 600; text-decoration: none; cursor: pointer;
+  border: 1px solid transparent; transition: transform 0.16s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.btn--gold { background: var(--gold); color: var(--on-gold); box-shadow: 0 0 0 rgba(219,177,85,0); }
+.btn--gold:hover { background: var(--gold-lift); box-shadow: 0 8px 34px -12px var(--gold-glow); }
+.btn--ghost { border-color: var(--hairline); color: var(--text); background: rgba(245,237,228,0.03); }
+.btn--ghost:hover { border-color: var(--gold-edge); background: var(--gold-tint); }
+.btn:active { transform: scale(0.98); }
+.btn--sm { min-height: 38px; padding: 0.4rem 0.95rem; font-size: 0.85rem; }
+.nav .btn--sm { display: none; }
+
+@media (min-width: 900px) {
+  .nav__links { display: flex; }
+  .nav .btn--sm { display: inline-flex; }
+}
+</style>
+<style>
+/* ── Hero: the stage ─────────────────────────────────────────────────────
+   Two soft beams from the top and a warm pool of light on the floor. The
+   phone is the lit object; everything else in the section is dark. */
+.hero { position: relative; padding-top: clamp(1.75rem, 4vw, 3.25rem); padding-bottom: clamp(3rem, 5vw, 4.5rem); overflow: hidden; }
+.hero__light { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+.beam {
+  position: absolute; top: -18%; left: 50%; width: 46vw; height: 92vh;
+  background: linear-gradient(to bottom, rgba(219,177,85,0.17), rgba(219,177,85,0.045) 42%, rgba(219,177,85,0) 72%);
+  filter: blur(46px);
+  clip-path: polygon(43% 0, 57% 0, 100% 100%, 0 100%);
+  opacity: 0;
+  animation: beam-up 1.5s cubic-bezier(0.22,0.8,0.3,1) 0.05s forwards;
+}
+.beam--l { transform: translateX(-96%) rotate(-13deg); transform-origin: top center; }
+.beam--r { transform: translateX(-4%) rotate(13deg); transform-origin: top center; animation-delay: 0.22s; }
+.pool {
+  position: absolute; left: 50%; top: 26%; width: min(900px, 128vw); aspect-ratio: 1.75;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse at center, rgba(219,177,85,0.28), rgba(178,131,36,0.10) 38%, rgba(11,4,3,0) 68%);
+  filter: blur(18px);
+  opacity: 0;
+  animation: beam-up 1.7s ease-out 0.1s forwards;
+}
+@keyframes beam-up { to { opacity: 1; } }
+
+.hero__in { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; text-align: center; gap: clamp(1.5rem, 3vw, 2.2rem); }
+.hero__phone { animation: rise-in 1.15s cubic-bezier(0.16,0.9,0.3,1) 0.1s both; }
+.hero__copy { display: flex; flex-direction: column; align-items: center; gap: 1.15rem; max-width: 780px; }
+.hero__eyebrow { animation: rise-in 0.75s cubic-bezier(0.16,0.9,0.3,1) 0.42s both; }
+.hero h1 {
+  font-size: var(--step-4); line-height: 0.98; letter-spacing: -0.025em;
+  animation: rise-in 0.85s cubic-bezier(0.16,0.9,0.3,1) 0.5s both;
+}
+.hero h1 em { font-style: italic; color: var(--gold); font-weight: 400; }
+.hero__lede { animation: rise-in 0.85s cubic-bezier(0.16,0.9,0.3,1) 0.62s both; max-width: 46ch; text-align: center; }
+.hero__cta { display: flex; flex-wrap: wrap; gap: 0.7rem; justify-content: center; animation: rise-in 0.85s cubic-bezier(0.16,0.9,0.3,1) 0.74s both; }
+.hero__meta {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem 1.1rem;
+  font-size: var(--step--1); color: var(--faint); font-variant-numeric: tabular-nums;
+  animation: rise-in 0.85s cubic-bezier(0.16,0.9,0.3,1) 0.86s both;
+}
+.hero__meta span { display: inline-flex; align-items: center; gap: 0.55rem; }
+.hero__meta span + span::before { content: ""; width: 3px; height: 3px; border-radius: 50%; background: var(--gold-deep); }
+@keyframes rise-in { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+
+/* ── Phone frame ─────────────────────────────────────────────────────────── */
+.phone { position: relative; width: min(var(--w, 300px), 78vw); flex: none; transform: translateY(var(--py, 0px)); will-change: transform; }
+.phone__body {
+  position: relative; border-radius: 13.5%/6.4%; padding: 2.4%;
+  background: linear-gradient(155deg, #4a3a30, #1a0f0c 34%, #120908 62%, #3b2c25);
+  box-shadow:
+    0 2px 2px rgba(245,237,228,0.10) inset,
+    0 42px 90px -30px rgba(0,0,0,0.85),
+    0 0 78px -22px var(--gold-glow);
+}
+.phone__screen { position: relative; border-radius: 11.4%/5.4%; overflow: hidden; background: var(--ink-2); }
+.phone__screen img { width: 100%; height: auto; }
+.phone__glare {
+  position: absolute; inset: 0; z-index: 3; pointer-events: none; border-radius: inherit;
+  background: linear-gradient(118deg, rgba(245,237,228,0.10) 0%, rgba(245,237,228,0.02) 22%, rgba(245,237,228,0) 46%);
+}
+.phone--tilt .phone__body { transform: rotate(var(--tilt, -6deg)); }
+
+/* Two screens that answer the same question: the search that found the
+   performer, and the page it leads to. */
+.duo { display: flex; align-items: center; justify-content: center; }
+.duo .phone--back { margin-right: -24%; }
+@media (max-width: 699px) { .duo .phone--back { display: none; } }
+
+/* ── Marquee: the houses ─────────────────────────────────────────────────── */
+.houses { border-block: 1px solid var(--hairline-soft); background: var(--ink-2); padding-block: 1.5rem; overflow: hidden; }
+.houses__label { text-align: center; font-size: var(--step--1); letter-spacing: 0.18em; text-transform: uppercase; color: var(--faint); margin-bottom: 1.1rem; }
+.marquee { display: flex; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }
+.marquee__track { display: flex; flex: none; gap: clamp(1.6rem, 4vw, 3.2rem); padding-right: clamp(1.6rem, 4vw, 3.2rem); animation: slide 42s linear infinite; }
+.marquee__track span { font-family: var(--display); font-size: clamp(1rem, 2.4vw, 1.5rem); white-space: nowrap; color: var(--dim); }
+@keyframes slide { to { transform: translateX(-100%); } }
+.marquee:hover .marquee__track { animation-play-state: paused; }
+.houses__note { text-align: center; margin-top: 1.15rem; color: var(--faint); font-size: var(--step--1); padding-inline: var(--gutter); }
+</style>
+<style>
+/* ── Section scaffolding ────────────────────────────────────────────────── */
+.bay { padding-block: var(--bay); position: relative; }
+.bay--tint { background: linear-gradient(180deg, var(--ink), var(--ink-2) 40%, var(--ink)); }
+
+.split { display: grid; gap: clamp(2.5rem, 6vw, 4.5rem); align-items: center; }
+.split__copy { display: flex; flex-direction: column; gap: 1.1rem; align-items: flex-start; }
+.split__copy h2 { font-size: var(--step-3); }
+.split__art { display: flex; justify-content: center; position: relative; }
+@media (min-width: 880px) {
+  .split { grid-template-columns: 1fr 1fr; }
+  .split--flip .split__art { order: -1; }
+}
+
+.center-stage { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 1.15rem; }
+.center-stage h2 { font-size: var(--step-3); max-width: 18ch; }
+.center-stage .lede { text-align: center; max-width: 52ch; }
+
+/* Notes hung off a phone — the app's own vocabulary, pointed at. */
+.callouts { list-style: none; margin: 0.35rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.85rem; }
+.callouts li { display: flex; gap: 0.8rem; align-items: flex-start; color: var(--dim); }
+.callouts svg { flex: none; width: 20px; height: 20px; margin-top: 3px; color: var(--gold); }
+.callouts b { color: var(--text); font-weight: 600; }
+
+/* Status vocabulary, straight out of the app. */
+.badges { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.badge {
+  font-size: var(--step--1); padding: 0.28rem 0.75rem; border-radius: 999px;
+  border: 1px solid var(--hairline); color: var(--dim); background: rgba(245,237,228,0.035);
+}
+.badge--on { border-color: var(--gold-edge); color: var(--gold); background: var(--gold-tint); }
+
+/* ── Playbill grid ───────────────────────────────────────────────────────── */
+.playbill { display: grid; gap: 1rem; grid-template-columns: 1fr; }
+@media (min-width: 700px) { .playbill { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1000px) { .playbill { grid-template-columns: repeat(3, 1fr); } }
+.tile {
+  display: flex; flex-direction: column; gap: 0.6rem;
+  padding: clamp(1.4rem, 2.6vw, 1.9rem);
+  border: 1px solid var(--hairline-soft); border-radius: 18px;
+  background: linear-gradient(168deg, var(--surface), var(--ink-2));
+  transition: border-color 0.25s ease, transform 0.25s ease;
+}
+.tile:hover { border-color: var(--gold-edge); transform: translateY(-3px); }
+.tile__icon { width: 26px; height: 26px; color: var(--gold); margin-bottom: 0.35rem; }
+.tile h3 { font-family: var(--sans); font-size: 1.05rem; font-weight: 600; letter-spacing: 0; line-height: 1.35; }
+.tile p { color: var(--dim); font-size: 0.94rem; line-height: 1.6; }
+@media (min-width: 700px) { .tile--wide { grid-column: span 2; } }
+.tile--shot { padding: 0; gap: 0; overflow: hidden; }
+.tile__inner { display: grid; grid-template-columns: 1fr; gap: 1.5rem; padding: clamp(1.4rem, 2.6vw, 1.9rem); }
+.tile__text { display: flex; flex-direction: column; gap: 0.6rem; }
+.tile__inner .phone__body { box-shadow: 0 22px 46px -24px rgba(0,0,0,0.9), 0 0 44px -24px var(--gold-glow); }
+@media (min-width: 560px) {
+  .tile__inner { grid-template-columns: minmax(0, 1fr) auto; align-items: end; padding-bottom: 0; }
+  .tile__inner .phone { margin-bottom: -16%; }
+}
+
+/* ── Counters ────────────────────────────────────────────────────────────── */
+.tally { display: grid; gap: 1px; background: var(--hairline-soft); border-block: 1px solid var(--hairline-soft); grid-template-columns: repeat(2, 1fr); }
+@media (min-width: 780px) { .tally { grid-template-columns: repeat(4, 1fr); } }
+.tally__cell { background: var(--ink); padding: clamp(1.6rem, 3.4vw, 2.6rem) 1.2rem; text-align: center; }
+.tally__n { font-family: var(--display); font-size: clamp(2.3rem, 5.5vw, 3.6rem); font-weight: 600; line-height: 1; color: var(--gold); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.tally__k { display: block; margin-top: 0.6rem; font-size: var(--step--1); letter-spacing: 0.13em; text-transform: uppercase; color: var(--faint); }
+
+/* ── Under the hood ──────────────────────────────────────────────────────── */
+.specs { margin: 0; padding: 0; display: grid; gap: 1px; background: var(--hairline-soft); border: 1px solid var(--hairline-soft); border-radius: 16px; overflow: hidden; }
+@media (min-width: 760px) { .specs { grid-template-columns: repeat(2, 1fr); } }
+.specs__row { background: var(--ink-2); padding: 1.25rem 1.4rem; display: flex; flex-direction: column; gap: 0.3rem; }
+.specs__k { font-size: var(--step--1); letter-spacing: 0.13em; text-transform: uppercase; color: var(--gold-deep); }
+.specs__v { color: var(--dim); font-size: 0.95rem; margin: 0; }
+
+/* ── FAQ ─────────────────────────────────────────────────────────────────── */
+.faq { border-top: 1px solid var(--hairline-soft); }
+.faq details { border-bottom: 1px solid var(--hairline-soft); }
+.faq summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 1.5rem;
+  padding: 1.35rem 0; cursor: pointer; list-style: none;
+  font-size: var(--step-1); font-weight: 500; min-height: 48px;
+  transition: color 0.18s ease;
+}
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary:hover { color: var(--gold); }
+.faq__sign { flex: none; width: 22px; height: 22px; color: var(--gold); transition: transform 0.3s cubic-bezier(0.22,0.8,0.3,1); }
+.faq details[open] .faq__sign { transform: rotate(45deg); }
+.faq__a p { color: var(--dim); padding-bottom: 1.5rem; max-width: 66ch; margin: 0; }
+.faq details[open] .faq__a { animation: unfold 0.36s cubic-bezier(0.22,0.8,0.3,1); }
+@keyframes unfold { from { opacity: 0; transform: translateY(-8px); } }
+
+/* ── The close ───────────────────────────────────────────────────────────── */
+.contact { display: flex; flex-direction: column; gap: 1.15rem; align-items: center; text-align: center; }
+.contact h2 { font-size: var(--step-3); }
+.contact .lede { text-align: center; max-width: 50ch; }
+.mailto {
+  display: inline-flex; align-items: center; gap: 0.7rem;
+  overflow-wrap: anywhere; min-width: 0;
+  font-family: var(--display); font-size: clamp(1.05rem, 3vw, 1.55rem); color: var(--gold);
+  text-decoration: none; border-bottom: 1px solid var(--gold-edge); padding-bottom: 0.25rem;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.mailto:hover { color: var(--gold-lift); border-color: var(--gold-lift); }
+.mailto svg { flex: none; width: 22px; height: 22px; }
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+.foot { border-top: 1px solid var(--hairline-soft); padding-block: 2.5rem 3.5rem; background: var(--ink-2); }
+.foot__in { display: flex; flex-wrap: wrap; gap: 1rem 2rem; align-items: center; justify-content: space-between; color: var(--faint); font-size: 0.88rem; }
+.foot a { color: var(--dim); text-decoration: none; }
+.foot a:hover { color: var(--gold); }
+.foot__links { display: flex; flex-wrap: wrap; gap: 1.2rem; }
+
+/* ── Reveal-on-scroll ────────────────────────────────────────────────────
+   Visible by default. Only a page with JS running hides them first, so a
+   thumbnail, a no-JS reader and a reduced-motion viewer all get the page
+   at rest rather than a column of blanks. */
+.js-anim [data-reveal] { opacity: 0; transform: translateY(28px); }
+.js-anim [data-reveal].is-in { opacity: 1; transform: none; transition: opacity 0.7s cubic-bezier(0.22,0.8,0.3,1), transform 0.7s cubic-bezier(0.22,0.8,0.3,1); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+  .js-anim [data-reveal] { opacity: 1; transform: none; }
+  .marquee__track { animation: none; }
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main" data-t="skip">Ugrás a tartalomra</a>
+
+<header class="nav" id="nav">
+  <div class="shell nav__in">
+    <a class="brand" href="#top">
+      <svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+        <path d="M4 9H60V14Q46 23 32 15Q18 23 4 14Z" fill="#dbb155"/>
+        <path d="M6 15H23C20 27 20 41 22 51Q14 56 6 52Z" fill="#dbb155"/>
+        <path d="M58 15H41C44 27 44 41 42 51Q50 56 58 52Z" fill="#dbb155"/>
+        <path d="M32 26.5l2.06 5.67 6.02.2-4.75 3.71 1.67 5.8L32 38.5l-5 3.38 1.67-5.8-4.75-3.71 6.02-.2z" fill="#dbb155"/>
+      </svg>
+      <span class="brand__name">Vastaps</span>
+    </a>
+
+    <nav class="nav__links" aria-label="Fő navigáció" data-t-label="navLabel">
+      <a href="#felfedezes" data-t="navDiscover">Felfedezés</a>
+      <a href="#naplo" data-t="navDiary">Napló</a>
+      <a href="#alkotok" data-t="navPeople">Alkotók</a>
+      <a href="#gyik" data-t="navFaq">GYIK</a>
+      <a href="#kapcsolat" data-t="navContact">Kapcsolat</a>
+    </nav>
+
+    <div class="lang" role="group" aria-label="Nyelv" data-t-label="langLabel">
+      <button class="lang__btn" type="button" data-lang="hu" aria-pressed="true">HU</button>
+      <button class="lang__btn" type="button" data-lang="en" aria-pressed="false">EN</button>
+    </div>
+
+    <a class="btn btn--gold btn--sm" href="https://szinhaz-tracker-production.up.railway.app/" data-t="ctaOpenShort">Megnyitom</a>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ── Hero ─────────────────────────────────────────────────────────── -->
+  <section class="hero" id="top">
+    <div class="hero__light" aria-hidden="true">
+      <div class="beam beam--l"></div>
+      <div class="beam beam--r"></div>
+      <div class="pool"></div>
+    </div>
+
+    <div class="shell hero__in">
+      <div class="hero__phone">
+        <div class="phone" style="--w: 264px" data-parallax="0.045">
+          <div class="phone__body">
+            <div class="phone__screen">
+              <img src="shots/feed.webp" width="810" height="1761" alt="A Vastaps hírfolyama: Maior Ottó megnézte a Scævola – Gianni Schicchit a Csokonai Nemzeti Színházban, négy maszkkal értékelve." data-t-alt="altFeed">
+              <span class="phone__glare"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero__copy">
+        <p class="eyebrow hero__eyebrow" data-t="heroEyebrow">Magyar színházi napló</p>
+        <h1 data-t="heroTitle">A magyar színház,<br><em>egy naplóban</em>.</h1>
+        <p class="lede hero__lede" data-t="heroLede">Nézd meg, mi megy ma este Budapesten és Debrecenben. Jegyezd fel, amit láttál, értékeld, és évek múlva is tudni fogod, melyik este volt az.</p>
+        <div class="hero__cta">
+          <a class="btn btn--gold" href="https://szinhaz-tracker-production.up.railway.app/">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            <span data-t="ctaOpen">Megnyitom az appot</span>
+          </a>
+          <a class="btn btn--ghost" href="https://github.com/ottomaior/szinhaz-tracker">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true" focusable="false"><path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.09.68-.22.68-.5 0-.24-.01-.87-.01-1.71-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.5-1.11-1.5-.91-.64.07-.63.07-.63 1 .07 1.53 1.06 1.53 1.06.89 1.570 2.34 1.12 2.91.86.09-.66.35-1.12.63-1.38-2.22-.26-4.56-1.14-4.56-5.06 0-1.12.39-2.03 1.02-2.75-.1-.26-.44-1.3.1-2.71 0 0 .84-.28 2.75 1.05a9.3 9.3 0 0 1 5 0c1.91-1.33 2.75-1.05 2.75-1.05.54 1.41.2 2.45.1 2.71.64.72 1.02 1.63 1.02 2.75 0 3.93-2.34 4.79-4.57 5.05.36.32.68.94.68 1.9 0 1.37-.01 2.48-.01 2.82 0 .27.18.59.69.49A10.06 10.06 0 0 0 22 12.25C22 6.58 17.52 2 12 2Z"/></svg>
+            <span data-t="ctaSource">Forráskód</span>
+          </a>
+        </div>
+        <p class="hero__meta">
+          <span data-t="metaPlays">1213 produkció</span>
+          <span data-t="metaCities">Budapest és Debrecen</span>
+          <span data-t="metaSync">Éjszakánként frissül</span>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── The houses ───────────────────────────────────────────────────── -->
+  <section class="houses" aria-label="A katalógusban szereplő színházak" data-t-label="housesLabel">
+    <p class="houses__label" data-t="housesHeading">Most Budapesten és Debrecenben</p>
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee__track">
+        <span>Örkény István Színház</span><span>·</span><span>Katona József Színház</span><span>·</span><span>Nemzeti Színház</span><span>·</span><span>Centrál Színház</span><span>·</span><span>Madách Színház</span><span>·</span><span>Vígszínház</span><span>·</span><span>Csokonai Nemzeti Színház</span><span>·</span><span>Vojtina Bábszínház</span><span>·</span>
+      </div>
+      <div class="marquee__track">
+        <span>Örkény István Színház</span><span>·</span><span>Katona József Színház</span><span>·</span><span>Nemzeti Színház</span><span>·</span><span>Centrál Színház</span><span>·</span><span>Madách Színház</span><span>·</span><span>Vígszínház</span><span>·</span><span>Csokonai Nemzeti Színház</span><span>·</span><span>Vojtina Bábszínház</span><span>·</span>
+      </div>
+    </div>
+    <p class="houses__note" data-t="housesNote">Több színház és több város jön — oda megyünk legközelebb, ahonnan kérik.</p>
+  </section>
+
+  <!-- ── Act I ────────────────────────────────────────────────────────── -->
+  <section class="bay" id="felfedezes">
+    <div class="shell">
+      <p class="act" data-reveal><span class="act__num">I.</span> <span data-t="act1">Felvonás · Felfedezés</span> <span class="act__rule"></span></p>
+
+      <div class="center-stage" data-reveal>
+        <h2 data-t="d1Title">Ami ma este megy, egy képernyőn.</h2>
+        <p class="lede" data-t="d1Lede">Budapest és Debrecen színházainak műsora egy helyen — nem jegyirodán át, hanem közvetlenül a színházak saját oldaláról, minden éjjel újraolvasva.</p>
+        <div class="phone" style="--w: 320px; margin-top: 1.5rem" data-parallax="0.03">
+          <div class="phone__body">
+            <div class="phone__screen">
+              <img src="shots/discover.webp" width="810" height="1761" loading="lazy" alt="A Felfedezés képernyő: „Műsoron most” sávban az Anyegin, a Káli holtak és A Pál utcai fiúk, alatta a közelgő előadások napokra bontva." data-t-alt="altDiscover">
+              <span class="phone__glare"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bay bay--tint">
+    <div class="shell split">
+      <div class="split__copy" data-reveal>
+        <p class="eyebrow" data-t="d2Eyebrow">Műsor</p>
+        <h2 data-t="d2Title">Nem darabok listája. Estéké.</h2>
+        <p class="body-dim" data-t="d2Body">A Műsor nézet napokra bontva mutatja, mi hol és hánykor kezdődik — teremmel, hosszal és műfajjal együtt. Ma, holnap, vagy bármelyik este az évadban.</p>
+        <ul class="callouts">
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"/><path d="m20 20-4.2-4.2"/></svg>
+            <span data-t="d2Point1"><b>Rangsorolt keresés.</b> Ékezet nélkül is megtalálja. A „Csuja Imre” a színészre keres, nem a szavakra.</span>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 5h18M6 12h12M10 19h4"/></svg>
+            <span data-t="d2Point2"><b>Szűrők.</b> Műfaj, színház, terjedelem, rendezés. Ahol egy városban csak egy színház van, a színházszűrő elrejti magát.</span>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 7h18v13H3zM3 7l2-3h14l2 3M9 12h6"/></svg>
+            <span data-t="d2Point3"><b>És az archívum.</b> Közel kilencszáz régi produkció, amit rég levettek. Kereshető marad, és naplózható.</span>
+          </li>
+        </ul>
+        <div style="margin-top: 0.6rem">
+          <p class="eyebrow" style="margin-bottom: 0.7rem" data-t="d2StatesLabel">Az app négy állapotot ismer</p>
+          <div class="badges">
+            <span class="badge" data-t="stAnnounced">Bemutató előtt</span>
+            <span class="badge badge--on" data-t="stRunning">Műsoron</span>
+            <span class="badge" data-t="stDormant">Szünetel</span>
+            <span class="badge" data-t="stEnded">Levették a műsorról</span>
+          </div>
+        </div>
+      </div>
+      <div class="split__art" data-reveal>
+        <div class="phone phone--tilt" style="--w: 288px; --tilt: 4deg" data-parallax="0.05">
+          <div class="phone__body">
+            <div class="phone__screen">
+              <img src="shots/musor.webp" width="810" height="1761" loading="lazy" alt="A Műsor naptárnézet: 2026. szeptember 7., egy előadás — Anyegin 19:30-kor az Örkény István Színház Stúdiójában." data-t-alt="altMusor">
+              <span class="phone__glare"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Act II ───────────────────────────────────────────────────────── -->
+  <section class="bay" id="naplo">
+    <div class="shell">
+      <p class="act" data-reveal><span class="act__num">II.</span> <span data-t="act2">Felvonás · A napló</span> <span class="act__rule"></span></p>
+      <div class="split">
+        <div class="split__art" data-reveal>
+          <div class="phone phone--tilt" style="--w: 288px; --tilt: -4deg" data-parallax="0.05">
+            <div class="phone__body">
+              <div class="phone__screen">
+                <img src="shots/play.webp" width="810" height="1761" loading="lazy" alt="A Pál utcai fiúk adatlapja a Csokonai Nemzeti Színházból: plakát, 4,0-s átlag, és külön sáv a színészi játékra, a rendezésre és a díszletre." data-t-alt="altPlay">
+                <span class="phone__glare"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="split__copy" data-reveal>
+          <p class="eyebrow" data-t="j1Eyebrow">Előadás naplózása</p>
+          <h2 data-t="j1Title">Öt maszk, három szempont, egy este.</h2>
+          <p class="body-dim" data-t="j1Body">Naplózz egy előadást: melyik estén voltál, hol ültél, mennyibe került a jegy. A színészi játékot, a rendezést és a díszletet külön értékeled — és megírhatod, mit gondoltál róla.</p>
+          <ul class="callouts">
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+              <span data-t="j1Point1"><b>Az évad, nem a naptári év.</b> A Vastaps szeptembertől augusztusig számol, ahogy a színházak is.</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 12a8 8 0 1 1 2.4 5.7"/><path d="M4 20v-5h5"/></svg>
+              <span data-t="j1Point2"><b>Újranézés.</b> Ugyanaz a darab másodszor külön bejegyzés, külön értékeléssel — mert nem ugyanaz az este volt.</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2 2 2 0 0 0 0 4 2 2 0 0 0 0 4 2 2 0 0 1-2 2H6a2 2 0 0 1-2-2 2 2 0 0 0 0-4 2 2 0 0 0 0-4Z"/><path d="M13 6v12"/></svg>
+              <span data-t="j1Point3"><b>A jegy is.</b> A hely, az ár és a jegyről készült fotó ugyanahhoz a bejegyzéshez tartozik.</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bay bay--tint">
+    <div class="shell split split--flip">
+      <div class="split__copy" data-reveal>
+        <p class="eyebrow" data-t="j2Eyebrow">Profil</p>
+        <h2 data-t="j2Title">A profilod egy műsorfüzet.</h2>
+        <p class="body-dim" data-t="j2Body">Minden megnézett előadás egy lapon, plakáttal, dátummal és értékeléssel. Nyilvános, ha akarod — így meg lehet mutatni, mit láttál ebben az évadban.</p>
+        <p class="body-dim" data-t="j2Body2">Az évad végén a Vastaps összeszámolja: hány estét töltöttél színházban, mibe került, milyen műfajokat néztél, és kiket láttál a legtöbbször színpadon.</p>
+      </div>
+      <div class="split__art" data-reveal>
+        <div class="phone phone--tilt" style="--w: 288px; --tilt: 4deg" data-parallax="0.05">
+          <div class="phone__body">
+            <div class="phone__screen">
+              <img src="shots/user.webp" width="810" height="1761" loading="lazy" alt="Maior Ottó nyilvános profilja: 14 megnézett darab, alatta a napló plakátokkal és maszk-értékelésekkel." data-t-alt="altUser">
+              <span class="phone__glare"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Act III ──────────────────────────────────────────────────────── -->
+  <section class="bay" id="alkotok">
+    <div class="shell">
+      <p class="act" data-reveal><span class="act__num">III.</span> <span data-t="act3">Felvonás · Alkotók</span> <span class="act__rule"></span></p>
+      <div class="split">
+        <div class="split__copy" data-reveal>
+          <p class="eyebrow" data-t="p1Eyebrow">Színészek és rendezők</p>
+          <h2 data-t="p1Title">Ki volt az a színésznő a második felvonásban?</h2>
+          <p class="body-dim" data-t="p1Body">A katalógus 2424 névvel indul. Rákeresel egy színészre, és előjön minden előadás, amiben játszott — szereppel, évszámmal, színházzal. A rendezők ugyanígy.</p>
+          <p class="body-dim" data-t="p1Body2">Ha bejelentkezel, szólunk, amikor egy követett alkotó új előadásban lép színpadra.</p>
+        </div>
+        <div class="split__art duo" data-reveal>
+          <div class="phone phone--back phone--tilt" style="--w: 226px; --tilt: -7deg" data-parallax="0.075">
+            <div class="phone__body">
+              <div class="phone__screen">
+                <img src="shots/search.webp" width="810" height="1761" loading="lazy" alt="Keresés a „Csuja Imre” névre: az alkotó találata 49 közreműködéssel, alatta 50 darab, amiből 47 már nincs műsoron." data-t-alt="altSearch">
+                <span class="phone__glare"></span>
+              </div>
+            </div>
+          </div>
+          <div class="phone phone--tilt" style="--w: 252px; --tilt: 3deg" data-parallax="0.045">
+            <div class="phone__body">
+              <div class="phone__screen">
+                <img src="shots/person.webp" width="810" height="1761" loading="lazy" alt="Für Anikó oldala: 48 közreműködés egy színházban, 2002-től 2027-ig, alatta az előadások szerepekkel." data-t-alt="altPerson">
+                <span class="phone__glare"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Playbill grid ────────────────────────────────────────────────── -->
+  <section class="bay bay--tint">
+    <div class="shell">
+      <div class="center-stage" data-reveal style="margin-bottom: clamp(2.5rem, 5vw, 3.5rem)">
+        <h2 data-t="gridTitle">És ami még a műsorfüzetben van</h2>
+      </div>
+      <div class="playbill">
+
+        <article class="tile tile--wide tile--shot" data-reveal>
+          <div class="tile__inner">
+            <div class="tile__text">
+              <svg class="tile__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/></svg>
+              <h3 data-t="tile1T">Készíts saját listát</h3>
+              <p data-t="tile1B">Bármilyen téma köré: egy rendező kézjegye, a gyerekekkel megnézhető darabok, az idei legjobb esték, a Shakespeare-ek. Összeállítod, sorrendbe teszed, és megosztod egy linkkel — a barátaid fiók nélkül is meg tudják nyitni. A „Bodó Viktor Budapesten” a mi példánk rá: nyolc rendezés három színházban.</p>
+            </div>
+            <div class="phone phone--tilt" style="--w: 176px; --tilt: -4deg">
+              <div class="phone__body">
+                <div class="phone__screen">
+                  <img src="shots/list.webp" width="810" height="1761" loading="lazy" alt="A „Bodó Viktor Budapesten” lista: nyolc rendezés három színházban, 2014-től." data-t-alt="altList">
+                  <span class="phone__glare"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="tile" data-reveal>
+          <svg class="tile__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 4h12a1 1 0 0 1 1 1v15l-7-4-7 4V5a1 1 0 0 1 1-1Z"/></svg>
+          <h3 data-t="tile2T">Kívánságlista</h3>
+          <p data-t="tile2B">Amit még meg akarsz nézni, egy helyen — a darab oldalán a könyvjelzővel teszed rá. Ugyanezen a képernyőn látod azokat az alkotókat és színházakat is, akiket követsz.</p>
+        </article>
+
+        <article class="tile" data-reveal>
+          <svg class="tile__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9" cy="8" r="3.2"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16.5 5.4a3.2 3.2 0 0 1 0 5.2M19 20a6 6 0 0 0-2.6-4.9"/></svg>
+          <h3 data-t="tile3T">Hírfolyam</h3>
+          <p data-t="tile3B">Kik mit néztek meg és mit gondoltak róla. Követhetsz másokat, vagy nézheted mindenki bejegyzéseit.</p>
+        </article>
+
+        <article class="tile" data-reveal>
+          <svg class="tile__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.9 1.8-1.8 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-1 .8-1.8 1.8-1.8H16a5 5 0 0 0 5-5c0-3.9-4-7-9-7Z"/><circle cx="7.7" cy="11.2" r="1.1" fill="currentColor" stroke="none"/><circle cx="11" cy="7.7" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.6" r="1.1" fill="currentColor" stroke="none"/></svg>
+          <h3 data-t="tile5T">Öt téma</h3>
+          <p data-t="tile5B">Sötét bordó, hűvös szén, krémszínű műsorfüzet, halvány lila és tiszta fehér. Mindegyikben minden szövegszín 4,5:1 fölött van — és bejelentkezés nélkül is át lehet váltani.</p>
+        </article>
+
+        <article class="tile" data-reveal>
+          <svg class="tile__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></svg>
+          <h3 data-t="tile6T">Jegyet nem itt veszel</h3>
+          <p data-t="tile6B">A Vastaps nem jegyiroda, és nem is akar az lenni. Egy koppintás kivisz a színház saját oldalára, oda, ahol tényleg meg lehet venni.</p>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Tally ────────────────────────────────────────────────────────── -->
+  <section class="tally" aria-label="A katalógus számokban" data-t-label="tallyLabel">
+    <div class="tally__cell"><span class="tally__n" data-count="1213">1213</span><span class="tally__k" data-t="tally1">Produkció</span></div>
+    <div class="tally__cell"><span class="tally__n" data-count="2424">2424</span><span class="tally__k" data-t="tally2">Alkotó</span></div>
+    <div class="tally__cell"><span class="tally__n" data-count="454">454</span><span class="tally__k" data-t="tally3">Meghirdetett időpont</span></div>
+    <div class="tally__cell"><span class="tally__n" data-count="1960" data-plain="1">1960</span><span class="tally__k" data-t="tally4">A legrégebbi bemutató</span></div>
+  </section>
+
+  <!-- ── Under the hood ───────────────────────────────────────────────── -->
+  <section class="bay">
+    <div class="shell">
+      <p class="act" data-reveal><span class="act__num">IV.</span> <span data-t="act4">Felvonás · A színfalak mögött</span> <span class="act__rule"></span></p>
+      <div class="center-stage" data-reveal style="margin-bottom: clamp(2rem, 4vw, 3rem)">
+        <h2 data-t="techTitle">Egy ember írta, és nyílt a forráskódja.</h2>
+        <p class="lede" data-t="techLede">A tárháznak nemcsak a kódja publikus: minden döntés indoklása is le van írva benne, azzal együtt, ami először nem működött.</p>
+      </div>
+      <dl class="specs" data-reveal>
+        <div class="specs__row"><dt class="specs__k">Expo · React Native · TypeScript</dt><dd class="specs__v" data-t="spec1">Egy kódbázis, amiből webes és natív build is készül.</dd></div>
+        <div class="specs__row"><dt class="specs__k">Supabase · Postgres · RLS</dt><dd class="specs__v" data-t="spec2">Ki mit lát, az sorszinten, az adatbázisban dől el — nem az appban.</dd></div>
+        <div class="specs__row"><dt class="specs__k" data-t="spec3K">Tíz beolvasó</dt><dd class="specs__v" data-t="spec3">Minden éjjel újraolvassa a színházak saját oldalait. Jegyirodai közvetítő nélkül.</dd></div>
+        <div class="specs__row"><dt class="specs__k">WCAG AA</dt><dd class="specs__v" data-t="spec4">Mind az öt témában minden szövegszín 4,5:1 kontraszt fölött van, kártyán is.</dd></div>
+        <div class="specs__row"><dt class="specs__k">expo-router</dt><dd class="specs__v" data-t="spec5">Minden képernyőnek saját URL-je van, és megosztható — a darabtól az alkotóig.</dd></div>
+        <div class="specs__row"><dt class="specs__k" data-t="spec6K">Ami még nincs kész</dt><dd class="specs__v" data-t="spec6">Az iOS- és Android-build készül. A webes verzió most is működik telefonon.</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <!-- ── FAQ ──────────────────────────────────────────────────────────── -->
+  <section class="bay bay--tint" id="gyik">
+    <div class="shell">
+      <div class="center-stage" data-reveal style="margin-bottom: clamp(2rem, 4vw, 3rem)">
+        <h2 data-t="faqTitle">Gyakori kérdések</h2>
+      </div>
+      <div class="faq" data-reveal>
+        <details>
+          <summary><span data-t="faq1Q">Kerül valamibe?</span><svg class="faq__sign" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></summary>
+          <div class="faq__a"><p data-t="faq1A">Ma nem. Böngészni, naplózni és értékelni fizetés nélkül lehet, és hirdetés sincs benne. Hogy hosszabb távon miből tartja el magát, az még nyitott kérdés; a színházi együttműködés például szóba jöhet. Ha ez változik, előre szólok, és nem visszamenőleg.</p></div>
+        </details>
+        <details>
+          <summary><span data-t="faq2Q">Honnan jönnek az adatok?</span><svg class="faq__sign" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></summary>
+          <div class="faq__a"><p data-t="faq2A">Közvetlenül a színházak saját oldalairól, minden éjjel újraolvasva — van, ahol a színház nyilvános API-jából, van, ahol a műsoroldalról. Minden új színház egy-egy külön beolvasót jelent, ezért nem egyszerre jönnek. Jegyirodai aggregátorokat szándékosan nem használ.</p></div>
+        </details>
+        <details>
+          <summary><span data-t="faq3Q">Melyik színházak vannak benne?</span><svg class="faq__sign" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></summary>
+          <div class="faq__a"><p data-t="faq3A">Egyelőre Budapest és Debrecen. Budapesten az Örkény István Színház, a Katona József Színház, a Nemzeti Színház, a Centrál Színház, a Madách Színház és a Vígszínház; Debrecenben a Csokonai Nemzeti Színház és a Vojtina Bábszínház. Hogy melyik város és melyik ház jön ezután, azon múlik, honnan kérik — úgyhogy ha a tiéd hiányzik, írj, mert pont ez dönti el a sorrendet.</p></div>
+        </details>
+        <details>
+          <summary><span data-t="faq4Q">Kell hozzá fiók?</span><svg class="faq__sign" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></summary>
+          <div class="faq__a"><p data-t="faq4A">A böngészéshez nem: a műsor, a darabok, az alkotók és a listák fiók nélkül is megnyithatók. Naplózáshoz, értékeléshez és kívánságlistához kell egy e-mail-cím és egy jelszó.</p></div>
+        </details>
+        <details>
+          <summary><span data-t="faq5Q">Van belőle telefonos alkalmazás?</span><svg class="faq__sign" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></summary>
+          <div class="faq__a"><p data-t="faq5A">A webes verzió most is telefonra van tervezve, és a böngésződből a kezdőképernyőre tehető. Az App Store-ba és a Google Play-be szánt változat készül — a natív projekt és a mélylinkek már megvannak hozzá.</p></div>
+        </details>
+        <details>
+          <summary><span data-t="faq6Q">Ki csinálja?</span><svg class="faq__sign" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></summary>
+          <div class="faq__a"><p data-t="faq6A">Maior Ottó. A tervezéstől az adatbázison és a szinkronon át a szövegekig. Lentebb megtalálod az elérhetőségét.</p></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Credits & contact ────────────────────────────────────────────── -->
+  <section class="bay" id="kapcsolat">
+    <div class="shell">
+      <p class="act" data-reveal><span class="act__num">V.</span> <span data-t="act5">Felvonás · Kapcsolat</span> <span class="act__rule"></span></p>
+      <div class="contact" data-reveal>
+        <h2 data-t="contactTitle">Írj, ha érdekel.</h2>
+        <p class="lede" data-t="contactBody">Színházat képviselsz, és szeretnéd, hogy a műsorotok is benne legyen? Sajtó, együttműködés, hibajelentés, vagy csak kíváncsi vagy, hogyan készült? Egy e-mail elég — magyarul vagy angolul.</p>
+        <a class="mailto" href="mailto:ottomaior@protonmail.com?subject=Vastaps">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></svg>
+          ottomaior@protonmail.com
+        </a>
+        <div class="hero__cta" style="margin-top: 0.4rem">
+          <a class="btn btn--gold" href="https://szinhaz-tracker-production.up.railway.app/" data-t="ctaOpen2">Megnyitom az appot</a>
+          <a class="btn btn--ghost" href="https://github.com/ottomaior/szinhaz-tracker" data-t="ctaSource2">Forráskód a GitHubon</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="shell foot__in">
+    <p data-t="footNote">Vastaps — magyar színházi napló. Készítette Maior Ottó.</p>
+    <div class="foot__links">
+      <a href="https://szinhaz-tracker-production.up.railway.app/legal/impresszum" data-t="footImpressum">Impresszum</a>
+      <a href="https://szinhaz-tracker-production.up.railway.app/legal/adatvedelem" data-t="footPrivacy">Adatvédelem</a>
+      <a href="https://szinhaz-tracker-production.up.railway.app/legal/feltetelek" data-t="footTerms">Feltételek</a>
+      <a href="mailto:ottomaior@protonmail.com?subject=Vastaps" data-t="footContact">Kapcsolat</a>
+    </div>
+  </div>
+</footer>
+<script>
+(function () {
+  "use strict";
+
+  /* ── Language ───────────────────────────────────────────────────────────
+     Hungarian is the document, not a translation of one: it is what the
+     markup says, so the page reads correctly with no JavaScript at all.
+     English is a dictionary applied over it, and switching back restores
+     the original nodes rather than translating a second time. */
+  var EN = {
+    skip: "Skip to content",
+    navLabel: "Main navigation",
+    navDiscover: "Discover", navDiary: "Diary", navPeople: "People", navFaq: "FAQ", navContact: "Contact",
+    langLabel: "Language",
+    ctaOpenShort: "Open",
+
+    heroEyebrow: "A Hungarian theatre diary",
+    heroTitle: "Hungarian theatre,<br><em>in one diary</em>.",
+    heroLede: "See what is on tonight in Budapest and Debrecen. Note down what you saw, rate it, and years from now still know which night it was.",
+    ctaOpen: "Open the app", ctaSource: "Source code",
+    metaPlays: "1,213 productions", metaCities: "Budapest and Debrecen", metaSync: "Synced nightly",
+    altFeed: "The Vastaps feed: Maior Ottó saw Scævola – Gianni Schicchi at the Csokonai National Theatre, rated four masks.",
+
+    housesLabel: "Theatres in the catalogue",
+    housesNote: "More theatres and more cities are coming — wherever people ask for them next.",
+    housesHeading: "Right now in Budapest and Debrecen",
+
+    act1: "Discover",
+    d1Title: "What is on tonight, on one screen.",
+    d1Lede: "Everything playing in Budapest and Debrecen in one place — not through a ticket agency, but read straight from the theatres’ own sites, every night.",
+    altDiscover: "The Discover screen: an “On now” rail with Anyegin, Káli holtak and A Pál utcai fiúk, and upcoming performances broken down by day.",
+
+    d2Eyebrow: "Listings",
+    d2Title: "Not a list of plays. A list of evenings.",
+    d2Body: "The listings view breaks the season down day by day: what starts where and at what time, with the room, the running time and the genre. Tonight, tomorrow, or any evening in the season.",
+    d2Point1: "<b>Ranked search.</b> It finds things without accents too. Searching “Csuja Imre” looks for the performer, not for the words.",
+    d2Point2: "<b>Filters.</b> Genre, theatre, running time, sort order. In a city with only one theatre, the theatre filter hides itself.",
+    d2Point3: "<b>And the archive.</b> Close to nine hundred past productions, long since taken off. Still searchable, still loggable.",
+    d2StatesLabel: "The app knows four states",
+    stAnnounced: "Before opening night", stRunning: "On now", stDormant: "Dormant", stEnded: "Taken off",
+    altMusor: "The listings calendar: 7 September 2026, one performance — Anyegin at 19:30 in the Örkény István Theatre’s studio.",
+
+    act2: "The diary",
+    altPlay: "The page for A Pál utcai fiúk at the Csokonai National Theatre: poster, a 4.0 average, and separate bars for acting, directing and set design.",
+    j1Eyebrow: "Logging a performance",
+    j1Title: "Five masks, three categories, one evening.",
+    j1Body: "Log a performance: which night you went, where you sat, what the ticket cost. You rate the acting, the directing and the set separately — and you can write down what you made of it.",
+    j1Point1: "<b>The season, not the calendar year.</b> Vastaps counts September to August, the way theatres do.",
+    j1Point2: "<b>Second viewings.</b> The same play a second time is its own entry with its own rating — because it was not the same evening.",
+    j1Point3: "<b>The ticket, too.</b> The seat, the price and a photo of the stub all belong to the same entry.",
+
+    j2Eyebrow: "Profile",
+    j2Title: "Your profile is a programme.",
+    j2Body: "Every performance you have seen on one page, with the poster, the date and your rating. Public if you want it to be — so you can show what you saw this season.",
+    j2Body2: "At the end of the season Vastaps adds it up: how many evenings you spent at the theatre, what it cost, which genres you watched, and who you saw on stage most often.",
+    altUser: "Maior Ottó’s public profile: 14 plays seen, and below it the diary with posters and mask ratings.",
+
+    act3: "People",
+    p1Eyebrow: "Performers and directors",
+    p1Title: "Who was that actress in the second act?",
+    p1Body: "The catalogue starts with 2,424 names. Search for a performer and every production they have appeared in comes back — with the role, the year and the house. Directors work the same way.",
+    p1Body2: "Sign in and we will tell you when someone you follow steps on stage in a new production.",
+    altSearch: "Searching for “Csuja Imre”: the performer match with 49 credits, and below it 50 productions, 47 of them no longer running.",
+    altPerson: "Für Anikó’s page: 48 credits at one theatre, from 2002 to 2027, with the productions and roles below.",
+
+    gridTitle: "And the rest of the programme",
+    altList: "The “Bodó Viktor in Budapest” list: eight productions across three theatres, from 2014 onwards.",
+    tile1T: "Make a list of your own",
+    tile1B: "Around any theme you like: one director’s signature, plays to take the children to, the best evenings of the year, the Shakespeares. You put it together, order it, and share it with a link — your friends can open it without an account. “Bodó Viktor in Budapest” is our own example: eight productions across three theatres.",
+    tile2T: "Watchlist",
+    tile2B: "What you still want to see, in one place — you add a production with the bookmark on its page. The same screen also holds the performers and theatres you follow.",
+    tile3T: "Feed",
+    tile3B: "Who saw what, and what they made of it. Follow people, or read everyone’s entries.",
+    tile5T: "Five themes",
+    tile5B: "Dark burgundy, cool charcoal, cream playbill, pale lilac and plain white. Every text colour clears 4.5:1 in all five — and you can switch without signing in.",
+    tile6T: "You don’t buy tickets here",
+    tile6B: "Vastaps is not a box office and does not want to be. One tap takes you to the theatre’s own page, where you can actually buy the seat.",
+
+    tallyLabel: "The catalogue in numbers",
+    tally1: "Productions", tally2: "People", tally3: "Announced dates", tally4: "The oldest premiere",
+
+    act4: "Behind the curtain",
+    techTitle: "Written by one person, and open source.",
+    techLede: "It is not only the code that is public: the repository explains the reasoning behind every decision, including the things that did not work the first time.",
+    spec1: "One codebase, producing both the web and the native builds.",
+    spec2: "Who sees what is decided row by row in the database — not in the app.",
+    spec3K: "Ten sync adapters",
+    spec3: "Re-reads the theatres’ own sites every night. No ticket-agency middleman.",
+    spec4: "Every text colour clears 4.5:1 in all five themes, on cards as well as on the page.",
+    spec5: "Every screen has its own URL and can be shared — from a production to a performer.",
+    spec6K: "What is not finished",
+    spec6: "The iOS and Android builds are in progress. The web version already works on a phone.",
+
+    faqTitle: "Frequently asked",
+    faq1Q: "Does it cost anything?",
+    faq1A: "Not today. Browsing, logging and rating cost nothing, and there is no advertising. How it supports itself longer term is still an open question — partnerships with theatres, for instance, are one possibility. If that changes, you will hear about it in advance, and it will not apply retroactively.",
+    faq2Q: "Where does the data come from?",
+    faq2A: "Straight from the theatres’ own websites, re-read every night — some through a theatre’s public API, some from its listings pages. Every new theatre means its own reader, which is why they arrive one at a time rather than all at once. Ticket aggregators are deliberately not used.",
+    faq3Q: "Which theatres are included?",
+    faq3A: "Budapest and Debrecen for now. In Budapest: Örkény István, Katona József, the National Theatre, Centrál, Madách and Vígszínház. In Debrecen: the Csokonai National Theatre and the Vojtina Puppet Theatre. Which city and which house comes next depends on where people ask from — so if yours is missing, write in, because that is exactly what decides the order.",
+    faq4Q: "Do I need an account?",
+    faq4A: "Not to browse: the listings, the productions, the performers and the lists all open without one. Logging, rating and the watchlist need an email address and a password.",
+    faq5Q: "Is there a phone app?",
+    faq5A: "The web version is already built for a phone and can be added to your home screen from the browser. App Store and Play Store builds are in progress — the native project and the deep links are already in place.",
+    faq6Q: "Who makes it?",
+    faq6A: "Maior Ottó. From the design through the database and the sync to the copy. His address is just below.",
+
+    act5: "Contact",
+    contactTitle: "Write, if this interests you.",
+    contactBody: "Do you work at a theatre and want its listings in here? Press, partnerships, a bug you found, or just curious how it was built? One email is enough — in Hungarian or in English.",
+    ctaOpen2: "Open the app", ctaSource2: "Source on GitHub",
+
+    footNote: "Vastaps — a Hungarian theatre diary. Made by Maior Ottó.",
+    footImpressum: "Imprint", footPrivacy: "Privacy", footTerms: "Terms", footContact: "Contact"
+  };
+
+  var TITLE = { hu: "Vastaps — magyar színházi napló", en: "Vastaps — a Hungarian theatre diary" };
+  var root = document.documentElement;
+  var buttons = document.querySelectorAll("[data-lang]");
+
+  function stash(el, key, value) {
+    if (el.dataset[key] === undefined) el.dataset[key] = value;
+  }
+
+  function setLang(lang) {
+    var en = lang === "en";
+    root.lang = en ? "en" : "hu";
+    document.title = TITLE[en ? "en" : "hu"];
+
+    document.querySelectorAll("[data-t]").forEach(function (el) {
+      var k = el.getAttribute("data-t");
+      stash(el, "hu", el.innerHTML);
+      if (en && EN[k]) el.innerHTML = EN[k];
+      else if (!en) el.innerHTML = el.dataset.hu;
+    });
+
+    document.querySelectorAll("[data-t-alt]").forEach(function (el) {
+      var k = el.getAttribute("data-t-alt");
+      stash(el, "huAlt", el.alt);
+      el.alt = en && EN[k] ? EN[k] : el.dataset.huAlt;
+    });
+
+    document.querySelectorAll("[data-t-label]").forEach(function (el) {
+      var k = el.getAttribute("data-t-label");
+      stash(el, "huLabel", el.getAttribute("aria-label") || "");
+      el.setAttribute("aria-label", en && EN[k] ? EN[k] : el.dataset.huLabel);
+    });
+
+    buttons.forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.lang === (en ? "en" : "hu")));
+    });
+
+    countUp(en ? "en-GB" : "hu-HU", true);
+
+    try { localStorage.setItem("vastaps-lang", en ? "en" : "hu"); } catch (e) {}
+  }
+
+  buttons.forEach(function (b) {
+    b.addEventListener("click", function () { setLang(b.dataset.lang); });
+  });
+
+  /* ── Counters ───────────────────────────────────────────────────────────
+     They hold the real figure in the markup, so the number is correct before
+     any script runs; the animation only replays it. */
+  var tallies = Array.prototype.slice.call(document.querySelectorAll("[data-count]"));
+  var locale = "hu-HU";
+  var calm = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+  function countUp(loc, immediate) {
+    if (loc) locale = loc;
+    var fmt = new Intl.NumberFormat(locale);
+    tallies.forEach(function (el) {
+      var target = Number(el.dataset.count);
+      if (el.dataset.plain === "1") { el.textContent = String(target); return; }
+      if (immediate || calm.matches || !el.dataset.armed) {
+        el.textContent = fmt.format(target);
+        return;
+      }
+      var start = performance.now(), dur = 1100;
+      (function step(now) {
+        var p = Math.min(1, (now - start) / dur);
+        var eased = 1 - Math.pow(1 - p, 3);
+        el.textContent = fmt.format(Math.round(target * eased));
+        if (p < 1) requestAnimationFrame(step);
+      })(start);
+    });
+  }
+
+  /* ── Reveal on scroll ───────────────────────────────────────────────── */
+  if ("IntersectionObserver" in window && !calm.matches) {
+    root.classList.add("js-anim");
+    var reveals = document.querySelectorAll("[data-reveal]");
+    var seen = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        var el = entry.target;
+        var siblings = Array.prototype.slice.call(el.parentElement.children).filter(function (n) { return n.hasAttribute("data-reveal"); });
+        var i = siblings.indexOf(el);
+        el.style.transitionDelay = Math.min(i, 5) * 70 + "ms";
+        el.classList.add("is-in");
+        seen.unobserve(el);
+      });
+    }, { rootMargin: "0px 0px -12% 0px", threshold: 0.06 });
+    reveals.forEach(function (el) { seen.observe(el); });
+
+    var counting = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        entry.target.dataset.armed = "1";
+        counting.unobserve(entry.target);
+        countUp();
+      });
+    }, { threshold: 0.5 });
+    tallies.forEach(function (el) { counting.observe(el); });
+  }
+
+  /* ── Parallax and the nav's hairline ────────────────────────────────── */
+  var floats = Array.prototype.slice.call(document.querySelectorAll("[data-parallax]"));
+  var nav = document.getElementById("nav");
+  var ticking = false;
+
+  function frame() {
+    ticking = false;
+    nav.classList.toggle("is-stuck", window.scrollY > 8);
+    if (calm.matches) return;
+    var mid = window.innerHeight / 2;
+    floats.forEach(function (el) {
+      var box = el.getBoundingClientRect();
+      var offset = (box.top + box.height / 2 - mid) * Number(el.dataset.parallax);
+      el.style.setProperty("--py", offset.toFixed(1) + "px");
+    });
+  }
+
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(frame);
+  }
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", onScroll, { passive: true });
+
+  /* ── Boot ───────────────────────────────────────────────────────────── */
+  var stored = null;
+  try { stored = localStorage.getItem("vastaps-lang"); } catch (e) {}
+  if (stored === "en") setLang("en");
+  frame();
+})();
+</script>
+</body>
+</html>

@@ -3,3 +3,7 @@ dist
 .git
 .gitignore
 npm-debug.log
+
+# The landing page ships nowhere near the app image: nginx serves dist/
+# only, and this keeps ~640 kB of screenshots out of the build layer too.
+landing
