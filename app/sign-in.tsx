@@ -13,8 +13,11 @@ import { Text } from "@/components/ui/Text";
 import { Button } from "@/components/ui/Button";
 import { strings } from "@/i18n/hu";
 import { closeModal } from "@/utils/navigation";
+import { makeStyles } from "@/theme/styles";
 
 export default function SignInScreen() {
+  const styles = useStyles();
+
   const router = useRouter();
   const fontsLoaded = useAppFonts();
   const [email, setEmail] = useState("");
@@ -109,7 +112,7 @@ export default function SignInScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   input: {
     backgroundColor: colors.surface,
     borderWidth: 1,
@@ -119,4 +122,4 @@ const styles = StyleSheet.create({
     fontSize: inputFontSize,
     color: colors.text,
   },
-});
+}));

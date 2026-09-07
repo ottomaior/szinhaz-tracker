@@ -20,6 +20,7 @@ import {
   isDataExportSupported,
 } from "@/services/accountService";
 import { strings } from "@/i18n/hu";
+import { makeStyles } from "@/theme/styles";
 
 /**
  * Everything that is a preference rather than a profile.
@@ -32,6 +33,8 @@ import { strings } from "@/i18n/hu";
  * they want to know what they agreed to.
  */
 export default function SettingsScreen() {
+  const styles = useStyles();
+
   const { session } = useAuth();
   const { preference, resolved, hydrated, setPreference } = useTheme();
 
@@ -140,6 +143,8 @@ function ThemeRow({
   selected: boolean;
   onPress: () => void;
 }) {
+  const styles = useStyles();
+
   const palette = themes[swatch];
 
   return (
@@ -193,6 +198,8 @@ function LinkRow({
   label: string;
   blurb: string;
 }) {
+  const styles = useStyles();
+
   return (
     <Link href={href} asChild>
       <Pressable accessibilityRole="link" accessibilityLabel={label} style={styles.row}>
@@ -217,6 +224,8 @@ function LinkRow({
  * neither is something anybody opens Settings to do.
  */
 function AccountSection() {
+  const styles = useStyles();
+
   const router = useRouter();
   const fontsLoaded = useAppFonts();
 
@@ -351,7 +360,7 @@ function AccountSection() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   content: { paddingHorizontal: gutter, paddingTop: space.xl, paddingBottom: space["4xl"], gap: space.lg },
   row: {
     flexDirection: "row",
@@ -404,4 +413,4 @@ const styles = StyleSheet.create({
   swatchCard: { position: "absolute", top: 5, left: 5, right: 5, height: 14, borderRadius: 3 },
   swatchRule: { height: 3, width: "70%", borderRadius: 2, opacity: 0.85 },
   swatchDot: { height: 3, width: "35%", borderRadius: 2 },
-});
+}));

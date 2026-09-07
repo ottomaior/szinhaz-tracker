@@ -36,10 +36,13 @@ import { Chip } from "@/components/ui/Chip";
 import { strings } from "@/i18n/hu";
 import { formatTime, todayInBudapest } from "@/utils/datetime";
 import { closeModal } from "@/utils/navigation";
+import { makeStyles } from "@/theme/styles";
 
 const MOMENT_TAGS = [strings.checkin.tagStandingOvation, strings.checkin.tagCried, strings.checkin.tagRecommend];
 
 export default function CheckInScreen() {
+  const styles = useStyles();
+
   // `reviewId` puts the form in edit mode. One screen rather than two, because
   // logging an evening and correcting one you logged are the same set of
   // questions — and a second screen asking them slightly differently is how the
@@ -719,6 +722,8 @@ export default function CheckInScreen() {
  * which made the most prominent action in the app a dead end.
  */
 function PlayPicker({ insetTop, onCancel, onPick }: { insetTop: number; onCancel: () => void; onPick: (play: Play) => void }) {
+  const styles = useStyles();
+
   const fontsLoaded = useAppFonts();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Play[]>([]);
@@ -803,7 +808,7 @@ function SubRatingRow({ label, value, onChange }: { label: string; value: number
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   centered: {
     flex: 1,
     backgroundColor: colors.bg,
@@ -892,4 +897,4 @@ const styles = StyleSheet.create({
     color: colors.text,
     textAlignVertical: "top",
   },
-});
+}));

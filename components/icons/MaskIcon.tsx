@@ -1,6 +1,6 @@
 import { View, Pressable } from "react-native";
 import Svg, { Path, Ellipse } from "react-native-svg";
-import { colors } from "@/theme/colors";
+import { useColors } from "@/theme/styles";
 import { fillPaint, paint, strokePaint } from "@/components/icons/svgPaint";
 import {
   MASK_BODY_PATH,
@@ -17,8 +17,8 @@ import {
 export function MaskIcon({
   size = 20,
   state = "off",
-  color = colors.gold,
-  offColor = colors.hairline,
+  color,
+  offColor,
 }: {
   size?: number;
   /** "on" = filled/active, "off" = empty/inactive */
@@ -26,14 +26,22 @@ export function MaskIcon({
   color?: string;
   offColor?: string;
 }) {
-  const stroke = state === "on" ? color : offColor;
-  const fill = state === "on" ? color : "none";
+  // Resolved from the palette here rather than as default parameters, because
+  // this component has to re-render when the theme changes and only a hook can
+  // make that happen. The plain icons in Icons.tsx can stay on defaults; they
+  // are always drawn inside something that already subscribes.
+  const palette = useColors();
+  const on = color ?? palette.gold;
+  const off = offColor ?? palette.hairline;
+
+  const stroke = state === "on" ? on : off;
+  const fill = state === "on" ? on : "none";
   // Eyes/mouth are cut out of the fill, so on "on" they use the surface
   // color the icon sits on; simplest robust choice is transparent via the
   // background showing through isn't possible in SVG fill, so we punch
   // holes using the bg color passed as `offColor`'s complement — in
   // practice we just draw them in the base app background tone.
-  const punchColor = state === "on" ? colors.onAccent : offColor;
+  const punchColor = state === "on" ? palette.onAccent : off;
 
   return (
     <Svg width={size} height={size} viewBox={`0 0 ${MASK_VIEWBOX} ${MASK_VIEWBOX}`}>

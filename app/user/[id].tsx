@@ -17,6 +17,7 @@ import { ReportSheet } from "@/components/ui/ReportSheet";
 import { ContentColumn } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
+import { makeStyles } from "@/theme/styles";
 
 /**
  * Somebody else's profile: what they have seen, and a button to follow them.
@@ -26,6 +27,8 @@ import { strings } from "@/i18n/hu";
  * author link lead here.
  */
 export default function UserProfileScreen() {
+  const styles = useStyles();
+
   const { id } = useLocalSearchParams<{ id?: string }>();
   const router = useRouter();
   const { session } = useAuth();
@@ -333,7 +336,7 @@ function Stat({ value, label }: { value: number; label: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   profileRow: { flexDirection: "row", alignItems: "center", gap: space.md, marginTop: space.md },
   statsRow: {
     flexDirection: "row",
@@ -366,4 +369,4 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     padding: space.md,
   },
-});
+}));

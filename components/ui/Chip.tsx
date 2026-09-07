@@ -2,6 +2,7 @@ import { Pressable, Text, StyleSheet } from "react-native";
 import { colors } from "@/theme/colors";
 import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
+import { makeStyles } from "@/theme/styles";
 
 export function Chip({
   label,
@@ -12,6 +13,8 @@ export function Chip({
   active?: boolean;
   onPress?: () => void;
 }) {
+  const styles = useStyles();
+
   const fontsLoaded = useAppFonts();
   return (
     <Pressable
@@ -35,7 +38,7 @@ export function Chip({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   base: {
     paddingVertical: 8,
     paddingHorizontal: 14,
@@ -49,4 +52,4 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.hairline,
   },
-});
+}));

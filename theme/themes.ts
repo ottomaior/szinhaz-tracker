@@ -7,13 +7,12 @@
  *
  * ## How a theme actually reaches the screen
  *
- * Every screen reads `colors` from theme/colors.ts inside a module-level
- * `StyleSheet.create`, which evaluates once at import. Nothing re-reads it on
- * render, so on the face of it a runtime switch is impossible without
- * rewriting all 37 of those blocks into hooks.
+ * Differently on each platform, and that is the one thing worth knowing about
+ * this app's theming.
  *
- * It is possible because react-native-web treats a CSS custom property as a
- * valid colour and passes it through verbatim:
+ * On the web it never goes through React at all, because react-native-web
+ * treats a CSS custom property as a valid colour and passes it through
+ * verbatim:
  *
  *     // react-native-web/dist/modules/isWebColor/index.js
  *     color === 'currentcolor' || color === 'inherit' || color.indexOf('var(') === 0
@@ -22,6 +21,11 @@
  * atomic CSS class is stable, and switching a theme is one attribute write on
  * the root element — no re-render, no restyle pass in React at all. The values
  * below are what app/+html.tsx writes into the custom properties.
+ *
+ * Native has no custom properties, so there the switch is React's job:
+ * theme/colors.ts resolves `colors.bg` against whichever palette is active, and
+ * theme/styles.ts rebuilds each screen's stylesheet per theme and re-renders the
+ * components holding one. That is the whole reason `makeStyles` exists.
  *
  * ## The constraint that shape imposes
  *
@@ -33,9 +37,8 @@
  * the tab bar's glow, the top-edge highlight — has to be its own token with
  * the alpha already mixed in. That is why this list is 18 tokens and not 12.
  *
- * Native has no custom properties and no theme picker: it reads `velvetDark`
- * directly. app.json's `userInterfaceStyle: "dark"` and the #120505 splash are
- * pinned for the same reason, and should stay that way.
+ * The constraint is the web's, but the shape is shared: a native palette is the
+ * same 18 tokens, so a theme is written once and works on both.
  *
  * ## Contrast
  *

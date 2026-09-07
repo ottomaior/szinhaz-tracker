@@ -18,11 +18,14 @@ import { ContentColumn } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { Chip } from "@/components/ui/Chip";
 import { strings } from "@/i18n/hu";
+import { makeStyles } from "@/theme/styles";
 
 const VENUE_TYPES: VenueType[] = ["kőszínház", "független", "befogadó tér", "szabadtéri"];
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 export default function AddPlayScreen() {
+  const styles = useStyles();
+
   const router = useRouter();
   const fontsLoaded = useAppFonts();
   const { session, loading } = useAuth();
@@ -387,6 +390,8 @@ function LabeledInput({
   placeholder?: string;
   keyboardType?: "default" | "number-pad";
 }) {
+  const styles = useStyles();
+
   const fontsLoaded = useAppFonts();
   return (
     <View style={{ gap: 6 }}>
@@ -404,7 +409,7 @@ function LabeledInput({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   // The brand face is applied per-instance like everywhere else in the app;
   // this style used to pin itself to "System" and skip Sora entirely.
   sectionLabel: {
@@ -444,4 +449,4 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     gap: 2,
   },
-});
+}));

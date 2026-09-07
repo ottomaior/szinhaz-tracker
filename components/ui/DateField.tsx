@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Modal, Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
-import { elevation, gutter, minTouchTarget, overlay, radius, space } from "@/theme/tokens";
+import { gutter, minTouchTarget, overlay, radius, space } from "@/theme/tokens";
 import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
 import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, CloseIcon } from "@/components/icons/Icons";
@@ -17,6 +17,7 @@ import {
   toDayKey,
   WEEKDAY_LABELS,
 } from "@/utils/calendar";
+import { makeStyles } from "@/theme/styles";
 
 /**
  * "When were you there?" — a chip carrying its date, which opens a month grid.
@@ -45,6 +46,8 @@ export function DateField({
   onChange: (dayKey: string) => void;
   label?: string;
 }) {
+  const styles = useStyles();
+
   const fontsLoaded = useAppFonts();
   const insets = useSafeAreaInsets();
   const [open, setOpen] = useState(false);
@@ -180,6 +183,8 @@ export function DateField({
 }
 
 function QuickPick({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  const styles = useStyles();
+
   const fontsLoaded = useAppFonts();
   return (
     <Pressable
@@ -202,7 +207,7 @@ function QuickPick({ label, active, onPress }: { label: string; active: boolean;
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors, elevation) => StyleSheet.create({
   chip: {
     flexDirection: "row",
     alignItems: "center",
@@ -271,4 +276,4 @@ const styles = StyleSheet.create({
   },
   dayCell: { borderRadius: radius.pill },
   dayCellSelected: { backgroundColor: colors.gold },
-});
+}));

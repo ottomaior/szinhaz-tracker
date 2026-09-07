@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
-import { colors } from "@/theme/colors";
 import { gutter, radius, space } from "@/theme/tokens";
 import { Text } from "@/components/ui/Text";
 import { Chip } from "@/components/ui/Chip";
@@ -12,6 +11,7 @@ import { getProgramDays, getProgramForDay, type ProgramFilters } from "@/service
 import type { ProgramDay, ProgramEntry } from "@/data/types";
 import { formatDayLabel, formatLongDate, formatRuntimeMinutes, formatTime, todayInBudapest } from "@/utils/datetime";
 import { strings } from "@/i18n/hu";
+import { makeStyles } from "@/theme/styles";
 
 /**
  * The catalogue read from the calendar end: pick an evening, see what is on.
@@ -27,6 +27,8 @@ import { strings } from "@/i18n/hu";
  * of dead ends.
  */
 export function ProgramView({ filters }: { filters: ProgramFilters }) {
+  const styles = useStyles();
+
   const router = useRouter();
   const [days, setDays] = useState<ProgramDay[]>([]);
   const [selectedDay, setSelectedDay] = useState<string>();
@@ -165,6 +167,8 @@ export function ProgramView({ filters }: { filters: ProgramFilters }) {
 }
 
 function ProgramRow({ entry, onPress }: { entry: ProgramEntry; onPress: () => void }) {
+  const styles = useStyles();
+
   // Everything the reader needs to decide, in one line under the title: which
   // stage, how long, and what kind of evening it is. Assembled by filtering
   // rather than by conditional joins, so a missing runtime never leaves a
@@ -202,7 +206,7 @@ function ProgramRow({ entry, onPress }: { entry: ProgramEntry; onPress: () => vo
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   dayRow: { gap: space.sm, paddingHorizontal: gutter },
   row: {
     flexDirection: "row",
@@ -218,4 +222,4 @@ const styles = StyleSheet.create({
   // with the length of each title above them.
   time: { width: 46 },
   thumb: { width: 40, aspectRatio: 3 / 4 },
-});
+}));

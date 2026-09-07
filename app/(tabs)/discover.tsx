@@ -44,6 +44,7 @@ import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 import { personInitials } from "@/utils/people";
 import { budapestDayKey, formatTime, todayInBudapest } from "@/utils/datetime";
+import { makeStyles } from "@/theme/styles";
 
 const FILTERS = [strings.discover.filterAll, strings.discover.filterKoszinhaz, strings.discover.filterFuggetlen, strings.discover.filterSzabadteri];
 
@@ -128,6 +129,8 @@ const BROWSE_SORTS: { key: BrowseSort; label: string }[] = [
 ];
 
 export default function DiscoverScreen() {
+  const styles = useStyles();
+
   const insets = useSafeAreaInsets();
   const fontsLoaded = useAppFonts();
   const router = useRouter();
@@ -1025,6 +1028,8 @@ function useVenue(venueId: string): Venue | undefined {
 }
 
 function PremiereCard({ play, onPress }: { play: Play; onPress: () => void }) {
+  const styles = useStyles();
+
   const venue = useVenue(play.venueId);
 
   return (
@@ -1043,6 +1048,8 @@ function PremiereCard({ play, onPress }: { play: Play; onPress: () => void }) {
 }
 
 function TrendingCard({ play, onPress }: { play: Play; onPress: () => void }) {
+  const styles = useStyles();
+
   const venue = useVenue(play.venueId);
   const hasRatings = play.rating.count > 0;
 
@@ -1084,6 +1091,8 @@ function TrendingCard({ play, onPress }: { play: Play; onPress: () => void }) {
  * where, and over what span.
  */
 function PersonResultRow({ person, onPress }: { person: PersonSearchResult; onPress: () => void }) {
+  const styles = useStyles();
+
   const parts = [strings.discover.personCredits(person.creditCount)];
   if (person.directedCount > 0) parts.push(strings.discover.personDirected(person.directedCount));
   if (person.venueCount > 0) parts.push(strings.person.venueCount(person.venueCount));
@@ -1149,6 +1158,8 @@ function UpcomingRow({
   isLast: boolean;
   onPress: () => void;
 }) {
+  const styles = useStyles();
+
   const isToday = budapestDayKey(entry.startsAt) === todayInBudapest();
   const genreLabel = entry.genreNormalized
     ? strings.genres[entry.genreNormalized] ?? entry.genreNormalized
@@ -1202,7 +1213,7 @@ function UpcomingRow({
     </View>
   );
 }
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
 
   /* The two-line hero. `display` twice, with the second line recessive: the
      reference sets the greeting and the news at the same size and separates
@@ -1306,4 +1317,4 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 3,
   },
-});
+}));

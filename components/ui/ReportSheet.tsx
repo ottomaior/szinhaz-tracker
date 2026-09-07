@@ -3,7 +3,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from "react
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
 import { inputFontSize } from "@/theme/type";
-import { elevation, gutter, minTouchTarget, overlay, radius, space } from "@/theme/tokens";
+import { gutter, minTouchTarget, overlay, radius, space } from "@/theme/tokens";
 import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
 import {
@@ -16,6 +16,7 @@ import {
 import { CheckIcon, CloseIcon } from "@/components/icons/Icons";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
+import { makeStyles } from "@/theme/styles";
 
 const TITLES: Record<ReportTarget, string> = {
   review: strings.moderation.reportTitleReview,
@@ -54,6 +55,8 @@ export function ReportSheet({
   /** Fired after the report lands, so the caller can flip its own label. */
   onReported: () => void;
 }) {
+  const styles = useStyles();
+
   const insets = useSafeAreaInsets();
   const fontsLoaded = useAppFonts();
 
@@ -180,7 +183,7 @@ export function ReportSheet({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors, elevation) => StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFill,
     backgroundColor: overlay.scrim,
@@ -236,4 +239,4 @@ const styles = StyleSheet.create({
     paddingTop: space.md,
     alignItems: "center",
   },
-});
+}));

@@ -13,6 +13,7 @@ import { ContentColumn } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { Button } from "@/components/ui/Button";
 import { strings } from "@/i18n/hu";
+import { makeStyles } from "@/theme/styles";
 
 /** Short enough to type twice, long enough not to be the year of your birth. */
 const MIN_PASSWORD_LENGTH = 8;
@@ -37,6 +38,8 @@ const MIN_PASSWORD_LENGTH = 8;
  * see by accident.
  */
 export default function ResetPasswordScreen() {
+  const styles = useStyles();
+
   const router = useRouter();
   const fontsLoaded = useAppFonts();
   const { session, loading } = useAuth();
@@ -145,7 +148,7 @@ export default function ResetPasswordScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   input: {
     backgroundColor: colors.surface,
     borderWidth: 1,
@@ -155,4 +158,4 @@ const styles = StyleSheet.create({
     fontSize: inputFontSize,
     color: colors.text,
   },
-});
+}));

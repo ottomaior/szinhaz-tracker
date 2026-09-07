@@ -3,6 +3,7 @@ import { colors } from "@/theme/colors";
 import { overlay } from "@/theme/tokens";
 import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
+import { makeStyles } from "@/theme/styles";
 
 export function Button({
   label,
@@ -24,6 +25,8 @@ export function Button({
   loading?: boolean;
   accessibilityLabel?: string;
 }) {
+  const styles = useStyles();
+
   const fontsLoaded = useAppFonts();
   const isPrimary = variant === "primary";
   const isBlocked = disabled || loading;
@@ -68,6 +71,8 @@ export function IconButton({
   disabled?: boolean;
   accessibilityLabel: string;
 }) {
+  const styles = useStyles();
+
   return (
     <Pressable
       onPress={onPress}
@@ -89,7 +94,7 @@ export function IconButton({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   base: {
     flexDirection: "row",
     alignItems: "center",
@@ -127,4 +132,4 @@ const styles = StyleSheet.create({
     backgroundColor: colors.gold,
     borderColor: colors.gold,
   },
-});
+}));

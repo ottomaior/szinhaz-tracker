@@ -47,12 +47,12 @@ const config: ExpoConfig = {
   icon: "./assets/images/icon.png",
   scheme: "szinhaztracker",
 
-  // Pinned dark, and it must stay pinned. `theme/colors.ts` explains why: the
-  // palette picker is web-only, because it works by swapping CSS custom
-  // properties on the document element, and there are none on native. A native
-  // build is Velvet Curtain and nothing else, so the OS chrome, the splash
-  // background below and the palette all have to agree on one answer.
-  userInterfaceStyle: "dark",
+  // Was pinned to "dark" for as long as the palette picker was web-only. It is
+  // not any more — theme/styles.ts carries the themes on native too — and this
+  // key is what `useColorScheme()` reports, so pinning it would have left the
+  // picker's "system" row permanently answering "dark" no matter what the
+  // phone was set to.
+  userInterfaceStyle: "automatic",
 
   assetBundlePatterns: ["**/*"],
 
@@ -196,8 +196,12 @@ const config: ExpoConfig = {
     "expo-router",
 
     // SDK 54 removed the top-level `splash` key; the same settings live in this
-    // plugin now. #120505 is the Velvet Curtain background — see the note on
-    // `userInterfaceStyle` above for why it is not themeable.
+    // plugin now. #120505 is the Velvet Curtain background, and it stays that
+    // way whichever theme the reader has chosen: the splash is a native asset
+    // rendered before any JavaScript runs, so it cannot know about a preference
+    // that lives in AsyncStorage. Doing better means a second, light artwork and
+    // a `dark` variant on this plugin — worth it later, but it is a drawing job
+    // rather than a code one.
     [
       "expo-splash-screen",
       {

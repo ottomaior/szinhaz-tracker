@@ -14,8 +14,11 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
+import { makeStyles } from "@/theme/styles";
 
 export default function WatchlistScreen() {
+  const styles = useStyles();
+
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { session, loading: authLoading } = useAuth();
@@ -146,6 +149,8 @@ export default function WatchlistScreen() {
 }
 
 function WatchlistRow({ play, onPress }: { play: Play; onPress: () => void }) {
+  const styles = useStyles();
+
   const [venue, setVenue] = useState<Venue>();
   useEffect(() => {
     getVenueById(play.venueId)
@@ -185,6 +190,8 @@ function WatchlistRow({ play, onPress }: { play: Play; onPress: () => void }) {
  * would give six rows more visual weight than the productions above them.
  */
 function SubjectRow({ label, detail, onPress }: { label: string; detail: string; onPress: () => void }) {
+  const styles = useStyles();
+
   return (
     <Pressable onPress={onPress} style={styles.subjectRow} accessibilityRole="button" accessibilityLabel={label}>
       <View style={{ flex: 1, gap: 2 }}>
@@ -200,7 +207,7 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("hu-HU", { month: "short", day: "numeric" });
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   header: {
     paddingHorizontal: gutter,
     paddingBottom: space.lg,
@@ -220,4 +227,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.md,
   },
   metaRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
-});
+}));

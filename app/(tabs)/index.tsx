@@ -25,8 +25,11 @@ import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { formatTimeAgo, strings } from "@/i18n/hu";
 import { budapestDayKey, formatLongDate } from "@/utils/datetime";
+import { makeStyles } from "@/theme/styles";
 
 export default function FeedScreen() {
+  const styles = useStyles();
+
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [items, setItems] = useState<FeedItem[]>([]);
@@ -284,6 +287,8 @@ function FeedCardRouter({
  * profile.
  */
 function CardByline({ user, action, meta }: { user: User; action: string; meta: string }) {
+  const styles = useStyles();
+
   const router = useRouter();
   return (
     <Pressable
@@ -319,6 +324,8 @@ function CheckinCard({
   onOpenPlay: (id: string) => void;
   onOpenEntry: (reviewId: string) => void;
 }) {
+  const styles = useStyles();
+
   const [play, setPlay] = useState<Play>();
   const [user, setUser] = useState<User>();
   const [venue, setVenue] = useState<Venue>();
@@ -425,6 +432,8 @@ function CheckinCard({
 }
 
 function WatchlistCard({ entry, onOpenPlay }: { entry: WatchlistEntry; onOpenPlay: (id: string) => void }) {
+  const styles = useStyles();
+
   const [play, setPlay] = useState<Play>();
   const [user, setUser] = useState<User>();
   const [venue, setVenue] = useState<Venue>();
@@ -471,7 +480,7 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("hu-HU", { month: "short", day: "numeric" });
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   topBar: {
     paddingHorizontal: gutter,
     paddingBottom: space.md,
@@ -524,4 +533,4 @@ const styles = StyleSheet.create({
   // edge of the card.
   posterCaption: { position: "absolute", left: space.lg, right: space.lg, bottom: space.lg, gap: space.xs },
   divider: { height: 1, backgroundColor: colors.hairlineSoft, marginTop: space.xs },
-});
+}));

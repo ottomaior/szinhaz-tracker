@@ -9,8 +9,9 @@
  * values (10, 10.5, 11, 11.5, 12, 12.5, 13, 13.5, 14 …) that no one chose —
  * they accumulated.
  */
-import { Platform } from "react-native";
+import { Platform, type ViewStyle } from "react-native";
 import { colors } from "./colors";
+import type { Palette } from "./themes";
 
 /**
  * Spacing, on a 4px grid.
@@ -68,20 +69,50 @@ export const hairlineWidth = Platform.select({ ios: 0.5, android: 0.5, default: 
  * colour is a custom property — see theme/themes.ts — and on iOS
  * `shadowOpacity: 1` times the colour's own alpha is the same result.
  */
-export const elevation = {
+export type Elevation = {
+  none: ViewStyle;
+  raised: ViewStyle;
+  floating: ViewStyle;
+};
+
+/** The two depth recipes, for a given palette. */
+export const elevationFor = (palette: Palette): Elevation => ({
   none: {},
   raised: {
     borderTopWidth: hairlineWidth,
-    borderTopColor: colors.edgeHighlight,
+    borderTopColor: palette.edgeHighlight,
   },
   floating: {
-    shadowColor: colors.shadow,
+    shadowColor: palette.shadow,
     shadowOpacity: 1,
     shadowRadius: 24,
     shadowOffset: { width: 0, height: 8 },
     elevation: 8,
   },
-} as const;
+});
+
+/**
+ * The same, against whichever palette is active.
+ *
+ * Getters rather than a plain object, and that is load-bearing: an object
+ * literal would read `colors.shadow` once, when this module is imported, and
+ * on native that is before the reader's stored theme has been read back — the
+ * exact staleness theme/colors.ts warns about. A getter defers the read to the
+ * moment of use.
+ *
+ * Inside a `makeStyles` factory take the `elevation` argument instead. The
+ * factory runs once per theme rather than once per render, so it must be
+ * handed the palette it is building for rather than reaching for the live one.
+ */
+export const elevation: Elevation = {
+  none: {},
+  get raised() {
+    return elevationFor(colors).raised;
+  },
+  get floating() {
+    return elevationFor(colors).floating;
+  },
+};
 
 /**
  * Veils that deliberately do not belong to the theme.

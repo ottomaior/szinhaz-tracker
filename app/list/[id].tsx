@@ -15,6 +15,7 @@ import { ContentColumn } from "@/components/ui/Screen";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
+import { makeStyles } from "@/theme/styles";
 
 /**
  * One list, and what is on it.
@@ -24,6 +25,8 @@ import { strings } from "@/i18n/hu";
  * publish a judgement its author never made.
  */
 export default function ListScreen() {
+  const styles = useStyles();
+
   const { id } = useLocalSearchParams<{ id?: string }>();
   const router = useRouter();
   const { session } = useAuth();
@@ -243,11 +246,11 @@ export default function ListScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   ownerZone: {
     gap: space.md,
     borderTopWidth: 1,
     borderTopColor: colors.hairlineSoft,
     paddingTop: space.lg,
   },
-});
+}));

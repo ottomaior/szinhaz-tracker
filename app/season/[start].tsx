@@ -28,6 +28,7 @@ import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 import { formatLongDate } from "@/utils/datetime";
 import { currentSeasonStart, seasonLabel, seasonLabelWithSuffix } from "@/utils/season";
+import { makeStyles } from "@/theme/styles";
 
 /**
  * The évad in review.
@@ -43,6 +44,8 @@ import { currentSeasonStart, seasonLabel, seasonLabelWithSuffix } from "@/utils/
  * went to and who you kept seeing.
  */
 export default function SeasonScreen() {
+  const styles = useStyles();
+
   const { start } = useLocalSearchParams<{ start?: string }>();
   const router = useRouter();
   const { session, loading } = useAuth();
@@ -297,6 +300,8 @@ export default function SeasonScreen() {
  * some opera", which a length answers directly.
  */
 function GenreBars({ genres, total }: { genres: SeasonGenre[]; total: number }) {
+  const styles = useStyles();
+
   const most = Math.max(...genres.map((g) => g.entries), 1);
   return (
     <View style={{ gap: space.sm }}>
@@ -333,7 +338,7 @@ function Stat({ value, label, gold = false }: { value: number; label: string; go
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   seasonRow: { flexDirection: "row", gap: space.sm, flexWrap: "wrap" },
   statsCard: {
     flexDirection: "row",
@@ -372,4 +377,4 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   genreFill: { height: 6, borderRadius: 3, backgroundColor: colors.gold },
-});
+}));

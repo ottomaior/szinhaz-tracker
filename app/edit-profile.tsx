@@ -23,6 +23,7 @@ import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 import { closeModal } from "@/utils/navigation";
 import { profileInitials } from "@/utils/people";
+import { makeStyles } from "@/theme/styles";
 
 /**
  * The one screen where a profile stops being read-only.
@@ -33,6 +34,8 @@ import { profileInitials } from "@/utils/people";
  * would only let the two disagree.
  */
 export default function EditProfileScreen() {
+  const styles = useStyles();
+
   const router = useRouter();
   const fontsLoaded = useAppFonts();
   const { session, loading } = useAuth();
@@ -265,6 +268,8 @@ function Field({
   placeholder?: string;
   fontsLoaded: boolean;
 }) {
+  const styles = useStyles();
+
   return (
     <View style={{ gap: space.sm }}>
       <Text variant="label" tone="dim">{label}</Text>
@@ -280,7 +285,7 @@ function Field({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   photoRow: { flexDirection: "row", alignItems: "center", gap: space.lg },
   photoButton: {
     borderWidth: 1,
@@ -305,4 +310,4 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   bioInput: { minHeight: 108, textAlignVertical: "top" },
-});
+}));

@@ -17,10 +17,13 @@ import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 import { currentSeasonStart } from "@/utils/season";
+import { makeStyles } from "@/theme/styles";
 
 const TABS = [strings.profile.tabDiary, strings.profile.tabWatchlists, strings.profile.tabReviews] as const;
 
 export default function ProfileScreen() {
+  const styles = useStyles();
+
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { session, loading } = useAuth();
@@ -352,6 +355,8 @@ function TabBody({
   emptyAction?: React.ReactNode;
   children: React.ReactNode;
 }) {
+  const styles = useStyles();
+
   if (loaded && isEmpty) {
     return (
       <View style={styles.emptyState}>
@@ -380,6 +385,8 @@ function formatDate(dayKey: string) {
 }
 
 function Stat({ value, label, gold = false }: { value: number; label: string; gold?: boolean }) {
+  const styles = useStyles();
+
   return (
     <View style={styles.stat}>
       <Text variant="heading" tone={gold ? "accent" : "default"}>
@@ -394,6 +401,8 @@ function Stat({ value, label, gold = false }: { value: number; label: string; go
 
 /** The way into Settings, identical whether or not anybody is signed in. */
 function SettingsButton({ onPress }: { onPress: () => void }) {
+  const styles = useStyles();
+
   return (
     <Pressable
       style={[styles.headerBtn, styles.headerIconBtn]}
@@ -407,7 +416,7 @@ function SettingsButton({ onPress }: { onPress: () => void }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   cover: {
     height: 118,
     backgroundColor: colors.surface2,
@@ -482,4 +491,4 @@ const styles = StyleSheet.create({
   tabList: { marginTop: space.lg, gap: space.lg },
   reviewMeta: { flexDirection: "row", alignItems: "center", gap: space.sm },
   emptyState: { marginTop: 24, alignItems: "center", paddingVertical: 30, gap: space.lg },
-});
+}));

@@ -22,6 +22,7 @@ import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 import { formatTime } from "@/utils/datetime";
 import { personSlug } from "@/utils/people";
+import { makeStyles } from "@/theme/styles";
 
 /**
  * One evening, read back.
@@ -37,6 +38,8 @@ import { personSlug } from "@/utils/people";
  * between its author and a visitor beyond what it offers to do next.
  */
 export default function DiaryEntryScreen() {
+  const styles = useStyles();
+
   const { id } = useLocalSearchParams<{ id?: string }>();
   const router = useRouter();
   const { session } = useAuth();
@@ -416,7 +419,7 @@ function formatDate(dayKey: string) {
   });
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   playRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -468,4 +471,4 @@ const styles = StyleSheet.create({
     borderColor: colors.hairline,
     backgroundColor: colors.surface,
   },
-});
+}));

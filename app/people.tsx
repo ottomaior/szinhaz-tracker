@@ -14,6 +14,7 @@ import { ModalHeader } from "@/components/ui/ModalHeader";
 import { ContentColumn } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
+import { makeStyles } from "@/theme/styles";
 
 /**
  * Finding people to follow.
@@ -22,6 +23,8 @@ import { strings } from "@/i18n/hu";
  * as a "who am I following" list too rather than an empty search box.
  */
 export default function PeopleScreen() {
+  const styles = useStyles();
+
   const router = useRouter();
   const fontsLoaded = useAppFonts();
   const { session } = useAuth();
@@ -119,7 +122,7 @@ export default function PeopleScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
@@ -136,4 +139,4 @@ const styles = StyleSheet.create({
     gap: space.md,
     paddingVertical: space.sm,
   },
-});
+}));

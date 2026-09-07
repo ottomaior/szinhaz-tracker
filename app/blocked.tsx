@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
-import { colors } from "@/theme/colors";
+import { useColors } from "@/theme/styles";
 import { gutter, minTouchTarget, space } from "@/theme/tokens";
 import { useAuth } from "@/contexts/AuthContext";
 import { getBlockedUsers, unblockUser, type BlockedPerson } from "@/services/moderationService";
@@ -69,6 +69,8 @@ export default function BlockedUsersScreen() {
       setBusyId(undefined);
     }
   }
+
+  const colors = useColors();
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>

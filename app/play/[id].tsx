@@ -33,6 +33,7 @@ import { formatLongDate, formatShowtime } from "@/utils/datetime";
 import { personSlug } from "@/utils/people";
 import { strings } from "@/i18n/hu";
 import { closeModal } from "@/utils/navigation";
+import { makeStyles } from "@/theme/styles";
 
 /**
  * The hero honours the poster's real proportions, within limits.
@@ -54,6 +55,8 @@ function heroAspect(poster?: Poster): number {
 }
 
 export default function PlayDetailScreen() {
+  const styles = useStyles();
+
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -612,6 +615,8 @@ function formatRuntime(minutes: number) {
  * as missing.
  */
 function RatingHistogram({ bands }: { bands: number[] }) {
+  const styles = useStyles();
+
   const peak = Math.max(...bands, 1);
   return (
     <View style={styles.histogram} accessibilityRole="image" accessibilityLabel={bands.map((n, i) => strings.playDetail.ratingBand(i + 1, n)).join(", ")}>
@@ -639,6 +644,8 @@ function RatingHistogram({ bands }: { bands: number[] }) {
 }
 
 function RatingBar({ label, value }: { label: string; value: number }) {
+  const styles = useStyles();
+
   const pct = Math.max(0, Math.min(1, value / 5)) * 100;
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
@@ -675,7 +682,7 @@ function ReviewRow({ review }: { review: Review }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   friendsHeading: {
     flexDirection: "row",
     alignItems: "baseline",
@@ -747,4 +754,4 @@ const styles = StyleSheet.create({
   barTrack: { flex: 1, height: 5, borderRadius: 3, backgroundColor: colors.surface2, overflow: "hidden" },
   barFill: { height: "100%", backgroundColor: colors.gold },
   rowBetween: { flexDirection: "row", alignItems: "baseline", justifyContent: "space-between" },
-});
+}));

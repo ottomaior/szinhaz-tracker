@@ -19,6 +19,7 @@
 import type { TextStyle } from "react-native";
 import { bodyFont, displayFont } from "./typography";
 import { colors } from "./colors";
+import type { Palette } from "./themes";
 
 export type TypeVariant =
   /** Play and screen titles. The app's voice. */
@@ -63,13 +64,26 @@ const VARIANTS: Record<TypeVariant, VariantSpec> = {
   caption: { size: 11.5, lineHeight: 15, family: "body", weight: "medium" },
 };
 
-const TONES: Record<TypeTone, string> = {
-  default: colors.text,
-  dim: colors.textDim,
-  faint: colors.textFaint,
-  accent: colors.gold,
-  // For text sitting on a gold fill.
-  inverse: colors.onAccent,
+/**
+ * A function of the palette rather than a map of it: a map would read the
+ * colours once, when this module is imported, which on native is before the
+ * reader's stored theme has been read back. theme/colors.ts explains why that
+ * goes stale and stays stale.
+ */
+const toneColor = (palette: Palette, tone: TypeTone): string => {
+  switch (tone) {
+    case "dim":
+      return palette.textDim;
+    case "faint":
+      return palette.textFaint;
+    case "accent":
+      return palette.gold;
+    // For text sitting on a gold fill.
+    case "inverse":
+      return palette.onAccent;
+    default:
+      return palette.text;
+  }
 };
 
 /**
@@ -79,14 +93,19 @@ const TONES: Record<TypeTone, string> = {
  * asynchronously and every screen renders before they arrive — see
  * theme/typography.ts.
  */
-export function typeStyle(variant: TypeVariant, fontsLoaded: boolean, tone: TypeTone = "default"): TextStyle {
+export function typeStyle(
+  variant: TypeVariant,
+  fontsLoaded: boolean,
+  tone: TypeTone = "default",
+  palette: Palette = colors
+): TextStyle {
   const spec = VARIANTS[variant];
   return {
     fontFamily: spec.family === "display" ? displayFont(fontsLoaded, spec.weight === "regular" ? "regular" : "semibold") : bodyFont(fontsLoaded, spec.weight),
     fontSize: spec.size,
     lineHeight: spec.lineHeight,
     letterSpacing: spec.letterSpacing,
-    color: TONES[tone],
+    color: toneColor(palette, tone),
   };
 }
 

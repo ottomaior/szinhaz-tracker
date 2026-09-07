@@ -8,6 +8,8 @@ import {
   themes,
   type ThemeId,
 } from "@/theme/themes";
+import { setActivePalette } from "@/theme/colors";
+import { PaintContext, type PaintTarget } from "./PaintContext";
 
 /** A reader's choice: one of the palettes, or "whatever the device is set to". */
 export type ThemePreference = ThemeId | "system";
@@ -35,12 +37,19 @@ function isPreference(value: string | null): value is ThemePreference {
 /**
  * Remembers which palette the reader picked.
  *
- * This provider is deliberately thin, because **the theme is not state that
- * renders anything.** The palette reaches the screen as CSS custom properties
- * (theme/themes.ts explains how), so applying a theme is one attribute write
- * on the document element — no re-render, and every `StyleSheet.create` in the
- * app keeps the class it was born with. What React owns here is only the
- * picker's checked row.
+ * On the web this provider is close to inert, because there **the theme is not
+ * state that renders anything.** The palette reaches the screen as CSS custom
+ * properties (theme/themes.ts explains how), so applying a theme is one
+ * attribute write on the document element — no re-render, and every stylesheet
+ * in the app keeps the class it was born with. What React owns there is only
+ * the picker's checked row.
+ *
+ * Native has no custom properties, so the same switch has to be made by React.
+ * `PaintContext` below carries the resolved theme id; the `makeStyles` hooks in
+ * theme/styles.ts subscribe to it, so the components holding stylesheets
+ * re-render with the palette swapped. `setActivePalette` covers the rest — the
+ * inline `colors.x` reads scattered through the screens' JSX, which are plain
+ * property reads with no way to reach a hook.
  *
  * "System" is likewise not tracked in JavaScript: app/+html.tsx expresses it
  * as two `prefers-color-scheme` media queries, which keep working when the OS
@@ -81,6 +90,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         : DEFAULT_DARK
       : preference;
 
+  // Before this provider's children render, not after: an inline
+  // `colors.surface` in a screen is read during that same pass, and a palette
+  // still pointing at the old theme would hand it the previous colour. A plain
+  // assignment to module state, so repeating it on every render costs nothing.
+  setActivePalette(resolved);
+
   useEffect(() => {
     let active = true;
     AsyncStorage.getItem(THEME_STORAGE_KEY)
@@ -115,9 +130,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     [scheme]
   );
 
+  // "css" on the web is a constant, so nothing subscribed to PaintContext ever
+  // re-renders there — see contexts/PaintContext.ts.
+  const paint: PaintTarget = Platform.OS === "web" ? "css" : resolved;
+
   return (
     <ThemeContext.Provider value={{ preference, resolved, hydrated, setPreference }}>
-      {children}
+      <PaintContext.Provider value={paint}>{children}</PaintContext.Provider>
     </ThemeContext.Provider>
   );
 }

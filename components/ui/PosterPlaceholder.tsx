@@ -2,10 +2,10 @@ import { useEffect, useId, useState } from "react";
 import { View, StyleSheet, DimensionValue, Text as RNText } from "react-native";
 import { Image } from "expo-image";
 import Svg, { Defs, RadialGradient, LinearGradient, Stop, Rect, Line } from "react-native-svg";
-import { colors } from "@/theme/colors";
 import { displayFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
 import type { Poster } from "@/data/types";
+import { makeStyles } from "@/theme/styles";
 
 /**
  * A production's cover art, or a warm spotlight-on-velvet stand-in when there
@@ -51,6 +51,8 @@ export function PosterPlaceholder({
   contentFit?: "cover" | "contain";
   priority?: "low" | "normal" | "high";
 }) {
+  const styles = useStyles();
+
   const [failedUri, setFailedUri] = useState<string>();
 
   // Gradient ids live in the document's global id namespace on web, so every
@@ -215,7 +217,7 @@ function Scrim({ id }: { id: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   wrap: {
     overflow: "hidden",
     backgroundColor: colors.surface,
@@ -225,4 +227,4 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-});
+}));

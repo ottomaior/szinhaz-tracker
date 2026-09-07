@@ -25,6 +25,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 import { closeModal } from "@/utils/navigation";
+import { makeStyles } from "@/theme/styles";
 
 /**
  * "Which of these have you seen?" — the first thing a new account should do.
@@ -41,6 +42,8 @@ import { closeModal } from "@/utils/navigation";
  * production.
  */
 export default function OnboardingScreen() {
+  const styles = useStyles();
+
   const router = useRouter();
   const { session, loading: authLoading } = useAuth();
 
@@ -251,7 +254,7 @@ export default function OnboardingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   cityRow: { flexDirection: "row", gap: space.sm, flexWrap: "wrap" },
   tickOverlay: {
     ...StyleSheet.absoluteFill,
@@ -280,4 +283,4 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.hairline,
   },
-});
+}));

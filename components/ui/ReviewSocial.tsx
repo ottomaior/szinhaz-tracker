@@ -22,6 +22,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { ReportSheet } from "@/components/ui/ReportSheet";
 import { Text } from "@/components/ui/Text";
 import { formatTimeAgo, strings } from "@/i18n/hu";
+import { makeStyles } from "@/theme/styles";
 
 /**
  * The like control and the comment thread for one diary entry.
@@ -43,6 +44,8 @@ export function ReviewSocial({
   /** Who owns the entry — they may remove any comment under it. */
   reviewOwnerId: string;
 }) {
+  const styles = useStyles();
+
   const router = useRouter();
   const fontsLoaded = useAppFonts();
   const { session } = useAuth();
@@ -287,7 +290,7 @@ export function ReviewSocial({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   likeRow: { flexDirection: "row", alignItems: "center", gap: space.md },
   likeButton: {
     flexDirection: "row",
@@ -321,4 +324,4 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 16,
   },
-});
+}));

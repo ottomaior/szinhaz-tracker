@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Animated, Easing, View, StyleSheet, type DimensionValue } from "react-native";
-import { colors } from "@/theme/colors";
+import { useColors } from "@/theme/styles";
 import { radius as radii, space } from "@/theme/tokens";
 
 /**
@@ -31,6 +31,7 @@ export function Skeleton({
   // also means the Animated.Value is constructed once rather than on every
   // render and immediately thrown away.
   const [pulse] = useState(() => new Animated.Value(0));
+  const colors = useColors();
 
   useEffect(() => {
     const animation = Animated.loop(

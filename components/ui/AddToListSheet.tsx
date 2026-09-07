@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
-import { elevation, gutter, minTouchTarget, overlay, radius, space } from "@/theme/tokens";
+import { gutter, minTouchTarget, overlay, radius, space } from "@/theme/tokens";
 import { addToList, getListIdsContaining, getLists, removeFromList, type ListSummary } from "@/services/listsService";
 import { getCurrentUser } from "@/services/playsService";
 import { CheckIcon, CloseIcon } from "@/components/icons/Icons";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
+import { makeStyles } from "@/theme/styles";
 
 /**
  * "Which of my lists does this belong on?"
@@ -34,6 +35,8 @@ export function AddToListSheet({
   /** Escape hatch when there is nowhere to put it yet. */
   onCreateList: () => void;
 }) {
+  const styles = useStyles();
+
   const insets = useSafeAreaInsets();
   const [lists, setLists] = useState<ListSummary[]>();
   const [contained, setContained] = useState<Set<string>>(new Set());
@@ -154,7 +157,7 @@ export function AddToListSheet({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors, elevation) => StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFill,
     backgroundColor: overlay.scrim,
@@ -198,4 +201,4 @@ const styles = StyleSheet.create({
     paddingTop: space.md,
     alignItems: "center",
   },
-});
+}));

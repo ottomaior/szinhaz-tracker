@@ -7,6 +7,7 @@ import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
 import { HomeIcon, CompassIcon, TicketIcon, UserIcon, PlusIcon } from "@/components/icons/Icons";
 import { strings } from "@/i18n/hu";
+import { makeStyles } from "@/theme/styles";
 
 const TAB_ICONS: Record<string, (color: string) => React.ReactNode> = {
   index: (color) => <HomeIcon color={color} />,
@@ -28,6 +29,8 @@ const TAB_LABELS: Record<string, string> = {
  * being a tab of its own.
  */
 export function TabBar({ state, navigation }: BottomTabBarProps) {
+  const styles = useStyles();
+
   const insets = useSafeAreaInsets();
   const fontsLoaded = useAppFonts();
 
@@ -83,7 +86,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   wrap: {
     flexDirection: "row",
     alignItems: "center",
@@ -115,4 +118,4 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 6,
   },
-});
+}));

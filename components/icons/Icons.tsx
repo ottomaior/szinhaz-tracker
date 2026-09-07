@@ -4,6 +4,17 @@ import { strokePaint } from "@/components/icons/svgPaint";
 
 type IconProps = { size?: number; color?: string; strokeWidth?: number };
 
+/**
+ * The palette defaults below are default *parameters*, which JavaScript
+ * evaluates on every call rather than once at import — so each one reads the
+ * theme that is on at the moment the icon renders. See theme/colors.ts.
+ *
+ * That leaves only the question of whether an icon re-renders when the theme
+ * changes, and it does: an icon is always drawn by a component that holds a
+ * stylesheet, those subscribe to the theme through `makeStyles`, and nothing in
+ * this app is memoised in between.
+ */
+
 export function HomeIcon({ size = 21, color = colors.textFaint, strokeWidth = 1.8 }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">

@@ -1,6 +1,7 @@
 import { Text as RNText, type TextProps as RNTextProps, type TextStyle, type StyleProp } from "react-native";
 import { useAppFonts } from "@/hooks/useAppFonts";
 import { typeStyle, type TypeTone, type TypeVariant } from "@/theme/type";
+import { useColors } from "@/theme/styles";
 
 /**
  * Every piece of text in the app.
@@ -28,5 +29,8 @@ export function Text({
   style?: StyleProp<TextStyle>;
 }) {
   const fontsLoaded = useAppFonts();
-  return <RNText {...rest} style={[typeStyle(variant, fontsLoaded, tone), style]} />;
+  // Every piece of text in the app comes through here, so this is also where
+  // most of the tree learns that the theme changed — see theme/styles.ts.
+  const colors = useColors();
+  return <RNText {...rest} style={[typeStyle(variant, fontsLoaded, tone, colors), style]} />;
 }

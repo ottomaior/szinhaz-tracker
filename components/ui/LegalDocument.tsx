@@ -1,5 +1,5 @@
 import { ScrollView, StyleSheet, View } from "react-native";
-import { colors } from "@/theme/colors";
+import { useColors } from "@/theme/styles";
 import { gutter, space } from "@/theme/tokens";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { ContentColumn } from "@/components/ui/Screen";
@@ -32,6 +32,8 @@ import { operatorDetailsComplete, pendingNotice, type LegalDocument } from "@/i1
  * route stays; only the contents wait.
  */
 export function LegalScreen({ document }: { document: LegalDocument }) {
+  const colors = useColors();
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ModalHeader title={document.title} fallbackRoute="/(tabs)/profile" />

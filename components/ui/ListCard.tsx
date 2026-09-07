@@ -1,11 +1,11 @@
 import { Pressable, StyleSheet, View } from "react-native";
-import { colors } from "@/theme/colors";
 import { radius, space } from "@/theme/tokens";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { Text } from "@/components/ui/Text";
 import type { ListSummary } from "@/services/listsService";
 import type { Play } from "@/data/types";
 import { strings } from "@/i18n/hu";
+import { makeStyles } from "@/theme/styles";
 
 /**
  * A list as a row: what it is called, how big it is, and a glimpse of what is in it.
@@ -27,6 +27,8 @@ export function ListCard({
   playsById: Map<string, Play>;
   onPress: () => void;
 }) {
+  const styles = useStyles();
+
   const covers = list.coverPlayIds.map((id) => playsById.get(id)).filter((p): p is Play => !!p);
 
   return (
@@ -77,7 +79,7 @@ export function ListCard({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   card: {
     flexDirection: "row",
     alignItems: "center",
@@ -100,4 +102,4 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.hairlineSoft,
   },
-});
+}));

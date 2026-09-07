@@ -2,12 +2,13 @@ import { useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
-import { elevation, gutter, minTouchTarget, overlay, radius, space } from "@/theme/tokens";
+import { gutter, minTouchTarget, overlay, radius, space } from "@/theme/tokens";
 import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
 import { CheckIcon, ChevronDownIcon, CloseIcon } from "@/components/icons/Icons";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
+import { makeStyles } from "@/theme/styles";
 
 /**
  * One facet of the filter bar: a chip showing its current value, which opens a
@@ -73,6 +74,8 @@ export function SelectChip({
   /** A quiet second line under a `header` trigger: "8 színház". */
   subtitle?: string;
 }) {
+  const styles = useStyles();
+
   const fontsLoaded = useAppFonts();
   const insets = useSafeAreaInsets();
   const [open, setOpen] = useState(false);
@@ -195,7 +198,7 @@ export function SelectChip({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors, elevation) => StyleSheet.create({
   chip: {
     flexDirection: "row",
     alignItems: "center",
@@ -259,4 +262,4 @@ const styles = StyleSheet.create({
     minHeight: minTouchTarget,
     paddingVertical: space.md,
   },
-});
+}));

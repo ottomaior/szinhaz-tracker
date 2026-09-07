@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 import { creditLabel, personInitials } from "@/utils/people";
+import { makeStyles } from "@/theme/styles";
 
 /**
  * One performer or director, and everything the catalogue has them on.
@@ -29,6 +30,8 @@ import { creditLabel, personInitials } from "@/utils/people";
  * the two places somebody is already looking at a name and wondering.
  */
 export default function PersonScreen() {
+  const styles = useStyles();
+
   const { slug } = useLocalSearchParams<{ slug?: string }>();
   const router = useRouter();
   const { session } = useAuth();
@@ -215,6 +218,8 @@ function yearOf(premiereDate?: string): string | undefined {
 }
 
 function Stat({ value, label, gold = false }: { value: number; label: string; gold?: boolean }) {
+  const styles = useStyles();
+
   return (
     <View style={styles.stat}>
       <Text variant="heading" tone={gold ? "accent" : "default"}>
@@ -228,6 +233,8 @@ function Stat({ value, label, gold = false }: { value: number; label: string; go
 }
 
 function PersonSkeleton() {
+  const styles = useStyles();
+
   return (
     <View style={{ gap: space.xl }}>
       <View style={styles.header}>
@@ -251,7 +258,7 @@ function PersonSkeleton() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   header: { flexDirection: "row", alignItems: "center", gap: space.md },
   statsRow: {
     flexDirection: "row",
@@ -262,4 +269,4 @@ const styles = StyleSheet.create({
   },
   stat: { flex: 1, alignItems: "center", gap: 2 },
   statDivider: { width: 1, alignSelf: "stretch", backgroundColor: colors.hairlineSoft },
-});
+}));

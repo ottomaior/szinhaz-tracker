@@ -15,6 +15,12 @@ import { defineConfig } from "vitest/config";
  * wrong. That class of bug is invisible on screen — 18:00 looks like a
  * perfectly plausible curtain — so it needs an assertion rather than an eye.
  *
+ * `theme/` is here for a fourth. Its test is not about colour: it is a static
+ * check that no screen has gone back to baking the palette into a module-level
+ * `StyleSheet.create`, which is how the theme picker came to ship doing nothing
+ * on native. That failure is invisible by construction — the picker still
+ * works, only the colours do not follow — so it needs an assertion too.
+ *
  * `i18n/` is here for a third reason again: `i18n/legal.ts` carries the
  * operator’s name, address and contact address, and a legal document that
  * still says TODO where the data controller should be is worse than no
@@ -33,7 +39,12 @@ export default defineConfig({
     alias: { "@": fileURLToPath(new URL(".", import.meta.url)) },
   },
   test: {
-    include: ["sync/**/*.test.ts", "utils/**/*.test.ts", "i18n/**/*.test.ts"],
+    include: [
+      "sync/**/*.test.ts",
+      "utils/**/*.test.ts",
+      "i18n/**/*.test.ts",
+      "theme/**/*.test.ts",
+    ],
     environment: "node",
     // Fixtures are real, sizeable pages; a slow first parse should not fail.
     testTimeout: 20_000,

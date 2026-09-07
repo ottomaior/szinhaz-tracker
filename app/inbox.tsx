@@ -1,7 +1,6 @@
 import { useCallback, useState } from "react";
 import { View, ScrollView, StyleSheet, Pressable } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
-import { colors } from "@/theme/colors";
 import { gutter, radius, space } from "@/theme/tokens";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -16,6 +15,7 @@ import { ContentColumn } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 import { formatShortDayForSuffix, formatTime } from "@/utils/datetime";
+import { makeStyles, useColors } from "@/theme/styles";
 
 /**
  * What the sync learned that you were waiting to hear.
@@ -29,6 +29,7 @@ import { formatShortDayForSuffix, formatTime } from "@/utils/datetime";
  * to do on its behalf.
  */
 export default function InboxScreen() {
+  const colors = useColors();
   const router = useRouter();
   const { session, loading } = useAuth();
   const [items, setItems] = useState<AppNotification[]>([]);
@@ -115,6 +116,8 @@ function NotificationRow({
   notification: AppNotification;
   onPress: () => void;
 }) {
+  const styles = useStyles();
+
   return (
     <Pressable
       onPress={onPress}
@@ -176,7 +179,7 @@ function describe(n: AppNotification): string {
   }
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
@@ -187,4 +190,4 @@ const styles = StyleSheet.create({
   },
   unread: { borderWidth: 1, borderColor: colors.hairline },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.gold },
-});
+}));

@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
-import { colors } from "@/theme/colors";
 import { radius, space } from "@/theme/tokens";
 import { Text } from "@/components/ui/Text";
 import { budapestMonthKey, formatMonthHeading, formatShortDate, formatTime, formatWeekday } from "@/utils/datetime";
 import { strings } from "@/i18n/hu";
 import type { Performance, Play } from "@/data/types";
+import { makeStyles } from "@/theme/styles";
 
 /**
  * Every upcoming date for one production, grouped by month.
@@ -22,6 +22,8 @@ import type { Performance, Play } from "@/data/types";
  * month headings are what let someone find the weekend they were thinking of.
  */
 export function ShowtimeList({ performances, play }: { performances: Performance[]; play: Play }) {
+  const styles = useStyles();
+
   const [expanded, setExpanded] = useState(false);
 
   const months = useMemo(() => groupByMonth(performances), [performances]);
@@ -82,6 +84,8 @@ export function ShowtimeList({ performances, play }: { performances: Performance
 }
 
 function ShowtimeRow({ performance }: { performance: Performance }) {
+  const styles = useStyles();
+
   return (
     <View style={styles.row}>
       <View style={styles.dateBlock}>
@@ -146,7 +150,7 @@ function groupByMonth(performances: Performance[]): MonthGroup[] {
   return [...groups.values()].sort((a, b) => a.key.localeCompare(b.key));
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   rowBetween: { flexDirection: "row", alignItems: "baseline", justifyContent: "space-between" },
   row: {
     flexDirection: "row",
@@ -162,4 +166,4 @@ const styles = StyleSheet.create({
   // Fixed width so the times line up in a column down the list rather than
   // starting at a different x for every date.
   dateBlock: { width: 76, gap: 2 },
-});
+}));

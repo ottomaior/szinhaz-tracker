@@ -2,13 +2,13 @@ import type { ReactNode } from "react";
 import { View, StyleSheet, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors } from "@/theme/colors";
 import { gutter, space } from "@/theme/tokens";
 import { CloseIcon } from "@/components/icons/Icons";
 import { Text } from "@/components/ui/Text";
 import { ContentColumn } from "@/components/ui/Screen";
 import { strings } from "@/i18n/hu";
 import { closeModal } from "@/utils/navigation";
+import { makeStyles } from "@/theme/styles";
 
 /**
  * The bar across the top of every modal: a close control, a title, and a
@@ -28,6 +28,8 @@ export function ModalHeader({
   /** Trailing control, e.g. the check-in modal's save. Replaces the spacer. */
   action?: ReactNode;
 }) {
+  const styles = useStyles();
+
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -52,7 +54,7 @@ export function ModalHeader({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   bar: {
     borderBottomWidth: 1,
     borderBottomColor: colors.hairlineSoft,
@@ -66,4 +68,4 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: space.md,
   },
-});
+}));

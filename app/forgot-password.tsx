@@ -12,6 +12,7 @@ import { ContentColumn } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { Button } from "@/components/ui/Button";
 import { strings } from "@/i18n/hu";
+import { makeStyles } from "@/theme/styles";
 
 /**
  * Asking for a new password.
@@ -24,6 +25,8 @@ import { strings } from "@/i18n/hu";
  * account — see the note on `requestPasswordReset`.
  */
 export default function ForgotPasswordScreen() {
+  const styles = useStyles();
+
   const router = useRouter();
   const fontsLoaded = useAppFonts();
   const [email, setEmail] = useState("");
@@ -108,7 +111,7 @@ export default function ForgotPasswordScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   input: {
     backgroundColor: colors.surface,
     borderWidth: 1,
@@ -118,4 +121,4 @@ const styles = StyleSheet.create({
     fontSize: inputFontSize,
     color: colors.text,
   },
-});
+}));

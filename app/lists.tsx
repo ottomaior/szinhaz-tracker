@@ -17,6 +17,7 @@ import { ModalHeader } from "@/components/ui/ModalHeader";
 import { ContentColumn } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
+import { makeStyles } from "@/theme/styles";
 
 /**
  * Lists: the ones written here, and the ones you have made.
@@ -27,6 +28,8 @@ import { strings } from "@/i18n/hu";
  * ten hand-made lists over 1,214 productions is a better first thing to read.
  */
 export default function ListsScreen() {
+  const styles = useStyles();
+
   const router = useRouter();
   const fontsLoaded = useAppFonts();
   const { session } = useAuth();
@@ -210,7 +213,7 @@ export default function ListsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   headingRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   composer: {
     gap: space.md,
@@ -232,4 +235,4 @@ const styles = StyleSheet.create({
   },
   textArea: { minHeight: 68, textAlignVertical: "top" },
   switchRow: { flexDirection: "row", alignItems: "center", gap: space.md },
-});
+}));
