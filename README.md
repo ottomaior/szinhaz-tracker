@@ -21,7 +21,7 @@ npx expo install --fix
 
 Then create a [Supabase](https://supabase.com) project (free tier is
 enough), run every file in `supabase/migrations/` **in order** (`0001_init.sql`
-through `0035_search_finds_people.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
+through `0036_ratings_that_move_and_accounts_that_close.sql`) in its SQL editor, and copy `.env.example` to `.env`, filling in the
 URL/anon key from the project's Settings → API page:
 
 ```bash
@@ -52,9 +52,25 @@ npx expo start           # then press i / a for iOS simulator / Android emulator
 The web export is production-ready: the `Dockerfile` builds the static site
 with `expo export`, and nginx (`nginx.conf`) serves it.
 
+For a real phone rather than a simulator, the native builds go through
+[EAS](https://docs.expo.dev/build/introduction/) — `eas.json` has the three
+profiles, and the native projects are generated on demand rather than checked
+in (see *[Building something a store will take](#building-something-a-store-will-take)*):
+
+```bash
+npx eas-cli build --profile preview --platform android   # an APK you can sideload
+npx eas-cli build --profile production --platform all    # an .aab and an .ipa
+```
+
 ## Project structure
 
 ```
+app.config.ts            the Expo config — was app.json until the native track
+                          started. Also the only description of the iOS and
+                          Android projects that exists; `expo prebuild`
+                          generates them from it, and they are not committed
+eas.json                 the three EAS build profiles
+
 app/                     expo-router screens (file-based routing)
   _layout.tsx             root stack: tabs + play detail + check-in/add-play/auth modals
   (tabs)/
@@ -1310,6 +1326,164 @@ form's `maxLength`, because the update policy means the form is not the only way
 in. The form does not use `maxLength` at all: silently swallowing keystrokes
 reads as a broken keyboard, so it shows a counter once fewer than sixty
 characters remain and refuses the save if it is over.
+
+## Building something a store will take
+
+This has always been a real React Native app rather than a website in a
+wrapper, which is the thing that usually sinks a web-derived app at review
+(Apple's Guideline 4.2, "Minimum Functionality"). But *credible* and *built*
+are different words, and until now it had never once been compiled for a
+phone. The path was open and unexercised.
+
+The thing that forced the issue is a date that has already passed. Google Play
+has required Android **API 36** of every new upload since 31 August 2026, and
+Expo SDK 52 — which this was written on, released November 2024 — ships
+`targetSdk` 35. There was no configuration that fixed that: the answer was five
+SDK releases.
+
+### Five majors, and the four things that actually broke
+
+Expo 52 → 57, React 18 → 19, React Native 0.76 → 0.86. That sounds like a
+rewrite and was not, because the app's dependency list is short and it owns its
+own components. Four things needed changing, all renames:
+
+- `StyleSheet.absoluteFillObject` is gone in RN 0.86. `absoluteFill` is a plain
+  frozen object now rather than a registered style id, so it spreads — which is
+  the only way the old name was ever used here.
+- **expo-router 57 no longer depends on `@react-navigation` at all.** It vendors
+  its own copy. The two direct dependencies in `package.json` were therefore a
+  second, structurally incompatible set of the same types, and
+  `BottomTabBarProps` imported from the wrong one no longer described the props
+  expo-router passes. Both are dropped; the type and `Tabs` itself now come from
+  `expo-router/js-tabs`, since the re-export from `expo-router` is deprecated.
+- `Router` is `ImperativeRouter`.
+- `Skeleton` held its `Animated.Value` in a ref and read it during render, which
+  the React Compiler lint rules in `react-hooks` 6 refuse. Lazy `useState`
+  instead — which also stops it constructing a fresh `Animated.Value` on every
+  render only to throw it away.
+
+The upgrade left 22 lint reports behind, all of one new rule:
+`set-state-in-effect`. Every one is a `setState` on a synchronous early-exit
+branch of an otherwise-async effect — clearing a rail to `[]` when the session
+goes away, copying a route param into state once the list it indexes has
+loaded. They are genuine "derived state in an effect" smells, and unpicking them
+means restructuring state ownership across ten screens. That is its own change
+with its own verification, and burying it inside an upgrade whose entire value
+is that it changed no behaviour would make both harder to trust. `.eslintrc.js`
+downgrades the rule to a warning, with the reason written down beside it, so the
+count stays visible and can only go down.
+
+Because Metro strips types rather than checking them, the thing that proves an
+upgrade like this is not the build — it is `tsc --noEmit`, which is why CI runs
+it. Between them, the typecheck and the 299 fixture tests found every one of the
+four breakages before a browser was opened.
+
+### app.json becomes app.config.ts
+
+Almost every field a store cares about needs a sentence explaining why it is set
+the way it is, and JSON cannot carry one. Three of them are otherwise
+rediscovered the hard way, each with the same shape: something is missing, and
+nothing says so.
+
+- **The privacy manifest.** Since spring 2024 Apple rejects a build that calls a
+  required-reason API without declaring a reason code. The app calls four of
+  them — file timestamps, `NSUserDefaults`, system boot time, free disk space —
+  and *none of those calls are in app code*. They come from React Native and the
+  Expo modules, which is exactly why they stay invisible until a rejection names
+  them.
+- **`usesNonExemptEncryption: false`.** The app talks to Supabase over ordinary
+  HTTPS and ships no cryptography of its own. Answering export compliance in the
+  binary is the difference between never thinking about it again and being asked
+  by hand, and blocked, on every single submission.
+- **`blockedPermissions`.** expo-image-picker's config plugin adds the camera and
+  microphone permissions whether or not they are used, and this app only ever
+  calls `launchImageLibraryAsync`. Left alone, the Play listing would have
+  claimed access the app never asks for, and the Data safety form would have had
+  to be filled in to match it.
+
+Two schema changes came with the SDK jump: SDK 54 removed the top-level `splash`
+key (it is the `expo-splash-screen` plugin now) and SDK 57 removed
+`newArchEnabled`, since there is only one architecture left. `npx expo-doctor`
+is the check for both, and passes 21/21.
+
+### Deep links, and a failure with no error in it
+
+`ios.associatedDomains` and an `autoVerify` intent filter claim the production
+domain from the app's side. Both halves are inert on their own: each store also
+fetches a file from that domain naming the app allowed to make the claim, and
+**neither store tells you when it is missing**. The link simply opens a browser
+— exactly what it did before deep links were configured at all. A feature that
+fails by looking unbuilt is a feature that stays broken.
+
+So the two files are written by a script rather than by hand, from the two
+credentials that do not exist until an EAS build has run — the Apple Team ID and
+the signing key's SHA-256 fingerprint:
+
+```bash
+npx tsx scripts/write-well-known.ts --team-id ABCDE12345 --sha256 AA:BB:...
+```
+
+They land in `public/.well-known/`, which `expo export` copies to the root of
+`dist/` verbatim, so the next deploy serves them. `nginx.conf` grew a block for
+that directory for one reason: Apple fetches
+`/.well-known/apple-app-site-association` — *no extension* — and requires it
+served as `application/json`. nginx types a file by its extension, so without an
+explicit `default_type` it goes out as `application/octet-stream` and is refused
+in silence, which is the same failure mode one level down.
+
+### The native projects are generated, not written
+
+`android/` and `ios/` are in `.gitignore`. `app.config.ts` is the only
+description of them that exists, and `expo prebuild` — which EAS Build runs on
+its own machines — turns it into the two directories on demand. Committing them
+would create a second, stale answer to every question the config already
+answers: an `AndroidManifest.xml` in git keeps whatever permissions it was
+generated with long after the config stops asking for them.
+
+Running that prebuild locally is also what verified the config. The generated
+manifest removes all three blocked permissions with `tools:node="remove"`,
+carries the `autoVerify` intent filter for the production host, and resolves —
+through React Native 0.86's Gradle version catalogue — to `targetSdk` 36,
+`compileSdk` 36, `minSdk` 24. That is the deadline met.
+
+The iOS half is schema-valid and unproven: `expo prebuild` will not generate an
+Xcode project from Windows, so the privacy manifest and the entitlements are
+first exercised by the first EAS build on macOS.
+
+### One asymmetry to know about
+
+The palette picker is web-only, and stays that way. It works by swapping CSS
+custom properties on the document element, and native has none. A native build
+is Velvet Curtain and nothing else, which is why `userInterfaceStyle` and the
+splash background are both pinned dark in `app.config.ts` and should stay
+pinned — the OS chrome, the splash and the palette all have to give the same
+answer.
+
+### What is still missing
+
+`npm run check:launch -- --stores` is the list, and enforces what it can:
+
+- **The EAS project link.** `npx eas-cli init` writes `extra.eas.projectId`, and
+  needs an Expo account. This is the first step that cannot be taken from the
+  repository.
+- **The two verification files**, which need the credentials above.
+- **Moderation.** Reviews and comments are public writing by strangers, and the
+  only rule today is that a diary owner may delete a comment on their own entry.
+  There is no way to report anything and no way to block anybody. That is a real
+  safety gap on the web and App Store Guideline 1.2 at review — the single most
+  likely reason this app is rejected. Phase 3 in [BACKLOG.md](BACKLOG.md).
+- **The share card**, which draws an evening onto a canvas and so does nothing at
+  all in a native build.
+
+And the parts no repository can check: an Apple Developer Program membership
+($99/yr, days to verify), a Play Console account ($25 once), the choice between
+publishing as an individual or a Hungarian company — which under the DSA decides
+whether a home address appears on the App Store page in 27 countries — and
+Google's requirement that a personal account created after 13 November 2023 run
+a closed test with **12 testers for 14 consecutive days** before it may ask for
+production access. That last one is roughly three weeks of calendar time that
+cannot be compressed, so it is worth starting as soon as there is something
+worth installing.
 
 ## What's real now
 

@@ -23,7 +23,7 @@ npx expo install --fix
 
 Ezután hozz létre egy [Supabase](https://supabase.com) projektet (az ingyenes
 csomag bőven elég), futtasd le a `supabase/migrations/` **összes** fájlját
-**sorrendben** (`0001_init.sql`-től a `0035_search_finds_people.sql`-ig) a projekt
+**sorrendben** (`0001_init.sql`-től a `0036_ratings_that_move_and_accounts_that_close.sql`-ig) a projekt
 SQL-szerkesztőjében, majd másold a `.env.example`-t `.env`-re, és töltsd ki a
 projekt Settings → API oldaláról az URL-t és az anon kulcsot:
 
@@ -55,9 +55,26 @@ npx expo start          # utána i / a az iOS szimulátorhoz / Android emulátor
 A webes kiadás éles kiszolgálásra is kész: a `Dockerfile` `expo export`-tal
 építi a statikus oldalt, és nginx (`nginx.conf`) szolgálja ki.
 
+Igazi telefonra — nem szimulátorra — a natív buildek az
+[EAS](https://docs.expo.dev/build/introduction/)-en át készülnek: a három profil
+az `eas.json`-ben van, a natív projektek pedig igény szerint generálódnak, nem
+be vannak commitolva (lásd *[Valami, amit egy bolt is
+elfogad](#valami-amit-egy-bolt-is-elfogad)*):
+
+```bash
+npx eas-cli build --profile preview --platform android   # oldalról telepíthető APK
+npx eas-cli build --profile production --platform all    # egy .aab és egy .ipa
+```
+
 ## Felépítés
 
 ```
+app.config.ts            az Expo-konfiguráció — app.json volt, amíg a natív sáv
+                          el nem indult. Egyben az iOS- és Android-projektek
+                          egyetlen létező leírása is; az `expo prebuild` ebből
+                          generálja őket, és nincsenek becommitolva
+eas.json                 a három EAS build profil
+
 app/                     expo-router képernyők (fájlalapú útvonalak)
   _layout.tsx             gyökér stack: tabok + előadás oldal + rögzítés/
                           előadás-felvitel/auth modálok
@@ -1377,6 +1394,167 @@ egyetlen út befelé. Az űrlap egyáltalán nem használ `maxLength`-et: a
 leütéseket némán elnyelni úgy hat, mintha a billentyűzet lenne rossz — ezért
 hatvan karakternél kevesebb hátralévő helynél számlálót mutat, és mentéskor
 utasítja vissza a túl hosszú szöveget.
+
+## Valami, amit egy bolt is elfogad
+
+Ez mindig is valódi React Native alkalmazás volt, nem egy burokba csomagolt
+weboldal — és általában épp ez az, ami a webes eredetű alkalmazásokat elsüllyeszti
+a felülvizsgálatnál (az Apple 4.2-es, „minimális funkcionalitás" irányelve). De a
+*hihető* és a *megépített* két különböző szó, és eddig egyetlenegyszer sem
+fordítottuk le telefonra. Az út nyitva állt, és kipróbálatlan volt.
+
+Amitől sürgőssé vált, az egy már lejárt határidő. A Google Play 2026. augusztus
+31. óta minden új feltöltéstől Android **API 36**-ot követel, az Expo SDK 52
+pedig — amire ez íródott, 2024 novemberi kiadás — `targetSdk` 35-tel jár. Erre
+nem volt olyan beállítás, ami segített volna: a válasz öt SDK-kiadás.
+
+### Öt főverzió, és a négy dolog, ami tényleg eltört
+
+Expo 52 → 57, React 18 → 19, React Native 0.76 → 0.86. Ez újraírásnak hangzik, és
+nem az volt, mert az alkalmazás függőséglistája rövid, és a saját komponenseit
+maga birtokolja. Négy dolgon kellett változtatni, mind átnevezés:
+
+- A `StyleSheet.absoluteFillObject` eltűnt az RN 0.86-ban. Az `absoluteFill` ma
+  már sima, fagyasztott objektum, nem regisztrált stílusazonosító, tehát
+  szétteríthető — és a régi nevet itt eleve csak így használtuk.
+- **Az expo-router 57 már egyáltalán nem függ a `@react-navigation`-től.** Saját
+  másolatot visz magával. A `package.json` két közvetlen függősége tehát
+  ugyanazon típusok második, szerkezetileg összeférhetetlen készlete volt, és a
+  rossz helyről importált `BottomTabBarProps` már nem írta le azokat a propokat,
+  amiket az expo-router valójában átad. Mindkettő kikerült; a típus és maga a
+  `Tabs` is az `expo-router/js-tabs`-ból jön, mert az `expo-router`-ből való
+  újraexport elavult.
+- A `Router` mostantól `ImperativeRouter`.
+- A `Skeleton` egy refben tartotta az `Animated.Value`-ját, és render közben
+  olvasta, amit a `react-hooks` 6 React Compiler-szabályai elutasítanak. Helyette
+  lusta `useState` — ami azt is megszünteti, hogy minden renderben új
+  `Animated.Value` készüljön, csak hogy azonnal eldobjuk.
+
+A frissítés 22 lint-jelzést hagyott maga után, mind egyetlen új szabályból: a
+`set-state-in-effect`-ből. Mindegyik egy `setState` egy egyébként aszinkron
+effekt szinkron, korai kilépési ágán — egy sáv `[]`-re állítása, amikor megszűnik
+a munkamenet; egy útvonalparaméter state-be másolása, miután betöltött a lista,
+amit indexel. Ezek valódi „származtatott érték state-ben" szagok, és a
+kibogozásuk tíz képernyőn át a state tulajdonlásának átrendezését jelenti. Az
+önálló változtatás, önálló ellenőrzéssel, és ha egy olyan frissítés belsejébe
+temetnénk, aminek az egész értéke épp az, hogy semmilyen viselkedést nem
+változtatott, mindkettőt nehezebb lenne elhinni. Az `.eslintrc.js` figyelmeztetésre
+fokozza le a szabályt, az indoklással együtt melléírva, hogy a szám látható
+maradjon, és csak csökkenhessen.
+
+Mivel a Metro a típusokat eldobja, nem ellenőrzi, egy ilyen frissítést nem a
+build bizonyítja, hanem a `tsc --noEmit` — ezért futtatja a CI. Ketten együtt a
+típusellenőrzés és a 299 fixtúrateszt mind a négy törést megtalálta, mielőtt
+bárki böngészőt nyitott volna.
+
+### Az app.json app.config.ts lesz
+
+Szinte minden mező, ami egy boltot érdekel, megkíván egy mondatnyi magyarázatot
+arról, hogy miért épp úgy van beállítva — és a JSON nem tud ilyet hordozni.
+Hármat közülük különben csak nehéz úton fedez fel az ember, és mindhárom
+ugyanolyan alakú: valami hiányzik, és semmi nem szól róla.
+
+- **Az adatvédelmi manifest.** 2024 tavasza óta az Apple elutasít minden buildet,
+  ami kötelező indoklású API-t hív indoklási kód nélkül. Az alkalmazás négyet is
+  érint — fájlidőbélyeg, `NSUserDefaults`, rendszerindítási idő, szabad
+  lemezterület —, és *ezek közül egyik hívás sincs az alkalmazás kódjában*. A
+  React Native-ből és az Expo-moduljaiból jönnek, és pontosan ezért maradnak
+  láthatatlanok addig, amíg egy elutasítás meg nem nevezi őket.
+- **`usesNonExemptEncryption: false`.** Az alkalmazás közönséges HTTPS-en beszél a
+  Supabase-zel, és semmilyen saját titkosítást nem szállít. Ha az exportmegfelelést
+  a binárisban válaszoljuk meg, akkor soha többé nem kell gondolni rá — különben
+  minden egyes beadásnál kézzel kérdezik meg, és addig blokkolják.
+- **`blockedPermissions`.** Az expo-image-picker konfigurációs pluginje akkor is
+  hozzáadja a kamera- és mikrofonjogosultságot, ha nincsenek használatban, ez az
+  alkalmazás pedig kizárólag a `launchImageLibraryAsync`-et hívja. Békén hagyva a
+  Play-adatlap olyan hozzáférést állított volna magáról, amit az alkalmazás soha
+  nem kér, az adatbiztonsági űrlapot pedig ehhez kellett volna igazítani.
+
+Két sémaváltozás jött az SDK-ugrással: az SDK 54 kivette a legfelső szintű
+`splash` kulcsot (ma az `expo-splash-screen` plugin), az SDK 57 pedig a
+`newArchEnabled`-et, mert már csak egyetlen architektúra van. Mindkettőre az
+`npx expo-doctor` az ellenőrzés, és 21/21-gyel megy át.
+
+### Mélylinkek, és egy hiba, amiben nincs hibaüzenet
+
+Az `ios.associatedDomains` és egy `autoVerify` intent filter az alkalmazás
+felől igényt támaszt az éles domainre. Mindkét fél önmagában hatástalan: minden
+bolt lekér egy fájlt is arról a domainről, ami megnevezi, melyik alkalmazás
+támaszthat ilyen igényt — és **egyik bolt sem szól, ha az hiányzik**. A link
+egyszerűen böngészőben nyílik meg — pontosan úgy, ahogy azelőtt, hogy a
+mélylinkeket egyáltalán beállítottuk volna. Egy funkció, ami úgy hibázik, mintha
+meg sem épült volna, elromlott is marad.
+
+Ezért a két fájlt szkript írja, nem kéz, abból a két hitelesítőből, amelyik addig
+nem létezik, amíg le nem futott egy EAS build — az Apple Team ID-ból és az aláíró
+kulcs SHA-256 ujjlenyomatából:
+
+```bash
+npx tsx scripts/write-well-known.ts --team-id ABCDE12345 --sha256 AA:BB:...
+```
+
+A `public/.well-known/`-ba kerülnek, amit az `expo export` szó szerint másol a
+`dist/` gyökerébe, így a következő telepítés már kiszolgálja őket. Az
+`nginx.conf` egyetlen okból kapott blokkot erre a könyvtárra: az Apple a
+`/.well-known/apple-app-site-association` címet kéri le — *kiterjesztés nélkül* —,
+és `application/json`-ként kell kiszolgálni. Az nginx kiterjesztés alapján
+típusol, tehát explicit `default_type` nélkül `application/octet-stream`-ként
+menne ki, és csendben elutasítanák — ami ugyanaz a hibamód, egy szinttel lejjebb.
+
+### A natív projektek generálódnak, nem íródnak
+
+Az `android/` és az `ios/` a `.gitignore`-ban van. Az `app.config.ts` az egyetlen
+létező leírásuk, és az `expo prebuild` — amit az EAS Build a saját gépein futtat
+— ebből állítja elő a két könyvtárat, igény szerint. Ha becommitolnánk őket, az
+minden kérdésre egy második, elavult választ adna, amire a konfiguráció már
+válaszol: egy gitben tárolt `AndroidManifest.xml` még jóval azután is őrzi a
+jogosultságokat, amikkel készült, hogy a konfiguráció már nem kéri őket.
+
+Ez a helyben lefuttatott prebuild az egyben, ami a konfigurációt ellenőrizte is.
+A generált manifestből mindhárom letiltott jogosultság kikerül
+(`tools:node="remove"`), benne van az `autoVerify` intent filter az éles hosztra,
+és — a React Native 0.86 Gradle verziókatalógusán át — `targetSdk` 36,
+`compileSdk` 36, `minSdk` 24 lesz belőle. Ez a teljesített határidő.
+
+Az iOS-fél sémahelyes és bizonyítatlan: az `expo prebuild` Windowsról nem generál
+Xcode-projektet, így az adatvédelmi manifestet és az entitlementeket az első,
+macOS-en futó EAS build gyakorolja be először.
+
+### Egy aszimmetria, amit érdemes tudni
+
+A palettaválasztó csak webes, és az is marad. Úgy működik, hogy CSS custom
+propertyket cserél a dokumentumelemen, és natíven ilyenek nincsenek. Egy natív
+build a Bársony paletta, és semmi más — ezért van az `app.config.ts`-ben a
+`userInterfaceStyle` és az indítóképernyő háttere is sötétre rögzítve, és ezért
+kell rögzítve maradniuk: a rendszer kerete, az indítóképernyő és a paletta
+mindnek ugyanazt a választ kell adnia.
+
+### Ami még hiányzik
+
+Az `npm run check:launch -- --stores` a lista, és amit tud, azt ki is kényszeríti:
+
+- **Az EAS projekt összekötése.** Az `npx eas-cli init` írja be az
+  `extra.eas.projectId`-t, és Expo-fiók kell hozzá. Ez az első lépés, amit nem
+  lehet a repóból megtenni.
+- **A két igazoló fájl**, amikhez a fenti hitelesítők kellenek.
+- **Moderáció.** A kritikák és a hozzászólások idegenek nyilvános írásai, és ma
+  az egyetlen szabály az, hogy egy naplóbejegyzés gazdája törölheti a saját
+  bejegyzésén lévő hozzászólást. Nincs mód semmit bejelenteni, és nincs mód
+  senkit letiltani. Ez valós biztonsági hiányosság a weben, és az App Store
+  1.2-es irányelve a felülvizsgálatnál — messze a legvalószínűbb ok, amiért ezt
+  az alkalmazást elutasítanák. A 3. fázis a [BACKLOG.hu.md](BACKLOG.hu.md)-ben.
+- **A megosztókártya**, ami egy estét rajzol canvasra, és így natív buildben
+  egyáltalán nem csinál semmit.
+
+És a részek, amiket semmilyen repó nem tud ellenőrizni: egy Apple Developer
+Program tagság (99 USD/év, napokig tartó ellenőrzéssel), egy Play Console fiók
+(25 USD egyszer), a döntés, hogy magánszemélyként vagy magyar cégként jelenjünk-e
+meg — ami a DSA szerint eldönti, hogy egy lakcím felkerül-e az App Store oldalára
+27 országban —, és a Google követelménye, hogy egy 2023. november 13. után
+létrehozott magánfiók zárt tesztet futtasson **12 tesztelővel, 14 egymást követő
+napon át**, mielőtt éles hozzáférést kérhet. Ez az utolsó nagyjából három hét
+naptári idő, amit nem lehet összenyomni, úgyhogy érdemes elkezdeni, amint van
+mit telepíteni.
 
 ## Ami ma tényleg megvan
 

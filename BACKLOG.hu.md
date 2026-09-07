@@ -10,7 +10,7 @@ azt a [README.hu.md](README.hu.md) meséli el; ez a fájl a terv és az aktuáli
 állapot, hogy egy hosszabb szünet után is fel lehessen venni a fonalat anélkül,
 hogy mindent újra ki kellene találni.
 
-Utoljára frissítve: 2026. szeptember 6.
+Utoljára frissítve: 2026. szeptember 7.
 
 ---
 
@@ -18,10 +18,18 @@ Utoljára frissítve: 2026. szeptember 6.
 
 Négy döntés, ami mindent meghatároz alább:
 
-- **Előbb a web.** Az alkalmazásboltok dokumentált, elhalasztott sávot kapnak ([„A" rész](#a-rész--amit-az-alkalmazásboltok-megkövetelnek-elhalasztva)), nem ez a következő feladat. Az alkalmazás valódi React Native alkalmazás, így ez az út nyitva marad.
+- **Előbb a web.** A webes termék az, ami elindul; az alkalmazásboltok egy mögötte futó második sáv ([„A" rész](#a-rész--a-boltos-sáv)). Ez a sáv már nem csak dokumentált — az SDK-frissítés és a natív konfiguráció elkészült, és egy build immár technikailag lehetséges. Ami hátravan belőle: a moderáció, egy Expo-fiók és pénz.
 - **Budapest és Debrecen, rendesen.** Nem országos — az később jön. A már lefedett két város *teljes és pontos* lefedettséget kap, amitől az adatminőség önálló munkafolyam lesz, nem az adapterek hozzáadásának mellékhatása.
 - **A push-értesítések benne vannak a bemutatóban.** A weben ez PWA-t és Web Pusht jelent, ami egyben a natív push alapozása is.
 - **Az üzemeltető személye eldöntetlen** — magánszemély vagy cég. Ez csak az első boltos beadást gátolja. A mérlegelés az „A" részben.
+
+> **Hol vegyük fel a fonalat.** Az „A" rész A.1-e soron kívül készült el, így az
+> alábbi fázisok már nem szigorúan egymás utániak. **A 3. fázis (moderáció) most
+> a közös következő lépés**: ez a boltos sáv utolsó mérnöki akadálya *és* egyben
+> valós biztonsági hiányosság a weben ma, tehát ez az egyetlen munka, ami
+> mindkettőt előbbre viszi. A 2. fázis (PWA és Web Push) továbbra is az, amire
+> magának a webes terméknek szüksége van, és az A.1-ből semmi nem változtatott
+> azon, hogy az mit jelent.
 
 ---
 
@@ -79,7 +87,7 @@ mert minden rajta lévő elem a projekt életének nagy részében befejezetlen.
 
 ---
 
-## 2. fázis — PWA-alapok és Web Push · következik
+## 2. fázis — PWA-alapok és Web Push · a weben ez következik
 
 Ma nincs manifest, nincs service worker és nincs PWA-ikonkészlet; ez zöldmezős
 munka. A Web Push az egyetlen működő csatorna egy csak webes bemutatóhoz, iOS-en
@@ -101,7 +109,7 @@ cserélődik.
 
 ---
 
-## 3. fázis — Moderáció és biztonság
+## 3. fázis — Moderáció és biztonság · a boltok felé ez következik, a weben pedig már régóta esedékes
 
 A kritikák és hozzászólások nyilvános, idegenek által írt tartalmak, és ma az
 egyetlen moderációs szabály az, hogy a napló tulajdonosa törölhet egy
@@ -147,42 +155,84 @@ alapján született, amik nemcsak kevesek, hanem hibásak is voltak.
 
 ## 5. fázis — Indulási készenlét
 
-- **5.0 A React máig nem tud hidratálni egyetlen route-on sem.** Az 1. fázis telepítésének
-  ellenőrzésekor derült ki: az éles oldal `Minified React error #425` (a szöveges tartalom nem
-  egyezett), majd #418 és #422 hibát dob **minden** oldalon — beleértve a `/discover`-t is, amihez
-  az 1. fázis hozzá sem nyúlt, tehát ez régi, nem új probléma. Az `nginx.conf` hosszan magyarázza,
-  hogy a `try_files $uri.html` javítás pontosan ezeket a hibákat szüntette meg; láthatóan csak az
-  *útválasztási* felét gyógyította meg, és a renderben marad valami, ami eltér a szerver és a
-  kliens között. A költsége az, hogy a statikus renderelést megfizetjük, majd az első festéskor
-  eldobjuk — épp az, amiről az a komment azt mondja, hogy nem szabad megtörténnie. Érdemes egy nem
-  minifikált buildtel megvizsgálni, mielőtt az 5.4 hozzányúl a route-onkénti `<Head>`-hez, mert az
-  ugyanezt a területet érinti. Valószínű gyanúsítottak: valami, ami render közben olvassa a
-  nézetablakot (`useSafeAreaInsets`, `hooks/useBreakpoint.ts`), vagy egy betűtípustól függő mérés.
+- **5.0 Hidratálás.** ~~A React egyetlen route-on sem tud hidratálni.~~ **Kész**, és a feljegyzés,
+  amit ez felvált, háromból két ponton tévedett. Soha nem *minden* route volt — egyetlen egy volt,
+  a `/settings` —, és nem a nézetablak vagy egy betűtípustól függő mérés okozta, hanem a
+  `useColorScheme()`, amit render közben olvasunk, és ami nem egyezik önmagával a hidratálási
+  határon át. A statikus exportban nincs `matchMedia`, tehát „light"-ot renderel; egy sötét módban
+  lévő telefon viszont „dark"-ot renderel az első kliensoldali futáskor. A Beállítások ezt az
+  értéket kétszer is kiteszi a képernyőre — a „Rendszer szerint" sor színmintájaként és néven
+  nevezve a *„jelenleg: Bársony"* szövegben —, így a két futás eltérő markupot állított elő, és a
+  React #418-cal eldobta az egész előre renderelt dokumentumot. A `contexts/ThemeContext.tsx` most
+  a sötét alapértelmezést jelenti, amíg a tárolt beállítást ki nem olvasta — ugyanaz az őr, amit a
+  szomszédos `selected={hydrated && …}` már alkalmazott a pipára. Ellenőrizve tizenkét route-on az
+  éles statikus exporton, kijelentkezve, telefonszélességen, sötét módban lévő rendszerrel: a
+  konzol mindegyiken üres. Az a gyanú, hogy ez számítani fog az **5.4**-nek, jó okból volt jó — a
+  route-onkénti `<Head>` most már egy olyan dokumentumra kerül, ami túléli az első festést.
 - **5.1 Hibafigyelés.** Semmi nincs — se Sentry, se PostHog, csak `console.log` a szinkronizáló szkriptben. Ezt *az első valódi felhasználók előtt* kell megcsinálni.
 - **5.2 Termékhiányok.** Játszóhely-/színházoldal (a követett színházak ma szűrt Felfedezésre visznek, mert nincs saját oldaluk). A szerzők neve nem kattintható, pedig a színészeké és a rendezőké igen.
 - **5.3 A Supabase CLI bevezetése.** 36 migráció ment fel kézzel, és a README azt mondja egy új fejlesztőnek, hogy futtassa le mindet sorban. `supabase link` + `supabase db push`, plusz generált `database.types.ts`.
 - **5.4 SEO és megosztás.** Route-onkénti `<title>`/`<meta description>` és Open Graph. Az 1. fázis kiderítette, hogy az `expo-router/head` *eljut* a statikus exportba, így ez képernyőnkénti `<Head>` hozzáadása, nem új infrastruktúra. Közben **ki kell venni a `<title>`-t az `app/+html.tsx`-ből**: ma minden exportált oldal két `<title>` elemet szállít — előbb a react-helmetét, aztán a shell beégetettjét. Ártalmatlan volt, amíg ugyanazt mondták; most, hogy eltérhetnek, bármi, ami az utolsó találatot veszi, rossz címet olvas.
+- **5.5 A 22 effekt, ami szinkron módon állít state-et.** A `react-hooks` 6 — az
+  `eslint-config-expo` 57 újdonsága — tíz képernyőn jelzi őket, és az `.eslintrc.js`-ben a szabály
+  `warn`, nem `error`, hogy a frissítésnek, ami felszínre hozta őket, ne kelljen egyben meg is
+  javítania mindet. Mindegyik egy `setState` egy egyébként aszinkron effekt szinkron, korai
+  kilépési ágán: egy sáv `[]`-re állítása, amikor megszűnik a munkamenet, vagy egy útvonalparaméter
+  state-be másolása, miután betöltött a lista, amit indexel. Ezek valódi „származtatott érték
+  state-ben" szagok, és a javítás az, hogy az értéket képernyőnként újra származtatottként fogalmazzuk
+  meg, nem tároltként. Nem sürgős — egyik sem ismert hiba —, de a figyelmeztetések száma a mérőszám,
+  és annak csak csökkennie szabad.
 
 ---
 
-## „A" rész — Amit az alkalmazásboltok megkövetelnek (elhalasztva)
+## „A" rész — a boltos sáv
 
-Ebből semmi nincs kész. Azért van rögzítve, mert megkötéseket ad a fenti
-fázisokhoz.
+Ez valódi React Native alkalmazás, nem webview-burok, így az Apple 4.2-es,
+„minimális funkcionalitás" irányelve — a webes eredetű alkalmazások leggyakoribb
+elutasítási oka — nem ugyanúgy vonatkozik rá. Ez az út mindig is járható volt,
+és soha nem próbáltuk ki. Most kipróbáltuk: a JS mindkét platformra lefordul
+Hermes bytecode-dá, a natív konfiguráció megvan, Androidon pedig ellenőrizve is.
 
-**A jó hír:** ez valódi React Native alkalmazás, nem webview-burok, így az Apple
-4.2-es, „minimális funkcionalitás" irányelve — a webes eredetű alkalmazások
-leggyakoribb elutasítási oka — nem ugyanúgy vonatkozik rá. Az út járható; csak
-még soha nem próbáltuk ki.
+### A.1 Az SDK-frissítés és a natív konfiguráció · **kész**
+
+Három commit a `part-a-native` ágon. A kényszerítő ok egy már lejárt határidő: a
+Google Play 2026. augusztus 31. óta **API 36**-ot követel minden új feltöltéstől,
+az SDK 52 pedig `targetSdk` 35-tel jár, tehát a régi fából épített semmit nem
+lehetett volna beadni.
+
+| | Mi |
+|---|---|
+| A.1.1 | Expo 52 → 57, React 18 → 19, React Native 0.76 → 0.86. Négy változtatás az alkalmazás kódjában, mind átnevezés — `absoluteFillObject`, a `BottomTabBarProps`/`Tabs` az `expo-router/js-tabs`-ból, `ImperativeRouter`, és egy render közben olvasott ref a `Skeleton`-ben. A `@react-navigation/*` kikerült: az expo-router 57 saját másolatot visz magával, így a közvetlen függőségek ugyanazon típusok egy második, szerkezetileg összeférhetetlen készletét jelentették |
+| A.1.2 | `app.json` → `app.config.ts` — iOS adatvédelmi manifest, `usesNonExemptEncryption`, `blockedPermissions`, az `expo-splash-screen` plugin, és a mélylink-igények mindkét platformon |
+| A.1.3 | `eas.json` — development / preview / production profilok, `appVersionSource: "remote"`, hogy a build számokat az EAS birtokolja |
+| A.1.4 | `scripts/write-well-known.ts` és egy nginx `.well-known` blokk, a mélylink-igény domain felőli feléhez |
+| A.1.5 | A `check:launch` boltos listát kap, ami mindig kiíródik, és a `--stores` kapcsolóval kényszerítő |
+
+**Amit érdemes tudni:** a `react-hooks` 6 huszonkét `set-state-in-effect`
+jelzést talált olyan kódon, amihez a frissítés hozzá sem nyúlt — ez most az 5.5.
+A hidratálási hiba pedig, amit az 5.0 rögzített, egyetlen route-ról szólt, nem
+mindről, és menet közben meg is lett javítva — lásd az 5.0-t.
+
+**Ellenőrizve:** 299 teszt, tiszta típusellenőrzés és lint, a webes export
+továbbra is mind a 31 route-ot kiadja és tizenkettőn üres konzollal hidratál
+telefonszélességen, munkamenet nélkül, `expo-doctor` 21/21, valamint egy helyi
+`expo prebuild`, ami olyan `AndroidManifest.xml`-t állít elő, amiből kikerül a
+három letiltott jogosultság, benne van az `autoVerify` intent filter, és
+`targetSdk`/`compileSdk` 36-ra és `minSdk` 24-re oldódik fel.
+
+**Nincs ellenőrizve:** bármi, ami iOS. Az `expo prebuild` Windowsról nem
+generál Xcode-projektet, így az adatvédelmi manifestet és az entitlementeket az
+első, macOS-en futó EAS build gyakorolja be először.
+
+### A.2 Ami hátravan
 
 | Akadály | Megjegyzés |
 |---|---|
-| Nincs `eas.json`, nincs EAS projekt | Soha nem készült eszközre build. Az ikonok megvannak, de bolti méretekben soha nem lettek ellenőrizve. |
-| **Expo SDK 52** (2024. nov.) | Android `targetSdk` 35-tel jár. A Google Play 2026. augusztus 31. óta **API 36**-ot követel. Minimum SDK 55 kell; az 57 az aktuális. Többnapos frissítés öt SDK-kiadáson át (RN 0.82-től az Új Architektúra kötelező). |
-| Nincs `PrivacyInfo.xcprivacy` | Kötelező indoklású API-deklarációk, az `expo.ios.privacyManifests`-en át. |
-| Nincs UGC-moderáció | 3. fázis. Ennél az alkalmazásnál ez a legvalószínűbb elutasítási ok. |
-| A megosztókártya csak webes | Canvas-alapú; natívhoz `react-native-view-shot` kell. |
-| Nincsenek mélylinkek | Az `app.json`-ban csak `scheme` van — nincs `associatedDomains` / `intentFilters`. |
+| Nincs EAS projekt | Az `npx eas-cli init` írja be az `extra.eas.projectId`-t az `app.config.ts`-be. Expo-fiók kell hozzá — ez az első lépés, amit nem lehet a repóból megtenni. Az ikonok 1024×1024-esek, az iOS-es teljesen átlátszatlan, az Android előtér pedig a 66%-os biztonságos zónán belül van, tehát bolti szempontból érvényesek; bolti méretekben viszont továbbra sem *látta* őket senki. |
+| Nincs UGC-moderáció | 3. fázis, változatlanul. Ennél az alkalmazásnál ez a legvalószínűbb elutasítási ok, és az egyetlen hátralévő akadály, ami valódi fejlesztés, nem papírmunka. |
+| A mélylinkek nincsenek igazolva | Az alkalmazás felőli igény be van állítva; a `/.well-known/apple-app-site-association`-höz és a `/.well-known/assetlinks.json`-höz kell az Apple Team ID és az aláíró kulcs ujjlenyomata, és egyik sem létezik, amíg le nem futott egy EAS build. A `scripts/write-well-known.ts` megírja mindkettőt, amint léteznek. |
+| A megosztókártya csak webes | Canvas-alapú; natívhoz `react-native-view-shot` kell. Eszközre készült build nélkül nem ellenőrizhető, tehát megvárja azt. |
+| Nincs OTA-frissítés | Az `expo-updates` nincs telepítve. Nem akadály, de egy bolti alkalmazás nélküle minden JavaScript-javításhoz egy teljes felülvizsgálati kört jelent. Érdemes az első beadás *előtt* eldönteni, nem utána. |
 
 A fióktörlés és a jogi oldalak **készen vannak** (1. fázis), és mindkét bolt
 követelményét kielégítik, beleértve a Google webről elérhető törlési URL-jét is.
@@ -220,5 +270,5 @@ be, amíg nincs ellenőrizve, hogy működik.
 
 Két dolgot érdemes előre tervezni:
 
-- **A Supabase-hitelesítők build időben égnek bele.** A `Dockerfile` build `ARG`-ként veszi át az `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_ANON_KEY` értékeket, így minden olyan fázis, amihez új környezeti beállítás kell (a 2. fázis VAPID publikus kulcsa), megköveteli, hogy a Railway build változói *a push előtt* frissüljenek, különben a telepítés csendben nélküle megy ki.
+- **A Supabase-hitelesítők build időben égnek bele.** A `Dockerfile` build `ARG`-ként veszi át az `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_ANON_KEY` értékeket, így minden olyan fázis, amihez új környezeti beállítás kell (a 2. fázis VAPID publikus kulcsa), megköveteli, hogy a Railway build változói *a push előtt* frissüljenek, különben a telepítés csendben nélküle megy ki. **Az EAS-ben ugyanez a csapda, egy második helyen.** Az `eas.json` három profilja megnevez egy `environment`-et, így ugyanannak a két `EXPO_PUBLIC_*` változónak az EAS projekt környezeteiben is léteznie kell; egy natív build, amiből hiányoznak, települ, elindul, és üres katalógust mutat — sehol semmilyen hibaüzenet nélkül.
 - **A migrációk kézzel mennek fel.** A migrációt alkalmazni és ellenőrizni kell, mielőtt a rá épülő alkalmazáskód felmegy, hogy a telepített build soha ne kérdezzen le még nem létező táblát. Az 5.3 részben azért van a Supabase CLI, hogy ez a sorrendezés kevésbé legyen kézi.
