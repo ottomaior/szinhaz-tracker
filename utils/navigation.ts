@@ -1,4 +1,4 @@
-import type { Router } from "expo-router";
+import type { ImperativeRouter } from "expo-router";
 
 /**
  * Closes a modal screen after a successful action. Plain `router.back()`
@@ -9,7 +9,7 @@ import type { Router } from "expo-router";
  * action from looking like it did nothing.
  */
 export function closeModal(
-  router: Router,
+  router: ImperativeRouter,
   // `/(tabs)/profile` was added for onboarding: the payoff of ticking fifteen
   // productions is seeing them in the diary, so that flow lands there rather
   // than back on Discover.

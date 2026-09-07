@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Animated, Easing, View, StyleSheet, type DimensionValue } from "react-native";
 import { colors } from "@/theme/colors";
 import { radius as radii, space } from "@/theme/tokens";
@@ -26,7 +26,11 @@ export function Skeleton({
   radius?: number;
   style?: object;
 }) {
-  const pulse = useRef(new Animated.Value(0)).current;
+  // Held in state rather than a ref because `pulse` is read during render, by
+  // the `interpolate` call below, and a ref must not be. The lazy initialiser
+  // also means the Animated.Value is constructed once rather than on every
+  // render and immediately thrown away.
+  const [pulse] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     const animation = Animated.loop(

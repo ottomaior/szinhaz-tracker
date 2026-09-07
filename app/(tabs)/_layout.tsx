@@ -1,4 +1,4 @@
-import { Tabs } from "expo-router";
+import { Tabs } from "expo-router/js-tabs";
 import { TabBar } from "@/components/ui/TabBar";
 import { strings } from "@/i18n/hu";
 

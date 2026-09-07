@@ -89,7 +89,7 @@ export function AddToListSheet({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} accessibilityViewIsModal>
-      {/* Pinned with absoluteFillObject rather than `flex: 1` — on
+      {/* Pinned with absoluteFill rather than `flex: 1` — on
           react-native-web a Modal's child inherits no definite height and the
           sheet otherwise collapses into the corner with no backdrop. */}
       <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel={strings.common.close}>
@@ -156,7 +156,7 @@ export function AddToListSheet({
 
 const styles = StyleSheet.create({
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: overlay.scrim,
     justifyContent: "flex-end",
   },

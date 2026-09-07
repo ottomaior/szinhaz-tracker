@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   monogramWrap: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: "center",
     justifyContent: "center",
   },

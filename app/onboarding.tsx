@@ -254,7 +254,7 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   cityRow: { flexDirection: "row", gap: space.sm, flexWrap: "wrap" },
   tickOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderRadius: radius.md,
     backgroundColor: overlay.onImageVeil,
     alignItems: "center",

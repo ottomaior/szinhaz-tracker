@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
    * the same result on native and is unambiguous on web.
    */
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: overlay.scrim,
     justifyContent: "flex-end",
   },
