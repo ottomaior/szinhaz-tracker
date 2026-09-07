@@ -243,6 +243,7 @@ html { scroll-behavior: smooth; }
 .marquee__track span { font-family: var(--display); font-size: clamp(1rem, 2.4vw, 1.5rem); white-space: nowrap; color: var(--dim); }
 @keyframes slide { to { transform: translateX(-100%); } }
 .marquee:hover .marquee__track { animation-play-state: paused; }
+.houses__note { text-align: center; margin-top: 1.15rem; color: var(--faint); font-size: var(--step--1); padding-inline: var(--gutter); }
 </style>
 <style>
 /* ── Section scaffolding ────────────────────────────────────────────────── */
@@ -440,7 +441,7 @@ html { scroll-behavior: smooth; }
       <div class="hero__copy">
         <p class="eyebrow hero__eyebrow" data-t="heroEyebrow">Magyar színházi napló</p>
         <h1 data-t="heroTitle">A magyar színház,<br><em>egy naplóban</em>.</h1>
-        <p class="lede hero__lede" data-t="heroLede">Nézd meg, mi megy ma este nyolc színházban. Jegyezd fel, amit láttál, értékeld, és évek múlva is tudni fogod, melyik este volt az.</p>
+        <p class="lede hero__lede" data-t="heroLede">Nézd meg, mi megy ma este Budapesten és Debrecenben. Jegyezd fel, amit láttál, értékeld, és évek múlva is tudni fogod, melyik este volt az.</p>
         <div class="hero__cta">
           <a class="btn btn--gold" href="https://szinhaz-tracker-production.up.railway.app/">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
@@ -453,8 +454,7 @@ html { scroll-behavior: smooth; }
         </div>
         <p class="hero__meta">
           <span data-t="metaPlays">1213 produkció</span>
-          <span data-t="metaVenues">8 színház</span>
-          <span data-t="metaCities">2 város</span>
+          <span data-t="metaCities">Budapest és Debrecen</span>
           <span data-t="metaSync">Éjszakánként frissül</span>
         </p>
       </div>
@@ -463,7 +463,7 @@ html { scroll-behavior: smooth; }
 
   <!-- ── The houses ───────────────────────────────────────────────────── -->
   <section class="houses" aria-label="A katalógusban szereplő színházak" data-t-label="housesLabel">
-    <p class="houses__label" data-t="housesHeading">A katalógusban most</p>
+    <p class="houses__label" data-t="housesHeading">Most Budapesten és Debrecenben</p>
     <div class="marquee" aria-hidden="true">
       <div class="marquee__track">
         <span>Örkény István Színház</span><span>·</span><span>Katona József Színház</span><span>·</span><span>Nemzeti Színház</span><span>·</span><span>Centrál Színház</span><span>·</span><span>Madách Színház</span><span>·</span><span>Vígszínház</span><span>·</span><span>Csokonai Nemzeti Színház</span><span>·</span><span>Vojtina Bábszínház</span><span>·</span>
@@ -472,6 +472,7 @@ html { scroll-behavior: smooth; }
         <span>Örkény István Színház</span><span>·</span><span>Katona József Színház</span><span>·</span><span>Nemzeti Színház</span><span>·</span><span>Centrál Színház</span><span>·</span><span>Madách Színház</span><span>·</span><span>Vígszínház</span><span>·</span><span>Csokonai Nemzeti Színház</span><span>·</span><span>Vojtina Bábszínház</span><span>·</span>
       </div>
     </div>
+    <p class="houses__note" data-t="housesNote">Több színház és több város jön — oda megyünk legközelebb, ahonnan kérik.</p>
   </section>
 
   <!-- ── Act I ────────────────────────────────────────────────────────── -->
@@ -481,7 +482,7 @@ html { scroll-behavior: smooth; }
 
       <div class="center-stage" data-reveal>
         <h2 data-t="d1Title">Ami ma este megy, egy képernyőn.</h2>
-        <p class="lede" data-t="d1Lede">Nyolc színház műsora egy helyen — nem jegyirodán át, hanem közvetlenül a színházak saját oldaláról, minden éjjel újraolvasva.</p>
+        <p class="lede" data-t="d1Lede">Budapest és Debrecen színházainak műsora egy helyen — nem jegyirodán át, hanem közvetlenül a színházak saját oldaláról, minden éjjel újraolvasva.</p>
         <div class="phone" style="--w: 320px; margin-top: 1.5rem" data-parallax="0.03">
           <div class="phone__body">
             <div class="phone__screen">
@@ -608,7 +609,7 @@ html { scroll-behavior: smooth; }
         <div class="split__copy" data-reveal>
           <p class="eyebrow" data-t="p1Eyebrow">Színészek és rendezők</p>
           <h2 data-t="p1Title">Ki volt az a színésznő a második felvonásban?</h2>
-          <p class="body-dim" data-t="p1Body">A katalógus 2424 névvel indul. Rákeresel egy színészre, és megkapod mindent, amiben a nyolc színházban játszott — szereppel, évszámmal, színházzal. A rendezők ugyanígy.</p>
+          <p class="body-dim" data-t="p1Body">A katalógus 2424 névvel indul. Rákeresel egy színészre, és megkapod mindent, amiben a katalógus színházaiban játszott — szereppel, évszámmal, színházzal. A rendezők ugyanígy.</p>
           <p class="body-dim" data-t="p1Body2">Ha bejelentkezel, szólunk, amikor egy követett alkotó új előadásban lép színpadra.</p>
         </div>
         <div class="split__art duo" data-reveal>
@@ -647,8 +648,8 @@ html { scroll-behavior: smooth; }
           <div class="tile__inner">
             <div class="tile__text">
               <svg class="tile__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/></svg>
-              <h3 data-t="tile1T">Listák</h3>
-              <p data-t="tile1B">Szerkesztői és saját listák — „Bodó Viktor Budapesten”, nyolc rendezés három színházban. Rangsorolható, megosztható, és bárki megnyithatja fiók nélkül is.</p>
+              <h3 data-t="tile1T">Készíts saját listát</h3>
+              <p data-t="tile1B">Bármilyen téma köré: egy rendező kézjegye, amit a gyerekekkel érdemes megnézni, az idei legjobb esték, a Shakespeare-ek. Összeállítod, sorrendbe teszed, és megosztod egy linkkel — a barátaid fiók nélkül is meg tudják nyitni. A „Bodó Viktor Budapesten” a mi példánk rá: nyolc rendezés három színházban.</p>
             </div>
             <div class="phone phone--tilt" style="--w: 176px; --tilt: -4deg">
               <div class="phone__body">
@@ -695,7 +696,7 @@ html { scroll-behavior: smooth; }
     <div class="tally__cell"><span class="tally__n" data-count="1213">1213</span><span class="tally__k" data-t="tally1">Produkció</span></div>
     <div class="tally__cell"><span class="tally__n" data-count="2424">2424</span><span class="tally__k" data-t="tally2">Alkotó</span></div>
     <div class="tally__cell"><span class="tally__n" data-count="454">454</span><span class="tally__k" data-t="tally3">Meghirdetett időpont</span></div>
-    <div class="tally__cell"><span class="tally__n" data-count="8">8</span><span class="tally__k" data-t="tally4">Színház, két városban</span></div>
+    <div class="tally__cell"><span class="tally__n" data-count="1960" data-plain="1">1960</span><span class="tally__k" data-t="tally4">A legrégebbi bemutató</span></div>
   </section>
 
   <!-- ── Under the hood ───────────────────────────────────────────────── -->
@@ -709,7 +710,7 @@ html { scroll-behavior: smooth; }
       <dl class="specs" data-reveal>
         <div class="specs__row"><dt class="specs__k">Expo · React Native · TypeScript</dt><dd class="specs__v" data-t="spec1">Egy kódbázis, amiből webes és natív build is készül.</dd></div>
         <div class="specs__row"><dt class="specs__k">Supabase · Postgres · RLS</dt><dd class="specs__v" data-t="spec2">Ki mit lát, az sorszinten, az adatbázisban dől el — nem az appban.</dd></div>
-        <div class="specs__row"><dt class="specs__k" data-t="spec3K">Tíz szinkron-adapter</dt><dd class="specs__v" data-t="spec3">Minden éjjel újraolvassa a nyolc színház saját oldalát. Jegyirodai közvetítő nélkül.</dd></div>
+        <div class="specs__row"><dt class="specs__k" data-t="spec3K">Tíz szinkron-adapter</dt><dd class="specs__v" data-t="spec3">Minden éjjel újraolvassa a színházak saját oldalait. Jegyirodai közvetítő nélkül.</dd></div>
         <div class="specs__row"><dt class="specs__k">WCAG AA</dt><dd class="specs__v" data-t="spec4">Mind az öt témában minden szövegszín 4,5:1 kontraszt fölött van, kártyán is.</dd></div>
         <div class="specs__row"><dt class="specs__k">expo-router</dt><dd class="specs__v" data-t="spec5">Minden képernyőnek saját URL-je van, és megosztható — a darabtól az alkotóig.</dd></div>
         <div class="specs__row"><dt class="specs__k" data-t="spec6K">Ami még nincs kész</dt><dd class="specs__v" data-t="spec6">Az iOS- és Android-build készül. A webes verzió most is működik telefonon.</dd></div>
@@ -726,15 +727,15 @@ html { scroll-behavior: smooth; }
       <div class="faq" data-reveal>
         <details>
           <summary><span data-t="faq1Q">Kerül valamibe?</span><svg class="faq__sign" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></summary>
-          <div class="faq__a"><p data-t="faq1A">Nem. A Vastaps ingyenes, nem árul jegyet, és nincs benne hirdetés. Nincs mögötte cég sem — egyetlen ember csinálja.</p></div>
+          <div class="faq__a"><p data-t="faq1A">Ma nem. Böngészni, naplózni és értékelni fizetés nélkül lehet, hirdetés pedig egyáltalán nincs benne. Hogy hosszabb távon mi tartja majd el — például színházi együttműködések —, az még nyitott kérdés; ha változik valami, előre szólok, és nem visszamenőleg.</p></div>
         </details>
         <details>
           <summary><span data-t="faq2Q">Honnan jönnek az adatok?</span><svg class="faq__sign" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></summary>
-          <div class="faq__a"><p data-t="faq2A">Közvetlenül a színházak saját oldalairól, minden éjjel újraolvasva. Tíz adapter olvassa a nyolc színházat — van, ahol a színház nyilvános API-jából, van, ahol a műsoroldalról. Jegyirodai aggregátorokat szándékosan nem használ.</p></div>
+          <div class="faq__a"><p data-t="faq2A">Közvetlenül a színházak saját oldalairól, minden éjjel újraolvasva — van, ahol a színház nyilvános API-jából, van, ahol a műsoroldalról. Minden új színház egy-egy külön beolvasót jelent, ezért nem egyszerre jönnek. Jegyirodai aggregátorokat szándékosan nem használ.</p></div>
         </details>
         <details>
           <summary><span data-t="faq3Q">Melyik színházak vannak benne?</span><svg class="faq__sign" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></summary>
-          <div class="faq__a"><p data-t="faq3A">Budapesten az Örkény István Színház, a Katona József Színház, a Nemzeti Színház, a Centrál Színház, a Madách Színház és a Vígszínház; Debrecenben a Csokonai Nemzeti Színház és a Vojtina Bábszínház. A lista bővül — ha hiányzik a kedvenced, írj.</p></div>
+          <div class="faq__a"><p data-t="faq3A">Egyelőre Budapest és Debrecen. Budapesten az Örkény István Színház, a Katona József Színház, a Nemzeti Színház, a Centrál Színház, a Madách Színház és a Vígszínház; Debrecenben a Csokonai Nemzeti Színház és a Vojtina Bábszínház. Hogy melyik város és melyik ház jön ezután, azon múlik, honnan kérik — úgyhogy ha a tiéd hiányzik, írj, mert pont ez dönti el a sorrendet.</p></div>
         </details>
         <details>
           <summary><span data-t="faq4Q">Kell hozzá fiók?</span><svg class="faq__sign" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></summary>
@@ -817,17 +818,18 @@ html { scroll-behavior: smooth; }
 
     heroEyebrow: "A Hungarian theatre diary",
     heroTitle: "Hungarian theatre,<br><em>in one diary</em>.",
-    heroLede: "See what is on tonight across eight theatres. Note down what you saw, rate it, and years from now still know which night it was.",
+    heroLede: "See what is on tonight in Budapest and Debrecen. Note down what you saw, rate it, and years from now still know which night it was.",
     ctaOpen: "Open the app", ctaSource: "Source code",
-    metaPlays: "1,213 productions", metaVenues: "8 theatres", metaCities: "2 cities", metaSync: "Synced nightly",
+    metaPlays: "1,213 productions", metaCities: "Budapest and Debrecen", metaSync: "Synced nightly",
     altFeed: "The Vastaps feed: Maior Ottó saw Scævola – Gianni Schicchi at the Csokonai National Theatre, rated four masks.",
 
     housesLabel: "Theatres in the catalogue",
-    housesHeading: "In the catalogue right now",
+    housesNote: "More theatres and more cities are coming — wherever people ask for them next.",
+    housesHeading: "Right now in Budapest and Debrecen",
 
     act1: "Act · Discover",
     d1Title: "What is on tonight, on one screen.",
-    d1Lede: "Eight theatres' listings in one place — not through a ticket agency, but read straight from the theatres' own sites, every night.",
+    d1Lede: "The listings of Budapest's and Debrecen's theatres in one place — not through a ticket agency, but read straight from the theatres' own sites, every night.",
     altDiscover: "The Discover screen: an “On now” rail with Anyegin, Káli holtak and A Pál utcai fiúk, and upcoming performances broken down by day.",
 
     d2Eyebrow: "Listings",
@@ -858,15 +860,15 @@ html { scroll-behavior: smooth; }
     act3: "Act · People",
     p1Eyebrow: "Performers and directors",
     p1Title: "Who was that actress in the second act?",
-    p1Body: "The catalogue starts with 2,424 names. Search for a performer and you get everything they have appeared in across the eight theatres — with the role, the year and the house. Directors work the same way.",
+    p1Body: "The catalogue starts with 2,424 names. Search for a performer and you get everything they have appeared in across the theatres in the catalogue — with the role, the year and the house. Directors work the same way.",
     p1Body2: "Sign in and we will tell you when someone you follow steps on stage in a new production.",
     altSearch: "Searching for “Csuja Imre”: the performer match with 49 credits, and below it 50 productions, 47 of them no longer running.",
     altPerson: "Für Anikó's page: 48 credits at one theatre, from 2002 to 2027, with the productions and roles below.",
 
     gridTitle: "And the rest of the programme",
     altList: "The “Bodó Viktor in Budapest” list: eight productions across three theatres, from 2014 onwards.",
-    tile1T: "Lists",
-    tile1B: "Editorial and personal lists — “Bodó Viktor in Budapest”, eight productions across three theatres. Rankable, shareable, and open to anyone without an account.",
+    tile1T: "Make a list of your own",
+    tile1B: "Around any theme you like: one director’s signature, what is worth seeing with the children, the best evenings of the year, the Shakespeares. You put it together, order it, and share it with a link — your friends can open it without an account. “Bodó Viktor in Budapest” is our own example: eight productions across three theatres.",
     tile2T: "Watchlist",
     tile2B: "What you still want to see. As soon as the next date is announced, the play moves up on its own.",
     tile3T: "Feed",
@@ -877,7 +879,7 @@ html { scroll-behavior: smooth; }
     tile6B: "Vastaps is not a box office and does not want to be. One tap takes you to the theatre's own page, where you can actually buy the seat.",
 
     tallyLabel: "The catalogue in numbers",
-    tally1: "Productions", tally2: "People", tally3: "Announced dates", tally4: "Theatres, in two cities",
+    tally1: "Productions", tally2: "People", tally3: "Announced dates", tally4: "The oldest premiere",
 
     act4: "Act · Behind the curtain",
     techTitle: "Written by one person, and open source.",
@@ -885,7 +887,7 @@ html { scroll-behavior: smooth; }
     spec1: "One codebase, producing both the web and the native builds.",
     spec2: "Who sees what is decided row by row in the database — not in the app.",
     spec3K: "Ten sync adapters",
-    spec3: "Re-reads the eight theatres' own sites every night. No ticket-agency middleman.",
+    spec3: "Re-reads the theatres' own sites every night. No ticket-agency middleman.",
     spec4: "Every text colour clears 4.5:1 in all five themes, on cards as well as on the page.",
     spec5: "Every screen has its own URL and can be shared — from a production to a performer.",
     spec6K: "What is not finished",
@@ -893,11 +895,11 @@ html { scroll-behavior: smooth; }
 
     faqTitle: "Frequently asked",
     faq1Q: "Does it cost anything?",
-    faq1A: "No. Vastaps is free, sells no tickets and carries no advertising. There is no company behind it either — one person makes it.",
+    faq1A: "Not today. Browsing, logging and rating cost nothing, and there is no advertising at all. How it supports itself longer term — through partnerships with theatres, for instance — is still an open question; if anything changes, you will hear about it in advance, and not retroactively.",
     faq2Q: "Where does the data come from?",
-    faq2A: "Straight from the theatres' own websites, re-read every night. Ten adapters cover the eight theatres — some read the theatre's public API, some read its listings pages. Ticket aggregators are deliberately not used.",
+    faq2A: "Straight from the theatres' own websites, re-read every night — some through a theatre's public API, some from its listings pages. Every new theatre means its own reader, which is why they arrive one at a time rather than all at once. Ticket aggregators are deliberately not used.",
     faq3Q: "Which theatres are included?",
-    faq3A: "In Budapest: Örkény István, Katona József, the National Theatre, Centrál, Madách and Vígszínház. In Debrecen: the Csokonai National Theatre and the Vojtina Puppet Theatre. The list is growing — if your favourite is missing, write in.",
+    faq3A: "Budapest and Debrecen for now. In Budapest: Örkény István, Katona József, the National Theatre, Centrál, Madách and Vígszínház. In Debrecen: the Csokonai National Theatre and the Vojtina Puppet Theatre. Which city and which house comes next depends on where people ask from — so if yours is missing, write in, because that is exactly what decides the order.",
     faq4Q: "Do I need an account?",
     faq4A: "Not to browse: the listings, the productions, the performers and the lists all open without one. Logging, rating and the watchlist need an email address and a password.",
     faq5Q: "Is there a phone app?",
@@ -976,6 +978,7 @@ html { scroll-behavior: smooth; }
     var fmt = new Intl.NumberFormat(locale);
     tallies.forEach(function (el) {
       var target = Number(el.dataset.count);
+      if (el.dataset.plain === "1") { el.textContent = String(target); return; }
       if (immediate || calm.matches || !el.dataset.armed) {
         el.textContent = fmt.format(target);
         return;
