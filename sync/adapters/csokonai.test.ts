@@ -38,6 +38,36 @@ describe("csokonai parseProductionDetails", () => {
     expect(details.cast).toContainEqual({ role: "ILUSKA", name: "Faluvégi Fanni" });
   });
 
+  /*
+   * The markup a role with alternates renders, reproduced from the live
+   * Gianni Schicchi / Scævola page. The fixture above is a production cast
+   * without alternates, which is exactly why the bug this pins survived: the
+   * adapter took `split("/")[0]` and every performer after the first was
+   * parsed and discarded, unnoticed by any test.
+   */
+  const alternates = `<div id="actors-container-1"><div>
+      <div>
+        <p class="uk-text-muted">PLAMEN</p>
+        <p class="uk-text-secondary">Körmendy Flórián m.v./ Beeri Benjámin m.v.</p>
+      </div>
+      <div>
+        <p class="uk-text-muted">SLAVA</p>
+        <p class="uk-text-secondary">Molnár Levente - Liszt-díjas, érdemes művész m.v. / Donkó Imre</p>
+      </div>
+    </div></div>`;
+
+  it("keeps every performer who covers a role, not just the first", () => {
+    const cast = parseProductionDetails(alternates).cast;
+    expect(cast).toEqual([
+      { role: "PLAMEN", name: "Körmendy Flórián" },
+      { role: "PLAMEN", name: "Beeri Benjámin" },
+      // The award stays in the name as the theatre prints it; only the guest
+      // marker is trimmed, which is this source's long-standing habit.
+      { role: "SLAVA", name: "Molnár Levente - Liszt-díjas, érdemes művész" },
+      { role: "SLAVA", name: "Donkó Imre" },
+    ]);
+  });
+
   it("carries a synopsis", () => {
     expect(details.synopsis).toBeTruthy();
     expect(details.synopsis?.length).toBeGreaterThan(50);

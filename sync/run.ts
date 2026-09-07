@@ -23,6 +23,7 @@ import { nemzetiAdapter } from "./adapters/nemzeti";
 import { centralAdapter } from "./adapters/central";
 import { madachAdapter } from "./adapters/madach";
 import { vigszinhazAdapter } from "./adapters/vigszinhaz";
+import { splitPerformers } from "./lib/performers";
 import { mirrorPoster } from "./lib/posters";
 import type { SyncAdapter, SyncedPlay } from "./lib/types";
 
@@ -91,6 +92,24 @@ const DEFAULT_ADAPTERS: SyncAdapter[] = [
   katonaWpAdapter,
   katonaArchiveAdapter,
 ];
+
+/**
+ * Gives every performer named in a credit a row of their own.
+ *
+ * A source publishes one line per part, and a part is regularly covered by
+ * more than one person — alternating leads written "Ács Eszter / Battai Lili
+ * Lujza", or a chorus listed as a comma-separated run of names. Written
+ * through unexpanded, that pair becomes a single cast member nobody is called,
+ * whose person page is then empty for both of them.
+ *
+ * Here rather than in the adapters, for the reason `dedupeCast` gives below:
+ * (play_id, name, role) is the table's own shape, so satisfying it is the
+ * sync's job and not something eleven sources each have to remember.
+ * `sync/lib/performers.ts` holds what does and does not count as a list.
+ */
+function expandCast(cast: SyncedPlay["cast"]): SyncedPlay["cast"] {
+  return cast.flatMap((member) => splitPerformers(member.name).map((name) => ({ name, role: member.role })));
+}
 
 /**
  * Collapses cast entries that repeat the same performer in the same role.
@@ -223,7 +242,7 @@ async function upsertPlay(sourceName: string, synced: SyncedPlay) {
   // supabase/migrations/0012_replace_play_cast.sql.
   const { error: castError } = await supabaseAdmin.rpc("replace_play_cast", {
     target_play_id: playId,
-    members: dedupeCast(synced.cast),
+    members: dedupeCast(expandCast(synced.cast)),
   });
   if (castError) throw castError;
 

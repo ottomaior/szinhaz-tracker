@@ -34,6 +34,7 @@ import { fetchText } from "../lib/http";
 import { budapestLocalToUtcIso, parseHungarianDate } from "../lib/huDate";
 import { titleKey } from "../lib/normalize";
 import { parseDurationHu } from "../lib/huDuration";
+import { splitPerformers } from "../lib/performers";
 import { VENUE_IDS } from "../venueMap";
 import type { SyncAdapter, SyncedPlay } from "../lib/types";
 
@@ -263,9 +264,29 @@ export function parseProductionDetails(html: string): ProductionDetails {
   $('[id^="actors-container-"] > div > div').each((_, row) => {
     const $row = $(row);
     const role = $row.find("p.uk-text-muted").first().text().trim();
+    /*
+     * Every performer covering the part, not just the first of them.
+     *
+     * This used to be `nameField.split("/")[0]`, so everyone else who covers
+     * a role was parsed and then thrown away: Gianni Schicchi lost Beeri
+     * Benjámin, Faluvégi Fanni and Donkó Imre, none of whom then appeared
+     * anywhere in the catalogue. `splitPerformers` decides where the
+     * boundaries are, and each name gets a row of its own against the same
+     * character.
+     *
+     * The guest marker is trimmed per performer rather than per field,
+     * because it is printed after each of them ("Körmendy Flórián m.v./
+     * Beeri Benjámin m.v."). Doing it at all is this source's own habit and
+     * not the catalogue's convention — Katona, Nemzeti and Örkény all store
+     * "m.v." as printed — but it is what these 2000 rows already look like,
+     * and unifying the two is a decision about display, not about parsing.
+     */
     const nameField = $row.find("p.uk-text-secondary").first().text().trim();
-    const firstAlternate = nameField.split("/")[0]?.replace(/\bm\.v\.\s*$/, "").trim();
-    if (role && firstAlternate) cast.push({ role, name: firstAlternate });
+    if (!role || !nameField) return;
+    for (const performer of splitPerformers(nameField)) {
+      const name = performer.replace(/\bm\.\s*v\.\s*$/, "").trim();
+      if (name) cast.push({ role, name });
+    }
   });
 
   return {
