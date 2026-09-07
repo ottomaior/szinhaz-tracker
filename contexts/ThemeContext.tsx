@@ -61,8 +61,25 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
   const scheme = useColorScheme();
 
-  const resolved: ThemeId =
-    preference === "system" ? (scheme === "light" ? DEFAULT_LIGHT : DEFAULT_DARK) : preference;
+  // `DEFAULT_DARK` until the effect below has run, for the same reason
+  // `preference` starts at "system": `useColorScheme()` is read during render,
+  // and it does not agree with itself across the hydration boundary. The static
+  // export has no `matchMedia`, so it renders "light"; a reader whose phone is
+  // in dark mode renders "dark" on the first client pass. Settings puts that
+  // value on screen — as the system row's swatch, and by name in "jelenleg:
+  // Bársony" — so the two passes produced different markup and React threw the
+  // whole pre-rendered document away with error #418.
+  //
+  // This is the one screen that reads it, but the correction belongs here
+  // rather than there: `resolved` is a value that is simply not knowable before
+  // hydration, and the next thing to read it should not have to rediscover why.
+  const resolved: ThemeId = !hydrated
+    ? DEFAULT_DARK
+    : preference === "system"
+      ? scheme === "light"
+        ? DEFAULT_LIGHT
+        : DEFAULT_DARK
+      : preference;
 
   useEffect(() => {
     let active = true;
