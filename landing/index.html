@@ -219,10 +219,6 @@ html { scroll-behavior: smooth; }
 }
 .phone__screen { position: relative; border-radius: 11.4%/5.4%; overflow: hidden; background: var(--ink-2); }
 .phone__screen img { width: 100%; height: auto; }
-.phone__island {
-  position: absolute; z-index: 2; top: 1.9%; left: 50%; transform: translateX(-50%);
-  width: 27%; height: 2.3%; min-height: 8px; border-radius: 999px; background: #080302;
-}
 .phone__glare {
   position: absolute; inset: 0; z-index: 3; pointer-events: none; border-radius: inherit;
   background: linear-gradient(118deg, rgba(245,237,228,0.10) 0%, rgba(245,237,228,0.02) 22%, rgba(245,237,228,0) 46%);
@@ -387,7 +383,7 @@ html { scroll-behavior: smooth; }
       <a href="#felfedezes" data-t="navDiscover">Felfedezés</a>
       <a href="#naplo" data-t="navDiary">Napló</a>
       <a href="#alkotok" data-t="navPeople">Alkotók</a>
-      <a href="#gyik" data-t="navFaq">GY.I.K.</a>
+      <a href="#gyik" data-t="navFaq">GYIK</a>
       <a href="#kapcsolat" data-t="navContact">Kapcsolat</a>
     </nav>
 
@@ -415,7 +411,6 @@ html { scroll-behavior: smooth; }
         <div class="phone" style="--w: 264px" data-parallax="0.045">
           <div class="phone__body">
             <div class="phone__screen">
-              <span class="phone__island"></span>
               <img src="shots/feed.webp" width="810" height="1761" alt="A Vastaps hírfolyama: Maior Ottó megnézte a Scævola – Gianni Schicchit a Csokonai Nemzeti Színházban, négy maszkkal értékelve." data-t-alt="altFeed">
               <span class="phone__glare"></span>
             </div>
@@ -471,7 +466,6 @@ html { scroll-behavior: smooth; }
         <div class="phone" style="--w: 320px; margin-top: 1.5rem" data-parallax="0.03">
           <div class="phone__body">
             <div class="phone__screen">
-              <span class="phone__island"></span>
               <img src="shots/discover.webp" width="810" height="1761" loading="lazy" alt="A Felfedezés képernyő: „Műsoron most” sávban az Anyegin, a Káli holtak és A Pál utcai fiúk, alatta a közelgő előadások napokra bontva." data-t-alt="altDiscover">
               <span class="phone__glare"></span>
             </div>
@@ -486,7 +480,7 @@ html { scroll-behavior: smooth; }
       <div class="split__copy" data-reveal>
         <p class="eyebrow" data-t="d2Eyebrow">Műsor</p>
         <h2 data-t="d2Title">Nem darabok listája. Estéké.</h2>
-        <p class="body-dim" data-t="d2Body">A Műsor nézet napokra bontva mutatja, mi hol és hánykor kezdődik — teremmel, hosszal és műfajjal együtt. Ma, holnap, vagy bármelyik este a szezonban.</p>
+        <p class="body-dim" data-t="d2Body">A Műsor nézet napokra bontva mutatja, mi hol és hánykor kezdődik — teremmel, hosszal és műfajjal együtt. Ma, holnap, vagy bármelyik este az évadban.</p>
         <ul class="callouts">
           <li>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"/><path d="m20 20-4.2-4.2"/></svg>
@@ -498,7 +492,7 @@ html { scroll-behavior: smooth; }
           </li>
           <li>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 7h18v13H3zM3 7l2-3h14l2 3M9 12h6"/></svg>
-            <span data-t="d2Point3"><b>És az archívum.</b> Nyolcszázötven régi produkció, amit rég levettek. Kereshető marad, és naplózható.</span>
+            <span data-t="d2Point3"><b>És az archívum.</b> Közel kilencszáz régi produkció, amit rég levettek. Kereshető marad, és naplózható.</span>
           </li>
         </ul>
         <div style="margin-top: 0.6rem">
@@ -515,7 +509,6 @@ html { scroll-behavior: smooth; }
         <div class="phone phone--tilt" style="--w: 288px; --tilt: 4deg" data-parallax="0.05">
           <div class="phone__body">
             <div class="phone__screen">
-              <span class="phone__island"></span>
               <img src="shots/musor.webp" width="810" height="1761" loading="lazy" alt="A Műsor naptárnézet: 2026. szeptember 7., egy előadás — Anyegin 19:30-kor az Örkény István Színház Stúdiójában." data-t-alt="altMusor">
               <span class="phone__glare"></span>
             </div>
@@ -534,7 +527,6 @@ html { scroll-behavior: smooth; }
           <div class="phone phone--tilt" style="--w: 288px; --tilt: -4deg" data-parallax="0.05">
             <div class="phone__body">
               <div class="phone__screen">
-                <span class="phone__island"></span>
                 <img src="shots/play.webp" width="810" height="1761" loading="lazy" alt="A Pál utcai fiúk adatlapja a Csokonai Nemzeti Színházból: plakát, 4,0-s átlag, és külön sáv a színészi játékra, a rendezésre és a díszletre." data-t-alt="altPlay">
                 <span class="phone__glare"></span>
               </div>
@@ -556,7 +548,7 @@ html { scroll-behavior: smooth; }
             </li>
             <li>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2 2 2 0 0 0 0 4 2 2 0 0 0 0 4 2 2 0 0 1-2 2H6a2 2 0 0 1-2-2 2 2 0 0 0 0-4 2 2 0 0 0 0-4Z"/><path d="M13 6v12"/></svg>
-              <span data-t="j1Point3"><b>A jegy is.</b> Széksor, ár és a jegyről készült fotó a bejegyzéshez tartozik.</span>
+              <span data-t="j1Point3"><b>A jegy is.</b> A hely, az ár és a jegyről készült fotó ugyanahhoz a bejegyzéshez tartozik.</span>
             </li>
           </ul>
         </div>
@@ -570,13 +562,12 @@ html { scroll-behavior: smooth; }
         <p class="eyebrow" data-t="j2Eyebrow">Profil</p>
         <h2 data-t="j2Title">A profilod egy műsorfüzet.</h2>
         <p class="body-dim" data-t="j2Body">Minden megnézett előadás egy lapon, plakáttal, dátummal és értékeléssel. Nyilvános, ha akarod — így meg lehet mutatni, mit láttál ebben az évadban.</p>
-        <p class="body-dim" data-t="j2Body2">Az évad végén a Vastaps összeszámolja: hány estét töltöttél színházban, melyik házban a legtöbbet, és kit láttál a legtöbbször színpadon.</p>
+        <p class="body-dim" data-t="j2Body2">Az évad végén a Vastaps összeszámolja: hány estét töltöttél színházban, mibe került, milyen műfajokat néztél, és kiket láttál a legtöbbször színpadon.</p>
       </div>
       <div class="split__art" data-reveal>
         <div class="phone phone--tilt" style="--w: 288px; --tilt: 4deg" data-parallax="0.05">
           <div class="phone__body">
             <div class="phone__screen">
-              <span class="phone__island"></span>
               <img src="shots/user.webp" width="810" height="1761" loading="lazy" alt="Maior Ottó nyilvános profilja: 14 megnézett darab, alatta a napló plakátokkal és maszk-értékelésekkel." data-t-alt="altUser">
               <span class="phone__glare"></span>
             </div>
@@ -594,14 +585,13 @@ html { scroll-behavior: smooth; }
         <div class="split__copy" data-reveal>
           <p class="eyebrow" data-t="p1Eyebrow">Színészek és rendezők</p>
           <h2 data-t="p1Title">Ki volt az a színésznő a második felvonásban?</h2>
-          <p class="body-dim" data-t="p1Body">A katalógus 2424 névvel indul. Rákeresel egy színészre, és megkapod mindent, amiben a katalógus színházaiban játszott — szereppel, évszámmal, színházzal. A rendezők ugyanígy.</p>
+          <p class="body-dim" data-t="p1Body">A katalógus 2424 névvel indul. Rákeresel egy színészre, és előjön minden előadás, amiben játszott — szereppel, évszámmal, színházzal. A rendezők ugyanígy.</p>
           <p class="body-dim" data-t="p1Body2">Ha bejelentkezel, szólunk, amikor egy követett alkotó új előadásban lép színpadra.</p>
         </div>
         <div class="split__art duo" data-reveal>
           <div class="phone phone--back phone--tilt" style="--w: 226px; --tilt: -7deg" data-parallax="0.075">
             <div class="phone__body">
               <div class="phone__screen">
-                <span class="phone__island"></span>
                 <img src="shots/search.webp" width="810" height="1761" loading="lazy" alt="Keresés a „Csuja Imre” névre: az alkotó találata 49 közreműködéssel, alatta 50 darab, amiből 47 már nincs műsoron." data-t-alt="altSearch">
                 <span class="phone__glare"></span>
               </div>
@@ -610,7 +600,6 @@ html { scroll-behavior: smooth; }
           <div class="phone phone--tilt" style="--w: 252px; --tilt: 3deg" data-parallax="0.045">
             <div class="phone__body">
               <div class="phone__screen">
-                <span class="phone__island"></span>
                 <img src="shots/person.webp" width="810" height="1761" loading="lazy" alt="Für Anikó oldala: 48 közreműködés egy színházban, 2002-től 2027-ig, alatta az előadások szerepekkel." data-t-alt="altPerson">
                 <span class="phone__glare"></span>
               </div>
@@ -634,12 +623,11 @@ html { scroll-behavior: smooth; }
             <div class="tile__text">
               <svg class="tile__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/></svg>
               <h3 data-t="tile1T">Készíts saját listát</h3>
-              <p data-t="tile1B">Bármilyen téma köré: egy rendező kézjegye, amit a gyerekekkel érdemes megnézni, az idei legjobb esték, a Shakespeare-ek. Összeállítod, sorrendbe teszed, és megosztod egy linkkel — a barátaid fiók nélkül is meg tudják nyitni. A „Bodó Viktor Budapesten” a mi példánk rá: nyolc rendezés három színházban.</p>
+              <p data-t="tile1B">Bármilyen téma köré: egy rendező kézjegye, a gyerekekkel megnézhető darabok, az idei legjobb esték, a Shakespeare-ek. Összeállítod, sorrendbe teszed, és megosztod egy linkkel — a barátaid fiók nélkül is meg tudják nyitni. A „Bodó Viktor Budapesten” a mi példánk rá: nyolc rendezés három színházban.</p>
             </div>
             <div class="phone phone--tilt" style="--w: 176px; --tilt: -4deg">
               <div class="phone__body">
                 <div class="phone__screen">
-                  <span class="phone__island"></span>
                   <img src="shots/list.webp" width="810" height="1761" loading="lazy" alt="A „Bodó Viktor Budapesten” lista: nyolc rendezés három színházban, 2014-től." data-t-alt="altList">
                   <span class="phone__glare"></span>
                 </div>
@@ -651,7 +639,7 @@ html { scroll-behavior: smooth; }
         <article class="tile" data-reveal>
           <svg class="tile__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 4h12a1 1 0 0 1 1 1v15l-7-4-7 4V5a1 1 0 0 1 1-1Z"/></svg>
           <h3 data-t="tile2T">Kívánságlista</h3>
-          <p data-t="tile2B">Amit még meg akarsz nézni. Ha meghirdetik a következő időpontot, a darab magától előrébb kerül.</p>
+          <p data-t="tile2B">Amit még meg akarsz nézni, egy helyen — a darab oldalán a könyvjelzővel teszed rá. Ugyanezen a képernyőn látod azokat az alkotókat és színházakat is, akiket követsz.</p>
         </article>
 
         <article class="tile" data-reveal>
@@ -663,7 +651,7 @@ html { scroll-behavior: smooth; }
         <article class="tile" data-reveal>
           <svg class="tile__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.9 1.8-1.8 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-1 .8-1.8 1.8-1.8H16a5 5 0 0 0 5-5c0-3.9-4-7-9-7Z"/><circle cx="7.7" cy="11.2" r="1.1" fill="currentColor" stroke="none"/><circle cx="11" cy="7.7" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.6" r="1.1" fill="currentColor" stroke="none"/></svg>
           <h3 data-t="tile5T">Öt téma</h3>
-          <p data-t="tile5B">Sötét bordó, hűvös szén, krémszínű műsorfüzet, papír és fehér. Mindegyikben minden szövegszín 4,5:1 fölött van — és bejelentkezés nélkül is át lehet váltani.</p>
+          <p data-t="tile5B">Sötét bordó, hűvös szén, krémszínű műsorfüzet, halvány lila és tiszta fehér. Mindegyikben minden szövegszín 4,5:1 fölött van — és bejelentkezés nélkül is át lehet váltani.</p>
         </article>
 
         <article class="tile" data-reveal>
@@ -689,13 +677,13 @@ html { scroll-behavior: smooth; }
     <div class="shell">
       <p class="act" data-reveal><span class="act__num">IV.</span> <span data-t="act4">Felvonás · A színfalak mögött</span> <span class="act__rule"></span></p>
       <div class="center-stage" data-reveal style="margin-bottom: clamp(2rem, 4vw, 3rem)">
-        <h2 data-t="techTitle">Egy ember írta, és nyílt forráskódú.</h2>
+        <h2 data-t="techTitle">Egy ember írta, és nyílt a forráskódja.</h2>
         <p class="lede" data-t="techLede">A tárháznak nemcsak a kódja publikus: minden döntés indoklása is le van írva benne, azzal együtt, ami először nem működött.</p>
       </div>
       <dl class="specs" data-reveal>
         <div class="specs__row"><dt class="specs__k">Expo · React Native · TypeScript</dt><dd class="specs__v" data-t="spec1">Egy kódbázis, amiből webes és natív build is készül.</dd></div>
         <div class="specs__row"><dt class="specs__k">Supabase · Postgres · RLS</dt><dd class="specs__v" data-t="spec2">Ki mit lát, az sorszinten, az adatbázisban dől el — nem az appban.</dd></div>
-        <div class="specs__row"><dt class="specs__k" data-t="spec3K">Tíz szinkron-adapter</dt><dd class="specs__v" data-t="spec3">Minden éjjel újraolvassa a színházak saját oldalait. Jegyirodai közvetítő nélkül.</dd></div>
+        <div class="specs__row"><dt class="specs__k" data-t="spec3K">Tíz beolvasó</dt><dd class="specs__v" data-t="spec3">Minden éjjel újraolvassa a színházak saját oldalait. Jegyirodai közvetítő nélkül.</dd></div>
         <div class="specs__row"><dt class="specs__k">WCAG AA</dt><dd class="specs__v" data-t="spec4">Mind az öt témában minden szövegszín 4,5:1 kontraszt fölött van, kártyán is.</dd></div>
         <div class="specs__row"><dt class="specs__k">expo-router</dt><dd class="specs__v" data-t="spec5">Minden képernyőnek saját URL-je van, és megosztható — a darabtól az alkotóig.</dd></div>
         <div class="specs__row"><dt class="specs__k" data-t="spec6K">Ami még nincs kész</dt><dd class="specs__v" data-t="spec6">Az iOS- és Android-build készül. A webes verzió most is működik telefonon.</dd></div>
@@ -712,7 +700,7 @@ html { scroll-behavior: smooth; }
       <div class="faq" data-reveal>
         <details>
           <summary><span data-t="faq1Q">Kerül valamibe?</span><svg class="faq__sign" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></summary>
-          <div class="faq__a"><p data-t="faq1A">Ma nem. Böngészni, naplózni és értékelni fizetés nélkül lehet, hirdetés pedig egyáltalán nincs benne. Hogy hosszabb távon mi tartja majd el — például színházi együttműködések —, az még nyitott kérdés; ha változik valami, előre szólok, és nem visszamenőleg.</p></div>
+          <div class="faq__a"><p data-t="faq1A">Ma nem. Böngészni, naplózni és értékelni fizetés nélkül lehet, és hirdetés sincs benne. Hogy hosszabb távon miből tartja el magát, az még nyitott kérdés; a színházi együttműködés például szóba jöhet. Ha ez változik, előre szólok, és nem visszamenőleg.</p></div>
         </details>
         <details>
           <summary><span data-t="faq2Q">Honnan jönnek az adatok?</span><svg class="faq__sign" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></summary>
@@ -728,7 +716,7 @@ html { scroll-behavior: smooth; }
         </details>
         <details>
           <summary><span data-t="faq5Q">Van belőle telefonos alkalmazás?</span><svg class="faq__sign" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></summary>
-          <div class="faq__a"><p data-t="faq5A">A webes verzió most is telefonra van tervezve, és a böngésződből a kezdőképernyőre tehető. Az App Store-os és Play Store-os build készül — a natív projekt és a mélylinkek már megvannak hozzá.</p></div>
+          <div class="faq__a"><p data-t="faq5A">A webes verzió most is telefonra van tervezve, és a böngésződből a kezdőképernyőre tehető. Az App Store-ba és a Google Play-be szánt változat készül — a natív projekt és a mélylinkek már megvannak hozzá.</p></div>
         </details>
         <details>
           <summary><span data-t="faq6Q">Ki csinálja?</span><svg class="faq__sign" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></summary>
@@ -744,7 +732,7 @@ html { scroll-behavior: smooth; }
       <p class="act" data-reveal><span class="act__num">V.</span> <span data-t="act5">Felvonás · Kapcsolat</span> <span class="act__rule"></span></p>
       <div class="contact" data-reveal>
         <h2 data-t="contactTitle">Írj, ha érdekel.</h2>
-        <p class="lede" data-t="contactBody">Színház vagy, és szeretnéd, hogy a műsorod is benne legyen? Sajtó, együttműködés, hibajelentés, vagy csak kíváncsi vagy, hogyan készült? Egy e-mail elég — magyarul vagy angolul.</p>
+        <p class="lede" data-t="contactBody">Színházat képviselsz, és szeretnéd, hogy a műsorotok is benne legyen? Sajtó, együttműködés, hibajelentés, vagy csak kíváncsi vagy, hogyan készült? Egy e-mail elég — magyarul vagy angolul.</p>
         <a class="mailto" href="mailto:ottomaior@protonmail.com?subject=Vastaps">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></svg>
           ottomaior@protonmail.com
@@ -798,18 +786,18 @@ html { scroll-behavior: smooth; }
 
     act1: "Discover",
     d1Title: "What is on tonight, on one screen.",
-    d1Lede: "The listings of Budapest's and Debrecen's theatres in one place — not through a ticket agency, but read straight from the theatres' own sites, every night.",
+    d1Lede: "Everything playing in Budapest and Debrecen in one place — not through a ticket agency, but read straight from the theatres’ own sites, every night.",
     altDiscover: "The Discover screen: an “On now” rail with Anyegin, Káli holtak and A Pál utcai fiúk, and upcoming performances broken down by day.",
 
     d2Eyebrow: "Listings",
     d2Title: "Not a list of plays. A list of evenings.",
-    d2Body: "The listings view breaks the week down by day: what starts where and at what time, with the room, the running time and the genre. Tonight, tomorrow, or any evening in the season.",
+    d2Body: "The listings view breaks the season down day by day: what starts where and at what time, with the room, the running time and the genre. Tonight, tomorrow, or any evening in the season.",
     d2Point1: "<b>Ranked search.</b> It finds things without accents too. Searching “Csuja Imre” looks for the performer, not for the words.",
     d2Point2: "<b>Filters.</b> Genre, theatre, running time, sort order. In a city with only one theatre, the theatre filter hides itself.",
-    d2Point3: "<b>And the archive.</b> Eight hundred and fifty past productions, long since taken off. Still searchable, still loggable.",
+    d2Point3: "<b>And the archive.</b> Close to nine hundred past productions, long since taken off. Still searchable, still loggable.",
     d2StatesLabel: "The app knows four states",
     stAnnounced: "Before opening night", stRunning: "On now", stDormant: "Dormant", stEnded: "Taken off",
-    altMusor: "The listings calendar: 7 September 2026, one performance — Anyegin at 19:30 in the Örkény István Theatre's studio.",
+    altMusor: "The listings calendar: 7 September 2026, one performance — Anyegin at 19:30 in the Örkény István Theatre’s studio.",
 
     act2: "The diary",
     altPlay: "The page for A Pál utcai fiúk at the Csokonai National Theatre: poster, a 4.0 average, and separate bars for acting, directing and set design.",
@@ -818,34 +806,34 @@ html { scroll-behavior: smooth; }
     j1Body: "Log a performance: which night you went, where you sat, what the ticket cost. You rate the acting, the directing and the set separately — and you can write down what you made of it.",
     j1Point1: "<b>The season, not the calendar year.</b> Vastaps counts September to August, the way theatres do.",
     j1Point2: "<b>Second viewings.</b> The same play a second time is its own entry with its own rating — because it was not the same evening.",
-    j1Point3: "<b>The ticket, too.</b> Seat, price and a photo of the stub belong to the entry.",
+    j1Point3: "<b>The ticket, too.</b> The seat, the price and a photo of the stub all belong to the same entry.",
 
     j2Eyebrow: "Profile",
     j2Title: "Your profile is a programme.",
     j2Body: "Every performance you have seen on one page, with the poster, the date and your rating. Public if you want it to be — so you can show what you saw this season.",
-    j2Body2: "At the end of the season Vastaps adds it up: how many evenings you spent at the theatre, which house saw you most, and who you watched on stage most often.",
-    altUser: "Maior Ottó's public profile: 14 plays seen, and below it the diary with posters and mask ratings.",
+    j2Body2: "At the end of the season Vastaps adds it up: how many evenings you spent at the theatre, what it cost, which genres you watched, and who you saw on stage most often.",
+    altUser: "Maior Ottó’s public profile: 14 plays seen, and below it the diary with posters and mask ratings.",
 
     act3: "People",
     p1Eyebrow: "Performers and directors",
     p1Title: "Who was that actress in the second act?",
-    p1Body: "The catalogue starts with 2,424 names. Search for a performer and you get everything they have appeared in across the theatres in the catalogue — with the role, the year and the house. Directors work the same way.",
+    p1Body: "The catalogue starts with 2,424 names. Search for a performer and every production they have appeared in comes back — with the role, the year and the house. Directors work the same way.",
     p1Body2: "Sign in and we will tell you when someone you follow steps on stage in a new production.",
     altSearch: "Searching for “Csuja Imre”: the performer match with 49 credits, and below it 50 productions, 47 of them no longer running.",
-    altPerson: "Für Anikó's page: 48 credits at one theatre, from 2002 to 2027, with the productions and roles below.",
+    altPerson: "Für Anikó’s page: 48 credits at one theatre, from 2002 to 2027, with the productions and roles below.",
 
     gridTitle: "And the rest of the programme",
     altList: "The “Bodó Viktor in Budapest” list: eight productions across three theatres, from 2014 onwards.",
     tile1T: "Make a list of your own",
-    tile1B: "Around any theme you like: one director’s signature, what is worth seeing with the children, the best evenings of the year, the Shakespeares. You put it together, order it, and share it with a link — your friends can open it without an account. “Bodó Viktor in Budapest” is our own example: eight productions across three theatres.",
+    tile1B: "Around any theme you like: one director’s signature, plays to take the children to, the best evenings of the year, the Shakespeares. You put it together, order it, and share it with a link — your friends can open it without an account. “Bodó Viktor in Budapest” is our own example: eight productions across three theatres.",
     tile2T: "Watchlist",
-    tile2B: "What you still want to see. As soon as the next date is announced, the play moves up on its own.",
+    tile2B: "What you still want to see, in one place — you add a production with the bookmark on its page. The same screen also holds the performers and theatres you follow.",
     tile3T: "Feed",
-    tile3B: "Who saw what, and what they made of it. Follow people, or read everyone's entries.",
+    tile3B: "Who saw what, and what they made of it. Follow people, or read everyone’s entries.",
     tile5T: "Five themes",
-    tile5B: "Dark burgundy, cool charcoal, cream playbill, paper and plain white. Every text colour clears 4.5:1 in all five — and you can switch without signing in.",
-    tile6T: "You don't buy tickets here",
-    tile6B: "Vastaps is not a box office and does not want to be. One tap takes you to the theatre's own page, where you can actually buy the seat.",
+    tile5B: "Dark burgundy, cool charcoal, cream playbill, pale lilac and plain white. Every text colour clears 4.5:1 in all five — and you can switch without signing in.",
+    tile6T: "You don’t buy tickets here",
+    tile6B: "Vastaps is not a box office and does not want to be. One tap takes you to the theatre’s own page, where you can actually buy the seat.",
 
     tallyLabel: "The catalogue in numbers",
     tally1: "Productions", tally2: "People", tally3: "Announced dates", tally4: "The oldest premiere",
@@ -856,7 +844,7 @@ html { scroll-behavior: smooth; }
     spec1: "One codebase, producing both the web and the native builds.",
     spec2: "Who sees what is decided row by row in the database — not in the app.",
     spec3K: "Ten sync adapters",
-    spec3: "Re-reads the theatres' own sites every night. No ticket-agency middleman.",
+    spec3: "Re-reads the theatres’ own sites every night. No ticket-agency middleman.",
     spec4: "Every text colour clears 4.5:1 in all five themes, on cards as well as on the page.",
     spec5: "Every screen has its own URL and can be shared — from a production to a performer.",
     spec6K: "What is not finished",
@@ -864,9 +852,9 @@ html { scroll-behavior: smooth; }
 
     faqTitle: "Frequently asked",
     faq1Q: "Does it cost anything?",
-    faq1A: "Not today. Browsing, logging and rating cost nothing, and there is no advertising at all. How it supports itself longer term — through partnerships with theatres, for instance — is still an open question; if anything changes, you will hear about it in advance, and not retroactively.",
+    faq1A: "Not today. Browsing, logging and rating cost nothing, and there is no advertising. How it supports itself longer term is still an open question — partnerships with theatres, for instance, are one possibility. If that changes, you will hear about it in advance, and it will not apply retroactively.",
     faq2Q: "Where does the data come from?",
-    faq2A: "Straight from the theatres' own websites, re-read every night — some through a theatre's public API, some from its listings pages. Every new theatre means its own reader, which is why they arrive one at a time rather than all at once. Ticket aggregators are deliberately not used.",
+    faq2A: "Straight from the theatres’ own websites, re-read every night — some through a theatre’s public API, some from its listings pages. Every new theatre means its own reader, which is why they arrive one at a time rather than all at once. Ticket aggregators are deliberately not used.",
     faq3Q: "Which theatres are included?",
     faq3A: "Budapest and Debrecen for now. In Budapest: Örkény István, Katona József, the National Theatre, Centrál, Madách and Vígszínház. In Debrecen: the Csokonai National Theatre and the Vojtina Puppet Theatre. Which city and which house comes next depends on where people ask from — so if yours is missing, write in, because that is exactly what decides the order.",
     faq4Q: "Do I need an account?",
@@ -878,7 +866,7 @@ html { scroll-behavior: smooth; }
 
     act5: "Contact",
     contactTitle: "Write, if this interests you.",
-    contactBody: "Are you a theatre that wants its listings in here? Press, partnerships, a bug you found, or just curious how it was built? One email is enough — in Hungarian or in English.",
+    contactBody: "Do you work at a theatre and want its listings in here? Press, partnerships, a bug you found, or just curious how it was built? One email is enough — in Hungarian or in English.",
     ctaOpen2: "Open the app", ctaSource2: "Source on GitHub",
 
     footNote: "Vastaps — a Hungarian theatre diary. Made by Maior Ottó.",
