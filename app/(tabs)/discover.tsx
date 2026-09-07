@@ -11,7 +11,6 @@ import { useRecentSearches } from "@/hooks/useRecentSearches";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   getCities,
-  getCurrentUser,
   getFilterGenres,
   getFilterVenues,
   getNowPlaying,
@@ -174,8 +173,6 @@ export default function DiscoverScreen() {
   const [listCovers, setListCovers] = useState<Map<string, Play>>(new Map());
   const [friendsSeen, setFriendsSeen] = useState<{ play: Play; friends: number }[]>([]);
   const [upcoming, setUpcoming] = useState<ProgramEntry[]>([]);
-  const [weekCount, setWeekCount] = useState(0);
-  const [viewerName, setViewerName] = useState<string>();
 
   // Built here rather than inline so each list is one object per render and
   // the "Mind" entry is written once instead of at four call sites.
@@ -306,38 +303,12 @@ export default function DiscoverScreen() {
   }, [session]);
 
   /**
-   * The name in the greeting.
-   *
-   * Read once per session rather than per filter change, and left undefined
-   * for a signed-out visitor — who gets a question instead of a greeting,
-   * since "Szia," with nothing after it reads as a bug. A failed lookup falls
-   * back to the same anonymous line: a greeting is not worth an error state.
-   */
-  useEffect(() => {
-    if (!session) {
-      setViewerName(undefined);
-      return;
-    }
-    let active = true;
-    getCurrentUser()
-      .then((user) => {
-        if (active) setViewerName(user?.name);
-      })
-      .catch(() => {
-        if (active) setViewerName(undefined);
-      });
-    return () => {
-      active = false;
-    };
-  }, [session]);
-
-  /**
-   * The next few evenings, and how busy the coming week is.
+   * The next few evenings.
    *
    * Scoped to the city and nothing else. The genre and venue chips narrow the
    * grid below, but this section answers "what is on near me soon", and a
-   * timeline silently filtered to opera would misdescribe the week the
-   * sentence above it is counting.
+   * timeline silently filtered to opera would answer a narrower question
+   * than the heading above it asks.
    *
    * Browse only: in Műsor mode the calendar is a better answer to the same
    * question, and running both would be two queries to say one thing twice.
@@ -346,17 +317,13 @@ export default function DiscoverScreen() {
     if (mode !== "browse") return;
     let active = true;
     getUpcomingProgram({ city })
-      .then(({ entries, weekCount: n }) => {
+      .then(({ entries }) => {
         if (!active) return;
         setUpcoming(entries);
-        setWeekCount(n);
       })
       .catch(() => {
         if (!active) return;
-        // Both cleared together: a stale count over an empty timeline would
-        // claim a week that nothing on screen backs up.
         setUpcoming([]);
-        setWeekCount(0);
       });
     return () => {
       active = false;
@@ -529,56 +496,52 @@ export default function DiscoverScreen() {
   const browseFiltered = !!(venueType || city || venueId || genre);
   const archivedCount = searchResults.filter((p) => p.isArchived || p.status === "ended").length;
 
+  /**
+   * The city scope and the add-a-production button, and why they scroll.
+   *
+   * Everything above the rails used to be pinned, which on a 411pt phone cost
+   * around 400pt — very nearly half the viewport — before a single poster
+   * appeared, and no amount of scrolling gave any of it back. What has to
+   * stay reachable at all times is the search field and the two rows that
+   * decide what is being listed. The city is a scope you set once a session
+   * and the "+" opens a form, so both ride at the top of the scroll body,
+   * where they are still the first thing you see and the first thing to go.
+   *
+   * The city still leads the content, because it decides what the whole
+   * screen is a list of — the rails and the upcoming timeline both read from
+   * it. It is kept out of the chip row for the same reason as before: there
+   * it looked like one narrowing filter among four.
+   */
+  const titleBlock = (
+    <View style={styles.titleRow}>
+      {cities.length > 1 ? (
+        <SelectChip
+          variant="header"
+          name={strings.discover.filterCity}
+          value={city}
+          subtitle={venues.length > 0 ? strings.discover.venueCount(venues.length) : undefined}
+          options={cityOptions}
+          onChange={(next) => setActiveCity(next ?? strings.discover.filterAll)}
+        />
+      ) : (
+        <Text variant="title">{strings.discover.title}</Text>
+      )}
+      <Pressable
+        style={styles.fab}
+        onPress={() => router.push("/add-play")}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel={strings.discover.addPlayFab}
+      >
+        <PlusIcon size={16} />
+      </Pressable>
+    </View>
+  );
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Screen>
         <View style={[styles.header, { paddingTop: insets.top + space.md }]}>
-          {/* The city leads, because it decides what the whole screen is a
-              list of — the rails, the upcoming timeline and the sentence in
-              the greeting all read from it. It used to sit in the chip row
-              below, where it looked like one narrowing filter among four. */}
-          <View style={styles.titleRow}>
-            {cities.length > 1 ? (
-              <SelectChip
-                variant="header"
-                name={strings.discover.filterCity}
-                value={city}
-                subtitle={venues.length > 0 ? strings.discover.venueCount(venues.length) : undefined}
-                options={cityOptions}
-                onChange={(next) => setActiveCity(next ?? strings.discover.filterAll)}
-              />
-            ) : (
-              <Text variant="title">{strings.discover.title}</Text>
-            )}
-            <Pressable
-              style={styles.fab}
-              onPress={() => router.push("/add-play")}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel={strings.discover.addPlayFab}
-            >
-              <PlusIcon size={16} />
-            </Pressable>
-          </View>
-
-          {/* Browse only, and never over search results: a greeting above a
-              list of matches would be talking about a different screen. */}
-          {mode === "browse" && !isSearching && (
-            <View style={styles.greeting}>
-              {/* `title`, not `display`. At 32px the second sentence ran to
-                  three lines on a 375px phone and pushed the first rail to
-                  roughly 400px — the exact fold problem the filter chips were
-                  introduced to fix. 24px keeps the same two-voice hero and
-                  leaves the content visible. */}
-              <Text variant="title">
-                {viewerName ? strings.discover.greetingNamed(viewerName) : strings.discover.greetingAnon}
-              </Text>
-              <Text variant="title" tone="faint">
-                {strings.discover.weekSentence(weekCount, upcoming.length > 0)}
-              </Text>
-            </View>
-          )}
-
           <View style={styles.searchBar}>
             <SearchIcon />
             <TextInput
@@ -740,6 +703,7 @@ export default function DiscoverScreen() {
 
         {isSearching ? (
           <ScrollView contentContainerStyle={styles.scrollBody} keyboardShouldPersistTaps="handled">
+            {titleBlock}
             {/* The people first, and above the count that heads the grid.
                 Typing a performer's name used to return the eleven productions
                 she is in and never her, so the only route to a person page ran
@@ -817,9 +781,13 @@ export default function DiscoverScreen() {
             )}
           </ScrollView>
         ) : mode === "program" ? (
-          <ProgramView filters={{ venueType, city, venueId, genre }} />
+          <ProgramView
+            filters={{ venueType, city, venueId, genre }}
+            header={<View style={styles.scrolledTitle}>{titleBlock}</View>}
+          />
         ) : (
           <ScrollView contentContainerStyle={{ paddingBottom: 100, gap: space["2xl"] }}>
+            <View style={styles.scrolledTitle}>{titleBlock}</View>
             {browseLoading && (
               <View style={{ gap: space["2xl"] }}>
                 <View style={{ gap: space.md }}>
@@ -1215,12 +1183,6 @@ function UpcomingRow({
 }
 const useStyles = makeStyles((colors) => StyleSheet.create({
 
-  /* The two-line hero. `display` twice, with the second line recessive: the
-     reference sets the greeting and the news at the same size and separates
-     them by colour, which reads as one sentence in two voices rather than as
-     a heading with a subtitle under it. */
-  greeting: { paddingTop: space.xs, gap: 2 },
-
   upcomingRow: { flexDirection: "row", gap: space.md, alignItems: "stretch" },
   upcomingDateCol: { width: 60, alignItems: "center", gap: space.sm },
   upcomingDateBox: {
@@ -1252,14 +1214,20 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     gap: space.md,
     paddingVertical: space.sm,
   },
+  /* Search, mode and filters, and nothing else. The gaps are `md` rather than
+     `lg`: with three rows left instead of five, `lg` between them read as a
+     gap where something had been taken out. */
   header: {
     paddingHorizontal: gutter,
-    paddingBottom: space.lg,
-    gap: space.lg,
+    paddingBottom: space.md,
+    gap: space.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.hairlineSoft,
   },
   titleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  /* The title block inside a scroll body that does not pad its own children —
+     browse and Műsor both run full-bleed rails. */
+  scrolledTitle: { paddingHorizontal: gutter, paddingTop: space.md },
   fab: {
     width: minTouchTarget,
     height: minTouchTarget,
@@ -1268,16 +1236,20 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  /* A field, not a banner. It was set at `md`/`lg` padding, which made it the
+     largest control on the screen for a query most sessions never type.
+     `sm`/`md` still clears the 40pt a text cursor wants and gives about ten
+     points back to the content below. */
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
-    gap: space.md,
+    gap: space.sm,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.hairline,
     borderRadius: radius.md,
-    paddingVertical: space.md,
-    paddingHorizontal: space.lg,
+    paddingVertical: space.sm,
+    paddingHorizontal: space.md,
   },
   chipRow: { gap: space.sm, paddingRight: gutter },
   segmented: {

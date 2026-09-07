@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
 import { gutter, radius, space } from "@/theme/tokens";
@@ -26,7 +26,13 @@ import { makeStyles } from "@/theme/styles";
  * nights in it, and a date picker that lets you land on one is a picker full
  * of dead ends.
  */
-export function ProgramView({ filters }: { filters: ProgramFilters }) {
+/**
+ * `header` rides inside this view's own scroll content rather than above it,
+ * so Discover can hand over the city row and have it scroll away with the
+ * days instead of adding to the pinned bar. In the states that have nothing
+ * to scroll — loading, failed, no days at all — it simply sits on top.
+ */
+export function ProgramView({ filters, header }: { filters: ProgramFilters; header?: ReactNode }) {
   const styles = useStyles();
 
   const router = useRouter();
@@ -105,24 +111,36 @@ export function ProgramView({ filters }: { filters: ProgramFilters }) {
 
   if (loadingDays) {
     return (
-      <View style={{ paddingHorizontal: gutter, paddingTop: space.lg }}>
-        <SkeletonRail />
-      </View>
+      <>
+        {header}
+        <View style={{ paddingHorizontal: gutter, paddingTop: space.lg }}>
+          <SkeletonRail />
+        </View>
+      </>
     );
   }
 
   if (failed) {
     return (
-      <EmptyState title={strings.common.loadError} actionLabel={strings.common.retry} onAction={loadDays} />
+      <>
+        {header}
+        <EmptyState title={strings.common.loadError} actionLabel={strings.common.retry} onAction={loadDays} />
+      </>
     );
   }
 
   if (days.length === 0) {
-    return <EmptyState title={strings.program.emptyTitle} body={strings.program.emptyBody} />;
+    return (
+      <>
+        {header}
+        <EmptyState title={strings.program.emptyTitle} body={strings.program.emptyBody} />
+      </>
+    );
   }
 
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: 100, gap: space.xl }}>
+      {header}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dayRow}>
         {days.map((d) => (
           <Chip

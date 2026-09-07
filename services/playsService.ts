@@ -707,15 +707,10 @@ export async function getProgramDays(days = 60, filters?: ProgramFilters): Promi
  * orders by `starts_at`, so the first row for a production is already its next
  * performance and no comparison is needed — only a seen set.
  *
- * `weekCount` counts productions in the next seven days, which is what the
- * greeting claims. It is computed from the same rows rather than from a second
- * query, so the two can never disagree.
  */
 export type UpcomingProgram = {
   /** Soonest first, at most one entry per production. */
   entries: ProgramEntry[];
-  /** Distinct productions playing within seven days. */
-  weekCount: number;
 };
 
 export async function getUpcomingProgram(
@@ -725,7 +720,6 @@ export async function getUpcomingProgram(
   const { days = 30, limit = 6 } = options;
   const now = new Date();
   const rangeEnd = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
-  const weekEnd = now.getTime() + 7 * 24 * 60 * 60 * 1000;
 
   const { data, error } = await supabase.rpc("program_in_range", {
     range_start: now.toISOString(),
@@ -737,18 +731,16 @@ export async function getUpcomingProgram(
   if (error) throw error;
 
   const seen = new Set<string>();
-  const weekPlays = new Set<string>();
   const entries: ProgramEntry[] = [];
 
   for (const row of (data ?? []) as ProgramRow[]) {
     const entry = toProgramEntry(row);
-    if (Date.parse(entry.startsAt) < weekEnd) weekPlays.add(entry.playId);
     if (seen.has(entry.playId)) continue;
     seen.add(entry.playId);
     if (entries.length < limit) entries.push(entry);
   }
 
-  return { entries, weekCount: weekPlays.size };
+  return { entries };
 }
 
 /**

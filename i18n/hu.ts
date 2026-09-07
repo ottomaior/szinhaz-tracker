@@ -132,31 +132,6 @@ export const strings = {
     includesArchived: (n: number) => `Ebből ${n} már nincs műsoron`,
     addPlayFab: "Darab hozzáadása",
 
-    /* The greeting that opens Felfedezés, and the sentence under it. */
-    greetingNamed: (name: string) => `Szia, ${name}`,
-    /* Signed out there is no name, and "Szia" alone reads as a mistake. */
-    greetingAnon: "Mi megy most?",
-    /**
-     * How busy the coming week is, in the city the header is set to.
-     *
-     * Four sentences rather than one with a number swapped in, because these
-     * are four different facts: plenty to choose from, exactly one, a week
-     * that has already run out, and a catalogue with nothing scheduled at all.
-     * Collapsing them would make at least one of them a lie.
-     *
-     * The city is deliberately absent. "Budapesten" and "Debrecenben" take
-     * different suffixes and Hungarian place names are not regular about it —
-     * the same trap `trendingTitleInCity` sidesteps. The picker sits directly
-     * above this line, so repeating the city buys nothing.
-     */
-    weekSentence: (count: number, hasUpcoming: boolean) =>
-      count >= 2
-        ? `Ezen a héten ${count} előadás közül választhatsz.`
-        : count === 1
-          ? "Ezen a héten egyetlen előadást játszanak."
-          : hasUpcoming
-            ? "Ezen a héten már nincs több előadás."
-            : "Jelenleg nincs meghirdetett előadás.",
     /* Under the city picker: how much is in scope, not how much is filtered. */
     venueCount: (n: number) => (n === 1 ? "1 színház" : `${n} színház`),
     /* The header picker's unset state. The chip said "Mind", which reads as an
