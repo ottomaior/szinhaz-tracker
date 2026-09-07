@@ -45,15 +45,34 @@ fejlesztői gépen van meg.
 
 ## A közzététele
 
-Egyelőre sehogy. Az `nginx.conf` az `expo export` kimenetét szolgálja ki a
-`dist/` könyvtárból, és ez a könyvtár nem része annak. A lehetőségek,
-nagyjából ráfordítás szerint:
+**Cloudflare Pages**-re, ebből a könyvtárból, az `npm run deploy:landing`
+paranccsal. Ehhez a `CLOUDFLARE_API_TOKEN` és a `CLOUDFLARE_ACCOUNT_ID` kell
+a `.env`-be — hogy melyik honnan való, az `.env.example` írja le —, és a
+`vastaps` projektbe publikál. A többit a `scripts/deploy-landing.ts`
+magyarázza, azt is, hogy a wrangler miért `npx`-en át fut, nem pedig
+`devDependencies`-ként.
 
-- A `landing/` mappa feltöltése bármelyik statikus tárhelyre (GitHub Pages,
-  Netlify, Cloudflare Pages), saját domain alatt.
-- Egy nginx `location` blokk, ami ezt a könyvtárat szolgálja ki például az
-  `/about` útvonalon, és a `landing/` bemásolása az image-be a
-  `Dockerfile`-ban.
-- Kiszolgálás a `/` gyökéren, az appot pedig aldomainre költöztetve — ez a
-  legnagyobb változás, és ez rontaná el az `app.config.ts` mélylink-igényeit
-  is, mivel a `PRODUCTION_HOST` bele van fordítva a natív binárisokba.
+Szándékosan külön tárhely. Az `nginx.conf` az `expo export` kimenetét
+szolgálja ki a `dist/` könyvtárból, ez a könyvtár benne van a
+`.dockerignore`-ban, a futtatókörnyezeti image pedig csak a `dist/`-et
+másolja be — a marketingoldal tehát akkor sem jelenhet meg az app saját
+címén, ha ide bármit becommitolunk.
+
+A `_headers` fájlt a Cloudflare Pages a publikáláskor olvassa: magát az
+oldalt mindig újraellenőrizteti, hogy egy újrapublikálás azonnal látszódjon,
+a képernyőképeket viszont — amelyek tartalom-hash nélküli, sima
+fájlnevek — egy napig gyorsítótárazza, nem egy évig.
+
+Saját domain egyetlen rekord kérdése, amint van mire mutatni: a Pages
+projektben kell hozzáadni, a tanúsítványt a Cloudflare állítja ki. Az
+oldalon semmi nincs a kiszolgáló címéhez kötve, mert minden belső hivatkozás
+relatív útvonal vagy horgony.
+
+## Amíg a tárház privát
+
+Az oldalon nincs hivatkozás a forráskódra, és nem is nevezi nyílt
+forráskódúnak az appot. Mindkettő szerepelt rajta, és mindkettő rossz volt
+egy privát tárház mellett: a gombok minden látogatónak 404-et adtak, az
+állítást pedig senki nem tudta ellenőrizni. Ha a tárház egyszer nyilvános
+lesz, a hero másodlagos gombja és a technikai rész címe az a két hely, ahol
+voltak.

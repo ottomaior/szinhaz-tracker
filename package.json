@@ -15,7 +15,8 @@
     "check:launch": "tsx scripts/check-launch.ts",
     "icons": "tsx scripts/generate-icons.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "deploy:landing": "tsx scripts/deploy-landing.ts"
   },
   "dependencies": {
     "@expo-google-fonts/bodoni-moda": "^0.2.3",

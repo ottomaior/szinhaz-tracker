@@ -39,14 +39,31 @@ a development machine.
 
 ## Deploying it
 
-Nothing does yet. `nginx.conf` serves the `expo export` output from `dist/`,
-and this directory is not part of that. The options, in rough order of
-effort:
+To **Cloudflare Pages**, from this directory, with `npm run deploy:landing`.
+It needs `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` in `.env` — see
+`.env.example` for where each comes from — and publishes to the `vastaps`
+project. `scripts/deploy-landing.ts` explains the rest, including why
+wrangler is run through `npx` rather than added to `devDependencies`.
 
-- Drop `landing/` on any static host (GitHub Pages, Netlify, Cloudflare
-  Pages) under its own domain.
-- Add an nginx `location` block that serves this directory at a path such as
-  `/about`, and copy `landing/` into the image in the `Dockerfile`.
-- Serve it at `/` and move the app to a subdomain — the largest change, and
-  the one that would break the deep-link claims in `app.config.ts`, since
-  `PRODUCTION_HOST` is compiled into the native binaries.
+It is a separate host on purpose. `nginx.conf` serves the `expo export`
+output from `dist/`, this directory is in `.dockerignore`, and the runtime
+image copies only `dist/`, so the marketing page cannot appear on the app's
+own origin no matter what is committed here.
+
+`_headers` is read by Cloudflare Pages at deploy time: the page itself is
+always revalidated so a redeploy shows up immediately, and the screenshots —
+which are plain filenames with no content hash — are cached for a day rather
+than a year.
+
+A custom domain is one record away when there is one to point: add it in the
+Pages project and Cloudflare issues the certificate. Nothing in the page is
+tied to its origin, since every internal link is a relative path or a
+fragment.
+
+## While the repository is private
+
+The page carries no link to the source and does not describe the app as open
+source. Both were there and both were wrong for a private repository: the
+buttons 404'd for every visitor, and the claim was one they could not check.
+If the repository is ever made public, the hero's secondary button and the
+tech section's heading are where they were.

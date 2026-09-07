@@ -1,0 +1,17 @@
+# Cloudflare Pages reads this file at deploy time.
+#
+# The screenshots are content-addressed by nothing at all — they are plain
+# filenames — so they are cached for a day rather than a year, and the page
+# itself is always revalidated. That way a redeploy is visible immediately
+# without the images being refetched on every visit.
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: SAMEORIGIN
+
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/shots/*
+  Cache-Control: public, max-age=86400

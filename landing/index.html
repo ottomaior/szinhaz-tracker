@@ -427,10 +427,11 @@ html { scroll-behavior: smooth; }
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             <span data-t="ctaOpen">Megnyitom az appot</span>
           </a>
-          <a class="btn btn--ghost" href="https://github.com/ottomaior/szinhaz-tracker">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true" focusable="false"><path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.09.68-.22.68-.5 0-.24-.01-.87-.01-1.71-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.5-1.11-1.5-.91-.64.07-.63.07-.63 1 .07 1.53 1.06 1.53 1.06.89 1.570 2.34 1.12 2.91.86.09-.66.35-1.12.63-1.38-2.22-.26-4.56-1.14-4.56-5.06 0-1.12.39-2.03 1.02-2.75-.1-.26-.44-1.3.1-2.71 0 0 .84-.28 2.75 1.05a9.3 9.3 0 0 1 5 0c1.91-1.33 2.75-1.05 2.75-1.05.54 1.41.2 2.45.1 2.71.64.72 1.02 1.63 1.02 2.75 0 3.93-2.34 4.79-4.57 5.05.36.32.68.94.68 1.9 0 1.37-.01 2.48-.01 2.82 0 .27.18.59.69.49A10.06 10.06 0 0 0 22 12.25C22 6.58 17.52 2 12 2Z"/></svg>
-            <span data-t="ctaSource">Forráskód</span>
+          <a class="btn btn--ghost" href="#felfedezes">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v13M6 12l6 6 6-6"/></svg>
+            <span data-t="ctaTour">Hogyan működik</span>
           </a>
+
         </div>
         <p class="hero__meta">
           <span data-t="metaPlays">1213 produkció</span>
@@ -677,8 +678,8 @@ html { scroll-behavior: smooth; }
     <div class="shell">
       <p class="act" data-reveal><span class="act__num">IV.</span> <span data-t="act4">Felvonás · A színfalak mögött</span> <span class="act__rule"></span></p>
       <div class="center-stage" data-reveal style="margin-bottom: clamp(2rem, 4vw, 3rem)">
-        <h2 data-t="techTitle">Egy ember írta, és nyílt a forráskódja.</h2>
-        <p class="lede" data-t="techLede">A tárháznak nemcsak a kódja publikus: minden döntés indoklása is le van írva benne, azzal együtt, ami először nem működött.</p>
+        <h2 data-t="techTitle">Egy ember írta, az első sortól az utolsóig.</h2>
+        <p class="lede" data-t="techLede">Nincs mögötte csapat és nincs mögötte cég. Ami alább áll, az nem marketing: ezek a döntések látszanak a napi használatban is.</p>
       </div>
       <dl class="specs" data-reveal>
         <div class="specs__row"><dt class="specs__k">Expo · React Native · TypeScript</dt><dd class="specs__v" data-t="spec1">Egy kódbázis, amiből webes és natív build is készül.</dd></div>
@@ -738,8 +739,7 @@ html { scroll-behavior: smooth; }
           ottomaior@protonmail.com
         </a>
         <div class="hero__cta" style="margin-top: 0.4rem">
-          <a class="btn btn--gold" href="https://szinhaz-tracker-production.up.railway.app/" data-t="ctaOpen2">Megnyitom az appot</a>
-          <a class="btn btn--ghost" href="https://github.com/ottomaior/szinhaz-tracker" data-t="ctaSource2">Forráskód a GitHubon</a>
+          <a class="btn btn--gold" href="https://szinhaz-tracker-production.up.railway.app/" data-t="ctaOpen2">Megnyitom az appot</a>
         </div>
       </div>
     </div>
@@ -776,7 +776,7 @@ html { scroll-behavior: smooth; }
     heroEyebrow: "A Hungarian theatre diary",
     heroTitle: "Hungarian theatre,<br><em>in one diary</em>.",
     heroLede: "See what is on tonight in Budapest and Debrecen. Note down what you saw, rate it, and years from now still know which night it was.",
-    ctaOpen: "Open the app", ctaSource: "Source code",
+    ctaOpen: "Open the app", ctaTour: "How it works",
     metaPlays: "1,213 productions", metaCities: "Budapest and Debrecen", metaSync: "Synced nightly",
     altFeed: "The Vastaps feed: Maior Ottó saw Scævola – Gianni Schicchi at the Csokonai National Theatre, rated four masks.",
 
@@ -839,8 +839,8 @@ html { scroll-behavior: smooth; }
     tally1: "Productions", tally2: "People", tally3: "Announced dates", tally4: "The oldest premiere",
 
     act4: "Behind the curtain",
-    techTitle: "Written by one person, and open source.",
-    techLede: "It is not only the code that is public: the repository explains the reasoning behind every decision, including the things that did not work the first time.",
+    techTitle: "Written by one person, from the first line to the last.",
+    techLede: "There is no team behind it and no company. What follows is not marketing — these are the decisions you feel in daily use.",
     spec1: "One codebase, producing both the web and the native builds.",
     spec2: "Who sees what is decided row by row in the database — not in the app.",
     spec3K: "Ten sync adapters",
@@ -867,7 +867,7 @@ html { scroll-behavior: smooth; }
     act5: "Contact",
     contactTitle: "Write, if this interests you.",
     contactBody: "Do you work at a theatre and want its listings in here? Press, partnerships, a bug you found, or just curious how it was built? One email is enough — in Hungarian or in English.",
-    ctaOpen2: "Open the app", ctaSource2: "Source on GitHub",
+    ctaOpen2: "Open the app",
 
     footNote: "Vastaps — a Hungarian theatre diary. Made by Maior Ottó.",
     footImpressum: "Imprint", footPrivacy: "Privacy", footTerms: "Terms", footContact: "Contact"
