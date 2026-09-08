@@ -286,8 +286,13 @@ storeCheck(
 const reminders = [
   "Supabase → Authentication → URL Configuration: the Railway production origin is on the " +
     "redirect allow list, or password-reset links from the deployed site land on the Site URL.",
-  "Supabase → Authentication: decide whether 'Confirm email' goes back on. It was switched off " +
-    "on 2026-09-06; with it off, anybody can sign up using somebody else's address.",
+  "Supabase → Authentication: 'Confirm email' is off, and stays off for the closed test — " +
+    "decided 2026-09-08, not an oversight. Only the allowlisted testers can install the app, so " +
+    "there is no stranger to impersonate anybody. It has to go back on before the public " +
+    "release, and NOT on its own: the built-in mailer allows a couple of emails an hour on " +
+    "'best-effort' availability, so turning it on without custom SMTP means some sign-ups get " +
+    "no mail and no error. Custom SMTP first, which needs a domain — vastaps.pages.dev is not " +
+    "one — then the toggle.",
   "Have the legal documents read by somebody qualified. They describe this system accurately, " +
     "which is the half that needed someone who had read the code — not the half that needs a lawyer.",
   "Supabase plan: the free tier is 500MB database / 1GB storage / 5GB egress, and the mirrored " +
