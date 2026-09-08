@@ -177,6 +177,19 @@ html { scroll-behavior: smooth; }
 .nav__links { display: none; gap: 1.6rem; font-size: 0.9rem; color: var(--dim); }
 .nav__links a { text-decoration: none; transition: color 0.18s ease; }
 .nav__links a:hover { color: var(--text); }
+.nav__links a.is-research { color: var(--gold); }
+
+/* ── The research notice ──────────────────────────────────────────────────
+   A strip under the header while the pre-launch questionnaire is open. It
+   is the one thing a visitor is asked to do right now, so it sits where a
+   visitor lands rather than in the contact section after the FAQ. Remove
+   the strip when the fieldwork closes. */
+.notice { background: var(--gold); color: var(--on-gold); }
+.notice__in { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.35rem 1rem; min-height: 44px; padding-block: 0.55rem; font-size: 0.9rem; text-align: center; }
+.notice__in b { font-weight: 600; }
+.notice__link { display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 700; color: inherit; text-decoration: none; border-bottom: 1.5px solid rgba(20,7,9,0.45); padding-bottom: 1px; white-space: nowrap; }
+.notice__link:hover { border-bottom-color: var(--on-gold); }
+.notice__link svg { width: 16px; height: 16px; }
 
 .lang { display: flex; padding: 3px; gap: 2px; border: 1px solid var(--hairline); border-radius: 999px; background: rgba(245,237,228,0.03); }
 .lang__btn {
@@ -472,6 +485,7 @@ html { scroll-behavior: smooth; }
       <a href="#alkotok" data-t="navPeople">Alkotók</a>
       <a href="#gyik" data-t="navFaq">GYIK</a>
       <a href="#kapcsolat" data-t="navContact">Kapcsolat</a>
+      <a class="is-research" href="/kutatas" data-t="navResearch">Kérdőív</a>
     </nav>
 
     <div class="lang" role="group" aria-label="Nyelv" data-t-label="langLabel">
@@ -484,6 +498,14 @@ html { scroll-behavior: smooth; }
 </header>
 
 <main id="main">
+
+  <!-- ── Research notice — remove when the fieldwork closes ───────────── -->
+  <aside class="notice" aria-label="Kérdőív" data-t-label="noticeLabel">
+    <div class="shell notice__in">
+      <span data-t="noticeText"><b>Készül.</b> Segíts eldönteni, mi kerüljön bele — hét perc, névtelenül.</span>
+      <a class="notice__link" href="/kutatas" data-t="noticeLink">Kitöltöm a kérdőívet <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+    </div>
+  </aside>
 
   <!-- ── Hero ─────────────────────────────────────────────────────────── -->
   <section class="hero" id="top">
@@ -858,6 +880,10 @@ html { scroll-behavior: smooth; }
     skip: "Skip to content",
     navLabel: "Main navigation",
     navDiscover: "Discover", navDiary: "Diary", navPeople: "People", navFaq: "FAQ", navContact: "Contact",
+    navResearch: "Questionnaire",
+    noticeLabel: "Questionnaire",
+    noticeText: "<b>In the making.</b> Help decide what goes in — seven minutes, anonymous.",
+    noticeLink: 'Take the questionnaire <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
     langLabel: "Language",
     ctaOpenShort: "Open",
 
