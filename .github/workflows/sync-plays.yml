@@ -2,11 +2,21 @@ name: Sync theater listings
 
 on:
   schedule:
-    # Daily at 04:00 UTC — Phase 1 sources only (clean JSON APIs, cheap to
-    # call). Extend with a second, looser-cadence job for Phase 3's Jegy.hu
+    # Daily, aimed at 04:00 UTC — Phase 1 sources only (clean JSON APIs, cheap
+    # to call). Extend with a second, looser-cadence job for Phase 3's Jegy.hu
     # HTML sources once they exist (their 20s crawl-delay makes a full pass
     # slow — see the implementation plan's rollout order).
-    - cron: "0 4 * * *"
+    #
+    # Not "0 4": GitHub queues every scheduled job for the same minute at
+    # once, and the top of an hour is the most crowded slot there is. With
+    # "0 4 * * *" this job was starting between 08:10 and 08:40 UTC — four
+    # hours late, and on 8 September 2026 that meant the day's catalogue was
+    # rebuilt with the parser from *before* that morning's merge. An odd
+    # minute a little before the hour is what GitHub itself recommends; the
+    # queue is short there, so the run lands at or just before 04:00 rather
+    # than mid-morning. GitHub still promises no exact minute — a job that
+    # must start on the second needs an external scheduler.
+    - cron: "47 3 * * *"
   workflow_dispatch: {} # allows a manual run from the Actions tab
 
 jobs:
