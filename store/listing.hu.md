@@ -125,3 +125,28 @@ munka.
 > kategória tele van streaming-alkalmazásokkal, és a Vastaps nem tartalmat
 > szolgáltat, hanem egy szokást tart nyilván. Az „Életmód” közelebb van ahhoz,
 > ahogy valaki tényleg használja.
+
+---
+
+## App access — belépés az ellenőrnek
+
+A Play ellenőre nem regisztrál magának: ha az app egy része bejelentkezéshez
+kötött, kapnia kell egy működő fiókot, különben a beküldés elutasítható azon az
+alapon, hogy a funkciók nem voltak elérhetők. Böngészni a Vastapsban
+bejelentkezés nélkül is lehet, de a napló, a listák és az értesítések nem —
+tehát kell a fiók.
+
+| Mező | Érték |
+| --- | --- |
+| Fiók | `ottomaior+playreview@protonmail.com` |
+| Név az appban | `Play Review` |
+| Jelszó | **nincs itt** — a Play Console → App access mezőjében |
+
+A jelszó szándékosan nem szerepel ebben a fájlban. A repó megosztható, a
+Console nem, és egy jelszó a verziókövetésben akkor is ott marad, amikor már rég
+megváltoztatták. Ha elveszik, a jelszó-visszaállítás a fenti címre megy — ez egy
+plusz-címzés, tehát Ottó postaládájába érkezik.
+
+A fiók naplója üres. Ez nem hiány: az ellenőr azt nézi, hogy a funkciók
+elérhetők-e, és egy friss fiók pontosan azt mutatja meg, amit egy új felhasználó
+lát. A hírfolyamban a demófiókok bejegyzései bejelentkezés nélkül is látszanak.
