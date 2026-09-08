@@ -281,11 +281,29 @@ export function parseProductionDetails(html: string): ProductionDetails {
      * "m.v." as printed — but it is what these 2000 rows already look like,
      * and unifying the two is a decision about display, not about parsing.
      */
-    const nameField = $row.find("p.uk-text-secondary").first().text().trim();
-    if (!role || !nameField) return;
-    for (const performer of splitPerformers(nameField)) {
-      const name = performer.replace(/\bm\.\s*v\.\s*$/, "").trim();
-      if (name) cast.push({ role, name });
+    /*
+     * Every name element in the row, not just the first.
+     *
+     * The page prints a role's performers two different ways, and the two
+     * used to be handled differently. Guests are one string in one element —
+     * "Körmendy Flórián m.v./ Beeri Benjámin m.v." — which `splitPerformers`
+     * divides. Company members are one element *each*, every one linked to
+     * their page under /tarsulat/, so Pünkösdi Kató in Csókos asszony is two
+     * `<p>`s: Berkó Boglárka, then Faluvégi Fanni. `.first()` read the first
+     * and threw the rest away, on every Csokonai production, current and
+     * archived, which is 203 roles in the catalogue at the time of writing.
+     */
+    const nameFields = $row
+      .find("p.uk-text-secondary")
+      .map((_, el) => $(el).text().trim())
+      .get()
+      .filter(Boolean);
+    if (!role || nameFields.length === 0) return;
+    for (const nameField of nameFields) {
+      for (const performer of splitPerformers(nameField)) {
+        const name = performer.replace(/\bm\.\s*v\.\s*$/, "").trim();
+        if (name) cast.push({ role, name });
+      }
     }
   });
 

@@ -68,6 +68,23 @@ describe("csokonai parseProductionDetails", () => {
     ]);
   });
 
+  /**
+   * Csókos asszony, where the alternates are company members. The theatre
+   * prints those as one linked element *per performer* rather than as a
+   * slash-joined string, and the adapter read only the first element of each
+   * row — so Faluvégi Fanni was missing from Pünkösdi Kató on the live site
+   * even after the slash splitting landed.
+   */
+  it("keeps every performer when each has an element of their own", () => {
+    const csokos = readFileSync(join(__dirname, "../__fixtures__/csokonai-csokos-asszony.html"), "utf8");
+    const { cast } = parseProductionDetails(csokos);
+    const kato = cast.filter((c) => c.role === "Pünkösdi Kató").map((c) => c.name);
+    expect(kato).toEqual(["Berkó Boglárka", "Faluvégi Fanni"]);
+    // The same shape on another role, and a genuinely single-performer row.
+    expect(cast.filter((c) => c.role === "Báró Tarpataky").map((c) => c.name)).toEqual(["Kaszás Mihály", "Vranyecz Artúr"]);
+    expect(cast.filter((c) => c.role === "Ügyelő").map((c) => c.name)).toEqual(["Nagy Fruzsina"]);
+  });
+
   it("carries a synopsis", () => {
     expect(details.synopsis).toBeTruthy();
     expect(details.synopsis?.length).toBeGreaterThan(50);
