@@ -40,11 +40,11 @@
  */
 export const operator = {
   /** Legal name — a person's full name, or the company's registered name. */
-  name: "TODO_OPERATOR_NAME",
+  name: "Maior Ottó",
   /** Registered seat / postal address, as it would appear on official post. */
-  address: "TODO_OPERATOR_ADDRESS",
+  address: "4025 Debrecen, Piac utca 1-3.",
   /** The address that reaches a human. Used for privacy requests and reports. */
-  email: "TODO_OPERATOR_EMAIL",
+  email: "ottomaior@protonmail.com",
   /**
    * Company registration number, or tax number for a sole trader.
    * Set to null for a private individual publishing in a non-business

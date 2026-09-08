@@ -61,8 +61,67 @@ a:hover { color: var(--gold-lift); }
 <main>
   <article class="shell">
     <h1>Adatkezelési tájékoztató</h1>
-<h2>Ez a dokumentum még készül</h2>
-<p class="dim">A szolgáltatás még nem indult el nyilvánosan, és a jogi dokumentumok véglegesítése folyamatban van. Amint elkészülnek, itt lesznek olvashatók.</p>
+<p class="lead">Ez a tájékoztató azt írja le, hogy a Vastaps milyen adatokat kezel rólad, miért, meddig, és mit tehetsz ezzel kapcsolatban. Utoljára frissítve: 2026. szeptember 8.</p>
+<section>
+<h2>Ki kezeli az adataidat</h2>
+<p class="dim">Az adatkezelő Maior Ottó (székhely: 4025 Debrecen, Piac utca 1-3.), a továbbiakban „mi”. Adatkezeléssel kapcsolatos bármely kérdésben a ottomaior@protonmail.com címen érsz el minket.</p>
+<p class="dim">Adatvédelmi tisztviselőt nem neveztünk ki, mert a szolgáltatás nem végez nagy számban különleges adatok kezelését, és nem jár a felhasználók rendszeres, szisztematikus megfigyelésével.</p>
+</section>
+<section>
+<h2>A legfontosabb, amit érdemes előre tudni</h2>
+<p class="dim">A Vastaps nyilvános napló. Amit egy előadásról beírsz — hogy láttad, mikor, hányra értékelted, mit írtál róla, kik léptek fel aznap este, sőt a feltöltött jegyfotó is — bárki számára olvasható, aki megnyitja az alkalmazást, akkor is, ha nincs fiókja. Ez nem mellékhatás, hanem a szolgáltatás lényege: a napló attól ér valamit, hogy mások is olvassák.</p>
+<p class="dim">Két dolog következik ebből, amit érdemes elolvasni, mielőtt beírsz valamit. A jegyfotón a legtöbb magyar színházban rajta van a neved és a foglalási azonosítód — ezt a képet nyilvánosnak szánod, amikor feltöltöd. És a naplód együtt olvasva elárulja, mikor nem vagy otthon; ez ugyanaz a megfontolás, mint bármelyik közösségi oldalon.</p>
+<p class="dim">Amit senki más nem lát: az e-mail-címed, a jelszavad és az értesítéseid (a postaláda tartalma a te kívánságlistád sorrendje, ezért csak neked olvasható).</p>
+</section>
+<section>
+<h2>Milyen adatokat kezelünk, és milyen jogalapon</h2>
+<p class="dim">Fiók létrehozásakor és használatakor a szerződés teljesítése a jogalap (GDPR 6. cikk (1) b) pont) — enélkül a szolgáltatás nem tud működni:</p>
+<ul><li>E-mail-cím és jelszó. A jelszót nem ismerjük: azt az adatfeldolgozónk sózott, egyirányú lenyomatként tárolja.</li><li>Profil: megjelenített név, automatikusan képzett felhasználónév, a névből képzett monogram, valamint amit magadról megadsz — város, bemutatkozás, profilkép.</li><li>Napló: melyik előadást láttad, mikor, hányra értékelted (összesítve és színészi játék / rendezés / díszlet bontásban), a szöveges kritikád, a hangulatcímkék, hogy hányadszor láttad, melyik előadásra váltottál jegyet, hol ültél, mennyit fizettél a jegyért, a feltöltött jegyfotó, és hogy aznap este kik léptek fel.</li><li>Kívánságlista, saját listák, követések (más felhasználók, alkotók és színházak), kedvelések és hozzászólások.</li><li>Értesítések, amelyeket az éjszakai frissítés generál neked.</li></ul>
+<p class="dim">Hozzájárulás alapján (6. cikk (1) a) pont) kezeljük a profilképet és a jegyfotót — ezek megadása önkéntes, a hozzájárulást a kép törlésével bármikor visszavonhatod, ami a jövőre nézve szünteti meg az adatkezelést.</p>
+<p class="dim">Jogos érdek alapján (6. cikk (1) f) pont) kezelünk technikai naplóadatokat a szolgáltatás üzemeltetéséhez, a visszaélések és a rosszindulatú forgalom kiszűréséhez, valamint a bejelentett tartalmak elbírálásához. A jogos érdek itt a szolgáltatás működőképessége és a többi felhasználó védelme.</p>
+<p class="dim">Nem végzünk automatizált döntéshozatalt és profilalkotást, nem kereskedünk az adataiddal, és nem adjuk át őket hirdetőknek.</p>
+<p class="dim">Az indulás előtti kérdőív (vastaps.pages.dev/kutatas) válaszait névtelenül tároljuk: nem kérünk nevet, és a válaszokhoz nem tartozik fiók. A böngésződben egy véletlen azonosítót helyezünk el, hogy egy eszközről ne lehessen kétszer beküldeni — ez személyhez nem köthető. Az e-mail-címedet csak akkor tároljuk, ha a kérdőív végén kéred, hogy szóljunk az indulásról; ez hozzájáruláson alapul (6. cikk (1) a) pont), a címet kizárólag erre az egy értesítésre használjuk, és a kérésedre bármikor töröljük.</p>
+</section>
+<section>
+<h2>Sütik és nyomkövetés</h2>
+<p class="dim">Az alkalmazás nem használ hirdetési vagy analitikai sütiket, és nem épít be külső nyomkövető szkriptet. Két dolgot tárolunk a böngésződben, mindkettőt a működéshez: a bejelentkezési munkamenetet (enélkül minden oldalbetöltésnél újra be kellene jelentkezned) és a kiválasztott színvilágot. Egyik sem hagyja el az eszközödet a szolgáltatás felé, és egyikhez sem kérünk hozzájárulást, mert az elektronikus hírközlési szabályok az ilyen, feltétlenül szükséges tárolást mentesítik alóla.</p>
+</section>
+<section>
+<h2>Kik férnek hozzá az adatokhoz</h2>
+<p class="dim">Adatfeldolgozókat veszünk igénybe, akik a mi utasításunkra járnak el:</p>
+<ul><li>Supabase (adatbázis, bejelentkezés, fájltárolás). Itt tárolódik gyakorlatilag minden, amit fentebb felsoroltunk.</li><li>Railway Corp. (tárhelyszolgáltatás) — az alkalmazást kiszolgáló szerver üzemeltetője.</li><li>GitHub (az éjszakai színházi műsorfrissítést futtató szolgáltatás). Ez a folyamat a színházak műsorát olvassa, felhasználói adatot nem.</li></ul>
+<p class="dim">Ezen kívül csak akkor adunk át adatot, ha jogszabály vagy hatósági, illetve bírósági megkeresés kötelez rá.</p>
+<p class="dim">Egyes szolgáltatóink az Európai Gazdasági Térségen kívül is működtethetnek infrastruktúrát. Ahol ilyen adattovábbítás történik, az az Európai Bizottság általános szerződési feltételein alapul.</p>
+</section>
+<section>
+<h2>Meddig őrizzük</h2>
+<ul><li>A fiókodhoz kötött adatokat addig, amíg a fiókod fennáll.</li><li>Ha törlöd a fiókodat, a profilod, a naplód, az értékeléseid, a listáid, a követéseid, a kedveléseid, a hozzászólásaid, valamint a feltöltött profilképed és jegyfotóid azonnal és véglegesen törlődnek.</li><li>Ami nem törlődik: az általad kézzel felvett előadások és színházak megmaradnak a katalógusban, de a szerzőségük megszűnik — a rekord többé nem kapcsolódik hozzád. Ezek ugyanis közös katalógusadatok, amelyekre mások naplóbejegyzései hivatkozhatnak.</li><li>A technikai üzemeltetési naplókat legfeljebb 30 napig őrizzük.</li><li>A kérdőív névtelen válaszait a termék tervezéséhez őrizzük meg; a hozzájuk kapcsolódó e-mail-címeket az indulásról szóló értesítés kiküldése után töröljük.</li></ul>
+</section>
+<section>
+<h2>A te jogaid</h2>
+<p class="dim">A GDPR alapján jogod van:</p>
+<ul><li>hozzáférni a rólad kezelt adatokhoz, és másolatot kérni róluk — ezt a Beállítások képernyőn magad is megteheted, az adataid letöltésével;</li><li>helyesbíteni a pontatlan adatokat — a profilodat és minden naplóbejegyzésedet bármikor szerkesztheted;</li><li>töröltetni az adataidat — a Beállítások képernyőn a fiókod törlésével, közvetítő nélkül;</li><li>kérni az adatkezelés korlátozását, illetve tiltakozni a jogos érdeken alapuló adatkezelés ellen;</li><li>az adataidat géppel olvasható formátumban megkapni és máshová vinni;</li><li>a hozzájárulásodat bármikor visszavonni, a visszavonás előtti adatkezelés jogszerűségének érintése nélkül.</li></ul>
+<p class="dim">Kérésedet a ottomaior@protonmail.com címre küldd. Legkésőbb egy hónapon belül válaszolunk.</p>
+<p class="dim">Ha úgy érzed, hogy jogsértően kezeljük az adataidat, panasszal fordulhatsz a felügyeleti hatósághoz: Nemzeti Adatvédelmi és Információszabadság Hatóság (NAIH), 1055 Budapest, Falk Miksa utca 9-11. (postacím: 1363 Budapest, Pf. 9.), e-mail: ugyfelszolgalat@naih.hu, honlap: naih.hu. Bírósághoz is fordulhatsz, a lakóhelyed vagy a tartózkodási helyed szerinti törvényszéken.</p>
+</section>
+<section>
+<h2>Adatbiztonság</h2>
+<p class="dim">A kapcsolat titkosított (HTTPS). Az adatbázisban sorszintű biztonsági szabályok érvényesülnek: a szerver oldalán van kikényszerítve, hogy ki mit írhat és olvashat, nem csak az alkalmazás felületén. A jelszavakat nem tároljuk visszafejthető formában.</p>
+<p class="dim">Ezzel együtt: teljes biztonságot egyetlen internetes szolgáltatás sem tud ígérni. Ne tölts fel olyan képet vagy írj le olyat, aminek a nyilvánosságra kerülése kárt okozna neked.</p>
+</section>
+<section>
+<h2>Kiskorúak</h2>
+<p class="dim">A szolgáltatás 16 éven aluliak számára nem áll rendelkezésre. Ha tudomásunkra jut, hogy 16 éven aluli hozott létre fiókot, azt töröljük.</p>
+</section>
+<section>
+<h2>A színházi adatokról</h2>
+<p class="dim">A katalógusban szereplő előadások, időpontok, szereposztások és plakátok a színházak saját, nyilvánosan elérhető oldalairól származnak, és nem személyes adatnak szánt információk. Ha alkotóként azt szeretnéd, hogy egy rád vonatkozó adat ne szerepeljen itt, írj a fenti címre, és megnézzük.</p>
+</section>
+<section>
+<h2>Ha ez a tájékoztató változik</h2>
+<p class="dim">Változás esetén frissítjük ezt az oldalt és a tetején szereplő dátumot. Lényeges változásról a fiókodban is értesítünk, mielőtt hatályba lépne.</p>
+</section>
+<p class="faint">Utoljára frissítve: 2026. szeptember 8.</p>
   </article>
 </main>
 <footer class="foot">
