@@ -43,6 +43,29 @@ Az újrafényképezés a fenti felvétel újrafuttatását jelenti; nincs hozzá
 szkript a tárházban, mert dev szerver és böngésző-binárist igényel, ami csak
 fejlesztői gépen van meg.
 
+Egyikük szándékosan retusált. A `user.webp` nyilvános profilja a szerző saját
+fiókja, a neve pedig a kapcsolat szekcióba tartozik, és sehova máshova az
+oldalon; ezért a felvétel előtt a megjelenített nevet, a felhasználónevet és
+az avatár monogramját a DOM-ban egy helyettesre cseréltük, **Tóth Eszterre**,
+aki nem létező fiók. Minden más a képen — a darabszám, a napló, az
+értékelések — valódi. Ha ezt a képernyőt újra kell fényképezni, ugyanezt a
+cserét kell megismételni (az `alt` szöveg és annak angol változata is őt
+nevezi meg).
+
+## Amíg az app zárt alfatesztben fut
+
+Az oldalon nincs link az appra. Ahol korábban „megnyitom az appot” állt — a
+fejléc gombja, a hero elsődleges gombja és a kapcsolat szekció gombja —, ott
+most egy `mailto:` kér meghívót, előre kitöltött tárgysorral; a hero a lede
+alatt kimondja, hogy ez zárt alfa; a GYIK a „ki használhatja most?” kérdéssel
+nyit; a kapcsolat szekció pedig a meghívással kezd. Az app címe szándékosan
+nem szerepel a markupban: néhány ember használ egy félkész buildet, és a
+bejutás módja az, hogy írni kell. Amikor az app megnyílik, a három gomb
+visszakapja a linkjét, a hero megjegyzése és az első GYIK-bejegyzés kikerül,
+a kapcsolat szövege pedig elveszti az első bekezdését. A lábléc három jogi
+linkje továbbra is az app hosztjára mutat, mert a kérdőív adatvédelmi
+tájékoztatója ott lakik.
+
 ## A közzététele
 
 **Cloudflare Pages**-re, ebből a könyvtárból, az `npm run deploy:landing`

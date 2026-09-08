@@ -37,6 +37,28 @@ Re-taking them means re-running that capture; there is no script checked in
 for it, because it needs a dev server and a browser binary that only exist on
 a development machine.
 
+One of them is doctored on purpose. The public profile in `user.webp` is the
+author’s own account, and his name belongs in the contact section and nowhere
+else on the page; so before the capture the display name, the handle and the
+avatar initials were swapped in the DOM for a stand-in, **Tóth Eszter**, who
+is not a real account. Everything else in the shot — the count, the diary,
+the ratings — is real. Re-shooting that screen means doing the same swap
+again (the `alt` text and its English entry name her too).
+
+## While the app is in closed alpha
+
+The page carries no link to the app. Every place that used to say “open the
+app” — the button in the header, the primary button in the hero and the one in
+the contact section — now asks for an invite over `mailto:` with a prefilled
+subject line; the hero says under the lede that this is a closed alpha; the
+FAQ opens with “who can use it now?”; and the contact section leads with the
+invitation. The app’s address stays out of the markup on purpose: a handful of
+people are using a half-finished build, and the way in is to write. When the
+app opens up, those three buttons go back to linking to it, the hero note and
+the first FAQ entry come out, and the contact copy loses its first paragraph.
+The three legal links in the footer still point at the app’s host, because the
+questionnaire’s privacy notice lives there.
+
 ## Deploying it
 
 To **Cloudflare Pages**, from this directory, with `npm run deploy:landing`.

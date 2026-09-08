@@ -257,6 +257,14 @@ html { scroll-behavior: smooth; }
 }
 .hero h1 em { font-style: italic; color: var(--gold); font-weight: 400; }
 .hero__lede { animation: rise-in 0.85s cubic-bezier(0.16,0.9,0.3,1) 0.62s both; max-width: 46ch; text-align: center; }
+/* The alpha note. It sits between the promise and the door so that a
+   visitor reads why the door asks for an email before they reach it. */
+.hero__stage {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.55rem 0.75rem;
+  max-width: 46ch; font-size: 0.95rem; line-height: 1.55; color: var(--dim);
+  animation: rise-in 0.85s cubic-bezier(0.16,0.9,0.3,1) 0.68s both;
+}
+.hero__stage .badge { flex: none; font-weight: 600; letter-spacing: 0.04em; }
 .hero__cta { display: flex; flex-wrap: wrap; gap: 0.7rem; justify-content: center; animation: rise-in 0.85s cubic-bezier(0.16,0.9,0.3,1) 0.74s both; }
 .hero__meta {
   display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem 1.1rem;
@@ -304,6 +312,7 @@ html { scroll-behavior: smooth; }
   .hero__copy { align-items: flex-start; max-width: none; }
   .hero h1 { font-size: clamp(2.45rem, 3.7vw, 3.85rem); }
   .hero__lede { text-align: left; max-width: 34ch; }
+  .hero__stage { justify-content: flex-start; text-align: left; max-width: 40ch; }
   .hero__cta, .hero__meta { justify-content: flex-start; }
 }
 
@@ -493,7 +502,7 @@ html { scroll-behavior: smooth; }
       <button class="lang__btn" type="button" data-lang="en" aria-pressed="false">EN</button>
     </div>
 
-    <a class="btn btn--gold btn--sm" href="https://szinhaz-tracker-production.up.railway.app/" data-t="ctaOpenShort">Megnyitom</a>
+    <a class="btn btn--gold btn--sm" href="mailto:ottomaior@protonmail.com?subject=Vastaps%20alfa%20%E2%80%93%20teszteln%C3%A9k" data-t="ctaInviteShort" data-t-href="hrefInvite">Kérek meghívót</a>
   </div>
 </header>
 
@@ -520,10 +529,11 @@ html { scroll-behavior: smooth; }
         <p class="eyebrow hero__eyebrow" data-t="heroEyebrow">Magyar színházi napló</p>
         <h1 data-t="heroTitle">A magyar színház,<br><em>egy naplóban</em>.</h1>
         <p class="lede hero__lede" data-t="heroLede">Nézd meg, mi megy ma este Budapesten és Debrecenben. Jegyezd fel, amit láttál, értékeld, és évek múlva is tudni fogod, melyik este volt az.</p>
+        <p class="hero__stage" data-t="heroStage"><span class="badge badge--on">Zárt alfa</span><span>Most még néhány ember próbálja, félkész állapotban. Ha te is kipróbálnád, írj — elküldöm a linket.</span></p>
         <div class="hero__cta">
-          <a class="btn btn--gold" href="https://szinhaz-tracker-production.up.railway.app/">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-            <span data-t="ctaOpen">Megnyitom az appot</span>
+          <a class="btn btn--gold" href="mailto:ottomaior@protonmail.com?subject=Vastaps%20alfa%20%E2%80%93%20teszteln%C3%A9k" data-t-href="hrefInvite">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></svg>
+            <span data-t="ctaInvite">Kérek meghívót</span>
           </a>
           <a class="btn btn--ghost" href="#felfedezes">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v13M6 12l6 6 6-6"/></svg>
@@ -678,7 +688,7 @@ html { scroll-behavior: smooth; }
         <div class="phone phone--tilt" style="--w: 288px; --tilt: 4deg" data-parallax="0.05">
           <div class="phone__body">
             <div class="phone__screen">
-              <img src="shots/user.webp" width="810" height="1761" loading="lazy" alt="Maior Ottó nyilvános profilja: 14 megnézett darab, alatta a napló plakátokkal és maszk-értékelésekkel." data-t-alt="altUser">
+              <img src="shots/user.webp" width="810" height="1761" loading="lazy" alt="Tóth Eszter nyilvános profilja: 14 megnézett darab, alatta a napló plakátokkal és maszk-értékelésekkel." data-t-alt="altUser">
               <span class="phone__glare"></span>
             </div>
           </div>
@@ -809,6 +819,10 @@ html { scroll-behavior: smooth; }
       </div>
       <div class="faq" data-reveal>
         <details>
+          <summary><span data-t="faq0Q">Ki használhatja most?</span><svg class="faq__sign" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></summary>
+          <div class="faq__a"><p data-t="faq0A">Egyelőre egy szűk kör: a Vastaps zárt alfatesztben fut, és az app címe szándékosan nincs kint ezen az oldalon. Nem titok, csak félkész — vannak még hibái és hiányzó részei, és ezeket előbb néhány tesztelővel szeretném megtalálni. Ha vállalod, hogy egy félkész appot használsz, és elmondod, mi hiányzik, írj egy e-mailt, és elküldöm a linket. Amikor nyilvános lesz, itt lesz a gomb.</p></div>
+        </details>
+        <details>
           <summary><span data-t="faq1Q">Kerül valamibe?</span><svg class="faq__sign" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></summary>
           <div class="faq__a"><p data-t="faq1A">Ma nem. Böngészni, naplózni és értékelni fizetés nélkül lehet, és hirdetés sincs benne. Hogy hosszabb távon miből tartja el magát, az még nyitott kérdés; a színházi együttműködés például szóba jöhet. Ha ez változik, előre szólok, és nem visszamenőleg.</p></div>
         </details>
@@ -842,13 +856,14 @@ html { scroll-behavior: smooth; }
       <p class="act" data-reveal><span class="act__num">V.</span> <span data-t="act5">Felvonás · Kapcsolat</span> <span class="act__rule"></span></p>
       <div class="contact" data-reveal>
         <h2 data-t="contactTitle">Írj, ha érdekel.</h2>
-        <p class="lede" data-t="contactBody">Színházat képviselsz, és szeretnéd, hogy a műsorotok is benne legyen? Sajtó, együttműködés, hibajelentés, vagy csak kíváncsi vagy, hogyan készült? Egy e-mail elég — magyarul vagy angolul.</p>
+        <p class="lede" data-t="contactAlpha">A Vastaps zárt alfatesztben fut: néhány ember használja, félkész állapotban, és az ő észrevételeik alakítják. Ha te is kipróbálnád, egy e-mail elég — elküldöm a linket, és cserébe csak annyit kérek, hogy mondd el, mi hiányzik.</p>
+        <p class="lede" data-t="contactBody">Színházat képviselsz, és szeretnéd, hogy a műsorotok is benne legyen? Sajtó, együttműködés, hibajelentés, vagy csak kíváncsi vagy, hogyan készült? Ugyanerre a címre — magyarul vagy angolul.</p>
         <a class="mailto" href="mailto:ottomaior@protonmail.com?subject=Vastaps">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></svg>
           ottomaior@protonmail.com
         </a>
         <div class="hero__cta" style="margin-top: 0.4rem">
-          <a class="btn btn--gold" href="https://szinhaz-tracker-production.up.railway.app/" data-t="ctaOpen2">Megnyitom az appot</a>
+          <a class="btn btn--gold" href="mailto:ottomaior@protonmail.com?subject=Vastaps%20alfa%20%E2%80%93%20teszteln%C3%A9k" data-t="ctaInvite2" data-t-href="hrefInvite">Kérek meghívót</a>
           <a class="btn btn--ghost" href="/kutatas" data-t="ctaResearch">Segíts alakítani — 7 perces kérdőív</a>
         </div>
       </div>
@@ -885,12 +900,14 @@ html { scroll-behavior: smooth; }
     noticeText: "<b>In the making.</b> Help decide what goes in — seven minutes, anonymous.",
     noticeLink: 'Take the questionnaire <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
     langLabel: "Language",
-    ctaOpenShort: "Open",
+    ctaInviteShort: "Request an invite",
+    hrefInvite: "mailto:ottomaior@protonmail.com?subject=Vastaps%20alpha%20%E2%80%93%20I%27d%20like%20to%20test",
 
     heroEyebrow: "A Hungarian theatre diary",
     heroTitle: "Hungarian theatre,<br><em>in one diary</em>.",
     heroLede: "See what is on tonight in Budapest and Debrecen. Note down what you saw, rate it, and years from now still know which night it was.",
-    ctaOpen: "Open the app", ctaTour: "How it works",
+    heroStage: '<span class="badge badge--on">Closed alpha</span><span>A few people are trying it right now, half-finished on purpose. If you would like to as well, write — I will send you the link.</span>',
+    ctaInvite: "Request an invite", ctaTour: "How it works",
     metaPlays: "1,199 productions", metaCities: "Budapest and Debrecen", metaSync: "Synced nightly",
     altFeed: "The Vastaps Discover screen: the next evening is Káli holtak at the Katona József Theatre, with the poster, the curtain time and a button to open it; below it, the rest of the week.",
 
@@ -926,7 +943,7 @@ html { scroll-behavior: smooth; }
     j2Title: "Your profile is a programme.",
     j2Body: "Every performance you have seen on one page, with the poster, the date and your rating. Public if you want it to be — so you can show what you saw this season.",
     j2Body2: "At the end of the season Vastaps adds it up: how many evenings you spent at the theatre, what it cost, which genres you watched, and who you saw on stage most often.",
-    altUser: "Maior Ottó’s public profile: 14 plays seen, and below it the diary with posters and mask ratings.",
+    altUser: "Tóth Eszter’s public profile: 14 plays seen, and below it the diary with posters and mask ratings.",
 
     act3: "People",
     p1Eyebrow: "Performers and directors",
@@ -965,6 +982,8 @@ html { scroll-behavior: smooth; }
     spec6: "The iOS and Android builds are in progress. The web version already works on a phone.",
 
     faqTitle: "Frequently asked",
+    faq0Q: "Who can use it now?",
+    faq0A: "A small circle, for now: Vastaps is in closed alpha, and the app’s address is deliberately not on this page. It is not a secret, only unfinished — there are still bugs and missing pieces, and I would rather find them with a few testers first. If you are willing to use a half-finished app and say what is missing, send an email and I will send you the link. When it opens up, the button will be here.",
     faq1Q: "Does it cost anything?",
     faq1A: "Not today. Browsing, logging and rating cost nothing, and there is no advertising. How it supports itself longer term is still an open question — partnerships with theatres, for instance, are one possibility. If that changes, you will hear about it in advance, and it will not apply retroactively.",
     faq2Q: "Where does the data come from?",
@@ -980,8 +999,9 @@ html { scroll-behavior: smooth; }
 
     act5: "Contact",
     contactTitle: "Write, if this interests you.",
-    contactBody: "Do you work at a theatre and want its listings in here? Press, partnerships, a bug you found, or just curious how it was built? One email is enough — in Hungarian or in English.",
-    ctaOpen2: "Open the app",
+    contactAlpha: "Vastaps is in closed alpha: a few people are using it, half-finished, and their notes are shaping it. If you would like to try it too, one email is enough — I will send you the link, and all I ask in return is that you tell me what is missing.",
+    contactBody: "Do you work at a theatre and want its listings in here? Press, partnerships, a bug you found, or just curious how it was built? Same address — in Hungarian or in English.",
+    ctaInvite2: "Request an invite",
     ctaResearch: "Help shape it — a 7-minute questionnaire",
 
     footNote: "Vastaps — a Hungarian theatre diary. Made by Maior Ottó.",
@@ -1012,6 +1032,12 @@ html { scroll-behavior: smooth; }
       var k = el.getAttribute("data-t-alt");
       stash(el, "huAlt", el.alt);
       el.alt = en && EN[k] ? EN[k] : el.dataset.huAlt;
+    });
+
+    document.querySelectorAll("[data-t-href]").forEach(function (el) {
+      var k = el.getAttribute("data-t-href");
+      stash(el, "huHref", el.getAttribute("href"));
+      el.setAttribute("href", en && EN[k] ? EN[k] : el.dataset.huHref);
     });
 
     document.querySelectorAll("[data-t-label]").forEach(function (el) {
