@@ -184,6 +184,21 @@ sync/                     önálló Node szkript (`npm run sync`; a `-- --dry-ru
                           átírja a HTML-jét — ne az legyen a jelzés, hogy
                           elnémul a katalógus
 
+landing/                  a marketing egyoldalas (lásd landing/README.md) és a
+                          kutatas.html, az indulás előtti kérdőív — a válaszai
+                          egyetlen ellenőrző függvényen át jutnak a Supabase-be,
+                          ez a séma egyetlen névtelen írása
+research/                 a felhasználói kutatás eszköztára: a módszer, egy
+                          interjú-vezérfonal, használhatósági forgatókönyv,
+                          toborzószövegek, és hogy hogyan olvassuk az eredményt
+                          kevés válasznál. Az `npm run research:report` ide írja
+                          a kérdőív jelentését (git figyelmen kívül hagyja, mert
+                          e-mail-címeket tartalmazhat)
+scripts/research-design.ts  a kérdőív tizenkét funkciója, kilenc MaxDiff-
+                          képernyője és a Kano-táblázat — az oldal egy
+                          másolatot ágyaz be, és a mellette lévő teszt elbukik,
+                          ha a kettő valaha eltér
+
 .github/workflows/
   ci.yml                  típusellenőrzés + lint + tesztek minden pushra és
                           PR-re — a webes build sosem érinti a sync/-et, így ez

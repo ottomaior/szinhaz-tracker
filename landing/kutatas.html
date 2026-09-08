@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0a0507">
+<title>Vastaps — kérdőív színházba járóknak</title>
+<meta name="description" content="Hét perc, névtelenül: mi kell egy magyar színházi naplóba, és mi nem. Nem osztályozni kell, hanem választani.">
+<!-- A questionnaire is not a page to be found from a search result. -->
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://vastaps.pages.dev/kutatas">
+
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Vastaps">
+<meta property="og:url" content="https://vastaps.pages.dev/kutatas">
+<meta property="og:title" content="Mi kell egy színházi naplóba? — hét perc, névtelenül">
+<meta property="og:description" content="Egy magyar színházi app készül. Mielőtt elindul, szeretnénk tudni, mi kell bele és mi nem. Nem osztályozni kell, hanem választani.">
+<meta property="og:image" content="https://vastaps.pages.dev/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="hu_HU">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500;6..96,600;6..96,700&family=Sora:wght@300;400;500;600;700&display=swap">
+
+<style>
+/* ── Tokens — the same as index.html, so the two pages are one house ─── */
+:root {
+  color-scheme: dark;
+  --ink: #0a0507; --ink-2: #0f0709;
+  --surface: #170b0f; --surface-2: #1c0d13; --surface-3: #2a1520;
+  --hairline: rgba(245,237,228,0.10); --hairline-soft: rgba(245,237,228,0.055);
+  --text: #f6efe6; --dim: #c2afa8; --faint: #9f8e8a;
+  --gold: #e4bf72; --gold-deep: #a97c2e; --gold-lift: #f0d38f; --on-gold: #140709;
+  --gold-tint: rgba(228,191,114,0.14); --gold-edge: rgba(228,191,114,0.42); --gold-glow: rgba(228,191,114,0.40);
+  --claret: #7a2433;
+  --display: "Bodoni Moda", "Bodoni MT", "Didot", "Times New Roman", serif;
+  --sans: "Sora", ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+  --step--1: clamp(0.78rem, 0.76rem + 0.10vw, 0.84rem);
+  --step-0: clamp(0.98rem, 0.94rem + 0.18vw, 1.08rem);
+  --step-1: clamp(1.15rem, 1.06rem + 0.42vw, 1.38rem);
+  --step-2: clamp(1.45rem, 1.24rem + 0.95vw, 2.05rem);
+  --step-3: clamp(1.95rem, 1.48rem + 2.10vw, 3.20rem);
+  --gutter: clamp(1.15rem, 4vw, 2.5rem);
+  --shell: 720px;
+}
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--ink); color: var(--text);
+  font-family: var(--sans); font-size: var(--step-0); line-height: 1.6;
+  -webkit-font-smoothing: antialiased; min-height: 100svh;
+  display: flex; flex-direction: column;
+}
+h1, h2, h3 { margin: 0; font-family: var(--display); font-weight: 500; line-height: 1.08; letter-spacing: -0.015em; text-wrap: balance; }
+p { margin: 0; }
+a { color: inherit; }
+button, input, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 4px; }
+.shell { width: 100%; max-width: var(--shell); margin-inline: auto; padding-inline: var(--gutter); }
+.eyebrow { font-size: var(--step--1); letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); font-weight: 500; }
+.lede { color: var(--dim); font-size: var(--step-1); font-weight: 300; line-height: 1.55; }
+.dim { color: var(--dim); }
+.faint { color: var(--faint); font-size: var(--step--1); }
+
+/* ── Chrome ─────────────────────────────────────────────────────────────── */
+.nav { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--ink) 86%, transparent); backdrop-filter: blur(14px) saturate(140%); border-bottom: 1px solid var(--hairline-soft); }
+.nav__in { display: flex; align-items: center; gap: 1rem; height: 60px; }
+.brand { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; margin-right: auto; }
+.brand__mark { width: 24px; height: 24px; }
+.brand__name { font-family: var(--display); font-size: 1.18rem; font-weight: 600; }
+.progress { display: flex; align-items: center; gap: 0.7rem; font-size: var(--step--1); color: var(--faint); letter-spacing: 0.06em; font-variant-numeric: tabular-nums; }
+.progress[hidden] { display: none; }
+.progress__bar { width: 96px; height: 2px; background: var(--hairline); border-radius: 2px; overflow: hidden; }
+.progress__fill { height: 100%; width: 0; background: var(--gold); transition: width 0.35s cubic-bezier(0.22,0.8,0.3,1); }
+
+main { flex: 1; padding-block: clamp(2rem, 6vw, 4rem) clamp(3rem, 8vw, 5rem); }
+.step { display: flex; flex-direction: column; gap: 1.6rem; animation: rise 0.36s cubic-bezier(0.22,0.8,0.3,1); }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .step { animation: none; } }
+.step__head { display: flex; flex-direction: column; gap: 0.7rem; }
+.step__head h1 { font-size: var(--step-3); }
+.step__head h2 { font-size: var(--step-2); }
+
+/* ── Questions ──────────────────────────────────────────────────────────── */
+.q { display: flex; flex-direction: column; gap: 0.7rem; padding-top: 1.35rem; border-top: 1px solid var(--hairline-soft); }
+.q:first-of-type { border-top: 0; padding-top: 0; }
+.q__title { font-weight: 600; font-size: var(--step-0); }
+.q__hint { color: var(--faint); font-size: var(--step--1); margin-top: -0.35rem; }
+.chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.chip { position: relative; display: inline-flex; align-items: center; min-height: 42px; padding: 0.45rem 0.95rem; border-radius: 999px; border: 1px solid var(--hairline); background: rgba(245,237,228,0.03); color: var(--dim); cursor: pointer; transition: border-color 0.18s, background 0.18s, color 0.18s; user-select: none; }
+.chip:hover { border-color: var(--gold-edge); color: var(--text); }
+.chip input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.chip:has(input:checked) { background: var(--gold); border-color: var(--gold); color: var(--on-gold); font-weight: 600; }
+.chip:has(input:focus-visible) { outline: 2px solid var(--gold); outline-offset: 3px; }
+.text { width: 100%; min-height: 46px; padding: 0.65rem 0.9rem; border-radius: 12px; border: 1px solid var(--hairline); background: var(--surface); color: var(--text); font-size: 16px; }
+.text:focus { border-color: var(--gold-edge); outline: none; }
+textarea.text { min-height: 120px; resize: vertical; line-height: 1.5; }
+.text--sm { max-width: 320px; margin-top: 0.3rem; }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+/* ── MaxDiff ────────────────────────────────────────────────────────────── */
+.md { border: 1px solid var(--hairline); border-radius: 16px; background: var(--surface); overflow: hidden; }
+.md__row { display: grid; grid-template-columns: 1fr 64px 64px; align-items: stretch; border-top: 1px solid var(--hairline-soft); }
+.md__row:first-child { border-top: 0; background: var(--surface-2); }
+.md__row--picked-best { background: var(--gold-tint); }
+.md__row--picked-worst { background: rgba(122,36,51,0.22); }
+.md__head { padding: 0.7rem 0.9rem; font-size: var(--step--1); letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); display: flex; align-items: end; }
+.md__head--col { justify-content: center; text-align: center; padding-inline: 0.2rem; line-height: 1.2; }
+.md__feat { display: flex; gap: 0.85rem; align-items: center; padding: 0.8rem 0.9rem; min-width: 0; }
+.md__thumb { flex: none; width: 44px; height: 60px; border-radius: 6px; overflow: hidden; border: 1px solid var(--hairline); background: var(--surface-3); padding: 0; cursor: zoom-in; }
+.md__thumb img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+.md__thumb--none { background: linear-gradient(160deg, var(--surface-3), var(--surface)); cursor: default; }
+.md__text { min-width: 0; }
+.md__label { font-weight: 600; line-height: 1.3; }
+.md__detail { color: var(--dim); font-size: var(--step--1); line-height: 1.45; margin-top: 0.15rem; }
+.md__cell { display: flex; align-items: center; justify-content: center; border-left: 1px solid var(--hairline-soft); }
+.md__pick { position: relative; width: 100%; height: 100%; min-height: 56px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.md__pick input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.md__dot { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--faint); transition: background 0.15s, border-color 0.15s, transform 0.15s; }
+.md__pick:hover .md__dot { border-color: var(--text); }
+.md__pick--best input:checked + .md__dot { background: var(--gold); border-color: var(--gold); transform: scale(1.08); }
+.md__pick--worst input:checked + .md__dot { background: var(--claret); border-color: #a8394d; transform: scale(1.08); }
+.md__pick input:focus-visible + .md__dot { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+/* ── Kano ───────────────────────────────────────────────────────────────── */
+.kano { display: flex; flex-direction: column; gap: 0.9rem; padding: 1rem 1.1rem 1.15rem; border: 1px solid var(--hairline); border-radius: 16px; background: var(--surface); }
+.kano__label { font-weight: 600; }
+.kano__detail { color: var(--dim); font-size: var(--step--1); margin-top: 0.1rem; }
+.kano__q { display: flex; flex-direction: column; gap: 0.45rem; }
+.kano__q-title { font-size: var(--step--1); color: var(--faint); letter-spacing: 0.06em; text-transform: uppercase; }
+.kano .chip { min-height: 38px; padding: 0.3rem 0.8rem; font-size: 0.9rem; }
+
+/* ── Buttons ────────────────────────────────────────────────────────────── */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: 46px; padding: 0.7rem 1.35rem; border-radius: 999px; font-size: 0.95rem; font-weight: 600; text-decoration: none; cursor: pointer; border: 1px solid transparent; transition: transform 0.16s, background 0.2s, border-color 0.2s, box-shadow 0.2s; }
+.btn--gold { background: var(--gold); color: var(--on-gold); }
+.btn--gold:hover { background: var(--gold-lift); box-shadow: 0 8px 34px -12px var(--gold-glow); }
+.btn--gold:disabled { opacity: 0.6; cursor: wait; box-shadow: none; }
+.btn--ghost { border-color: var(--hairline); color: var(--text); background: rgba(245,237,228,0.03); }
+.btn--ghost:hover { border-color: var(--gold-edge); background: var(--gold-tint); }
+.btn--text { background: transparent; color: var(--dim); padding-inline: 0.6rem; }
+.btn--text:hover { color: var(--text); }
+.actions { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding-top: 0.5rem; }
+.err { display: none; color: #f0a5b0; font-size: var(--step--1); padding: 0.7rem 0.9rem; border: 1px solid rgba(240,165,176,0.35); border-radius: 10px; background: rgba(122,36,51,0.16); }
+.err.is-on { display: block; }
+
+/* ── Intro & thanks ─────────────────────────────────────────────────────── */
+.facts { display: grid; gap: 0.6rem; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+.fact { padding: 0.9rem 1rem; border: 1px solid var(--hairline); border-radius: 12px; background: var(--surface); }
+.fact b { display: block; font-family: var(--display); font-size: var(--step-2); color: var(--gold); font-weight: 500; line-height: 1.1; }
+.fact span { color: var(--dim); font-size: var(--step--1); }
+.consent { color: var(--dim); font-size: var(--step--1); line-height: 1.5; padding: 0.8rem 1rem; border-left: 2px solid var(--gold-edge); background: rgba(245,237,228,0.03); border-radius: 0 10px 10px 0; }
+.consent a { color: var(--gold); }
+.check { position: relative; display: flex; gap: 0.75rem; align-items: flex-start; cursor: pointer; }
+.check input { flex: none; width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--gold); }
+.thanks h1 { font-size: var(--step-3); }
+.thanks__acts { display: flex; flex-wrap: wrap; gap: 0.7rem; }
+
+dialog { border: 0; padding: 0; background: transparent; max-width: min(92vw, 420px); }
+dialog::backdrop { background: rgba(5,2,3,0.82); backdrop-filter: blur(6px); }
+dialog img { width: 100%; height: auto; border-radius: 22px; border: 1px solid var(--hairline); display: block; }
+dialog button { position: absolute; top: -14px; right: -14px; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--hairline); background: var(--surface-3); cursor: pointer; }
+
+.foot { border-top: 1px solid var(--hairline-soft); padding-block: 1.6rem 2.2rem; background: var(--ink-2); color: var(--faint); font-size: 0.85rem; }
+.foot__in { display: flex; flex-wrap: wrap; gap: 0.6rem 1.4rem; justify-content: space-between; }
+.foot a { color: var(--dim); text-decoration: none; }
+.foot a:hover { color: var(--gold); }
+
+@media (max-width: 480px) {
+  .md__row { grid-template-columns: 1fr 56px 56px; }
+  .md__thumb { width: 38px; height: 52px; }
+  .actions { flex-wrap: wrap; }
+}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="shell nav__in">
+    <a class="brand" href="/" aria-label="Vastaps — vissza a főoldalra">
+      <svg class="brand__mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 5c2.6 1.6 5.3 2.4 8 2.4S17.4 6.6 20 5v8.2c0 3.7-3.6 6.8-8 6.8s-8-3.1-8-6.8V5Z" fill="none" stroke="#e4bf72" stroke-width="1.6" stroke-linejoin="round"/><path d="M8.6 11.2c.6-.7 1.6-.7 2.2 0M13.2 11.2c.6-.7 1.6-.7 2.2 0M8.8 15.3c1.9 1.5 4.5 1.5 6.4 0" fill="none" stroke="#e4bf72" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span class="brand__name">Vastaps</span>
+    </a>
+    <div class="progress" id="progress" aria-live="polite" hidden>
+      <span id="progress-text">1 / 13</span>
+      <span class="progress__bar" aria-hidden="true"><span class="progress__fill" id="progress-fill"></span></span>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <div class="shell" id="root"></div>
+</main>
+
+<footer class="foot">
+  <div class="shell foot__in">
+    <p>Vastaps — magyar színházi napló. Készítette Maior Ottó.</p>
+    <p><a href="https://szinhaz-tracker-production.up.railway.app/legal/adatvedelem">Adatvédelem</a> &nbsp;·&nbsp; <a href="mailto:ottomaior@protonmail.com?subject=Vastaps%20k%C3%A9rd%C5%91%C3%ADv">Kapcsolat</a></p>
+  </div>
+</footer>
+
+<dialog id="shot" aria-label="Képernyőkép az appból">
+  <button type="button" id="shot-close" aria-label="Bezárás">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+  </button>
+  <img id="shot-img" src="" alt="">
+</dialog>
+
+<!-- The design is generated from scripts/research-design.ts; the test in
+     scripts/research-design.test.ts fails if this block and that module
+     ever disagree. Do not edit it here. -->
+<script id="research-design" type="application/json">{"features":[{"id":"musor_ma","label":"Ami ma este megy","detail":"A következő esték műsora Budapest és Debrecen színházaiból, egy képernyőn — plakáttal, kezdési idővel.","shot":"discover.webp"},{"id":"naptar","label":"Műsornaptár napra","detail":"Kiválasztasz egy napot, és látod, mi megy aznap, színházanként.","shot":"musor.webp"},{"id":"kereses","label":"Kereső, ami alkotót is talál","detail":"Darabra, szerzőre, színházra és színészre — ékezet nélkül és elgépelve is.","shot":"search.webp"},{"id":"idopontok_jegy","label":"Minden időpont, és a jegyvásárlás linkje","detail":"A darab oldalán az összes jövőbeli előadás, teremmel, és egy gomb a színház jegyoldalára.","shot":"play.webp"},{"id":"naplo","label":"Napló és értékelés","detail":"Feljegyzed, mit láttál és mikor, értékeled, írsz róla pár sort.","shot":"user.webp"},{"id":"beugro","label":"Ki játszott aznap este","detail":"A bejegyzésben rögzíted a szereposztást — beugróval együtt, mert a színlapot másnap már senki nem őrzi."},{"id":"hely_ar_jegy","label":"Ülőhely, jegyár, jegyfotó","detail":"Hol ültél, mennyibe került, és egy fotó a jegyről vagy a műsorfüzetről."},{"id":"kivansaglista","label":"Kívánságlista","detail":"Amit meg akarsz nézni — egy helyen, amíg fut."},{"id":"listak","label":"Listák: szerkesztői és saját","detail":"Válogatások a katalógusból („Shakespeare Budapesten”), és a te listáid.","shot":"list.webp"},{"id":"kovetes","label":"Színházak és alkotók követése","detail":"Egy színész vagy rendező oldala mindennel, amiben játszik — és értesítés, ha új darabja jön.","shot":"person.webp"},{"id":"baratok","label":"Amit az ismerőseid gondoltak","detail":"A darab oldalán látod, kik látták már azok közül, akiket követsz, és hányasra értékelték."},{"id":"evad_kartya","label":"Évadösszegzés és megosztható kártya","detail":"Egy évad számokban, és egy este képeslapként, amit elküldhetsz."}],"blocks":[[1,3,4,10],[2,5,10,11],[0,2,3,6],[1,2,7,8],[0,7,9,10],[0,4,8,11],[4,5,6,7],[1,6,9,11],[3,5,8,9]],"kano":[{"id":"ertesites","label":"Értesítés a követett színházakról","detail":"Szólunk, ha egy követett színház vagy alkotó új darabot jelent be, vagy közeledik egy előadás a kívánságlistádról."},{"id":"baratok","label":"Az ismerőseid értékelése a darab oldalán","detail":"Látod, kik látták már azok közül, akiket követsz, és mit gondoltak."},{"id":"beugro","label":"Ki játszott aznap este","detail":"A naplóbejegyzésben rögzíted az aznapi szereposztást, beugróval együtt."},{"id":"hely_ar_jegy","label":"Ülőhely, jegyár és jegyfotó a bejegyzésben","detail":"Hol ültél, mennyibe került, és egy fotó a jegyről."},{"id":"listak","label":"Szerkesztői listák","detail":"Kézzel válogatott listák a katalógusból, amiket böngészhetsz."},{"id":"evad","label":"Évadösszegzés","detail":"Szeptembertől augusztusig: hány este, melyik színházak, mennyi jegy, kik játszottak a legtöbbször."}],"kanoAnswers":["tetszene","elvarom","mindegy","elviselnem","zavarna"]}</script>
+
+<script>
+(function () {
+  "use strict";
+
+  // ── Where the answers go ───────────────────────────────────────────────
+  // The publishable key is the same one the app ships in its bundle; it can
+  // only do what Row Level Security lets `anon` do, which on this table is
+  // nothing but call the one validating function.
+  var SUPABASE_URL = "https://saelgjlnbpkdwgetpcbj.supabase.co";
+  var SUPABASE_KEY = "sb_publishable_cD-TqNCQNtqwIKs4hUyRWQ_uZB7Gakw";
+  var RPC = SUPABASE_URL + "/rest/v1/rpc/submit_research_response";
+
+  var DESIGN = JSON.parse(document.getElementById("research-design").textContent);
+  var FEATURES = DESIGN.features;
+  var BLOCKS = DESIGN.blocks;
+  var KANO = DESIGN.kano;
+  var KANO_LABELS = { tetszene: "Örülnék neki", elvarom: "Elvárnám", mindegy: "Mindegy", elviselnem: "Elviselném", zavarna: "Zavarna" };
+  var APP = "https://szinhaz-tracker-production.up.railway.app/";
+  var PRIVACY = APP + "legal/adatvedelem";
+
+  var root = document.getElementById("root");
+  var progress = document.getElementById("progress");
+  var progressText = document.getElementById("progress-text");
+  var progressFill = document.getElementById("progress-fill");
+
+  // ── Storage ────────────────────────────────────────────────────────────
+  var K_DRAFT = "vastaps-kutatas-draft";
+  var K_DONE = "vastaps-kutatas-done";
+  var K_CLIENT = "vastaps-kutatas-client";
+
+  function load(k) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
+  function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function drop(k) { try { localStorage.removeItem(k); } catch (e) {} }
+
+  function uuid() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    var s = "";
+    for (var i = 0; i < 32; i++) s += Math.floor(Math.random() * 16).toString(16);
+    return s;
+  }
+  function shuffled(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+
+  var clientId = load(K_CLIENT);
+  if (!clientId) { clientId = uuid(); save(K_CLIENT, clientId); }
+
+  var source = null;
+  try { source = new URLSearchParams(location.search).get("s"); } catch (e) {}
+
+  var state = load(K_DRAFT) || {
+    step: 0,
+    // Screens in a fresh order for each respondent, and the four features in
+    // a fresh order on each screen, so position cannot masquerade as value.
+    blockOrder: shuffled(BLOCKS.map(function (_, i) { return i; })),
+    itemOrder: BLOCKS.map(function (b) { return shuffled(b); }),
+    behaviour: {},
+    maxdiff: {},
+    kano: {},
+    open_answer: "",
+    optin: false,
+    email: "",
+    source: source
+  };
+  if (source && !state.source) state.source = source;
+
+  // ── Steps ──────────────────────────────────────────────────────────────
+  var steps = [{ kind: "intro" }, { kind: "rolad1" }, { kind: "rolad2" }];
+  state.blockOrder.forEach(function (b, i) { steps.push({ kind: "maxdiff", block: b, nth: i + 1 }); });
+  steps.push({ kind: "kano" }, { kind: "zaras" });
+  var TOTAL = steps.length - 1; // the intro is not a step
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  function chips(name, options, chosen, multi) {
+    return '<div class="chips" role="group">' + options.map(function (o) {
+      var on = multi ? (chosen || []).indexOf(o.id) >= 0 : chosen === o.id;
+      return '<label class="chip"><input type="' + (multi ? "checkbox" : "radio") + '" name="' + name + '" value="' + esc(o.id) + '"' + (on ? " checked" : "") + '>' + esc(o.label) + "</label>";
+    }).join("") + "</div>";
+  }
+
+  function renderIntro() {
+    return '<div class="step">' +
+      '<div class="step__head"><p class="eyebrow">Kérdőív · színházba járóknak</p>' +
+      '<h1>Mi kell egy színházi naplóba, és mi nem?</h1>' +
+      '<p class="lede">A Vastaps egy magyar színházi app: műsor Budapest és Debrecen színházaiból, és egy napló arról, mit láttál. Mielőtt elindul, szeretnénk tudni, mi számít valójában — neked.</p></div>' +
+      '<div class="facts"><div class="fact"><b>7 perc</b><span>Először rólad, aztán a funkciókról.</span></div>' +
+      '<div class="fact"><b>Névtelen</b><span>Nem kérünk nevet, és nem kell fiók.</span></div>' +
+      '<div class="fact"><b>Nem osztályzat</b><span>Választani kell — mi a legértékesebb, és mi a legkevésbé.</span></div></div>' +
+      '<p class="dim">Nincs jó válasz. Ha valamit nem használnál, az pont olyan hasznos, mint ha igen — sőt.</p>' +
+      '<p class="consent">A válaszokat névtelenül tároljuk. E-mail-címet csak akkor, ha a végén kéred, hogy szóljunk az indulásról, és csak arra használjuk. <a href="' + PRIVACY + '" target="_blank" rel="noopener">Adatkezelési tájékoztató</a></p>' +
+      '<div class="actions"><span></span><button class="btn btn--gold" type="button" data-next>Kezdjük</button></div></div>';
+  }
+
+  function renderRolad1() {
+    var b = state.behaviour;
+    return '<div class="step"><div class="step__head"><p class="eyebrow">1. Rólad</p><h2>Hogyan jársz színházba?</h2></div>' +
+      '<div class="q"><p class="q__title">Hányszor voltál színházban az elmúlt egy évben?</p>' +
+      chips("gyakorisag", [{ id: "0", label: "Egyszer sem" }, { id: "1-2", label: "1–2" }, { id: "3-5", label: "3–5" }, { id: "6-10", label: "6–10" }, { id: "10+", label: "Több mint 10" }], b.gyakorisag, false) + "</div>" +
+      '<div class="q"><p class="q__title">Hol jársz színházba?</p><p class="q__hint">Több is lehet.</p>' +
+      chips("varos", [{ id: "budapest", label: "Budapest" }, { id: "debrecen", label: "Debrecen" }, { id: "mas", label: "Máshol" }], b.varos, true) +
+      '<input class="text text--sm" type="text" name="varos_mas" maxlength="80" placeholder="Hol máshol?" value="' + esc(b.varos_mas || "") + '"' + ((b.varos || []).indexOf("mas") >= 0 ? "" : " hidden") + "></div>" +
+      '<div class="q"><p class="q__title">Melyik színházakban jártál az elmúlt egy évben?</p><p class="q__hint">Amelyikben voltál. Ha egyikben sem, hagyd üresen.</p>' +
+      chips("szinhazak", [
+        { id: "orkeny", label: "Örkény" }, { id: "katona", label: "Katona" }, { id: "nemzeti", label: "Nemzeti" }, { id: "central", label: "Centrál" },
+        { id: "madach", label: "Madách" }, { id: "vig", label: "Vígszínház" }, { id: "csokonai", label: "Csokonai (Debrecen)" }, { id: "vojtina", label: "Vojtina (Debrecen)" }, { id: "mas", label: "Más színház" }
+      ], b.szinhazak, true) +
+      '<input class="text text--sm" type="text" name="szinhazak_mas" maxlength="120" placeholder="Melyik?" value="' + esc(b.szinhazak_mas || "") + '"' + ((b.szinhazak || []).indexOf("mas") >= 0 ? "" : " hidden") + "></div>" +
+      '<div class="err" id="err"></div>' +
+      '<div class="actions"><button class="btn btn--text" type="button" data-back>Vissza</button><button class="btn btn--gold" type="button" data-next>Tovább</button></div></div>';
+  }
+
+  function renderRolad2() {
+    var b = state.behaviour;
+    return '<div class="step"><div class="step__head"><p class="eyebrow">1. Rólad</p><h2>Hogyan választasz, és mire emlékszel?</h2></div>' +
+      '<div class="q"><p class="q__title">Honnan tudod meg, mi megy?</p><p class="q__hint">Amit tényleg használsz — több is lehet.</p>' +
+      chips("forras", [
+        { id: "szinhaz_honlap", label: "A színház honlapja" }, { id: "jegyiroda", label: "jegy.hu, jegyiroda" }, { id: "facebook", label: "Facebook, Instagram" },
+        { id: "portalok", label: "port.hu, szinhaz.hu, kritikák" }, { id: "ismerosok", label: "Ismerősök" }, { id: "hirlevel", label: "Hírlevél, bérlet" },
+        { id: "plakat", label: "Plakát, az utcán" }, { id: "egyeb", label: "Egyéb" }
+      ], b.forras, true) + "</div>" +
+      '<div class="q"><p class="q__title">Mi dönti el, mit nézel meg?</p><p class="q__hint">A két-három legfontosabb.</p>' +
+      chips("dontes", [
+        { id: "darab", label: "A darab vagy a szerző" }, { id: "szinesz", label: "Egy színész" }, { id: "rendezo", label: "A rendező" }, { id: "szinhaz", label: "A színház maga" },
+        { id: "ajanlas", label: "Valaki ajánlotta" }, { id: "kritika", label: "Kritika, értékelés" }, { id: "ar", label: "Az ár" }, { id: "datum", label: "Amikor ráérek" }
+      ], b.dontes, true) + "</div>" +
+      '<div class="q"><p class="q__title">Hogyan tartod számon, mit láttál?</p>' +
+      chips("nyilvantartas", [
+        { id: "fejben", label: "Fejben" }, { id: "jegyek_fuzetek", label: "Megőrzöm a jegyeket, műsorfüzeteket" }, { id: "jegyzet", label: "Jegyzetappban" },
+        { id: "tablazat", label: "Táblázatban" }, { id: "kozossegi", label: "Posztolok róla" }, { id: "masik_app", label: "Egy másik appban" }, { id: "semmi", label: "Sehogy" }
+      ], b.nyilvantartas, true) +
+      '<input class="text text--sm" type="text" name="nyilvantartas_mas" maxlength="80" placeholder="Melyik appban?" value="' + esc(b.nyilvantartas_mas || "") + '"' + ((b.nyilvantartas || []).indexOf("masik_app") >= 0 ? "" : " hidden") + "></div>" +
+      '<div class="q"><p class="q__title">Használsz naplóappot filmre vagy könyvre?</p>' +
+      chips("analog_app", [{ id: "letterboxd", label: "Letterboxd" }, { id: "goodreads", label: "Goodreads, Moly" }, { id: "imdb", label: "IMDb" }, { id: "egyik_sem", label: "Egyiket sem" }], b.analog_app, true) + "</div>" +
+      '<div class="err" id="err"></div>' +
+      '<div class="actions"><button class="btn btn--text" type="button" data-back>Vissza</button><button class="btn btn--gold" type="button" data-next>Tovább</button></div></div>';
+  }
+
+  function renderMaxDiff(step) {
+    var b = step.block;
+    var picked = state.maxdiff[b] || {};
+    var rows = state.itemOrder[b].map(function (idx) {
+      var f = FEATURES[idx];
+      var cls = picked.best === f.id ? " md__row--picked-best" : picked.worst === f.id ? " md__row--picked-worst" : "";
+      var thumb = f.shot
+        ? '<button class="md__thumb" type="button" data-shot="shots/' + esc(f.shot) + '" aria-label="Képernyőkép: ' + esc(f.label) + '"><img src="shots/' + esc(f.shot) + '" alt="" loading="lazy" width="44" height="60"></button>'
+        : '<span class="md__thumb md__thumb--none" aria-hidden="true"></span>';
+      return '<div class="md__row' + cls + '" data-row="' + esc(f.id) + '">' +
+        '<div class="md__feat">' + thumb + '<div class="md__text"><div class="md__label">' + esc(f.label) + '</div><div class="md__detail">' + esc(f.detail) + '</div></div></div>' +
+        '<div class="md__cell"><label class="md__pick md__pick--best"><input type="radio" name="best" value="' + esc(f.id) + '"' + (picked.best === f.id ? " checked" : "") + ' aria-label="Legértékesebb: ' + esc(f.label) + '"><span class="md__dot"></span></label></div>' +
+        '<div class="md__cell"><label class="md__pick md__pick--worst"><input type="radio" name="worst" value="' + esc(f.id) + '"' + (picked.worst === f.id ? " checked" : "") + ' aria-label="Legkevésbé: ' + esc(f.label) + '"><span class="md__dot"></span></label></div>' +
+        "</div>";
+    }).join("");
+    return '<div class="step"><div class="step__head"><p class="eyebrow">2. Funkciók · ' + step.nth + ' / ' + BLOCKS.length + '</p>' +
+      '<h2>' + (step.nth === 1 ? "Ebből a négyből melyik ér a legtöbbet — és melyik a legkevesebbet?" : "És ebből a négyből?") + '</h2>' +
+      (step.nth === 1 ? '<p class="dim">Minden képernyőn négy funkció. Jelöld meg azt, amelyik neked a legértékesebb, és azt, amelyik a legkevésbé. A kis képekre koppintva látod, hogy néz ki az appban.</p>' : "") +
+      "</div>" +
+      '<div class="md" role="group" aria-label="Négy funkció"><div class="md__row"><div class="md__head">Funkció</div><div class="md__head md__head--col">Leg-<br>értékesebb</div><div class="md__head md__head--col">Leg-<br>kevésbé</div></div>' + rows + "</div>" +
+      '<div class="err" id="err"></div>' +
+      '<div class="actions"><button class="btn btn--text" type="button" data-back>Vissza</button><button class="btn btn--gold" type="button" data-next>Tovább</button></div></div>';
+  }
+
+  function renderKano() {
+    var opts = DESIGN.kanoAnswers.map(function (id) { return { id: id, label: KANO_LABELS[id] }; });
+    var cards = KANO.map(function (f) {
+      var a = state.kano[f.id] || {};
+      return '<div class="kano" data-kano="' + esc(f.id) + '"><div><div class="kano__label">' + esc(f.label) + '</div><div class="kano__detail">' + esc(f.detail) + '</div></div>' +
+        '<div class="kano__q"><span class="kano__q-title">Ha lenne ilyen</span>' + chips("f:" + f.id, opts, a.f, false) + "</div>" +
+        '<div class="kano__q"><span class="kano__q-title">Ha nem lenne</span>' + chips("d:" + f.id, opts, a.d, false) + "</div></div>";
+    }).join("");
+    return '<div class="step"><div class="step__head"><p class="eyebrow">3. Hat funkció közelebbről</p><h2>Mit éreznél, ha lenne — és ha nem lenne?</h2>' +
+      '<p class="dim">Ugyanaz a hat funkció kétszer kérdezve. Ellentmondás nincs: elvárni valamit és zavartatni a hiányát két külön dolog.</p></div>' +
+      cards + '<div class="err" id="err"></div>' +
+      '<div class="actions"><button class="btn btn--text" type="button" data-back>Vissza</button><button class="btn btn--gold" type="button" data-next>Tovább</button></div></div>';
+  }
+
+  function renderZaras() {
+    return '<div class="step"><div class="step__head"><p class="eyebrow">4. Végül</p><h2>Mitől használnád minden színházi este után?</h2></div>' +
+      '<div class="q"><p class="q__hint">Egy mondat is elég. Az is válasz, hogy „semmitől”.</p>' +
+      '<textarea class="text" name="open_answer" maxlength="1500" placeholder="Írd le a saját szavaiddal…">' + esc(state.open_answer || "") + "</textarea></div>" +
+      '<div class="q"><label class="check"><input type="checkbox" name="optin"' + (state.optin ? " checked" : "") + '><span>Szóljatok, amikor elindul. <span class="faint">Egy e-mail, az indulásról, és semmi más.</span></span></label>' +
+      '<input class="text text--sm" type="email" name="email" maxlength="254" autocomplete="email" placeholder="e-mail-cím" value="' + esc(state.email || "") + '"' + (state.optin ? "" : " hidden") + "></div>" +
+      '<div class="hp" aria-hidden="true"><label>Weboldal <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>' +
+      '<div class="err" id="err"></div>' +
+      '<div class="actions"><button class="btn btn--text" type="button" data-back>Vissza</button><button class="btn btn--gold" type="button" data-submit>Beküldöm</button></div></div>';
+  }
+
+  function renderThanks(already) {
+    var url = "https://vastaps.pages.dev/kutatas";
+    return '<div class="step thanks"><div class="step__head"><p class="eyebrow">Köszönjük</p>' +
+      '<h1>' + (already ? "Ezt már beküldted." : "Megvan. Köszönjük!") + '</h1>' +
+      '<p class="lede">' + (already ? "Ebből a böngészőből már érkezett válasz, és egy ember egy szavazat. Ha másvalaki töltené ki, más eszközön vagy privát ablakban megteheti." : "A legtöbbet most azzal segítesz, ha továbbküldöd egy ismerősödnek, aki jár színházba. Egy ember egy szavazat — és minden szavazat számít, amíg kevesen vagyunk.") + "</p></div>" +
+      '<div class="thanks__acts"><button class="btn btn--gold" type="button" data-share data-url="' + url + '">Továbbküldöm</button>' +
+      '<a class="btn btn--ghost" href="' + APP + '">Megnézem az appot</a></div>' +
+      '<p class="faint" id="share-note"></p></div>';
+  }
+
+  // ── Render & progress ──────────────────────────────────────────────────
+  function render() {
+    if (load(K_DONE)) { progress.hidden = true; root.innerHTML = renderThanks(true); return; }
+    var step = steps[state.step];
+    var html;
+    if (step.kind === "intro") html = renderIntro();
+    else if (step.kind === "rolad1") html = renderRolad1();
+    else if (step.kind === "rolad2") html = renderRolad2();
+    else if (step.kind === "maxdiff") html = renderMaxDiff(step);
+    else if (step.kind === "kano") html = renderKano();
+    else html = renderZaras();
+    root.innerHTML = html;
+    progress.hidden = state.step === 0;
+    progressText.textContent = state.step + " / " + TOTAL;
+    progressFill.style.width = Math.round((100 * state.step) / TOTAL) + "%";
+    window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+    var first = root.querySelector("h1, h2");
+    if (first && state.step > 0) { first.setAttribute("tabindex", "-1"); first.focus({ preventScroll: true }); }
+  }
+
+  function showErr(msg) {
+    var el = document.getElementById("err");
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.add("is-on");
+    el.scrollIntoView({ block: "nearest" });
+  }
+
+  // ── Reading answers back ───────────────────────────────────────────────
+  function readBehaviour() {
+    var b = state.behaviour;
+    root.querySelectorAll("input[type=radio][name], input[type=checkbox][name]").forEach(function (i) {
+      if (i.name === "optin" || i.name.indexOf(":") >= 0 || i.name === "best" || i.name === "worst") return;
+      if (i.type === "radio") { if (i.checked) b[i.name] = i.value; }
+      else {
+        var list = b[i.name] = (b[i.name] || []).filter(function (v) { return v !== i.value; });
+        if (i.checked) list.push(i.value);
+      }
+    });
+    root.querySelectorAll("input[type=text][name]").forEach(function (i) {
+      if (i.name === "website") return;
+      b[i.name] = i.value.trim().slice(0, 120);
+    });
+    // Free-text fields follow their "other" chip.
+    var pairs = { varos_mas: ["varos", "mas"], szinhazak_mas: ["szinhazak", "mas"], nyilvantartas_mas: ["nyilvantartas", "masik_app"] };
+    Object.keys(pairs).forEach(function (k) {
+      var el = root.querySelector('input[name="' + k + '"]');
+      if (!el) return;
+      var on = (b[pairs[k][0]] || []).indexOf(pairs[k][1]) >= 0;
+      el.hidden = !on;
+      if (!on) { el.value = ""; delete b[k]; }
+    });
+    save(K_DRAFT, state);
+  }
+
+  function readMaxDiff(block) {
+    var best = root.querySelector('input[name="best"]:checked');
+    var worst = root.querySelector('input[name="worst"]:checked');
+    state.maxdiff[block] = { best: best ? best.value : null, worst: worst ? worst.value : null };
+    root.querySelectorAll(".md__row[data-row]").forEach(function (r) {
+      r.classList.toggle("md__row--picked-best", !!best && r.dataset.row === best.value);
+      r.classList.toggle("md__row--picked-worst", !!worst && r.dataset.row === worst.value);
+    });
+    save(K_DRAFT, state);
+  }
+
+  function readKano() {
+    KANO.forEach(function (f) {
+      var fa = root.querySelector('input[name="f:' + f.id + '"]:checked');
+      var da = root.querySelector('input[name="d:' + f.id + '"]:checked');
+      state.kano[f.id] = { f: fa ? fa.value : null, d: da ? da.value : null };
+    });
+    save(K_DRAFT, state);
+  }
+
+  function readZaras() {
+    var t = root.querySelector('textarea[name="open_answer"]');
+    var o = root.querySelector('input[name="optin"]');
+    var e = root.querySelector('input[name="email"]');
+    state.open_answer = t ? t.value.slice(0, 1500) : "";
+    state.optin = !!(o && o.checked);
+    state.email = e ? e.value.trim() : "";
+    if (e) e.hidden = !state.optin;
+    save(K_DRAFT, state);
+  }
+
+  // ── Validation per step ────────────────────────────────────────────────
+  function validate(step) {
+    var b = state.behaviour;
+    if (step.kind === "rolad1") {
+      if (!b.gyakorisag) return "Válaszd ki, hányszor voltál színházban.";
+      if (!(b.varos || []).length) return "Jelöld meg, hol jársz színházba.";
+    }
+    if (step.kind === "rolad2") {
+      if (!(b.forras || []).length) return "Jelöld meg, honnan tudod meg, mi megy.";
+      if (!(b.dontes || []).length) return "Jelöld meg, mi dönti el, mit nézel meg.";
+      if (!(b.nyilvantartas || []).length) return "Jelöld meg, hogyan tartod számon, mit láttál.";
+    }
+    if (step.kind === "maxdiff") {
+      var p = state.maxdiff[step.block] || {};
+      if (!p.best || !p.worst) return "Jelölj meg egyet legértékesebbnek és egyet legkevésbé értékesnek.";
+      if (p.best === p.worst) return "Ugyanaz nem lehet a legértékesebb és a legkevésbé is.";
+    }
+    if (step.kind === "kano") {
+      for (var i = 0; i < KANO.length; i++) {
+        var a = state.kano[KANO[i].id] || {};
+        if (!a.f || !a.d) return "Mind a hat funkciónál válaszolj mindkét kérdésre — „" + KANO[i].label + "” még hiányzik.";
+      }
+    }
+    if (step.kind === "zaras") {
+      if (state.optin && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email)) return "Ha szeretnéd, hogy szóljunk, kell egy működő e-mail-cím — vagy vedd ki a pipát.";
+    }
+    return null;
+  }
+
+  // ── Submit ─────────────────────────────────────────────────────────────
+  function payload() {
+    var hp = root.querySelector('input[name="website"]');
+    var md = Object.keys(state.maxdiff).map(function (k) { return { block: Number(k), best: state.maxdiff[k].best, worst: state.maxdiff[k].worst }; });
+    return {
+      version: 1,
+      client_id: clientId,
+      source: state.source || null,
+      behaviour: state.behaviour,
+      maxdiff: md,
+      kano: state.kano,
+      open_answer: state.open_answer || null,
+      email: state.optin ? state.email : null,
+      website: hp ? hp.value : ""
+    };
+  }
+
+  function submit(btn) {
+    btn.disabled = true;
+    btn.textContent = "Küldés…";
+    fetch(RPC, {
+      method: "POST",
+      headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ payload: payload() })
+    }).then(function (res) {
+      return res.text().then(function (text) {
+        var body = null;
+        try { body = JSON.parse(text); } catch (e) {}
+        if (res.ok) return { ok: true };
+        if (body && body.code === "23505") return { ok: true, already: true };
+        var msg = body && body.message ? body.message : "HTTP " + res.status;
+        throw new Error(msg);
+      });
+    }).then(function (r) {
+      save(K_DONE, { at: new Date().toISOString(), client: clientId });
+      drop(K_DRAFT);
+      progress.hidden = true;
+      root.innerHTML = renderThanks(!!r.already);
+    }).catch(function (err) {
+      btn.disabled = false;
+      btn.textContent = "Beküldöm";
+      var m = String(err && err.message || "");
+      showErr(m.indexOf("too many") >= 0
+        ? "Most sokan küldenek egyszerre — várj egy percet, és próbáld újra. A válaszaid megvannak."
+        : "Nem sikerült beküldeni (" + m + "). A válaszaid ebben a böngészőben megmaradnak — próbáld újra kicsit később.");
+    });
+  }
+
+  // ── Events ─────────────────────────────────────────────────────────────
+  root.addEventListener("change", function () {
+    var step = steps[state.step];
+    if (step.kind === "rolad1" || step.kind === "rolad2") readBehaviour();
+    else if (step.kind === "maxdiff") readMaxDiff(step.block);
+    else if (step.kind === "kano") readKano();
+    else if (step.kind === "zaras") readZaras();
+  });
+  root.addEventListener("input", function (e) {
+    if (e.target && (e.target.name === "open_answer" || e.target.name === "email")) readZaras();
+    if (e.target && e.target.type === "text") readBehaviour();
+  });
+  root.addEventListener("click", function (e) {
+    var t = e.target.closest("button, a");
+    if (!t) return;
+    if (t.hasAttribute("data-next")) {
+      var step = steps[state.step];
+      if (step.kind === "zaras") readZaras();
+      var problem = validate(step);
+      if (problem) { showErr(problem); return; }
+      state.step = Math.min(state.step + 1, steps.length - 1);
+      save(K_DRAFT, state);
+      render();
+    } else if (t.hasAttribute("data-back")) {
+      state.step = Math.max(state.step - 1, 0);
+      save(K_DRAFT, state);
+      render();
+    } else if (t.hasAttribute("data-submit")) {
+      readZaras();
+      var p = validate(steps[state.step]);
+      if (p) { showErr(p); return; }
+      submit(t);
+    } else if (t.hasAttribute("data-shot")) {
+      var d = document.getElementById("shot");
+      document.getElementById("shot-img").src = t.getAttribute("data-shot");
+      if (d.showModal) d.showModal(); else window.open(t.getAttribute("data-shot"), "_blank");
+    } else if (t.hasAttribute("data-share")) {
+      var url = t.getAttribute("data-url");
+      var note = document.getElementById("share-note");
+      var text = "Egy magyar színházi app készül — hét perc, névtelenül: mi kell bele, és mi nem?";
+      if (navigator.share) {
+        navigator.share({ title: "Vastaps kérdőív", text: text, url: url }).catch(function () {});
+      } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(text + " " + url).then(function () { note.textContent = "A link a vágólapon van — illeszd be egy üzenetbe."; }, function () { note.textContent = url; });
+      } else {
+        note.textContent = url;
+      }
+    }
+  });
+  document.getElementById("shot-close").addEventListener("click", function () { document.getElementById("shot").close(); });
+  document.getElementById("shot").addEventListener("click", function (e) { if (e.target === e.currentTarget) e.currentTarget.close(); });
+
+  render();
+})();
+</script>
+</body>
+</html>

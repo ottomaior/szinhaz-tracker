@@ -13,6 +13,14 @@
 /index.html
   Cache-Control: public, max-age=0, must-revalidate
 
+# The questionnaire is edited between waves; a stale copy would keep asking
+# questions that have since changed, against a function that no longer
+# accepts the old shape.
+/kutatas
+  Cache-Control: public, max-age=0, must-revalidate
+/kutatas.html
+  Cache-Control: public, max-age=0, must-revalidate
+
 /shots/*
   Cache-Control: public, max-age=86400
 

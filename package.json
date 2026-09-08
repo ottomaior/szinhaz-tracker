@@ -17,6 +17,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "deploy:landing": "tsx scripts/deploy-landing.ts",
+    "research:report": "tsx scripts/research-report.ts",
     "promo": "tsx scripts/render-promo.ts",
     "tour": "tsx scripts/render-tour.ts",
     "og": "tsx scripts/render-og.ts"

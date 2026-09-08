@@ -172,6 +172,19 @@ sync/                     standalone Node script (`npm run sync`; add
                           adapter tests (`npm test`) catch a theatre changing
                           its markup rather than the catalogue going quiet
 
+landing/                  the marketing one-pager (see landing/README.md) and
+                          kutatas.html, the pre-launch questionnaire — its
+                          answers reach Supabase through one validating
+                          function, the schema's only anonymous write
+research/                 the user-research kit: the method, an interview
+                          guide, a usability script, recruitment copy, and how
+                          to read the results honestly at few responses.
+                          `npm run research:report` writes the survey report
+                          here (git-ignored, it can hold opted-in emails)
+scripts/research-design.ts  the questionnaire's twelve features, nine MaxDiff
+                          screens and the Kano table — the page embeds a copy,
+                          and the test beside it fails if the two ever drift
+
 .github/workflows/
   ci.yml                  typecheck + lint + tests on every push and PR —
                           the web build never covers sync/, so this is what

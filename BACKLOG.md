@@ -220,6 +220,19 @@ but wrong.
   indexes has loaded. They are genuine derived-state-in-an-effect smells and the fix is to restate
   the value as derived rather than stored, screen by screen. Not urgent — none of them is a known
   bug — but the warning count is the measure, and it should only ever go down.
+- **5.6 User research before launch · kit built, fieldwork open.** The product
+  has never been put in front of anybody who did not build it. `research/` holds
+  the method and the instruments — eight to ten discovery interviews about how
+  people go to the theatre *today*, five think-aloud sessions on the live app,
+  and a questionnaire at `vastaps.pages.dev/kutatas` that forces choices between
+  the twelve features (MaxDiff) and classifies six uncertain ones (Kano) rather
+  than asking for 1–5 ratings, which everybody answers with 4s and 5s. Answers
+  land in `research_responses` through one validating function (0039); `npm run
+  research:report` writes the analysis. First wave is friends and acquaintances,
+  which is enough for the interviews and the sessions and too few for a stable
+  ranking — the questionnaire stays open for a Facebook-group wave later. What
+  is left is the fieldwork itself, and the one-page findings that decide the
+  launch feature set.
 
 ---
 

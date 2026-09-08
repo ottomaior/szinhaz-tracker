@@ -231,6 +231,19 @@ alapján született, amik nemcsak kevesek, hanem hibásak is voltak.
   state-ben" szagok, és a javítás az, hogy az értéket képernyőnként újra származtatottként fogalmazzuk
   meg, nem tároltként. Nem sürgős — egyik sem ismert hiba —, de a figyelmeztetések száma a mérőszám,
   és annak csak csökkennie szabad.
+- **5.6 Felhasználói kutatás az indulás előtt · az eszköztár kész, a terepmunka
+  nyitva.** A terméket még soha nem látta senki, aki nem építette. A `research/`
+  mappa a módszer és az eszközök: nyolc-tíz feltáró interjú arról, hogyan járnak
+  az emberek *ma* színházba, öt hangosan gondolkodós ülés az élő appon, és egy
+  kérdőív a `vastaps.pages.dev/kutatas` címen, amely a tizenkét funkció között
+  választásra kényszerít (MaxDiff), és hat bizonytalant besorol (Kano) — nem
+  1–5-ös osztályzatot kér, amire mindenki négyest-ötöst ad. A válaszok egyetlen
+  ellenőrző függvényen át kerülnek a `research_responses` táblába (0039); az
+  `npm run research:report` írja az elemzést. Az első kör barátok és ismerősök,
+  ami elég az interjúkhoz és az ülésekhez, és kevés egy stabil rangsorhoz — a
+  kérdőív nyitva marad egy későbbi Facebook-csoportos körre. Ami hátravan: maga
+  a terepmunka, és az egyoldalas összegzés, amely eldönti az indulási
+  funkciókészletet.
 
 ---
 

@@ -1,0 +1,5 @@
+# One page per interview holds a name and quotes; the report may hold opted-in emails.
+# Both are personal data and stay on this machine.
+interju-[0-9]*.md
+jelentes-*.md
+feliratkozok-*.txt

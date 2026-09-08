@@ -44,6 +44,10 @@ export default defineConfig({
       "utils/**/*.test.ts",
       "i18n/**/*.test.ts",
       "theme/**/*.test.ts",
+      // The research questionnaire's MaxDiff design: a feature shown four
+      // times against another's two wins on exposure, not on value, and the
+      // static page carries its own copy of the design — so both are pinned.
+      "scripts/**/*.test.ts",
     ],
     environment: "node",
     // Fixtures are real, sizeable pages; a slow first parse should not fail.

@@ -99,7 +99,7 @@ export const hostingProvider = {
  * typo fix is not a new version, and telling people the policy changed when it
  * did not is how a change notice stops being read.
  */
-export const legalLastUpdated = "2026. szeptember 6.";
+export const legalLastUpdated = "2026. szeptember 8.";
 
 export type LegalBlock =
   | { kind: "p"; text: string }
@@ -186,6 +186,9 @@ export const privacyPolicy: LegalDocument = {
         p(
           "Nem végzünk automatizált döntéshozatalt és profilalkotást, nem kereskedünk az adataiddal, és nem adjuk át őket hirdetőknek."
         ),
+        p(
+          "Az indulás előtti kérdőív (vastaps.pages.dev/kutatas) válaszait névtelenül tároljuk: nem kérünk nevet, és a válaszokhoz nem tartozik fiók. A böngésződben egy véletlen azonosítót helyezünk el, hogy egy eszközről ne lehessen kétszer beküldeni — ez személyhez nem köthető. Az e-mail-címedet csak akkor tároljuk, ha a kérdőív végén kéred, hogy szóljunk az indulásról; ez hozzájáruláson alapul (6. cikk (1) a) pont), a címet kizárólag erre az egy értesítésre használjuk, és a kérésedre bármikor töröljük."
+        ),
       ],
     },
     {
@@ -220,7 +223,8 @@ export const privacyPolicy: LegalDocument = {
           "A fiókodhoz kötött adatokat addig, amíg a fiókod fennáll.",
           "Ha törlöd a fiókodat, a profilod, a naplód, az értékeléseid, a listáid, a követéseid, a kedveléseid, a hozzászólásaid, valamint a feltöltött profilképed és jegyfotóid azonnal és véglegesen törlődnek.",
           "Ami nem törlődik: az általad kézzel felvett előadások és színházak megmaradnak a katalógusban, de a szerzőségük megszűnik — a rekord többé nem kapcsolódik hozzád. Ezek ugyanis közös katalógusadatok, amelyekre mások naplóbejegyzései hivatkozhatnak.",
-          "A technikai üzemeltetési naplókat legfeljebb 30 napig őrizzük."
+          "A technikai üzemeltetési naplókat legfeljebb 30 napig őrizzük.",
+          "A kérdőív névtelen válaszait a termék tervezéséhez őrizzük meg; a hozzájuk kapcsolódó e-mail-címeket az indulásról szóló értesítés kiküldése után töröljük."
         ),
       ],
     },
