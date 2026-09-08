@@ -515,6 +515,24 @@ export const accountDeletion: LegalDocument = {
       ],
     },
     {
+      heading: "Ha csak egy részét törölnéd",
+      blocks: [
+        p(
+          "A fiókod megtartása mellett is törölheted azt, amit írtál. Ezekhez nem kell megkeresned minket, és nem jár a fiók elvesztésével:"
+        ),
+        ul(
+          "egy naplóbejegyzést vagy értékelést a bejegyzés oldalán",
+          "egy hozzászólást, amit te írtál",
+          "egy tételt a kívánságlistádról vagy egy általad készített listát",
+          "a profilképedet és a bemutatkozásodat a profil szerkesztésénél",
+          "egy követést, bármikor"
+        ),
+        p(
+          `Ha olyasmit szeretnél töröltetni, amihez az alkalmazásban nem találsz gombot, írj a ${operator.email} címre, és 30 napon belül elintézzük.`
+        ),
+      ],
+    },
+    {
       heading: "Ha csak az adataidat kérnéd ki",
       blocks: [
         p(
