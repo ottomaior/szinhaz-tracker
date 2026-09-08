@@ -194,10 +194,10 @@ research/                 a felhasználói kutatás eszköztára: a módszer, eg
                           kevés válasznál. Az `npm run research:report` ide írja
                           a kérdőív jelentését (git figyelmen kívül hagyja, mert
                           e-mail-címeket tartalmazhat)
-scripts/research-design.ts  a kérdőív tizenkét funkciója, kilenc MaxDiff-
-                          képernyője és a Kano-táblázat — az oldal egy
-                          másolatot ágyaz be, és a mellette lévő teszt elbukik,
-                          ha a kettő valaha eltér
+scripts/research-design.ts  a kérdőív tizenkét funkciója és az a hat, amelynek
+                          a hiányáról kérdez — az oldal egy másolatot ágyaz be,
+                          és a mellette lévő teszt elbukik, ha a kettő valaha
+                          eltér
 
 .github/workflows/
   ci.yml                  típusellenőrzés + lint + tesztek minden pushra és

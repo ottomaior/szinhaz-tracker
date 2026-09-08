@@ -2,15 +2,12 @@ import "dotenv/config";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { getSupabaseAdmin } from "../sync/lib/supabaseAdmin";
 import {
-  FEATURES,
-  KANO_ANSWERS,
-  KANO_CATEGORY_LABELS,
-  KANO_FEATURES,
-  kanoCategory,
-  scoreMaxDiff,
-  type KanoAnswer,
-  type KanoCategory,
-  type MaxDiffAnswer,
+  MISSING_ANSWERS,
+  MISSING_FEATURES,
+  MISSING_LABELS,
+  scorePicks,
+  type MissingAnswer,
+  type Picks,
 } from "./research-design";
 
 /**
@@ -21,9 +18,9 @@ import {
  *
  * Below thirty respondents the report prints counts and says so; a "0.73"
  * over eleven answers would claim a precision it does not have. From thirty
- * it adds the normalised MaxDiff score. Emails never go into the report file
- * (it sits next to files that get pasted around); `--emails` prints them to
- * the terminal for the launch notice, and nowhere else.
+ * it adds the normalised score. Emails never go into the report file (it
+ * sits next to files that get pasted around); `--emails` prints them to the
+ * terminal for the launch notice, and nowhere else.
  */
 
 type Row = {
@@ -31,8 +28,8 @@ type Row = {
   submitted_at: string;
   source: string | null;
   behaviour: Record<string, unknown>;
-  maxdiff: MaxDiffAnswer[];
-  kano: Record<string, { f: KanoAnswer; d: KanoAnswer }>;
+  picks: Picks;
+  missing: Record<string, MissingAnswer>;
   open_answer: string | null;
   email: string | null;
 };
@@ -109,7 +106,7 @@ async function main() {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("research_responses")
-    .select("id, submitted_at, source, behaviour, maxdiff, kano, open_answer, email")
+    .select("id, submitted_at, source, behaviour, picks, missing, open_answer, email")
     .order("submitted_at", { ascending: true });
   if (error) throw new Error(`reading research_responses: ${error.message}`);
   const rows = (data ?? []) as Row[];
@@ -120,7 +117,7 @@ async function main() {
   const lines: string[] = [];
   lines.push(`# Kérdőív — jelentés, ${today}`, "");
   lines.push(`**${n} válasz.** ${enough
-    ? "Harminc fölött a MaxDiff-rangsor pontszámként is olvasható."
+    ? "Harminc fölött a rangsor pontszámként is olvasható."
     : "Harminc alatt csak darabszámot írunk: a rangsor teteje és alja mond valamit, a közepe sorrendje zaj."}`);
   if (n > 0) {
     const first = rows[0].submitted_at.slice(0, 10);
@@ -133,46 +130,46 @@ async function main() {
     lines.push("", "Forrás szerint: " + [...sources.entries()].map(([s, c]) => `${s} ${c}`).join(" · "));
   }
 
-  // ── MaxDiff ──────────────────────────────────────────────────────────────
-  lines.push("", "## Melyik funkció ér a legtöbbet — MaxDiff", "");
-  lines.push("Minden válaszoló kilenc képernyőn négy funkció közül választotta a legértékesebbet és a legkevésbé értékeset. Minden funkció háromszor szerepelt válaszolónként.", "");
-  const scores = scoreMaxDiff(rows.flatMap((r) => r.maxdiff ?? []));
+  // ── Picks ────────────────────────────────────────────────────────────────
+  lines.push("", "## Melyik funkció ér a legtöbbet", "");
+  lines.push("Minden válaszoló a tizenkettőből kiválasztotta a három legértékesebbet, majd a maradék kilencből azt a hármat, ami kimaradhat. A nettó a kettő különbsége.", "");
+  const scores = scorePicks(rows.map((r) => r.picks ?? { best: [], worst: [] }));
   lines.push(
-    enough
-      ? "| # | Funkció | Legjobb | Legrosszabb | Mutatva | Pontszám |"
-      : "| # | Funkció | Legjobb | Legrosszabb | Mutatva | Nettó |",
-    enough ? "|---|---|---:|---:|---:|---:|" : "|---|---|---:|---:|---:|---:|"
+    enough ? "| # | Funkció | Top 3-ban | Kimaradhat | Pontszám |" : "| # | Funkció | Top 3-ban | Kimaradhat | Nettó |",
+    "|---|---|---:|---:|---:|"
   );
   scores.forEach((s, i) => {
     const tail = enough ? s.score.toFixed(2) : `${s.net > 0 ? "+" : ""}${s.net}`;
-    lines.push(`| ${i + 1} | ${s.label} | ${s.best} | ${s.worst} | ${s.shown} | ${tail} |`);
+    lines.push(`| ${i + 1} | ${s.label} | ${s.best} | ${s.worst} | ${tail} |`);
   });
 
-  // ── Kano ─────────────────────────────────────────────────────────────────
-  lines.push("", "## Alap, teljesítmény, vagy csak szép — Kano", "");
-  lines.push("Két kérdés funkciónként: mit éreznél, ha lenne, és ha nem lenne. A besorolás akkor mondható ki, ha egy kategória a válaszok legalább felét viszi.", "");
-  lines.push("| Funkció | Besorolás | Megoszlás |", "|---|---|---|");
-  for (const f of KANO_FEATURES) {
-    const counts: Record<KanoCategory, number> = { alap: 0, teljesitmeny: 0, vonzo: 0, kozombos: 0, forditott: 0, kerdeses: 0 };
+  // ── Missing ──────────────────────────────────────────────────────────────
+  lines.push("", "## Ha kimaradna az indulásból", "");
+  lines.push("Hat bizonytalan funkció, egy kérdés mindegyikről: ha az induláskor még nem lenne benne, mit éreznél? A „zavarna” aránya mondja meg, mi számít alapnak.", "");
+  lines.push("| Funkció | Zavarna | Nem tűnne fel | Jobb is lenne nélküle | Ítélet |", "|---|---:|---:|---:|---|");
+  for (const f of MISSING_FEATURES) {
+    const counts: Record<MissingAnswer, number> = { zavarna: 0, mindegy: 0, jobb_nelkule: 0 };
     let answered = 0;
     for (const r of rows) {
-      const a = r.kano?.[f.id];
-      if (!a || !KANO_ANSWERS.includes(a.f) || !KANO_ANSWERS.includes(a.d)) continue;
-      counts[kanoCategory(a.f, a.d)] += 1;
+      const a = r.missing?.[f.id];
+      if (!a || !MISSING_ANSWERS.includes(a)) continue;
+      counts[a] += 1;
       answered += 1;
     }
-    const sorted = (Object.entries(counts) as [KanoCategory, number][]).filter(([, c]) => c > 0).sort((a, b) => b[1] - a[1]);
-    const top = sorted[0];
-    // At least half, and not tied — a 1:1 split is not a verdict.
-    const clear = !!top && top[1] * 2 >= answered && (!sorted[1] || sorted[1][1] < top[1]);
-    const verdict = !top ? "nincs válasz" : clear ? KANO_CATEGORY_LABELS[top[0]] : `vegyes (leggyakoribb: ${KANO_CATEGORY_LABELS[top[0]].split(" — ")[0]})`;
-    const dist = sorted.map(([k, c]) => `${KANO_CATEGORY_LABELS[k].split(" — ")[0]} ${c} (${pct(c, answered)})`).join(", ");
-    lines.push(`| ${f.label} | ${verdict} | ${dist || "–"} |`);
+    const cell = (k: MissingAnswer) => `${counts[k]} (${pct(counts[k], answered)})`;
+    let verdict = "nincs válasz";
+    if (answered > 0) {
+      const z = counts.zavarna / answered;
+      const j = counts.jobb_nelkule / answered;
+      verdict = z >= 0.5 ? "alap — enélkül ne induljon" : j >= 0.5 ? "inkább ne" : z >= 0.3 ? "kellene, de nem indulási" : "későbbre";
+    }
+    lines.push(`| ${f.label} | ${cell("zavarna")} | ${cell("mindegy")} | ${cell("jobb_nelkule")} | ${verdict} |`);
   }
+  void MISSING_LABELS;
 
   // ── Behaviour ────────────────────────────────────────────────────────────
   lines.push("", "## Hogyan járnak színházba ma", "");
-  lines.push("A válaszolók színházrajongók — azok vállalnak egy hétperces kérdőívet —, ezért a gyakoriság felfelé torzít.", "");
+  lines.push("A válaszolók színházrajongók — azok vállalnak egy ötperces kérdőívet —, ezért a gyakoriság felfelé torzít.", "");
   for (const q of BEHAVIOUR) {
     lines.push(`**${q.title}**`, "");
     for (const [label, c] of tally(rows, q.key, q.options)) lines.push(`- ${label}: ${c} (${pct(c, n)})`);
@@ -194,10 +191,10 @@ async function main() {
   // ── Reading guide ────────────────────────────────────────────────────────
   lines.push("## Hogyan olvasd", "");
   lines.push(
-    "- A MaxDiff **első két-három** és **utolsó két-három** sora megbízható. A közép sorrendje harminc válasz alatt véletlen.",
-    "- Ami a Kano szerint **alap**, az indulási funkció, akkor is, ha a MaxDiff-ben középen van: a hiánya bosszant, a megléte nem tűnik fel.",
-    "- Ami **vonzó** és a MaxDiff alján van, azt később is elég megépíteni.",
-    "- Az interjúk és a használhatósági tesztek felülírják ezt: ha öt emberből négy átugorja a „ki játszott” mezőt, az nem indulási funkció, akárhányan mondták itt, hogy elvárják.",
+    "- A rangsor **első két-három** és **utolsó két-három** sora megbízható. A közép sorrendje harminc válasz alatt véletlen.",
+    "- Ami a „kimaradna” kérdésben **alap**, az indulási funkció, akkor is, ha a rangsorban középen van: a hiánya bosszant, a megléte nem tűnik fel.",
+    "- Ami a rangsor alján van és senkit nem zavarna a hiánya, azt később is elég megépíteni.",
+    "- Az interjúk és a használhatósági tesztek felülírják ezt: ha öt emberből négy átugorja a „ki játszott” mezőt, az nem indulási funkció, akárhányan mondták itt, hogy zavarná a hiánya.",
     ""
   );
 

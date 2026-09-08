@@ -181,8 +181,8 @@ research/                 the user-research kit: the method, an interview
                           to read the results honestly at few responses.
                           `npm run research:report` writes the survey report
                           here (git-ignored, it can hold opted-in emails)
-scripts/research-design.ts  the questionnaire's twelve features, nine MaxDiff
-                          screens and the Kano table — the page embeds a copy,
+scripts/research-design.ts  the questionnaire's twelve features and the six
+                          asked about their absence — the page embeds a copy,
                           and the test beside it fails if the two ever drift
 
 .github/workflows/

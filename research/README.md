@@ -25,11 +25,11 @@ Ezért három forrásból dolgozunk, és a súlyuk nem egyforma:
 
 ## A kérdőív módszere
 
-> The questionnaire uses two trade-off methods instead of ratings.
+> The questionnaire uses two trade-off methods instead of ratings. The first version was a textbook MaxDiff — nine screens of four features, best and worst — which on a phone reads as the same question nine times over; version 2 asks each feature at most twice.
 
-**MaxDiff (best–worst scaling).** Tizenkét funkció, kilenc képernyő, minden képernyőn négy funkció, és a válaszoló mindig a *legértékesebbet* és a *legkevésbé értékeset* jelöli meg. Minden funkció pontosan háromszor szerepel, és semelyik pár nem kerül kétszer egy képernyőre. Ebből rangsor lesz, távolságokkal — egy osztályzatból sosem.
+**Három a tizenkettőből, aztán három a kilencből.** Az első képernyőn a válaszoló a tizenkét funkcióból kiválasztja azt a hármat, amiért a leginkább elővenné az appot; a másodikon a maradék kilencből azt a hármat, amit észre sem venne, ha az indulásból kimaradna. Kényszerű választás, nem osztályzat: nem lehet mindent fontosnak mondani. Ebből rangsor lesz — a top 3-ba kerülések és a kimaradhat-jelölések különbsége.
 
-**Kano-párok.** Hat bizonytalan funkcióról két kérdés: „mit éreznél, ha lenne?” és „mit éreznél, ha nem lenne?”. A két válasz együtt sorolja be a funkciót: *alap* (elvárt, hiánya bosszant), *teljesítmény* (minél több, annál jobb), *vonzó* (meglepetés, hiánya nem fáj), *közömbös*, vagy *fordított* (inkább ne legyen).
+**„Ha kimaradna.”** Hat bizonytalan funkcióról egy-egy kérdés: ha az induláskor még nem lenne benne, *zavarna*, *nem tűnne fel*, vagy *jobb is lenne nélküle*? Ez a Kano-módszer „ha nem lenne” fele — az, amelyik az *alap* funkciót (hiánya bosszant) elválasztja a *szép* funkciótól (hiánya nem fáj) —, a „ha lenne” fele nélkül, mert az mindent kétszer kérdezne.
 
 **Viselkedés előbb, vélemény utóbb.** A kérdőív azzal kezd, hogy hányszor, hol, honnan tudja meg, hogyan jegyzi fel — és csak aztán kérdez funkciókról.
 
@@ -39,9 +39,9 @@ Ezért három forrásból dolgozunk, és a súlyuk nem egyforma:
 
 Az első körben barátok és ismerősök válaszolnak, ez 15–30 kitöltés. Ez **kevés** egy stabil MaxDiff-rangsorhoz (ahhoz 50+ kell), ezért:
 
-- A jelentés 30 válasz alatt **darabszámot** ír, nem tizedes pontszámot. „Kilencszer volt a legjobb, egyszer a legrosszabb” — ez őszinte; „0,73” azt sugallná, hogy pontos.
+- A jelentés 30 válasz alatt **darabszámot** ír, nem tizedes pontszámot. „Kilencen tették a top 3-ba, egy hagyná ki” — ez őszinte; „0,73” azt sugallná, hogy pontos.
 - A rangsor **teteje és alja** használható: ami a lista elején van, azt valóban értékelik; ami az alján, azt nem. A középső hat sorrendje zaj.
-- A Kano-besorolás akkor mondható ki, ha egy kategória a válaszok **legalább felét** viszi. Ha 40/35/25-ös a megoszlás, az „vegyes”, és úgy is kell írni.
+- A „ha kimaradna” kérdésnél az *alap* akkor mondható ki, ha a válaszolók **legalább fele** azt mondta, zavarná. 30 százalék fölött „kellene, de nem indulási”; alatta későbbre való.
 - A viselkedési kérdések már 15 válasznál is mondanak valamit — de a válaszolók színházrajongók, mert azok vállalnak egy hétperces kérdőívet. A „hányszor jársz” eloszlás tehát felfelé torzít.
 - Az interjúk és a tesztek erre nem érzékenyek: ott öt–tíz ember is elég, mert nem számolunk, hanem megfigyelünk.
 

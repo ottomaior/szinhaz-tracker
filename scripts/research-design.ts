@@ -1,14 +1,17 @@
 /**
  * The research questionnaire's design, in one place.
  *
- * `landing/kutatas.html` carries a copy of the features and the MaxDiff
- * blocks in a `<script type="application/json">` element, because the page
- * is a static file with no build step. `research-design.test.ts` reads that
- * element back and compares it with what is here, so the two cannot drift:
- * a block order changed in the page without changing it here fails the
- * build rather than quietly mis-scoring every answer.
+ * `landing/kutatas.html` carries a copy of the features in a
+ * `<script type="application/json">` element, because the page is a static
+ * file with no build step. `research-design.test.ts` reads that element back
+ * and compares it with what is here, so the two cannot drift.
  *
- * The scoring lives here too, so the report and the test share it.
+ * The first version asked nine MaxDiff screens — four features at a time,
+ * best and worst — which is the textbook instrument and, on a phone, reads
+ * as the same question nine times. Version 2 asks each feature at most twice:
+ * pick the three you value most out of twelve, then the three you would
+ * leave out of the remaining nine. Less statistical power per respondent,
+ * and a questionnaire people finish.
  */
 
 /** One thing the app does, as the questionnaire names it. */
@@ -25,8 +28,7 @@ export type Feature = {
 /**
  * Twelve, merged from the app's surface so a seven-minute survey can carry
  * them: "diary" and "rating" are one thing to a respondent, and so are seat,
- * price and the stub photo. The order is the design's index order and must
- * not change without regenerating `MAXDIFF_BLOCKS`.
+ * price and the stub photo.
  */
 export const FEATURES: Feature[] = [
   {
@@ -98,25 +100,16 @@ export const FEATURES: Feature[] = [
   },
 ];
 
-/**
- * Nine screens of four. Every feature appears exactly three times and no
- * pair of features shares a screen twice — found by search, not by hand, and
- * pinned by the test. Indices into `FEATURES`.
- */
-export const MAXDIFF_BLOCKS: number[][] = [
-  [1, 3, 4, 10],
-  [2, 5, 10, 11],
-  [0, 2, 3, 6],
-  [1, 2, 7, 8],
-  [0, 7, 9, 10],
-  [0, 4, 8, 11],
-  [4, 5, 6, 7],
-  [1, 6, 9, 11],
-  [3, 5, 8, 9],
-];
+/** How many a respondent picks on each of the two screens. */
+export const PICK_COUNT = 3;
 
-/** The six features whose place in the launch set is genuinely open. */
-export const KANO_FEATURES: { id: string; label: string; detail: string }[] = [
+/**
+ * The six features whose place in the launch set is genuinely open, asked
+ * one question each: if this were missing at launch, how would that feel?
+ * That is the dysfunctional half of a Kano pair — the half that separates
+ * "must have" from "nice to have" — without asking every feature twice.
+ */
+export const MISSING_FEATURES: { id: string; label: string; detail: string }[] = [
   {
     id: "ertesites",
     label: "Értesítés a követett színházakról",
@@ -149,91 +142,68 @@ export const KANO_FEATURES: { id: string; label: string; detail: string }[] = [
   },
 ];
 
-/** The five Kano answers, in the order the page shows them. */
-export const KANO_ANSWERS = ["tetszene", "elvarom", "mindegy", "elviselnem", "zavarna"] as const;
-export type KanoAnswer = (typeof KANO_ANSWERS)[number];
+/** The three answers to "if this were missing", in the order the page shows them. */
+export const MISSING_ANSWERS = ["zavarna", "mindegy", "jobb_nelkule"] as const;
+export type MissingAnswer = (typeof MISSING_ANSWERS)[number];
 
-export type KanoCategory = "alap" | "teljesitmeny" | "vonzo" | "kozombos" | "forditott" | "kerdeses";
-
-/**
- * The standard Kano evaluation table, rows are the functional answer ("if it
- * had this"), columns the dysfunctional one ("if it did not").
- */
-const KANO_TABLE: Record<KanoAnswer, Record<KanoAnswer, KanoCategory>> = {
-  tetszene: { tetszene: "kerdeses", elvarom: "vonzo", mindegy: "vonzo", elviselnem: "vonzo", zavarna: "teljesitmeny" },
-  elvarom: { tetszene: "forditott", elvarom: "kozombos", mindegy: "kozombos", elviselnem: "kozombos", zavarna: "alap" },
-  mindegy: { tetszene: "forditott", elvarom: "kozombos", mindegy: "kozombos", elviselnem: "kozombos", zavarna: "alap" },
-  elviselnem: { tetszene: "forditott", elvarom: "kozombos", mindegy: "kozombos", elviselnem: "kozombos", zavarna: "alap" },
-  zavarna: { tetszene: "forditott", elvarom: "forditott", mindegy: "forditott", elviselnem: "forditott", zavarna: "kerdeses" },
+export const MISSING_LABELS: Record<MissingAnswer, string> = {
+  zavarna: "Zavarna",
+  mindegy: "Nem tűnne fel",
+  jobb_nelkule: "Jobb is lenne nélküle",
 };
 
-export function kanoCategory(functional: KanoAnswer, dysfunctional: KanoAnswer): KanoCategory {
-  return KANO_TABLE[functional][dysfunctional];
-}
+/** One respondent's two pick screens. */
+export type Picks = { best: string[]; worst: string[] };
 
-export const KANO_CATEGORY_LABELS: Record<KanoCategory, string> = {
-  alap: "alap — elvárt, a hiánya bosszant",
-  teljesitmeny: "teljesítmény — minél jobb, annál elégedettebb",
-  vonzo: "vonzó — örülnek neki, de a hiánya nem fáj",
-  kozombos: "közömbös",
-  forditott: "fordított — inkább ne legyen",
-  kerdeses: "kérdéses — ellentmondó válasz",
-};
-
-/** One respondent's answer to one MaxDiff screen. */
-export type MaxDiffAnswer = { block: number; best: string; worst: string };
-
-export type MaxDiffScore = {
+export type PickScore = {
   id: string;
   label: string;
-  shown: number;
+  /** How many respondents put it in their top three. */
   best: number;
+  /** How many put it in the three they would leave out. */
   worst: number;
-  /** best minus worst — the count the report prints below 30 respondents. */
+  /** best minus worst. */
   net: number;
-  /** net over shown, in [-1, 1] — the score the report prints from 30 up. */
+  /** net over respondents, in [-1, 1]. */
   score: number;
 };
 
 /**
- * Count-based MaxDiff scoring: how often each feature was picked best, how
- * often worst, over how often it was shown. Simple, transparent, and at the
- * sample sizes this survey will see, indistinguishable from the multinomial
- * logit that commercial tools fit.
+ * Count scoring: +1 for every respondent who put the feature in their top
+ * three, -1 for every one who would leave it out, ranked by the net. Below
+ * thirty respondents the report prints the counts and not the ratio.
  */
-export function scoreMaxDiff(answers: MaxDiffAnswer[]): MaxDiffScore[] {
-  const byId = new Map<string, MaxDiffScore>();
-  for (const f of FEATURES) byId.set(f.id, { id: f.id, label: f.label, shown: 0, best: 0, worst: 0, net: 0, score: 0 });
-
-  for (const a of answers) {
-    const block = MAXDIFF_BLOCKS[a.block];
-    if (!block) continue;
-    for (const idx of block) {
-      const s = byId.get(FEATURES[idx].id);
-      if (s) s.shown += 1;
-    }
-    const b = byId.get(a.best);
-    const w = byId.get(a.worst);
-    if (b) b.best += 1;
-    if (w) w.worst += 1;
+export function scorePicks(all: Picks[]): PickScore[] {
+  const byId = new Map<string, PickScore>();
+  for (const f of FEATURES) byId.set(f.id, { id: f.id, label: f.label, best: 0, worst: 0, net: 0, score: 0 });
+  for (const p of all) {
+    for (const id of p.best ?? []) { const s = byId.get(id); if (s) s.best += 1; }
+    for (const id of p.worst ?? []) { const s = byId.get(id); if (s) s.worst += 1; }
   }
-
+  const n = all.length;
   const out = [...byId.values()];
   for (const s of out) {
     s.net = s.best - s.worst;
-    s.score = s.shown === 0 ? 0 : s.net / s.shown;
+    s.score = n === 0 ? 0 : s.net / n;
   }
-  return out.sort((x, y) => y.score - x.score || y.best - x.best || x.label.localeCompare(y.label, "hu"));
+  return out.sort((x, y) => y.net - x.net || y.best - x.best || x.label.localeCompare(y.label, "hu"));
+}
+
+/** True when the two pick lists are the right size, distinct, real, and disjoint. */
+export function validPicks(p: Picks): boolean {
+  const ids = new Set(FEATURES.map((f) => f.id));
+  const ok = (list: string[]) => list.length === PICK_COUNT && new Set(list).size === PICK_COUNT && list.every((id) => ids.has(id));
+  return ok(p.best) && ok(p.worst) && p.best.every((id) => !p.worst.includes(id));
 }
 
 /** The shape the page submits and the SQL function validates. */
 export type ResearchPayload = {
-  version: 1;
+  version: 2;
   client_id: string;
   source: string | null;
   behaviour: Record<string, unknown>;
-  maxdiff: MaxDiffAnswer[];
-  kano: Record<string, { f: KanoAnswer; d: KanoAnswer }>;
+  picks: Picks;
+  missing: Record<string, MissingAnswer>;
   open_answer: string | null;
   email: string | null;
 };
@@ -242,8 +212,9 @@ export type ResearchPayload = {
 export function designForPage() {
   return {
     features: FEATURES,
-    blocks: MAXDIFF_BLOCKS,
-    kano: KANO_FEATURES,
-    kanoAnswers: [...KANO_ANSWERS],
+    pickCount: PICK_COUNT,
+    missing: MISSING_FEATURES,
+    missingAnswers: [...MISSING_ANSWERS],
+    missingLabels: MISSING_LABELS,
   };
 }

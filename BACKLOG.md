@@ -224,10 +224,13 @@ but wrong.
   has never been put in front of anybody who did not build it. `research/` holds
   the method and the instruments — eight to ten discovery interviews about how
   people go to the theatre *today*, five think-aloud sessions on the live app,
-  and a questionnaire at `vastaps.pages.dev/kutatas` that forces choices between
-  the twelve features (MaxDiff) and classifies six uncertain ones (Kano) rather
-  than asking for 1–5 ratings, which everybody answers with 4s and 5s. Answers
-  land in `research_responses` through one validating function (0039); `npm run
+  and a questionnaire at `vastaps.pages.dev/kutatas` that forces choices rather
+  than asking for 1–5 ratings, which everybody answers with 4s and 5s: the three
+  features you value most out of twelve, the three you would leave out of the
+  rest, and for six uncertain ones whether their absence at launch would bother
+  you. (The first cut was a textbook nine-screen MaxDiff; on a phone it read as
+  the same question nine times, and 0040 replaced it.) Answers land in
+  `research_responses` through one validating function; `npm run
   research:report` writes the analysis. First wave is friends and acquaintances,
   which is enough for the interviews and the sessions and too few for a stable
   ranking — the questionnaire stays open for a Facebook-group wave later. What

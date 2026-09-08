@@ -235,11 +235,14 @@ alapján született, amik nemcsak kevesek, hanem hibásak is voltak.
   nyitva.** A terméket még soha nem látta senki, aki nem építette. A `research/`
   mappa a módszer és az eszközök: nyolc-tíz feltáró interjú arról, hogyan járnak
   az emberek *ma* színházba, öt hangosan gondolkodós ülés az élő appon, és egy
-  kérdőív a `vastaps.pages.dev/kutatas` címen, amely a tizenkét funkció között
-  választásra kényszerít (MaxDiff), és hat bizonytalant besorol (Kano) — nem
-  1–5-ös osztályzatot kér, amire mindenki négyest-ötöst ad. A válaszok egyetlen
-  ellenőrző függvényen át kerülnek a `research_responses` táblába (0039); az
-  `npm run research:report` írja az elemzést. Az első kör barátok és ismerősök,
+  kérdőív a `vastaps.pages.dev/kutatas` címen, amely választásra kényszerít —
+  nem 1–5-ös osztályzatot kér, amire mindenki négyest-ötöst ad: a tizenkét
+  funkcióból a három legértékesebb, a maradékból a három, ami kimaradhat, és hat
+  bizonytalanról az, hogy zavarna-e a hiánya az induláskor. (Az első változat
+  tankönyvi, kilencképernyős MaxDiff volt; telefonon ugyanannak a kérdésnek
+  hatott kilencszer, a 0040 cserélte le.) A válaszok egyetlen ellenőrző
+  függvényen át kerülnek a `research_responses` táblába; az `npm run
+  research:report` írja az elemzést. Az első kör barátok és ismerősök,
   ami elég az interjúkhoz és az ülésekhez, és kevés egy stabil rangsorhoz — a
   kérdőív nyitva marad egy későbbi Facebook-csoportos körre. Ami hátravan: maga
   a terepmunka, és az egyoldalas összegzés, amely eldönti az indulási
