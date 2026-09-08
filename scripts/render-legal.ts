@@ -19,6 +19,7 @@
  */
 import { writeFileSync } from "node:fs";
 import {
+  accountDeletion,
   imprint,
   legalLastUpdated,
   operatorDetailsComplete,
@@ -32,6 +33,8 @@ const PAGES: { slug: string; document: LegalDocument }[] = [
   { slug: "adatvedelem", document: privacyPolicy },
   { slug: "feltetelek", document: termsOfService },
   { slug: "impresszum", document: imprint },
+  // Required by Google Play: a deletion route reachable without installing the app.
+  { slug: "fiok-torlese", document: accountDeletion },
 ];
 
 const esc = (s: string) =>

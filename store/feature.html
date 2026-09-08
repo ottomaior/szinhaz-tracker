@@ -1,0 +1,121 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Vastaps — Play feature graphic</title>
+<!--
+  The 1024x500 banner Play shows at the top of the listing, and the only
+  artwork that appears if the listing is ever featured.
+
+  Two constraints shape it. Play may crop it for some placements, so nothing
+  that matters goes near an edge. And it is shown at roughly a third of this
+  size on a phone, so there is one line of large type and nothing else — a
+  banner carrying three sentences reads as a grey smear at thumbnail size.
+
+  Rendered by `scripts/render-store.ts`.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,600;6..96,700&family=Sora:wght@300;400;500;600&display=swap"
+/>
+<style>
+  :root {
+    --text: #f6efe6;
+    --dim: #cbb9b1;
+    --gold: #e4bf72;
+    --gold-lift: #f0d38f;
+    --display: "Bodoni Moda", "Bodoni MT", Didot, "Times New Roman", serif;
+    --sans: "Sora", ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1024px; height: 500px; overflow: hidden; }
+
+  .banner {
+    position: relative;
+    width: 1024px;
+    height: 500px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #0a0507;
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+
+  /* The auditorium, pushed well back. It is atmosphere, not subject: at
+     thumbnail size a legible photograph competes with the wordmark and wins. */
+  .banner img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 56% 34%;
+    opacity: 0.85;
+    filter: saturate(0.85);
+  }
+
+  /* Darkens the middle band so the type keeps its contrast wherever the
+     photograph happens to be bright. */
+  .banner::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(78% 108% at 50% 50%, rgba(10, 5, 7, 0.8) 0%, rgba(10, 5, 7, 0.34) 55%, rgba(10, 5, 7, 0.8) 100%),
+      linear-gradient(180deg, rgba(10, 5, 7, 0.6), rgba(10, 5, 7, 0.16) 42%, rgba(10, 5, 7, 0.74));
+  }
+
+  .plate { position: relative; z-index: 2; text-align: center; }
+
+  .rule {
+    width: 108px;
+    height: 2px;
+    margin: 0 auto 30px;
+    background: linear-gradient(90deg, transparent, var(--gold-lift), transparent);
+  }
+
+  .wordmark {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 126px;
+    line-height: 1;
+    color: var(--text);
+    letter-spacing: 0.005em;
+    text-shadow: 0 6px 40px rgba(0, 0, 0, 0.75);
+  }
+
+  .tagline {
+    margin-top: 26px;
+    font-size: 27px;
+    font-weight: 400;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+</style>
+
+<body>
+  <div class="banner">
+    <img src="../brand/hero/hero-auditorium-soul-1600.webp" alt="" />
+    <div class="plate">
+      <div class="rule"></div>
+      <div class="wordmark">Vastaps</div>
+      <div class="tagline">Magyar színházi napló</div>
+    </div>
+  </div>
+  <script>
+    window.storeReady = Promise.all([
+      document.fonts.ready,
+      ...[...document.images].map(
+        (img) =>
+          img.decode?.() ??
+          new Promise((res) => {
+            img.onload = img.onerror = res;
+          })
+      ),
+    ]).then(() => true);
+  </script>
+</body>

@@ -444,9 +444,91 @@ export const imprint: LegalDocument = {
   ],
 };
 
+/**
+ * How to delete the account — as a page on the open web.
+ *
+ * The app has had working deletion since the `delete-account` Edge Function
+ * existed, and Settings links to it. Google Play wants something further: a URL
+ * anybody can open *without installing the app*, describing what deletion does
+ * and how to ask for it. It is a required field on the Data safety form for
+ * every app that lets people register, and the form cannot be submitted
+ * without it — which means no release to any track, closed testing included.
+ *
+ * Written as a fourth `LegalDocument` rather than as hand-written HTML in
+ * `landing/` so it renders through the same pipeline as the other three, and
+ * so what it promises stays next to the documents that make the same promises.
+ * The specifics below are read off `supabase/functions/delete-account/index.ts`
+ * — particularly the three storage buckets and the two `set null` columns — and
+ * if that function's behaviour changes, this is the text that has to change
+ * with it.
+ */
+export const accountDeletion: LegalDocument = {
+  title: "A fiók törlése",
+  lead: `Ezen az oldalon leírjuk, hogyan törölheted a Vastaps-fiókodat, mi tűnik el vele, és mi marad meg. Utoljára frissítve: ${legalLastUpdated}`,
+  sections: [
+    {
+      heading: "Törlés az alkalmazásban",
+      blocks: [
+        p(
+          "A leggyorsabb út: nyisd meg a Vastaps alkalmazást, jelentkezz be, majd Profil → Beállítások → Fiók törlése. A törlés azonnal megtörténik, és nem vonható vissza."
+        ),
+      ],
+    },
+    {
+      heading: "Törlés e-mailben",
+      blocks: [
+        p(
+          `Ha már nincs meg az alkalmazás, vagy nem tudsz bejelentkezni, írj a ${operator.email} címre arról az e-mail-címről, amellyel regisztráltál. A kérést 30 napon belül teljesítjük, és e-mailben visszaigazoljuk.`
+        ),
+      ],
+    },
+    {
+      heading: "Mi törlődik",
+      blocks: [
+        p("A fiókkal együtt véglegesen törlődik minden, ami rólad szól:"),
+        ul(
+          "a felhasználói fiókod és a bejelentkezési adataid",
+          "a profilod: név, felhasználónév, bemutatkozás, profilkép",
+          "a naplóbejegyzéseid, értékeléseid és kritikáid",
+          "a kívánságlistád és az általad készített listák",
+          "a követéseid, a téged követők kapcsolatai, a tetszéseid és a hozzászólásaid",
+          "az értesítéseid",
+          "a feltöltött profilképeid és a jegyekről készült fotóid"
+        ),
+        p(
+          "A törölt értékelések azonnal kikerülnek az előadások nyilvános átlagából is."
+        ),
+      ],
+    },
+    {
+      heading: "Mi marad meg, és miért",
+      blocks: [
+        p(
+          "Ha felvettél a katalógusba egy előadást vagy játszóhelyet, amely korábban nem szerepelt benne, az a rekord megmarad — de elveszíti a rád mutató hivatkozást, tehát többé nem köthető hozzád. Ugyanez vonatkozik az ilyen előadásokhoz feltöltött borítóképre."
+        ),
+        p(
+          "Ennek az az oka, hogy a katalógus közös: mások naplóbejegyzései is ezekre a rekordokra hivatkoznak, és a törlésük mások esti emlékét vinné magával. A megmaradó adat magáról az előadásról szól, nem rólad."
+        ),
+        p(
+          "Amit egy jogszabály megőrizni rendel — például egy tartalombejelentés kezelésének nyoma —, azt a jogszabályban előírt ideig megőrizzük. Erről az adatkezelési tájékoztató szól részletesen."
+        ),
+      ],
+    },
+    {
+      heading: "Ha csak az adataidat kérnéd ki",
+      blocks: [
+        p(
+          `A törlés mellett jogod van hozzáférni az adataidhoz, helyesbíteni és hordozható formában megkapni őket. Bármelyiket kérheted a ${operator.email} címen.`
+        ),
+      ],
+    },
+  ],
+};
+
 /** Every document, for the settings screen's links and for the tests. */
 export const legalDocuments = {
   privacy: privacyPolicy,
   terms: termsOfService,
   imprint,
+  deletion: accountDeletion,
 } as const;

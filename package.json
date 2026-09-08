@@ -22,7 +22,8 @@
     "research:report": "tsx scripts/research-report.ts",
     "promo": "tsx scripts/render-promo.ts",
     "tour": "tsx scripts/render-tour.ts",
-    "og": "tsx scripts/render-og.ts"
+    "og": "tsx scripts/render-og.ts",
+    "store": "tsx scripts/render-store.ts"
   },
   "dependencies": {
     "@expo-google-fonts/bodoni-moda": "^0.2.3",

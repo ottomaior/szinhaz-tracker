@@ -230,6 +230,53 @@ storeCheck(
     "and destroys the evidence of why it was actioned."
 );
 
+/**
+ * The listing copy, against Play's two hard limits.
+ *
+ * Both are enforced at upload time and nowhere earlier, so a description that
+ * is sixty characters too long gets discovered while filling in a form that has
+ * already taken twenty minutes. Cheaper to know here. The fenced blocks in
+ * `store/listing.hu.md` are what actually gets pasted into the Console, so they
+ * are what gets measured — not a second copy kept in sync by hand.
+ */
+const listing = readText("store/listing.hu.md");
+
+/** The contents of the first fenced block following a heading. */
+function fenced(heading: string): string | undefined {
+  const after = listing?.split(`## ${heading}`)[1];
+  if (after === undefined) return undefined;
+  const open = after.indexOf("```");
+  if (open === -1) return undefined;
+  const body = after.slice(after.indexOf("\n", open) + 1);
+  const close = body.indexOf("```");
+  return close === -1 ? undefined : body.slice(0, close).trimEnd();
+}
+
+const shortDescription = fenced("Rövid leírás");
+const fullDescription = fenced("Teljes leírás");
+
+storeCheck(
+  "Store listing copy is written and within Play's character limits",
+  shortDescription !== undefined &&
+    fullDescription !== undefined &&
+    shortDescription.length <= 80 &&
+    fullDescription.length <= 4000,
+  shortDescription === undefined || fullDescription === undefined
+    ? "store/listing.hu.md is missing one of its copy blocks — the fenced block under " +
+      "'## Rövid leírás' or under '## Teljes leírás'."
+    : `Short description is ${shortDescription.length}/80, full is ${fullDescription.length}/4000. ` +
+      "Play rejects the upload rather than truncating what does not fit."
+);
+
+storeCheck(
+  "Every store graphic Play requires has been rendered",
+  ["icon-512.png", "feature-graphic.png", "screenshot-01.png", "screenshot-02.png"].every((f) =>
+    existsSync(join(root, "store", "out", f))
+  ),
+  "Run `npm run store`. Play wants the 512×512 icon, the 1024×500 feature graphic and at least " +
+    "two phone screenshots before a release reaches any track — closed testing included."
+);
+
 // ------------------------------------------------- things a human must do
 //
 // Not checkable from here — they live in the Supabase dashboard, in Railway,
