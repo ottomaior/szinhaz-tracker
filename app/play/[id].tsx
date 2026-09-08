@@ -255,7 +255,7 @@ export default function PlayDetailScreen() {
           {/* Pinned to the bottom edge, then centred to the same reading
               column the text below uses, so the title on the image and the
               paragraphs under it share a left edge on a wide screen. */}
-          <View style={styles.heroCaptionWrap} pointerEvents="box-none">
+          <View style={[styles.heroCaptionWrap, { pointerEvents: "box-none" }]}>
           <ContentColumn style={styles.heroCaption}>
             {!!heroFacts && (
               <Text variant="eyebrow" numberOfLines={1} style={{ color: overlay.onImageAccent }}>

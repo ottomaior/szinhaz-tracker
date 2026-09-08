@@ -126,7 +126,7 @@ export function PosterPlaceholder({
           loading; a monogram makes each stand-in belong to its production and
           gives the eye something to distinguish rows by. */}
       {!!monogram && (
-        <View style={styles.monogramWrap} pointerEvents="none">
+        <View style={[styles.monogramWrap, { pointerEvents: "none" }]}>
           <MonogramText size={monogramSize(height)}>{monogram}</MonogramText>
         </View>
       )}
@@ -204,7 +204,7 @@ function colourway(seed: string) {
 /** Bottom-up dark gradient that keeps overlaid caption text legible. */
 function Scrim({ id }: { id: string }) {
   return (
-    <Svg width="100%" height="100%" style={StyleSheet.absoluteFill} pointerEvents="none">
+    <Svg width="100%" height="100%" style={[StyleSheet.absoluteFill, { pointerEvents: "none" }]}>
       <Defs>
         <LinearGradient id={id} x1="0" y1="1" x2="0" y2="0">
           <Stop offset="0%" stopColor="#090403" stopOpacity={0.92} />

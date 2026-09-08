@@ -112,10 +112,8 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     marginTop: -26,
     borderWidth: 6,
     borderColor: colors.bgElevated,
-    shadowColor: colors.goldGlow,
-    shadowOpacity: 1,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
+    // The glow of a lit button, as one boxShadow string — see theme/tokens.ts
+    // for why not the deprecated shadow* props.
+    boxShadow: `0 4px 10px ${colors.goldGlow}`,
   },
 }));

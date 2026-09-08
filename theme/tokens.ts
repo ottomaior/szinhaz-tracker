@@ -64,10 +64,13 @@ export const hairlineWidth = Platform.select({ ios: 0.5, android: 0.5, default: 
  *
  * Both colours are palette tokens rather than literals, so a light theme can
  * drop the top highlight (which means nothing on cream) and soften the
- * shadow. The alpha lives inside the token and `shadowOpacity` is 1, rather
- * than the other way round: the web build discards `shadowOpacity` when the
- * colour is a custom property — see theme/themes.ts — and on iOS
- * `shadowOpacity: 1` times the colour's own alpha is the same result.
+ * shadow. The alpha lives inside the colour token.
+ *
+ * `boxShadow` rather than the four `shadow*` props, which React Native
+ * deprecated in 0.86 and warned about on every dev session. On the web the
+ * string is passed straight through to CSS, so a `var(--vc-shadow)` colour
+ * resolves per theme exactly as the colour tokens do; on native the new
+ * architecture parses the same string.
  */
 export type Elevation = {
   none: ViewStyle;
@@ -83,11 +86,7 @@ export const elevationFor = (palette: Palette): Elevation => ({
     borderTopColor: palette.edgeHighlight,
   },
   floating: {
-    shadowColor: palette.shadow,
-    shadowOpacity: 1,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 8,
+    boxShadow: `0 8px 24px ${palette.shadow}`,
   },
 });
 

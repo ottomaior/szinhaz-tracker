@@ -1008,12 +1008,12 @@ function TonightHero({ entry, onPress, tall }: { entry: ProgramEntry; onPress: (
       <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={entry.title} style={StyleSheet.absoluteFill}>
         <PosterPlaceholder poster={entry.poster} title={entry.title} seed={entry.playId} height="100%" radius={0} scrim priority="high" />
       </Pressable>
-      <View style={styles.heroBadge} pointerEvents="none">
+      <View style={[styles.heroBadge, { pointerEvents: "none" }]}>
         <Text variant="eyebrow" style={{ color: overlay.onImageAccent }}>
           {isToday ? strings.discover.heroTonight : strings.discover.heroNext(formatWeekday(entry.startsAt))}
         </Text>
       </View>
-      <View style={styles.heroCaption} pointerEvents="box-none">
+      <View style={[styles.heroCaption, { pointerEvents: "box-none" }]}>
         <Text variant="eyebrow" style={{ color: overlay.onImageAccent }}>
           {formatTime(entry.startsAt)} · {entry.venueName}
         </Text>

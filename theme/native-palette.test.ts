@@ -63,8 +63,10 @@ describe("a makeStyles factory", () => {
   });
 
   it("carries the palette into the depth tokens too", () => {
-    expect(sheetFor("velvetDark").card.shadowColor).toBe(themes.velvetDark.shadow);
-    expect(sheetFor("playbillLight").card.shadowColor).toBe(themes.playbillLight.shadow);
+    // Depth is one `boxShadow` string per theme, with the palette's shadow
+    // colour inside it — see theme/tokens.ts.
+    expect(sheetFor("velvetDark").card.boxShadow).toContain(themes.velvetDark.shadow);
+    expect(sheetFor("playbillLight").card.boxShadow).toContain(themes.playbillLight.shadow);
   });
 
   it("does not follow the ambient palette once built", () => {
