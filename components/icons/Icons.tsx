@@ -46,6 +46,21 @@ export function CompassIcon({ size = 21, color = colors.textFaint, strokeWidth =
   );
 }
 
+/** Three lines and a plus: "put this on a list". */
+export function ListPlusIcon({ size = 18, color = colors.text, strokeWidth = 1.8 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M4 6h16M4 12h10M4 18h7M18 14v6M15 17h6"
+        {...strokePaint(color)}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 export function TicketIcon({ size = 21, color = colors.textFaint, strokeWidth = 1.8 }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">

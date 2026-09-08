@@ -12,6 +12,8 @@ import { CalendarIcon, ChevronRightIcon, PinIcon } from "@/components/icons/Icon
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Screen } from "@/components/ui/Screen";
+import { SectionHeader } from "@/components/ui/SectionHeader";
+import { SignedOutState } from "@/components/ui/SignedOutState";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 import { makeStyles } from "@/theme/styles";
@@ -74,12 +76,19 @@ export default function WatchlistScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Screen width="reading">
         <View style={[styles.header, { paddingTop: insets.top + space.md }]}>
-          <Text variant="title">{strings.watchlist.title}</Text>
-          <Text variant="bodySmall" tone="faint">
-            {strings.watchlist.subtitle(items.length)}
-          </Text>
+          <Text variant="display">{strings.watchlist.title}</Text>
+          {!!session && (
+            <Text variant="bodySmall" tone="faint">
+              {strings.watchlist.subtitle(items.length)}
+            </Text>
+          )}
         </View>
 
+        {!session && !authLoading ? (
+          <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+            <SignedOutState lead="watchlist" />
+          </ScrollView>
+        ) : (
         <ScrollView contentContainerStyle={styles.body}>
           {items.map(({ play }) => (
             <WatchlistRow key={play.id} play={play} onPress={() => router.push(`/play/${play.id}`)} />
@@ -89,11 +98,11 @@ export default function WatchlistScreen() {
               about a specific evening and a follow is an open question. */}
           {!!session && followed.length > 0 && (
             <View style={{ gap: space.lg, marginTop: items.length > 0 ? space.xl : 0 }}>
-              <Text variant="heading">{strings.watchlist.followingHeading}</Text>
+              <SectionHeader title={strings.watchlist.followingHeading} />
 
               {people.length > 0 && (
                 <View style={{ gap: space.md }}>
-                  <Text variant="label" tone="dim">{strings.watchlist.followingPeople}</Text>
+                  <Text variant="eyebrow" tone="faint">{strings.watchlist.followingPeople}</Text>
                   {people.map((f) => (
                     <SubjectRow
                       key={`${f.type}:${f.key}`}
@@ -107,7 +116,7 @@ export default function WatchlistScreen() {
 
               {venues.length > 0 && (
                 <View style={{ gap: space.md }}>
-                  <Text variant="label" tone="dim">{strings.watchlist.followingVenues}</Text>
+                  <Text variant="eyebrow" tone="faint">{strings.watchlist.followingVenues}</Text>
                   {venues.map((f) => (
                     <SubjectRow
                       key={`${f.type}:${f.key}`}
@@ -136,13 +145,15 @@ export default function WatchlistScreen() {
 
           {showEmpty && (
             <EmptyState
-              title={failed ? strings.common.loadError : !session ? strings.watchlist.signInPrompt : strings.watchlist.emptyTitle}
-              body={!failed && session ? strings.watchlist.emptyBody : undefined}
-              actionLabel={failed ? strings.common.retry : !session ? strings.auth.signInButton : strings.watchlist.emptyAction}
-              onAction={failed ? load : !session ? () => router.push("/sign-in") : () => router.push("/(tabs)/discover")}
+              eyebrow={strings.watchlist.title}
+              title={failed ? strings.common.loadError : strings.watchlist.emptyTitle}
+              body={!failed ? strings.watchlist.emptyBody : undefined}
+              actionLabel={failed ? strings.common.retry : strings.watchlist.emptyAction}
+              onAction={failed ? load : () => router.push("/(tabs)/discover")}
             />
           )}
         </ScrollView>
+        )}
       </Screen>
     </View>
   );

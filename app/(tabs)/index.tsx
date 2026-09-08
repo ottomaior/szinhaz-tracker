@@ -15,18 +15,31 @@ import {
 import { getUnreadCount } from "@/services/notificationService";
 import type { FeedItem, Play, User, Venue, Review, WatchlistEntry } from "@/data/types";
 import { useAuth } from "@/contexts/AuthContext";
-import { Chip } from "@/components/ui/Chip";
 import { BellIcon, CommentIcon, HeartIcon } from "@/components/icons/Icons";
 import { MaskRatingRow } from "@/components/icons/MaskIcon";
-import { BrandMark } from "@/components/icons/BrandMark";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { Avatar } from "@/components/ui/Avatar";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { formatTimeAgo, strings } from "@/i18n/hu";
-import { budapestDayKey, formatLongDate } from "@/utils/datetime";
+import { budapestDayKey, formatLongDate, formatShowtime } from "@/utils/datetime";
 import { makeStyles } from "@/theme/styles";
+
+/**
+ * Whether this launch has already sent a signed-out visitor to Discover.
+ *
+ * The feed is the first tab, and for somebody without an account it is a list
+ * of strangers' evenings. Discover, with tonight's lead, is a stronger first
+ * screen and needs no account — so the *first* time the feed mounts in a
+ * session with nobody signed in, it hands over. Once per launch, not on every
+ * visit: the tab stays reachable, since a visitor who taps Hírfolyam on
+ * purpose should get it.
+ *
+ * Module state rather than React state because it has to survive this screen
+ * unmounting and remounting, which is exactly what the redirect causes.
+ */
+let handedOffToDiscover = false;
 
 export default function FeedScreen() {
   const styles = useStyles();
@@ -37,7 +50,7 @@ export default function FeedScreen() {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const { session } = useAuth();
+  const { session, loading: authLoading } = useAuth();
   const [scope, setScope] = useState<FeedScope>("everyone");
   const [unread, setUnread] = useState(0);
   const [viewer, setViewer] = useState<User>();
@@ -113,23 +126,21 @@ export default function FeedScreen() {
     setRefreshing(false);
   }, [load]);
 
+  // In an effect rather than during render: flipping the module flag is a
+  // side effect, and React's rules want those out of the render pass.
+  useEffect(() => {
+    if (authLoading || session || handedOffToDiscover) return;
+    handedOffToDiscover = true;
+    router.replace("/(tabs)/discover");
+  }, [authLoading, session, router]);
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Screen width="reading">
         <View style={[styles.topBar, { paddingTop: insets.top + space.md }]}>
-          {/* The screen names itself rather than the app. Every other tab does,
-              the tab bar underneath already says which app this is, and the
-              widest line on the first screen is better spent on something the
-              reader does not already know.
-
-              The glyph beside it is the logo, not a rating mask. It used to be
-              a mask, which put the rating glyph next to a heading and made a
-              single filled mask look like it meant something about this
-              screen. */}
-          <View style={styles.brand}>
-            <BrandMark size={24} />
-            <Text variant="title">{strings.tabs.feed}</Text>
-          </View>
+          {/* The screen names itself rather than the app: every other tab
+              does, and the tab bar underneath already says which app this is. */}
+          <Text variant="display">{strings.tabs.feed}</Text>
           <View style={styles.topBarActions}>
             {/* Only when signed in: an inbox is per account, and a bell that
                 can only ever be empty is a control that teaches you to ignore
@@ -165,38 +176,48 @@ export default function FeedScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={strings.tabs.profile}
               >
-                {/* Empty initials until the profile arrives, rather than
-                    hiding the avatar until then: the circle holds its place so
-                    the header does not shift under a thumb already reaching
-                    for it. */}
-                <Avatar uri={viewer?.avatarUrl} initials={viewer?.initials ?? ""} size={38} />
+                <Avatar uri={viewer?.avatarUrl} initials={viewer?.initials ?? ""} size={36} />
               </Pressable>
             )}
           </View>
         </View>
 
-        {/* The scope chips are signed-in only — "Követettek" for a visitor with
-            no account could only ever be empty. "Színházbarátok" is not: it is
-            the one route into finding people, and a signed-out visitor is
-            exactly who needs it, so the row renders for them too with the link
-            alone. */}
+        {/* The scope as text tabs on the header's rule, the way Discover
+            offers its three views, rather than two filled chips floating in a
+            row. Signed-in only — "Követettek" for a visitor with no account
+            could only ever be empty. "Színházbarátok" is not: it is the one
+            route into finding people, and a signed-out visitor is exactly who
+            needs it, so the row renders for them too with the link alone. */}
         <View style={styles.scopeRow}>
-          {!!session && (
-            <>
-              <Chip
-                label={strings.feed.scopeEveryone}
-                active={scope === "everyone"}
-                onPress={() => setScope("everyone")}
-              />
-              <Chip
-                label={strings.feed.scopeFollowing}
-                active={scope === "following"}
-                onPress={() => setScope("following")}
-              />
-            </>
+          {!!session ? (
+            <View style={styles.tabs} accessibilityRole="tablist">
+              {(
+                [
+                  ["everyone", strings.feed.scopeEveryone],
+                  ["following", strings.feed.scopeFollowing],
+                ] as [FeedScope, string][]
+              ).map(([key, label]) => {
+                const active = scope === key;
+                return (
+                  <Pressable
+                    key={key}
+                    onPress={() => setScope(key)}
+                    style={[styles.tab, active && styles.tabActive]}
+                    accessibilityRole="tab"
+                    aria-selected={active}
+                    accessibilityState={{ selected: active }}
+                  >
+                    <Text variant="label" tone={active ? "default" : "faint"}>
+                      {label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : (
+            <View style={{ flex: 1 }} />
           )}
-          <View style={{ flex: 1 }} />
-          <Pressable onPress={() => router.push("/people")} hitSlop={8} accessibilityRole="button">
+          <Pressable onPress={() => router.push("/people")} hitSlop={8} accessibilityRole="button" style={styles.tab}>
             <Text variant="label" tone="accent">{strings.feed.findPeople}</Text>
           </Pressable>
         </View>
@@ -221,6 +242,7 @@ export default function FeedScreen() {
               the wrong problem. */}
           {!loading && items.length === 0 && !failed && scope === "following" && (
             <EmptyState
+              eyebrow={strings.feed.scopeFollowing}
               title={strings.feed.followingEmptyTitle}
               body={strings.feed.followingEmptyBody}
               actionLabel={strings.feed.followingEmptyAction}
@@ -230,6 +252,7 @@ export default function FeedScreen() {
 
           {!loading && items.length === 0 && (failed || scope === "everyone") && (
             <EmptyState
+              eyebrow={strings.tabs.feed}
               title={failed ? strings.common.loadError : strings.feed.emptyTitle}
               body={failed ? undefined : strings.feed.emptyBody}
               actionLabel={failed ? strings.common.retry : strings.feed.emptyAction}
@@ -360,28 +383,24 @@ function CheckinCard({
       <CardByline
         user={user}
         action={strings.feed.checkedIn}
-        meta={[
-          formatTimeAgo(review.createdAt),
-          // Three cases, not two. `seenAt` has been nullable since 0026 —
-          // undefined means "seen it, cannot say when", which is what
-          // onboarding writes — and this line only tested it against the write
-          // date, so a ticked entry rendered `undefinedT12:00:00Z` and the card
-          // said "látta: Invalid Date".
-          seenNote(review),
-          venue?.name,
-        ]
-          .filter(Boolean)
-          .join(" · ")}
+        meta={[formatTimeAgo(review.createdAt), seenNote(review)].filter(Boolean).join(" · ")}
       />
 
       <Pressable onPress={() => onOpenPlay(play.id)} accessibilityRole="button" accessibilityLabel={play.title}>
         {/* `scrim` matters here: these are production photos, and bright ones
             left the white caption below completely unreadable. */}
-        <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} height={200} radius={radius.md} scrim priority="high" />
-        {/* Both lines take their colour from `overlay`, not from the palette.
-            They sit on the scrim above, which is dark in every theme, so a
-            theme with near-black text would print this caption in dark plum
-            over a lit production photograph. */}
+        <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} height={220} radius={radius.md} scrim priority="high" />
+        {/* Everything on the image takes its colour from `overlay`, not from
+            the palette. The scrim is dark in every theme, so a theme with
+            near-black text would print this caption in ink over a lit
+            production photograph. */}
+        {!!venue?.name && (
+          <View style={styles.posterEyebrow}>
+            <Text variant="eyebrow" numberOfLines={1} style={{ color: overlay.onImageAccent }}>
+              {venue.name}
+            </Text>
+          </View>
+        )}
         <View style={styles.posterCaption}>
           <Text variant="title" numberOfLines={2} style={{ color: overlay.onImageHeading }}>
             {play.title}
@@ -403,13 +422,9 @@ function CheckinCard({
           <View />
         )}
 
-        {/* Back, and true this time. These counters existed as columns from
-            0001 with nothing writing to them, so they drew a permanent zero
-            beside an icon that did nothing when tapped — which is why they were
-            removed. 0032 maintains them, and both now lead to the evening,
-            where the conversation actually is: a feed card is a summary, and a
-            thread read inside one would be a thread nobody can reply to
-            without losing their place. */}
+        {/* Both counters lead to the evening, where the conversation actually
+            is: a feed card is a summary, and a thread read inside one would be
+            a thread nobody can reply to without losing their place. */}
         <Pressable
           onPress={() => onOpenEntry(review.id)}
           hitSlop={8}
@@ -437,6 +452,12 @@ function CheckinCard({
   );
 }
 
+/**
+ * Somebody wants to see something. A programme row rather than a poster card:
+ * the poster belongs to the evening that happened, and a wish is a smaller
+ * thing than a night out. The line under the title is the next date, which
+ * is what turns "wants to see" into "could go on Friday".
+ */
 function WatchlistCard({ entry, onOpenPlay }: { entry: WatchlistEntry; onOpenPlay: (id: string) => void }) {
   const styles = useStyles();
 
@@ -458,23 +479,30 @@ function WatchlistCard({ entry, onOpenPlay }: { entry: WatchlistEntry; onOpenPla
 
   if (!play || !user) return null;
 
+  const when = play.nextPerformanceAt
+    ? formatShowtime(play.nextPerformanceAt)
+    : play.premiereDate
+      ? `${strings.feed.premiereLabel}: ${formatDate(play.premiereDate)}`
+      : undefined;
+
   return (
     <View style={{ gap: space.md }}>
       <CardByline user={user} action={strings.feed.wantsToSee} meta={`${formatTimeAgo(entry.addedAt)} · ${strings.feed.addedToWatchlist}`} />
       <Pressable onPress={() => onOpenPlay(play.id)} style={styles.watchlistRow} accessibilityRole="button" accessibilityLabel={play.title}>
-        <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} width={64} height={96} radius={radius.sm} preferThumb />
-        <View style={{ flex: 1, gap: space.xs }}>
+        <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} width={56} height={76} radius={radius.sm} preferThumb />
+        <View style={{ flex: 1, gap: 3 }}>
           <Text variant="subheading" numberOfLines={2}>
             {play.title}
           </Text>
-          <Text variant="caption" tone="dim" numberOfLines={1}>
+          <Text variant="caption" tone="faint" numberOfLines={1}>
             {venue?.name}
+            {!!when && (
+              <>
+                {" · "}
+                <Text variant="caption" tone="accent">{when}</Text>
+              </>
+            )}
           </Text>
-          {play.premiereDate && (
-            <Text variant="caption" tone="faint">
-              {strings.feed.premiereLabel}: {formatDate(play.premiereDate)}
-            </Text>
-          )}
         </View>
       </Pressable>
       <View style={styles.divider} />
@@ -489,12 +517,10 @@ function formatDate(iso: string) {
 const useStyles = makeStyles((colors) => StyleSheet.create({
   topBar: {
     paddingHorizontal: gutter,
-    paddingBottom: space.md,
+    paddingBottom: space.sm,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    borderBottomWidth: 1,
-    borderBottomColor: colors.hairlineSoft,
   },
   topBarActions: { flexDirection: "row", alignItems: "center", gap: space.lg },
   cardFooter: {
@@ -523,20 +549,32 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   },
   badgeText: { color: colors.onAccent, fontWeight: "700", fontSize: 10, lineHeight: 16 },
   scopeRow: {
-    alignItems: "center",
     flexDirection: "row",
-    gap: space.sm,
+    alignItems: "flex-end",
+    justifyContent: "space-between",
     paddingHorizontal: gutter,
-    paddingTop: space.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.hairlineSoft,
   },
-  brand: { flexDirection: "row", alignItems: "center", gap: space.sm },
+  tabs: { flexDirection: "row", gap: space["2xl"] },
+  tab: { paddingVertical: space.md - 2, borderBottomWidth: 2, borderBottomColor: "transparent" },
+  tabActive: { borderBottomColor: colors.gold },
   body: { padding: gutter, paddingBottom: 100, gap: space["2xl"] },
   byline: { flexDirection: "row", alignItems: "center", gap: space.md },
   name: { color: colors.text },
   watchlistRow: { flexDirection: "row", alignItems: "center", gap: space.md },
-  rowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  // `right` was missing, so long titles ran off the poster and out past the
-  // edge of the card.
+  posterEyebrow: {
+    position: "absolute",
+    top: space.md,
+    left: space.md,
+    maxWidth: "70%",
+    backgroundColor: overlay.onImage,
+    borderRadius: radius.pill,
+    paddingVertical: 4,
+    paddingHorizontal: 9,
+  },
+  // `right` was missing once, so long titles ran off the poster and out past
+  // the edge of the card.
   posterCaption: { position: "absolute", left: space.lg, right: space.lg, bottom: space.lg, gap: space.xs },
   divider: { height: 1, backgroundColor: colors.hairlineSoft, marginTop: space.xs },
 }));

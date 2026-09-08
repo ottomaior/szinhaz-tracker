@@ -105,17 +105,16 @@ export function SelectChip({
             {/* The chosen city, or "Mind" — never the facet's name. Unlike a
                 chip, this trigger is the only thing on screen saying what the
                 whole page is scoped to, so it has to read as an answer even
-                when nothing has been picked. */}
-            <Text variant="subheading" numberOfLines={1}>
-              {selected?.label ?? strings.discover.filterAll}
+                when nothing has been picked. One line under the screen title,
+                the way a programme prints the season under its name. */}
+            <Text variant="bodySmall" tone="dim" numberOfLines={1} style={{ flexShrink: 1 }}>
+              <Text variant="bodySmall" style={{ fontFamily: bodyFont(fontsLoaded, "semibold") }}>
+                {selected?.label ?? strings.discover.filterAll}
+              </Text>
+              {!!subtitle && ` · ${subtitle}`}
             </Text>
-            <ChevronDownIcon size={14} color={colors.textDim} />
+            <ChevronDownIcon size={12} color={colors.textDim} />
           </View>
-          {!!subtitle && (
-            <Text variant="caption" tone="faint" numberOfLines={1}>
-              {subtitle}
-            </Text>
-          )}
         </Pressable>
       ) : (
         <Pressable
@@ -213,7 +212,7 @@ const useStyles = makeStyles((colors, elevation) => StyleSheet.create({
   /* Unpainted on purpose: this trigger sits over the header's wash and reads
      as a heading you can change, not as a control dropped on top of one. The
      touch target is met by the two lines plus the vertical padding. */
-  header: { paddingVertical: space.xs, paddingRight: space.sm, minHeight: minTouchTarget, justifyContent: "center" },
+  header: { paddingVertical: space.xs, paddingRight: space.sm, minHeight: 32, justifyContent: "center", alignSelf: "flex-start" },
   headerLine: { flexDirection: "row", alignItems: "center", gap: space.xs },
 
   /*

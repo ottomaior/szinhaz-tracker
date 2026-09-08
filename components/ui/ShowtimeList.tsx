@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
-import { radius, space } from "@/theme/tokens";
+import { space } from "@/theme/tokens";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Text } from "@/components/ui/Text";
 import { budapestMonthKey, formatMonthHeading, formatShortDate, formatTime, formatWeekday } from "@/utils/datetime";
 import { strings } from "@/i18n/hu";
@@ -20,8 +21,24 @@ import { makeStyles } from "@/theme/styles";
  * Grouped by month rather than listed flat because a production in repertory
  * runs across a season: an unbroken list of twenty dates is a wall, and the
  * month headings are what let someone find the weekend they were thinking of.
+ *
+ * Set as a table on hairlines rather than as a stack of cards: the dates form
+ * one column, the curtain times another, and the eye runs down them the way it
+ * runs down a printed programme. `action` is the way out to the box office,
+ * which belongs on this section's baseline because this is where somebody has
+ * just found the evening they want.
  */
-export function ShowtimeList({ performances, play }: { performances: Performance[]; play: Play }) {
+export function ShowtimeList({
+  performances,
+  play,
+  action,
+  onAction,
+}: {
+  performances: Performance[];
+  play: Play;
+  action?: string;
+  onAction?: () => void;
+}) {
   const styles = useStyles();
 
   const [expanded, setExpanded] = useState(false);
@@ -31,7 +48,7 @@ export function ShowtimeList({ performances, play }: { performances: Performance
   if (performances.length === 0) {
     return (
       <View style={{ gap: space.sm }}>
-        <Text variant="subheading">{strings.playDetail.showtimes}</Text>
+        <SectionHeader title={strings.playDetail.showtimes} action={action} onAction={onAction} />
         <Text variant="bodySmall" tone="faint">
           {emptyReason(play)}
         </Text>
@@ -48,20 +65,20 @@ export function ShowtimeList({ performances, play }: { performances: Performance
 
   return (
     <View style={{ gap: space.md }}>
-      <View style={styles.rowBetween}>
-        <Text variant="subheading">{strings.playDetail.showtimes}</Text>
-        <Text variant="label" tone="accent">
-          {strings.playDetail.showtimesCount(total)}
-        </Text>
-      </View>
+      <SectionHeader
+        eyebrow={strings.playDetail.showtimesCount(total)}
+        title={strings.playDetail.showtimes}
+        action={action}
+        onAction={onAction}
+      />
 
-      <View style={{ gap: space.lg }}>
+      <View>
         {shown.map((month) => (
-          <View key={month.key} style={{ gap: space.sm }}>
+          <View key={month.key}>
             {/* The heading is dropped when every date is in one month: it
                 would just repeat what each row already says. */}
             {months.length > 1 && (
-              <Text variant="caption" tone="faint">
+              <Text variant="eyebrow" tone="faint" style={styles.monthHeading}>
                 {month.heading}
               </Text>
             )}
@@ -94,7 +111,7 @@ function ShowtimeRow({ performance }: { performance: Performance }) {
           {formatWeekday(performance.startsAt)}
         </Text>
       </View>
-      <Text variant="body" tone="accent">
+      <Text variant="numeral" style={styles.time}>
         {formatTime(performance.startsAt)}
       </Text>
       {/* The stage, where the source names one. Which room a Katona production
@@ -151,19 +168,17 @@ function groupByMonth(performances: Performance[]): MonthGroup[] {
 }
 
 const useStyles = makeStyles((colors) => StyleSheet.create({
-  rowBetween: { flexDirection: "row", alignItems: "baseline", justifyContent: "space-between" },
+  monthHeading: { paddingTop: space.md, paddingBottom: space.xs },
   row: {
     flexDirection: "row",
     alignItems: "center",
     gap: space.md,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.hairlineSoft,
-    borderRadius: radius.md,
-    paddingVertical: space.md,
-    paddingHorizontal: space.lg,
+    paddingVertical: space.md - 2,
+    borderTopWidth: 1,
+    borderTopColor: colors.hairlineSoft,
   },
-  // Fixed width so the times line up in a column down the list rather than
-  // starting at a different x for every date.
-  dateBlock: { width: 76, gap: 2 },
+  // Fixed widths so the dates and the times line up in columns down the list
+  // rather than starting at a different x for every row.
+  dateBlock: { width: 92, gap: 1 },
+  time: { width: 64 },
 }));

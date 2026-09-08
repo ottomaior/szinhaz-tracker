@@ -33,10 +33,18 @@ export function FollowSubjectButton({
   subjectKey,
   /** Rendered under the button. Omitted where the surrounding screen is tight. */
   showHint = true,
+  /**
+   * A small outlined pill with no hint or count, for a row where the subject
+   * is named beside it — the theatre line on play detail. A follow is a
+   * secondary commitment, and a full-width gold bar for it competed with the
+   * one action that screen is built around.
+   */
+  compact = false,
 }: {
   type: FollowSubjectType;
   subjectKey: string;
   showHint?: boolean;
+  compact?: boolean;
 }) {
   const router = useRouter();
   const { session } = useAuth();
@@ -101,6 +109,19 @@ export function FollowSubjectButton({
       : type === "person"
         ? strings.follow.followPerson
         : strings.follow.followVenue;
+
+  if (compact) {
+    return (
+      <Button
+        label={session ? label : strings.follow.followVenue}
+        variant={following ? "outline" : "primary"}
+        disabled={busy}
+        onPress={toggle}
+        accessibilityLabel={label}
+        style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999 }}
+      />
+    );
+  }
 
   return (
     <View style={{ gap: space.sm }}>

@@ -1,17 +1,16 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
-import { gutter, radius, space } from "@/theme/tokens";
+import { gutter, space } from "@/theme/tokens";
 import { Text } from "@/components/ui/Text";
 import { Chip } from "@/components/ui/Chip";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
-import { SkeletonRail } from "@/components/ui/Skeleton";
+import { ProgramRow, ProgramRowSkeleton } from "@/components/ui/ProgramRow";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { getProgramDays, getProgramForDay, type ProgramFilters } from "@/services/playsService";
 import type { ProgramDay, ProgramEntry } from "@/data/types";
-import { formatDayLabel, formatLongDate, formatRuntimeMinutes, formatTime, todayInBudapest } from "@/utils/datetime";
+import { formatDayLabel, formatLongDate, formatWeekday, todayInBudapest } from "@/utils/datetime";
 import { strings } from "@/i18n/hu";
-import { makeStyles } from "@/theme/styles";
 
 /**
  * The catalogue read from the calendar end: pick an evening, see what is on.
@@ -25,16 +24,13 @@ import { makeStyles } from "@/theme/styles";
  * Days with nothing scheduled are never offered. A theatre's week has dark
  * nights in it, and a date picker that lets you land on one is a picker full
  * of dead ends.
- */
-/**
+ *
  * `header` rides inside this view's own scroll content rather than above it,
- * so Discover can hand over the city row and have it scroll away with the
+ * so Discover can hand over its filter row and have it scroll away with the
  * days instead of adding to the pinned bar. In the states that have nothing
  * to scroll — loading, failed, no days at all — it simply sits on top.
  */
 export function ProgramView({ filters, header }: { filters: ProgramFilters; header?: ReactNode }) {
-  const styles = useStyles();
-
   const router = useRouter();
   const [days, setDays] = useState<ProgramDay[]>([]);
   const [selectedDay, setSelectedDay] = useState<string>();
@@ -114,7 +110,9 @@ export function ProgramView({ filters, header }: { filters: ProgramFilters; head
       <>
         {header}
         <View style={{ paddingHorizontal: gutter, paddingTop: space.lg }}>
-          <SkeletonRail />
+          {Array.from({ length: 5 }).map((_, i) => (
+            <ProgramRowSkeleton key={i} />
+          ))}
         </View>
       </>
     );
@@ -133,7 +131,7 @@ export function ProgramView({ filters, header }: { filters: ProgramFilters; head
     return (
       <>
         {header}
-        <EmptyState title={strings.program.emptyTitle} body={strings.program.emptyBody} />
+        <EmptyState eyebrow={strings.program.modeProgram} title={strings.program.emptyTitle} body={strings.program.emptyBody} />
       </>
     );
   }
@@ -153,29 +151,35 @@ export function ProgramView({ filters, header }: { filters: ProgramFilters; head
       </ScrollView>
 
       {!!selectedDay && (
-        <View style={{ paddingHorizontal: gutter, gap: space.xs }}>
-          <Text variant="subheading">{formatLongDate(`${selectedDay}T12:00:00Z`)}</Text>
-          <Text variant="caption" tone="faint">
-            {strings.program.performanceCount(entries.length)}
-          </Text>
-        </View>
+        <SectionHeader
+          style={{ paddingHorizontal: gutter }}
+          eyebrow={
+            selectedDay === today
+              ? strings.discover.heroTonight
+              : formatWeekday(`${selectedDay}T12:00:00Z`)
+          }
+          title={formatLongDate(`${selectedDay}T12:00:00Z`)}
+          action={strings.program.performanceCount(entries.length)}
+        />
       )}
 
       {loadingEntries ? (
         <View style={{ paddingHorizontal: gutter }}>
-          <SkeletonRail />
+          {Array.from({ length: 4 }).map((_, i) => (
+            <ProgramRowSkeleton key={i} />
+          ))}
         </View>
       ) : (
         byVenue.map((group) => (
-          <View key={group.venueId} style={{ gap: space.md, paddingHorizontal: gutter }}>
-            <View style={{ gap: 2 }}>
+          <View key={group.venueId} style={{ paddingHorizontal: gutter }}>
+            <View style={styles.venueHeading}>
               <Text variant="subheading">{group.venueName}</Text>
               <Text variant="caption" tone="faint">
                 {group.venueCity}
               </Text>
             </View>
             {group.items.map((e) => (
-              <ProgramRow key={e.performanceId} entry={e} onPress={() => router.push(`/play/${e.playId}`)} />
+              <ProgramRow key={e.performanceId} entry={e} lead="time" onPress={() => router.push(`/play/${e.playId}`)} />
             ))}
           </View>
         ))
@@ -184,60 +188,7 @@ export function ProgramView({ filters, header }: { filters: ProgramFilters; head
   );
 }
 
-function ProgramRow({ entry, onPress }: { entry: ProgramEntry; onPress: () => void }) {
-  const styles = useStyles();
-
-  // Everything the reader needs to decide, in one line under the title: which
-  // stage, how long, and what kind of evening it is. Assembled by filtering
-  // rather than by conditional joins, so a missing runtime never leaves a
-  // stranded separator.
-  const meta = [
-    entry.room,
-    entry.runtimeMinutes != null ? formatRuntimeMinutes(entry.runtimeMinutes) : undefined,
-    entry.genreNormalized ? strings.genres[entry.genreNormalized] ?? entry.genreNormalized : undefined,
-  ].filter(Boolean);
-
-  return (
-    <Pressable onPress={onPress} style={styles.row} accessibilityRole="button" accessibilityLabel={entry.title}>
-      <Text variant="label" tone="accent" style={styles.time}>
-        {formatTime(entry.startsAt)}
-      </Text>
-      <View style={styles.thumb}>
-        <PosterPlaceholder poster={entry.poster} title={entry.title} seed={entry.playId} height="100%" radius={radius.sm} preferThumb />
-      </View>
-      <View style={{ flex: 1, gap: 2 }}>
-        <Text variant="label" numberOfLines={2}>
-          {entry.title}
-        </Text>
-        {!!entry.author && (
-          <Text variant="caption" tone="dim" numberOfLines={1}>
-            {entry.author}
-          </Text>
-        )}
-        {meta.length > 0 && (
-          <Text variant="caption" tone="faint" numberOfLines={1}>
-            {meta.join(" · ")}
-          </Text>
-        )}
-      </View>
-    </Pressable>
-  );
-}
-
-const useStyles = makeStyles((colors) => StyleSheet.create({
+const styles = StyleSheet.create({
   dayRow: { gap: space.sm, paddingHorizontal: gutter },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.md,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.hairlineSoft,
-    borderRadius: radius.md,
-    padding: space.md,
-  },
-  // Fixed width so curtain times form a column rather than stepping in and out
-  // with the length of each title above them.
-  time: { width: 46 },
-  thumb: { width: 40, aspectRatio: 3 / 4 },
-}));
+  venueHeading: { flexDirection: "row", alignItems: "baseline", gap: space.sm, paddingBottom: space.xs },
+});

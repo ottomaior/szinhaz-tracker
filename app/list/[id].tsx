@@ -188,7 +188,7 @@ export default function ListScreen() {
                     trailing={
                       <View style={{ alignItems: "flex-end", gap: space.sm }}>
                         {list.isRanked && (
-                          <Text variant="heading" tone="accent">
+                          <Text variant="numeral">
                             {i + 1}
                           </Text>
                         )}

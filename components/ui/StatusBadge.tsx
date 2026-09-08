@@ -12,14 +12,30 @@ import type { PlayStatus } from "@/data/types";
  * `unknown` renders nothing at all rather than a placeholder: it means the
  * source data is stale, and a badge saying so would be noise to a reader who
  * cannot act on it.
+ *
+ * Two forms. The pill is for a screen about one production, where the status
+ * is worth a line of its own. `inline` is for a tile in a grid or a row in a
+ * list, and there it says nothing at all for `running`: forty tiles wearing
+ * forty identical gold pills told the reader nothing, since running is what a
+ * browsing grid is *of*. The exceptions — paused, closed, not yet open — are
+ * the news, and they keep a quiet pill so the eye lands on them.
  */
-export function StatusBadge({ status, size = "md" }: { status: PlayStatus; size?: "sm" | "md" }) {
+export function StatusBadge({
+  status,
+  size = "md",
+  inline = false,
+}: {
+  status: PlayStatus;
+  size?: "sm" | "md";
+  inline?: boolean;
+}) {
   const fontsLoaded = useAppFonts();
   const colors = useColors();
   if (status === "unknown") return null;
+  if (inline && status === "running") return null;
 
   const tone = tonesFor(colors)[status];
-  const small = size === "sm";
+  const small = size === "sm" || inline;
 
   return (
     <View
@@ -42,6 +58,27 @@ export function StatusBadge({ status, size = "md" }: { status: PlayStatus; size?
         {strings.status[status]}
       </Text>
     </View>
+  );
+}
+
+/**
+ * The status as part of a sentence: a dot and the word, with no box.
+ *
+ * For the line under a title that already carries the next date — "● Műsoron ·
+ * Következő: szept. 19." — where a pill would be a badge interrupting prose.
+ * A Text rather than a View so it can sit *inside* the sentence and wrap with
+ * it: as a separate box the rest of the line broke underneath it on a phone.
+ */
+export function StatusInline({ status }: { status: PlayStatus }) {
+  const fontsLoaded = useAppFonts();
+  const colors = useColors();
+  if (status === "unknown") return null;
+  const tone = tonesFor(colors)[status];
+  return (
+    <Text style={{ fontFamily: bodyFont(fontsLoaded, "semibold"), color: tone.text }}>
+      {"● "}
+      {strings.status[status]}
+    </Text>
   );
 }
 

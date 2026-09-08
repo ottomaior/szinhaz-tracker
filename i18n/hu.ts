@@ -57,6 +57,25 @@ export const strings = {
     findPeople: "Színházbarátok",
   },
 
+  /**
+   * What a visitor without an account sees on the two tabs that are about
+   * their account. One dim sentence in a dark void read as an error; this says
+   * what the account is for, in the app's voice, and offers the door.
+   */
+  signedOut: {
+    eyebrow: "Vastaps",
+    title: "A színházi naplód, ami emlékszik helyetted.",
+    diaryTitle: "Napló",
+    diaryBody: "Minden este, amit láttál: darab, dátum, szereposztás, értékelés.",
+    watchlistTitle: "Kívánságlista",
+    watchlistBody: "Amit meg akarsz nézni, a következő időponttal.",
+    peopleTitle: "Színházbarátok",
+    peopleBody: "Kövesd, ki mit néz meg Budapesten és Debrecenben.",
+    signUp: "Fiókot nyitok",
+    haveAccount: "Van már fiókod?",
+    signIn: "Bejelentkezés",
+  },
+
   time: {
     justNow: "Most",
     hoursAgo: (h: number) => `${h} órája`,
@@ -146,8 +165,25 @@ export const strings = {
        answer to "which filter" — but as the line that names what the whole
        screen is scoped to it has to answer "which city". */
     cityAll: "Minden város",
-    upcomingTitle: "Közelgő előadások",
+    upcomingTitle: "A következő esték",
+    upcomingEyebrow: "Műsor",
+    upcomingAction: "Teljes műsor",
     upcomingToday: "Ma",
+    /* The lead: what is on tonight, or failing that the next evening there is
+       anything on at all. "Ma este" is the answer the reader came for; a
+       weekday is the honest substitute on a dark night. */
+    heroTonight: "Ma este",
+    heroNext: (weekday: string) => `Legközelebb · ${weekday}`,
+    heroOpen: "Megnézem",
+    heroDirected: (name: string) => `${name} rendezése`,
+    /* Section eyebrows: what kind of shelf each one is. */
+    featuredEyebrow: "Szerkesztői válogatás",
+    premieresEyebrow: "Bemutató előtt",
+    trendingEyebrow: "Legjobbra értékelt",
+    trendingEyebrowSorted: "Minden előadás",
+    trendingEyebrowArchive: "Az archívummal együtt",
+    searchOpen: "Keresés",
+    searchClose: "Keresés bezárása",
     emptyTitle: "Ehhez a szűréshez még nincs darab",
     emptyBody: "Próbálj másik várost vagy színháztípust, vagy vedd fel a darabot magad.",
   },
@@ -286,6 +322,14 @@ export const strings = {
       `${band} maszk: ${people} értékelés`,
 
     castCrew: "Szereposztás és alkotók",
+    castCount: (n: number) => (n === 1 ? "1 közreműködő" : `${n} közreműködő`),
+    aboutHeading: "A darabról",
+    readMore: "Tovább",
+    readLess: "Kevesebb",
+    venueEyebrow: "Színház",
+    followingEyebrow: "Követettek",
+    ratingsEyebrow: "Értékelés",
+    ticketsShort: "Jegyek ↗",
     fromFollowing: "Vélemények",
     reviewsCount: (n: number) => `${n} vélemény`,
     ratingsCount: (n: number) => `${n} értékelés`,
@@ -617,7 +661,9 @@ export const strings = {
     headerTitle: "Listák",
     headerFallback: "Lista",
     featuredHeading: "Szerkesztői listák",
+    featuredEyebrow: "Válogatás",
     mineHeading: "A listáim",
+    mineEyebrow: "Saját",
     newList: "Új lista",
     create: "Létrehozás",
     creating: "Létrehozás…",
@@ -731,9 +777,9 @@ export const strings = {
       modernDark: "Éjszakai",
     },
     themeBlurbs: {
-      lavenderLight: "Világos levendula, ibolya kiemeléssel — az alapértelmezett.",
-      velvetDark: "A ház stílusa: sötét bordó, arany kiemeléssel.",
-      playbillLight: "Ugyanaz a színlap, nyomtatva: meleg krém és tinta.",
+      lavenderLight: "Világos levendula, ibolya kiemeléssel.",
+      velvetDark: "A ház stílusa: bársonyfüggöny, arany fényben — az alapértelmezett sötét.",
+      playbillLight: "Ugyanaz a színlap, nyomtatva: krém papír, tinta és bordó — az alapértelmezett világos.",
       minimalLight: "Világos és semleges, minden dísz nélkül.",
       modernDark: "Hűvös, szürke sötét mód.",
     },

@@ -76,60 +76,73 @@ export type ThemeId =
   | "minimalLight"
   | "modernDark";
 
-/** The original: a near-black warm burgundy stage with a lit gold accent. */
+/**
+ * The house style: a plum-black stage, claret surfaces, and a champagne gold.
+ *
+ * Re-cut in September 2026 from the original burgundy. The old ground
+ * (#120505) and its surfaces (#251210, #331d1a) were all the same red-brown at
+ * three brightnesses, so a card on the page read as a slightly lighter patch
+ * of the same wall and the gold sat on it as brass. Here the ground is taken a
+ * step darker and towards plum, the surfaces are the claret of the curtain
+ * itself, and the gold is lifted a little so it reads as lit rather than
+ * tarnished. Same identity, more depth between the layers.
+ */
 const velvetDark: Palette = {
-  bg: "#120505", // oklch(14% 0.025 25)
-  bgElevated: "#1d0c0a", // oklch(18% 0.03 26)
-  surface: "#251210", // oklch(21% 0.032 27)
-  surface2: "#331d1a", // oklch(26% 0.035 28)
+  bg: "#0f0709", // oklch(12% 0.025 5)
+  bgElevated: "#170b0f",
+  surface: "#1c0d13", // oklch(16% 0.035 355)
+  surface2: "#2a1520", // oklch(21% 0.045 350)
 
-  hairline: "rgba(255,255,255,0.10)",
-  hairlineSoft: "rgba(255,255,255,0.06)",
-  edgeHighlight: "rgba(255,255,255,0.06)",
+  hairline: "rgba(246,238,232,0.11)",
+  hairlineSoft: "rgba(246,238,232,0.06)",
+  edgeHighlight: "rgba(246,238,232,0.06)",
 
-  text: "#f5ede4", // oklch(95% 0.015 75) — 17.26 / 15.45 / 13.61
-  textDim: "#b9a69e", // oklch(74% 0.025 45) — 8.59 / 7.68 / 6.77
+  // Contrast measured against bg / surface / surface2, as the note above the
+  // type explains.
+  text: "#f6efe6", // 17.45 / 16.49 / 15.01
+  textDim: "#c2afa8", // 9.47 / 8.95 / 8.15
   /**
-   * Lifted twice, both times for the same reason. #80716d measured 4.29:1 on
-   * `bg`; #8a7a75 fixed that but was still 4.37 on `surface` and 3.85 on
-   * `surface2` — and this colour carries metadata at the app's smallest sizes
-   * *inside cards*, which is exactly where those two grounds are. This is
-   * 6.04 / 5.41 / 4.76 and passes on all three.
+   * This colour carries metadata at the app's smallest sizes *inside cards*,
+   * which is exactly where the two surface grounds are, so it is the token
+   * that decides whether the theme passes. 6.36 / 6.01 / 5.47.
    */
-  textFaint: "#9a8a84",
+  textFaint: "#9f8e8a",
 
-  gold: "#dbb155", // oklch(78% 0.12 85) — 9.94 / 8.90 / 7.84
-  goldDeep: "#b28324", // oklch(64% 0.12 80) — recessive fill, never text
-  onAccent: "#120505", // 9.94:1 on gold
+  gold: "#e4bf72", // oklch(82% 0.11 85) — 11.37 / 10.74 / 9.78
+  goldDeep: "#a97c2e", // recessive fill, never text
+  onAccent: "#140709", // 11.27:1 on gold
 
-  goldTintBg: "rgba(219,177,85,0.15)",
-  goldTintBorder: "rgba(219,177,85,0.45)",
-  neutralTintBg: "rgba(245,237,228,0.08)",
+  goldTintBg: "rgba(228,191,114,0.14)",
+  goldTintBorder: "rgba(228,191,114,0.42)",
+  neutralTintBg: "rgba(246,239,230,0.08)",
 
-  shadow: "rgba(0,0,0,0.45)",
-  goldGlow: "rgba(219,177,85,0.40)",
+  shadow: "rgba(0,0,0,0.5)",
+  goldGlow: "rgba(228,191,114,0.38)",
 };
 
 /**
  * The same playbill, printed rather than lit: warm cream stock and ink.
  *
- * The accent is the interesting problem. #dbb155 is about 1.9:1 on cream —
- * fine as a fill, unusable as text, and gold *is* text here (it is what says
- * "you can still go and see this"). #7d5810 is the same hue family taken down
- * until it clears AA on the darkest card ground, so it reads as the ink side
- * of the brand's gold rather than as a different colour.
+ * The light default since September 2026, and the accent is the interesting
+ * problem. #e4bf72 is about 1.8:1 on cream — fine as a fill, unusable as text,
+ * and the accent *is* text here (it is what says "you can still go and see
+ * this"). The previous answer was the same hue taken down to an ochre ink,
+ * which cleared AA but read as mustard. The accent token names a role, not a
+ * hue — the lavender theme makes the same argument for violet — so here the
+ * role is carried by the claret of the dark theme's curtain: what is lit gold
+ * on the stage is printed in red on the programme.
  */
 const playbillLight: Palette = {
-  bg: "#fbf6ec", // oklch(97% 0.014 85)
-  bgElevated: "#f6efe1", // oklch(95% 0.018 85)
-  surface: "#f2ead9", // oklch(93% 0.022 85)
-  surface2: "#e7dbc6", // oklch(89% 0.030 84)
+  bg: "#faf5ec", // oklch(97% 0.014 85)
+  bgElevated: "#f5eddf",
+  surface: "#f1e8d7", // oklch(93% 0.022 85)
+  surface2: "#e6dac4", // oklch(88% 0.030 84)
 
   // Ink at low alpha, not white: a pale hairline is invisible on paper. Set a
   // little higher than the dark themes' 0.10, because a dark line at 10% on
   // cream reads weaker than a white one at 10% on near-black.
-  hairline: "rgba(30,24,21,0.14)",
-  hairlineSoft: "rgba(30,24,21,0.08)",
+  hairline: "rgba(31,23,20,0.14)",
+  hairlineSoft: "rgba(31,23,20,0.08)",
   /**
    * No top highlight. `elevation.raised` draws a lit top edge, which is a
    * dark-stage metaphor: on cream a pale line is invisible and a dark one
@@ -137,28 +150,28 @@ const playbillLight: Palette = {
    */
   edgeHighlight: "transparent",
 
-  text: "#1e1815", // 16.29 / 14.66 / 12.82
-  textDim: "#544940", // 8.11 / 7.30 / 6.38
-  textFaint: "#665950", // 6.27 / 5.64 / 4.93
+  text: "#1f1714", // 16.24 / 14.50 / 12.76
+  textDim: "#574a42", // 7.85 / 7.01 / 6.17
+  textFaint: "#6b5d54", // 5.83 / 5.20 / 4.58
 
-  gold: "#7d5810", // oklch(45% 0.09 78) — 5.95 / 5.36 / 4.69
+  gold: "#7a2433", // oklch(36% 0.13 15) — 9.09 / 8.11 / 7.14
   /**
    * Lighter than `gold` here, and that is not a mistake. Its two consumers —
    * the histogram's off-peak bars and the lists Switch track — use it as a
    * *recessive* accent fill, and on a light ground recessive means lighter.
    * The name describes the role, not the value.
    */
-  goldDeep: "#c08f2e",
-  onAccent: "#fffbf3", // 6.21:1 on gold
+  goldDeep: "#b7727d",
+  onAccent: "#fff8f0", // 9.37:1 on the accent
 
-  goldTintBg: "rgba(125,88,16,0.12)",
-  goldTintBorder: "rgba(125,88,16,0.38)",
-  neutralTintBg: "rgba(30,24,21,0.06)",
+  goldTintBg: "rgba(122,36,51,0.10)",
+  goldTintBorder: "rgba(122,36,51,0.36)",
+  neutralTintBg: "rgba(31,23,20,0.06)",
 
   // Warm rather than neutral, and much softer: a 45% black shadow that reads
   // as depth on near-black reads as dirt on cream.
-  shadow: "rgba(70,48,20,0.16)",
-  goldGlow: "rgba(125,88,16,0.28)",
+  shadow: "rgba(70,30,30,0.16)",
+  goldGlow: "rgba(122,36,51,0.26)",
 };
 
 /**
@@ -292,18 +305,20 @@ export const themeScheme: Record<ThemeId, "dark" | "light"> = {
 /**
  * What "follow the system" resolves to.
  *
- * A device set to light gets Levendula, which is the app's current design
- * direction. A device set to dark still gets Bársony: there is no lavender
- * dark twin yet, and inverting a light palette would produce neither.
+ * Both defaults are the house style now: Bársony lit, or Színlap printed.
+ * Levendula was the light default until September 2026, which meant a phone
+ * in light mode opened a lilac app under a landing page that had just sold it
+ * velvet and gold. The two playbill themes are one brand at two times of day;
+ * the lavender one stays in the picker as a taste.
  */
 export const DEFAULT_DARK: ThemeId = "velvetDark";
-export const DEFAULT_LIGHT: ThemeId = "lavenderLight";
+export const DEFAULT_LIGHT: ThemeId = "playbillLight";
 
-/** Order in the picker: the current direction first, then the house style, then the alternatives. */
+/** Order in the picker: the two defaults first, then the alternatives. */
 export const THEME_ORDER: ThemeId[] = [
-  "lavenderLight",
   "velvetDark",
   "playbillLight",
+  "lavenderLight",
   "minimalLight",
   "modernDark",
 ];

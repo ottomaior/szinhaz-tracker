@@ -7,13 +7,13 @@ import { inputFontSize } from "@/theme/type";
 import { gutter, minTouchTarget, overlay, radius, space } from "@/theme/tokens";
 import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
+import { useAtLeast } from "@/hooks/useBreakpoint";
 import { useRecentSearches } from "@/hooks/useRecentSearches";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   getCities,
   getFilterGenres,
   getFilterVenues,
-  getNowPlaying,
   getPremieres,
   getTrending,
   getUpcomingProgram,
@@ -26,35 +26,45 @@ import { getFriendsRecentPlays } from "@/services/friendsService";
 import { searchPlays, type SortKey } from "@/services/searchService";
 import { searchPeople, type PersonSearchResult } from "@/services/peopleService";
 import type { Play, ProgramEntry, Venue, VenueType } from "@/data/types";
-import { SearchIcon, PlusIcon, CloseIcon } from "@/components/icons/Icons";
+import { SearchIcon, CloseIcon } from "@/components/icons/Icons";
 import { MaskIcon } from "@/components/icons/MaskIcon";
 import { Avatar } from "@/components/ui/Avatar";
+import { Button, IconButton } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { SelectChip, type SelectOption } from "@/components/ui/SelectChip";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ListCard } from "@/components/ui/ListCard";
-import { PosterCardSkeleton, SkeletonRail } from "@/components/ui/Skeleton";
+import { ListsBody } from "@/components/ui/ListsBody";
+import { PosterCardSkeleton, Skeleton, SkeletonRail } from "@/components/ui/Skeleton";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
-import { Screen } from "@/components/ui/Screen";
+import { ProgramRow, ProgramRowSkeleton } from "@/components/ui/ProgramRow";
+import { Screen, ContentColumn } from "@/components/ui/Screen";
 import { ProgramView } from "@/components/ui/ProgramView";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Grid } from "@/components/ui/Grid";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 import { personInitials } from "@/utils/people";
-import { budapestDayKey, formatTime, todayInBudapest } from "@/utils/datetime";
+import { budapestDayKey, formatRuntimeMinutes, formatTime, formatWeekday, todayInBudapest } from "@/utils/datetime";
 import { makeStyles } from "@/theme/styles";
 
 const FILTERS = [strings.discover.filterAll, strings.discover.filterKoszinhaz, strings.discover.filterFuggetlen, strings.discover.filterSzabadteri];
 
 /**
  * How many editorial lists Discover shows before sending people to the full
- * screen. Three is a shelf; ten is a second Listák screen with no way out.
+ * tab. Three is a shelf; ten is a second Listák screen with no way out.
  */
 const FEATURED_LIST_LIMIT = 3;
 
 /** How many of the productions your follows have been to the rail carries. */
 const FRIENDS_RAIL_LIMIT = 10;
+
+/**
+ * How many evenings the lead section carries: one as the hero, the rest as a
+ * programme. Seven is about a week of a two-city catalogue.
+ */
+const UPCOMING_LIMIT = 7;
 
 /**
  * Whether to offer the venue-type chips.
@@ -88,20 +98,26 @@ const FILTER_TO_VENUE_TYPE: Record<string, VenueType | undefined> = {
 const TILE_ASPECT = 3 / 4;
 
 /**
- * Discover answers two different questions and now says which one it is on.
+ * Discover answers three questions and says which one it is on.
  *
- * "Felfedezés" is the browse rails: what is worth seeing, ranked. "Műsor" is
- * the calendar: pick an evening, see what is on that night across every
- * theatre in scope. The second was not reachable at all before — every query
- * in the app started from a production and asked when it played, never from a
- * date — even though the sync job has been collecting showtimes all along.
+ * "Felfedezés" is the browse screen: what is on next, what is worth seeing.
+ * "Műsor" is the calendar: pick an evening, see what is on that night across
+ * every theatre in scope. "Listák" is the editorial shelf and the reader's own
+ * lists. They used to be a segmented switch and a modal; as tabs under the
+ * title they are places a reader can go rather than modes a screen can be in.
  *
- * A fifth bottom tab would have been the obvious home for it, and is why it is
- * here instead: components/ui/TabBar splits the routes around a raised centre
- * button, so an odd number of tabs puts three on one side and two on the other
- * and pulls the "+" off centre.
+ * A fifth bottom tab would have been the obvious home for the calendar, and
+ * is why it is here instead: components/ui/TabBar splits the routes around a
+ * raised centre button, so an odd number of tabs puts three on one side and
+ * two on the other and pulls the "+" off centre.
  */
-type DiscoverMode = "browse" | "program";
+type DiscoverMode = "browse" | "program" | "lists";
+
+const MODES: { key: DiscoverMode; label: string }[] = [
+  { key: "browse", label: strings.program.modeBrowse },
+  { key: "program", label: strings.program.modeProgram },
+  { key: "lists", label: strings.lists.headerTitle },
+];
 
 /**
  * The sort options, and why there are two sets.
@@ -133,6 +149,9 @@ export default function DiscoverScreen() {
   const insets = useSafeAreaInsets();
   const fontsLoaded = useAppFonts();
   const router = useRouter();
+  // From 900pt the lead goes two-column: the hero beside the programme rather
+  // than above it, so a desktop window is not a phone column with margins.
+  const wide = useAtLeast("expanded");
   // Set when something else in the app means "show me this theatre" — today
   // that is a followed venue on the watchlist, which has no page of its own to
   // open. Applied once, in an effect below, so the chip stays the user's to
@@ -146,7 +165,7 @@ export default function DiscoverScreen() {
   const [venues, setVenues] = useState<Venue[]>([]);
   const [activeVenueId, setActiveVenueId] = useState<string>();
   const [query, setQuery] = useState("");
-  const [nowPlaying, setNowPlaying] = useState<Play[]>([]);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [premieres, setPremieres] = useState<Play[]>([]);
   const [trending, setTrending] = useState<Play[]>([]);
   const [searchResults, setSearchResults] = useState<Play[]>([]);
@@ -216,8 +235,7 @@ export default function DiscoverScreen() {
   /**
    * The editorial lists, fetched once and never refetched per filter.
    *
-   * This is the half of 0025 that had not reached the screen it was written
-   * for. A brand-new account's Discover is otherwise led by "Népszerű", a grid
+   * A brand-new account's Discover is otherwise led by "Népszerű", a grid
    * ordered by an average over five reviews across 1,214 productions — not a
    * popularity signal, and no amount of waiting makes it one. A hand-made list
    * is worth reading on day one.
@@ -303,7 +321,7 @@ export default function DiscoverScreen() {
   }, [session]);
 
   /**
-   * The next few evenings.
+   * The next few evenings — the screen's lead.
    *
    * Scoped to the city and nothing else. The genre and venue chips narrow the
    * grid below, but this section answers "what is on near me soon", and a
@@ -316,7 +334,7 @@ export default function DiscoverScreen() {
   useEffect(() => {
     if (mode !== "browse") return;
     let active = true;
-    getUpcomingProgram({ city })
+    getUpcomingProgram({ city }, { limit: UPCOMING_LIMIT })
       .then(({ entries }) => {
         if (!active) return;
         setUpcoming(entries);
@@ -374,15 +392,12 @@ export default function DiscoverScreen() {
     setBrowseLoading(true);
     try {
       const scoped = { venueType, city, venueId, genre, includeArchived };
-      const [nextNowPlaying, nextPremieres, firstPage] = await Promise.all([
-        // These two stay current-only whatever the scope says: an archived
-        // production has no future date to be "on soon" and no premiere ahead
-        // of it. Passing the flag would widen them to nothing.
-        getNowPlaying({ venueType, city, venueId, genre }),
+      const [nextPremieres, firstPage] = await Promise.all([
+        // Current-only whatever the scope says: an archived production has no
+        // premiere ahead of it. Passing the flag would widen it to nothing.
         getPremieres({ venueType, city, venueId, genre }),
         getTrending(scoped, browseSort, 0),
       ]);
-      setNowPlaying(nextNowPlaying);
       setPremieres(nextPremieres);
       setTrending(firstPage.plays);
       setTrendingTotal(firstPage.total);
@@ -434,8 +449,8 @@ export default function DiscoverScreen() {
   }, [loadingMore, trendingPage, venueType, city, venueId, genre, includeArchived, browseSort]);
 
   useEffect(() => {
-    // Skipped in program mode: three rail queries whose results nothing
-    // renders is a round trip per filter change for nothing.
+    // Skipped off the browse tab: rail queries whose results nothing renders
+    // are a round trip per filter change for nothing.
     if (mode !== "browse") return;
     loadBrowse();
   }, [loadBrowse, mode]);
@@ -489,52 +504,123 @@ export default function DiscoverScreen() {
     return () => clearTimeout(handle);
   }, [query, isSearching]);
 
-  const hasBrowseContent = nowPlaying.length > 0 || premieres.length > 0 || trending.length > 0;
+  const hasBrowseContent = upcoming.length > 0 || premieres.length > 0 || trending.length > 0;
   // Editorial lists are written about the whole catalogue and cannot answer a
   // city or genre filter, so the section steps aside once one is on rather
   // than sitting there ignoring it.
   const browseFiltered = !!(venueType || city || venueId || genre);
   const archivedCount = searchResults.filter((p) => p.isArchived || p.status === "ended").length;
 
+  const openPlay = (id: string) => router.push(`/play/${id}`);
+
+  function closeSearch() {
+    setQuery("");
+    setSearchOpen(false);
+  }
+
   /**
-   * The city scope and the add-a-production button, and why they scroll.
+   * The facet chips, and why they scroll.
    *
-   * Everything above the rails used to be pinned, which on a 411pt phone cost
-   * around 400pt — very nearly half the viewport — before a single poster
-   * appeared, and no amount of scrolling gave any of it back. What has to
-   * stay reachable at all times is the search field and the two rows that
-   * decide what is being listed. The city is a scope you set once a session
-   * and the "+" opens a form, so both ride at the top of the scroll body,
-   * where they are still the first thing you see and the first thing to go.
-   *
-   * The city still leads the content, because it decides what the whole
-   * screen is a list of — the rails and the upcoming timeline both read from
-   * it. It is kept out of the chip row for the same reason as before: there
-   * it looked like one narrowing filter among four.
+   * Everything above the rails used to be pinned: search field, a boxed mode
+   * switch, this row and the city header, which on a 375pt phone cost around
+   * 440pt — more than half the viewport — before a single poster. Now the
+   * pinned bar is the title and the tabs; the chips are the first thing in the
+   * scroll, so they are there when the reader arrives and gone when they are
+   * reading. Facets with nothing to choose between are left out entirely.
    */
-  const titleBlock = (
-    <View style={styles.titleRow}>
-      {cities.length > 1 ? (
+  const chipRow = (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+      {SHOW_VENUE_TYPE_FILTER && (
         <SelectChip
-          variant="header"
-          name={strings.discover.filterCity}
-          value={city}
-          subtitle={venues.length > 0 ? strings.discover.venueCount(venues.length) : undefined}
-          options={cityOptions}
-          onChange={(next) => setActiveCity(next ?? strings.discover.filterAll)}
+          name={strings.discover.filterVenueType}
+          value={activeFilter === strings.discover.filterAll ? undefined : activeFilter}
+          options={venueTypeOptions}
+          onChange={(next) => setActiveFilter(next ?? strings.discover.filterAll)}
         />
-      ) : (
-        <Text variant="title">{strings.discover.title}</Text>
       )}
-      <Pressable
-        style={styles.fab}
-        onPress={() => router.push("/add-play")}
-        hitSlop={8}
-        accessibilityRole="button"
-        accessibilityLabel={strings.discover.addPlayFab}
-      >
-        <PlusIcon size={18} color={colors.gold} />
-      </Pressable>
+
+      {genres.length > 1 && (
+        <SelectChip
+          name={strings.discover.filterGenre}
+          value={activeGenre}
+          options={genreOptions}
+          onChange={setActiveGenre}
+        />
+      )}
+
+      {venues.length > 1 && (
+        <SelectChip
+          name={strings.discover.filterVenue}
+          value={activeVenueId}
+          options={venueOptions}
+          onChange={setActiveVenueId}
+        />
+      )}
+
+      {/* What the grid is a list *of*. Not a filter — it widens rather than
+          narrows — but it belongs in this row because it is the same kind of
+          decision, and because putting it anywhere else would hide the answer
+          to "where is everything else". Browse only: search has covered the
+          archive from the start. */}
+      {mode === "browse" && !isSearching && (
+        <SelectChip
+          name={strings.discover.scopeLabel}
+          title={strings.discover.scopeLabel}
+          value={includeArchived ? "all" : undefined}
+          defaultValue={undefined}
+          options={[
+            { value: undefined, label: strings.discover.scopeCurrent },
+            { value: "all", label: strings.discover.scopeAll },
+          ]}
+          onChange={(next) => setIncludeArchived(next === "all")}
+        />
+      )}
+
+      {/* Sorting sits in the same row rather than on a bar of its own. Not
+          offered in the calendar, where the ordering is the date. */}
+      {mode !== "program" && (
+        <SelectChip
+          name={strings.sort.label}
+          title={strings.sort.label}
+          value={isSearching ? searchSort : browseSort}
+          // Highlighted only once it has been moved off its default, so the
+          // gold on this row always means "changed".
+          defaultValue={isSearching ? "relevance" : "rating"}
+          options={isSearching ? searchSortOptions : browseSortOptions}
+          onChange={(next) => {
+            if (isSearching) setSearchSort((next as SortKey) ?? "relevance");
+            else setBrowseSort((next as BrowseSort) ?? "rating");
+          }}
+        />
+      )}
+    </ScrollView>
+  );
+
+  const hero = upcoming[0];
+  const programme = upcoming.slice(1);
+
+  /**
+   * The lead: the next evening as a hero, and the evenings after it as a
+   * programme. Two columns from 900pt, stacked below.
+   */
+  const lead = hero && (
+    <View style={wide ? styles.leadWide : undefined}>
+      <TonightHero entry={hero} onPress={() => openPlay(hero.playId)} tall={wide} />
+      {programme.length > 0 && (
+        <View style={wide ? styles.leadSide : styles.leadStacked}>
+          <SectionHeader
+            eyebrow={strings.discover.upcomingEyebrow}
+            title={strings.discover.upcomingTitle}
+            action={strings.discover.upcomingAction}
+            onAction={() => setMode("program")}
+          />
+          <View style={{ marginTop: space.xs }}>
+            {programme.map((entry) => (
+              <ProgramRow key={entry.performanceId} entry={entry} onPress={() => openPlay(entry.playId)} />
+            ))}
+          </View>
+        </View>
+      )}
     </View>
   );
 
@@ -542,43 +628,67 @@ export default function DiscoverScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Screen>
         <View style={[styles.header, { paddingTop: insets.top + space.md }]}>
-          <View style={styles.searchBar}>
-            <SearchIcon />
-            <TextInput
-              value={query}
-              onChangeText={setQuery}
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
-              // Recorded on submit rather than on every keystroke, so the list
-              // holds "Katona" and not "K", "Ka", "Kat".
-              onSubmitEditing={() => remember(query)}
-              returnKeyType="search"
-              placeholder={strings.discover.searchPlaceholder}
-              placeholderTextColor={colors.textFaint}
-              accessibilityLabel={strings.discover.searchLabel}
-              style={{ flex: 1, fontFamily: bodyFont(fontsLoaded), fontSize: inputFontSize, color: colors.text }}
-            />
-            {/* Clearing a search by backspacing through it is tedious on a
-                phone, and there was no other way out of the results view. */}
-            {isSearching && (
-              <Pressable onPress={() => setQuery("")} hitSlop={10} accessibilityRole="button" accessibilityLabel={strings.common.close}>
-                <CloseIcon size={15} color={colors.textDim} />
+          {searchOpen ? (
+            <View style={styles.searchBar}>
+              <SearchIcon />
+              <TextInput
+                autoFocus
+                value={query}
+                onChangeText={setQuery}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setSearchFocused(false)}
+                // Recorded on submit rather than on every keystroke, so the
+                // list holds "Katona" and not "K", "Ka", "Kat".
+                onSubmitEditing={() => remember(query)}
+                returnKeyType="search"
+                placeholder={strings.discover.searchPlaceholder}
+                placeholderTextColor={colors.textFaint}
+                accessibilityLabel={strings.discover.searchLabel}
+                style={{ flex: 1, fontFamily: bodyFont(fontsLoaded), fontSize: inputFontSize, color: colors.text }}
+              />
+              {/* One control closes the search whether or not there is a
+                  query: backspacing out of a term on a phone is tedious, and a
+                  field with nothing in it has no other way back. */}
+              <Pressable onPress={closeSearch} hitSlop={10} accessibilityRole="button" accessibilityLabel={strings.discover.searchClose}>
+                <CloseIcon size={16} color={colors.textDim} />
               </Pressable>
-            )}
-          </View>
+            </View>
+          ) : (
+            <View style={styles.titleRow}>
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text variant="display">{strings.discover.title}</Text>
+                {/* The city decides what the whole screen is about, so it is
+                    printed under the title like a season under a theatre's
+                    name, not offered as one chip among the facets. */}
+                {mode !== "lists" && (
+                  <SelectChip
+                    variant="header"
+                    name={strings.discover.filterCity}
+                    value={city}
+                    subtitle={venues.length > 0 ? strings.discover.venueCount(venues.length) : undefined}
+                    options={cityOptions}
+                    onChange={(next) => setActiveCity(next ?? strings.discover.filterAll)}
+                  />
+                )}
+              </View>
+              <IconButton onPress={() => setSearchOpen(true)} accessibilityLabel={strings.discover.searchOpen}>
+                <SearchIcon size={18} color={colors.text} />
+              </IconButton>
+            </View>
+          )}
 
           {/* Only while the field is focused and empty: once there is a query
               the results themselves are the better answer, and the row would
               otherwise sit above the rails permanently. */}
-          {searchFocused && !isSearching && recent.length > 0 && (
-            <View style={{ gap: space.xs }}>
+          {searchOpen && searchFocused && !isSearching && recent.length > 0 && (
+            <View style={{ gap: space.xs, paddingTop: space.sm }}>
               <View style={styles.rowBetween}>
-                <Text variant="caption" tone="faint">{strings.discover.recentTitle}</Text>
+                <Text variant="eyebrow" tone="faint">{strings.discover.recentTitle}</Text>
                 <Pressable onPress={clearRecent} hitSlop={8} accessibilityRole="button">
                   <Text variant="caption" tone="dim">{strings.discover.recentClear}</Text>
                 </Pressable>
               </View>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.sm }}>
                 {recent.map((term) => (
                   <Chip key={term} label={term} active={false} onPress={() => setQuery(term)} />
                 ))}
@@ -586,400 +696,339 @@ export default function DiscoverScreen() {
             </View>
           )}
 
-          {/* Hidden while searching: results are their own answer, and a mode
-              switch above them would silently change what a query returns. */}
+          {/* Hidden while searching: results are their own answer, and a tab
+              row above them would silently change what a query returns. */}
           {!isSearching && (
-            <View style={styles.segmented}>
-              {(
-                [
-                  ["browse", strings.program.modeBrowse],
-                  ["program", strings.program.modeProgram],
-                ] as [DiscoverMode, string][]
-              ).map(([value, label]) => (
-                <Pressable
-                  key={value}
-                  onPress={() => setMode(value)}
-                  style={[styles.segment, mode === value && styles.segmentActive]}
-                  accessibilityRole="tab"
-                  aria-selected={mode === value}
-                  accessibilityState={{ selected: mode === value }}
-                  accessibilityLabel={label}
-                >
-                  <Text variant="label" tone={mode === value ? "default" : "faint"}>
-                    {label}
-                  </Text>
-                </Pressable>
-              ))}
+            <View style={styles.tabs} accessibilityRole="tablist">
+              {MODES.map(({ key, label }) => {
+                const active = mode === key;
+                return (
+                  <Pressable
+                    key={key}
+                    onPress={() => setMode(key)}
+                    style={[styles.tab, active && styles.tabActive]}
+                    accessibilityRole="tab"
+                    aria-selected={active}
+                    accessibilityState={{ selected: active }}
+                    accessibilityLabel={label}
+                  >
+                    <Text variant="label" tone={active ? "default" : "faint"}>
+                      {label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
           )}
-
-          {/*
-            One row of value-carrying chips, replacing four rows of options.
-            Each opens a sheet; each shows what it is currently set to.
-
-            Those four rows pushed the first result to 401px on a 375x812
-            phone — half the screen was controls, and the Musor calendar showed
-            exactly one performance above the fold.
-
-            Chips still carry their value rather than collapsing behind a
-            single "Filters" button: this screen already hides a filter row
-            instead of showing one that returns nothing, and renames the
-            "Nepszeru" heading when the sort stops matching it. A screen
-            quietly filtered to Debrecen and opera, looking unfiltered, would
-            be the same mistake in a new place.
-
-            Facets with nothing to choose between are left out entirely, which
-            is the rule the rows already followed.
-          */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-            {SHOW_VENUE_TYPE_FILTER && (
-              <SelectChip
-                name={strings.discover.filterVenueType}
-                value={activeFilter === strings.discover.filterAll ? undefined : activeFilter}
-                options={venueTypeOptions}
-                onChange={(next) => setActiveFilter(next ?? strings.discover.filterAll)}
-              />
-            )}
-
-            {/* No city chip: it lives in the header now, where it can say what
-                the screen is scoped to rather than looking like one more way
-                to narrow the grid. */}
-            {genres.length > 1 && (
-              <SelectChip
-                name={strings.discover.filterGenre}
-                value={activeGenre}
-                options={genreOptions}
-                onChange={setActiveGenre}
-              />
-            )}
-
-            {venues.length > 1 && (
-              <SelectChip
-                name={strings.discover.filterVenue}
-                value={activeVenueId}
-                options={venueOptions}
-                onChange={setActiveVenueId}
-              />
-            )}
-
-            {/* What the grid is a list *of*. Not a filter — it widens rather
-                than narrows — but it belongs in this row because it is the
-                same kind of decision, and because putting it anywhere else
-                would hide the answer to "where is everything else". Browse
-                only: search has covered the archive from the start. */}
-            {mode === "browse" && !isSearching && (
-              <SelectChip
-                name={strings.discover.scopeLabel}
-                title={strings.discover.scopeLabel}
-                value={includeArchived ? "all" : undefined}
-                defaultValue={undefined}
-                options={[
-                  { value: undefined, label: strings.discover.scopeCurrent },
-                  { value: "all", label: strings.discover.scopeAll },
-                ]}
-                onChange={(next) => setIncludeArchived(next === "all")}
-              />
-            )}
-
-            {/* Sorting sits in the same row rather than on a bar of its own.
-                Not offered in the calendar, where the ordering is the date. */}
-            {mode !== "program" && (
-              <SelectChip
-                name={strings.sort.label}
-                title={strings.sort.label}
-                value={isSearching ? searchSort : browseSort}
-                // Highlighted only once it has been moved off its default, so
-                // the gold on this row always means "changed".
-                defaultValue={isSearching ? "relevance" : "rating"}
-                options={isSearching ? searchSortOptions : browseSortOptions}
-                onChange={(next) => {
-                  if (isSearching) setSearchSort((next as SortKey) ?? "relevance");
-                  else setBrowseSort((next as BrowseSort) ?? "rating");
-                }}
-              />
-            )}
-          </ScrollView>
         </View>
 
         {isSearching ? (
           <ScrollView contentContainerStyle={styles.scrollBody} keyboardShouldPersistTaps="handled">
-            {titleBlock}
-            {/* The people first, and above the count that heads the grid.
-                Typing a performer's name used to return the eleven productions
-                she is in and never her, so the only route to a person page ran
-                through opening one of her plays and pressing her name in the
-                cast strip. Held back while the productions are still loading:
-                the two queries share a debounce, and a list of people from the
-                previous keystroke sitting above a grid of skeletons would be
-                answering a question that has already been retyped. */}
-            {!searching && searchPeopleResults.length > 0 && (
-              <View style={{ gap: space.sm }}>
-                <Text variant="subheading">{strings.discover.peopleResultsTitle}</Text>
-                {searchPeopleResults.map((person) => (
-                  <PersonResultRow
-                    key={person.slug}
-                    person={person}
-                    onPress={() => {
-                      remember(query);
-                      router.push(`/person/${person.slug}`);
-                    }}
-                  />
-                ))}
-              </View>
-            )}
-            <View style={{ gap: space.xs }}>
-              <Text variant="subheading">
-                {searching ? strings.discover.searching : strings.discover.searchResultsTitle(searchResults.length)}
-              </Text>
-              {/* Search covers the theatres' archives as well as what is on
-                  now — that is the point, since the app is for logging plays
-                  you have already seen — but a run of "ended" badges reads as
-                  a bug unless the list says so first. */}
-              {!searching && archivedCount > 0 && (
-                <Text variant="caption" tone="faint">
-                  {strings.discover.includesArchived(archivedCount)}
-                </Text>
-              )}
-            </View>
-            {searching ? (
-              <Grid>
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <PosterCardSkeleton key={i} />
-                ))}
-              </Grid>
-            ) : (
-              <Grid>
-                {searchResults.map((p) => (
-                  <TrendingCard
-                    key={p.id}
-                    play={p}
-                    // Opening a result is the signal that this search was worth
-                    // keeping. Pressing Enter is not: on web the results appear
-                    // as you type, so most searches never submit at all.
-                    onPress={() => {
-                      remember(query);
-                      router.push(`/play/${p.id}`);
-                    }}
-                  />
-                ))}
-              </Grid>
-            )}
-            {/* "Nothing found — add it yourself" would be a lie under a list of
-                people the search did find, and the invitation it carries is to
-                create a duplicate production. */}
-            {!searching && searchResults.length === 0 && searchPeopleResults.length === 0 && (
-              <View style={styles.noResults}>
-                <Text variant="body" tone="dim">
-                  {strings.discover.noResultsTitle}
-                </Text>
-                <Pressable onPress={() => router.push("/add-play")} accessibilityRole="button" hitSlop={8}>
-                  <Text variant="label" tone="accent">
-                    {strings.discover.noResultsAction}
-                  </Text>
-                </Pressable>
-              </View>
-            )}
-          </ScrollView>
-        ) : mode === "program" ? (
-          <ProgramView
-            filters={{ venueType, city, venueId, genre }}
-            header={<View style={styles.scrolledTitle}>{titleBlock}</View>}
-          />
-        ) : (
-          <ScrollView contentContainerStyle={{ paddingBottom: 100, gap: space["2xl"] }}>
-            <View style={styles.scrolledTitle}>{titleBlock}</View>
-            {browseLoading && (
-              <View style={{ gap: space["2xl"] }}>
-                <View style={{ gap: space.md }}>
-                  <View style={{ paddingHorizontal: gutter }}>
-                    <Text variant="subheading">{strings.discover.premieresTitle}</Text>
-                  </View>
-                  <View style={{ paddingHorizontal: gutter }}>
-                    <SkeletonRail />
-                  </View>
-                </View>
-                <View style={{ gap: space.md, paddingHorizontal: gutter }}>
-                  <Text variant="subheading">{strings.discover.trendingTitle}</Text>
-                  <Grid>
-                    {Array.from({ length: 10 }).map((_, i) => (
-                      <PosterCardSkeleton key={i} />
-                    ))}
-                  </Grid>
-                </View>
-              </View>
-            )}
-
-            {/* First rail, and the one the screen is really for: what is on
-                in the next few days, soonest first. */}
-            {!browseLoading && nowPlaying.length > 0 && (
-              <View style={{ gap: space.md }}>
-                <View style={{ paddingHorizontal: gutter }}>
-                  <Text variant="subheading">{strings.discover.nowPlayingTitle}</Text>
-                </View>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
-                  {nowPlaying.map((p) => (
-                    <PremiereCard key={p.id} play={p} onPress={() => router.push(`/play/${p.id}`)} />
-                  ))}
-                </ScrollView>
-              </View>
-            )}
-
-            {/* The calendar, read as a list rather than as a grid of days.
-                "Műsoron most" says what is running; this says which evenings
-                are coming and in what order, which is the question somebody
-                deciding whether to go out this week actually has. Scoped to
-                the city only — see the effect that loads it. */}
-            {!browseLoading && upcoming.length > 0 && (
-              <View style={{ gap: space.md, paddingHorizontal: gutter }}>
-                <View style={styles.rowBetween}>
-                  <Text variant="subheading">{strings.discover.upcomingTitle}</Text>
-                  <Pressable
-                    onPress={() => setMode("program")}
-                    hitSlop={8}
-                    accessibilityRole="button"
-                    accessibilityLabel={strings.program.modeProgram}
-                  >
-                    <Text variant="label" tone="accent">{strings.discover.seeAll}</Text>
-                  </Pressable>
-                </View>
-
-                <View style={{ gap: space.lg }}>
-                  {upcoming.map((entry, i) => (
-                    <UpcomingRow
-                      key={entry.performanceId}
-                      entry={entry}
-                      isLast={i === upcoming.length - 1}
-                      onPress={() => router.push(`/play/${entry.playId}`)}
+            {chipRow}
+            <ContentColumn width="content" style={{ paddingHorizontal: gutter, gap: space.xl }}>
+              {/* The people first, and above the count that heads the grid.
+                  Typing a performer's name used to return the eleven
+                  productions she is in and never her. Held back while the
+                  productions are still loading: the two queries share a
+                  debounce, and a list of people from the previous keystroke
+                  sitting above a grid of skeletons would be answering a
+                  question that has already been retyped. */}
+              {!searching && searchPeopleResults.length > 0 && (
+                <View style={{ gap: space.sm }}>
+                  <SectionHeader eyebrow={strings.discover.searchOpen} title={strings.discover.peopleResultsTitle} />
+                  {searchPeopleResults.map((person) => (
+                    <PersonResultRow
+                      key={person.slug}
+                      person={person}
+                      onPress={() => {
+                        remember(query);
+                        router.push(`/person/${person.slug}`);
+                      }}
                     />
                   ))}
                 </View>
-              </View>
-            )}
-
-            {/* Above the editorial lists, and only for an account that follows
-                somebody: a handful of people you chose beats anything written
-                for everybody, and unlike the lists it is different for every
-                reader. */}
-            {!browseLoading && !browseFiltered && friendsSeen.length > 0 && (
+              )}
               <View style={{ gap: space.md }}>
-                <View style={{ paddingHorizontal: gutter }}>
-                  <Text variant="subheading">{strings.friends.discoverHeading}</Text>
-                </View>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
-                  {friendsSeen.map(({ play }) => (
-                    <PremiereCard key={play.id} play={play} onPress={() => router.push(`/play/${play.id}`)} />
-                  ))}
-                </ScrollView>
-              </View>
-            )}
-
-            {/* Above "Népszerű" on purpose. What is on tonight is a fact and
-                stays first; after that, three hand-made lists are a better
-                thing to put in front of a new account than a grid ranked by an
-                average over five reviews. */}
-            {!browseLoading && !browseFiltered && featuredLists.length > 0 && (
-              <View style={{ gap: space.md, paddingHorizontal: gutter }}>
-                <View style={styles.rowBetween}>
-                  <Text variant="subheading">{strings.discover.featuredListsTitle}</Text>
-                  <Pressable onPress={() => router.push("/lists")} hitSlop={8} accessibilityRole="button">
-                    <Text variant="label" tone="accent">{strings.discover.seeAll}</Text>
-                  </Pressable>
-                </View>
-                {featuredLists.map((list) => (
-                  <ListCard
-                    key={list.id}
-                    list={list}
-                    playsById={listCovers}
-                    onPress={() => router.push({ pathname: "/list/[id]", params: { id: list.id } })}
-                  />
-                ))}
-              </View>
-            )}
-
-            {!browseLoading && premieres.length > 0 && (
-              <View style={{ gap: space.md }}>
-                <View style={[styles.rowBetween, { paddingHorizontal: gutter }]}>
-                  <Text variant="subheading">{strings.discover.premieresTitle}</Text>
-                  {/* This label used to be plain text with nothing behind it. */}
-                  <Pressable onPress={() => setShowAllPremieres((s) => !s)} hitSlop={8} accessibilityRole="button">
-                    <Text variant="label" tone="accent">
-                      {showAllPremieres ? strings.discover.seeLess : strings.discover.seeAll}
-                    </Text>
-                  </Pressable>
-                </View>
-                {showAllPremieres ? (
-                  <Grid style={{ paddingHorizontal: gutter }}>
-                    {premieres.map((p) => (
-                      <TrendingCard key={p.id} play={p} onPress={() => router.push(`/play/${p.id}`)} />
+                <SectionHeader
+                  eyebrow={strings.discover.searchOpen}
+                  title={searching ? strings.discover.searching : strings.discover.searchResultsTitle(searchResults.length)}
+                  // Search covers the theatres' archives as well as what is
+                  // on now — that is the point, since the app is for logging
+                  // plays you have already seen — but a run of "ended" badges
+                  // reads as a bug unless the list says so first.
+                  action={!searching && archivedCount > 0 ? strings.discover.includesArchived(archivedCount) : undefined}
+                />
+                {searching ? (
+                  <Grid>
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <PosterCardSkeleton key={i} />
                     ))}
                   </Grid>
                 ) : (
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
-                    {premieres.map((p) => (
-                      <PremiereCard key={p.id} play={p} onPress={() => router.push(`/play/${p.id}`)} />
+                  <Grid>
+                    {searchResults.map((p) => (
+                      <TrendingCard
+                        key={p.id}
+                        play={p}
+                        // Opening a result is the signal that this search was
+                        // worth keeping. Pressing Enter is not: on web the
+                        // results appear as you type, so most searches never
+                        // submit at all.
+                        onPress={() => {
+                          remember(query);
+                          openPlay(p.id);
+                        }}
+                      />
                     ))}
-                  </ScrollView>
+                  </Grid>
                 )}
               </View>
-            )}
+              {/* "Nothing found — add it yourself" would be a lie under a list
+                  of people the search did find, and the invitation it carries
+                  is to create a duplicate production. */}
+              {!searching && searchResults.length === 0 && searchPeopleResults.length === 0 && (
+                <EmptyState
+                  eyebrow={strings.discover.searchOpen}
+                  title={strings.discover.noResultsTitle}
+                  actionLabel={strings.discover.noResultsAction}
+                  onAction={() => router.push("/add-play")}
+                />
+              )}
+            </ContentColumn>
+          </ScrollView>
+        ) : mode === "program" ? (
+          <ProgramView filters={{ venueType, city, venueId, genre }} header={chipRow} />
+        ) : mode === "lists" ? (
+          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scrollBody}>
+            <ContentColumn width="content" style={{ padding: gutter }}>
+              <ListsBody />
+            </ContentColumn>
+          </ScrollView>
+        ) : (
+          <ScrollView contentContainerStyle={styles.scrollBody}>
+            {chipRow}
 
-            {!browseLoading && trending.length > 0 && (
-              <View style={{ gap: space.md, paddingHorizontal: gutter }}>
-                <View style={{ gap: space.xs }}>
-                  <Text variant="subheading">
-                    {/* The heading follows both the sort and the scope. "Népszerű"
-                        is a claim about ratings; leaving it up while the grid is
-                        ordered by premiere date would describe the wrong list,
-                        and so would leaving it up over a list that is mostly
-                        productions which closed years ago. */}
-                    {includeArchived
-                      ? city
-                        ? strings.discover.allIncludingArchiveInCity(city)
-                        : strings.discover.allIncludingArchive
-                      : browseSort !== "rating"
-                        ? strings.discover.allPlaysTitle
-                        : city
-                          ? strings.discover.trendingTitleInCity(city)
-                          : strings.discover.trendingTitle}
-                  </Text>
-                  {/* How many there are, not how many fit. The grid used to stop
-                      at forty with nothing saying whether that was the answer
-                      or the limit — which for Debrecen meant 40 of 242. */}
-                  <Text variant="caption" tone="faint">
-                    {strings.discover.showingCount(trending.length, trendingTotal)}
-                  </Text>
+            {browseLoading && (
+              <View style={{ gap: space["2xl"], paddingHorizontal: gutter }}>
+                <View style={{ aspectRatio: wide ? 16 / 7 : HERO_ASPECT }}>
+                  <Skeleton width="100%" height="100%" radius={radius.lg} />
+                </View>
+                <View>
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <ProgramRowSkeleton key={i} />
+                  ))}
                 </View>
                 <Grid>
-                  {trending.map((p) => (
-                    <TrendingCard key={p.id} play={p} onPress={() => router.push(`/play/${p.id}`)} />
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <PosterCardSkeleton key={i} />
                   ))}
                 </Grid>
-                {trending.length < trendingTotal && (
-                  <Pressable
-                    onPress={loadMoreTrending}
-                    disabled={loadingMore}
-                    accessibilityRole="button"
-                    style={[styles.loadMore, { opacity: loadingMore ? 0.55 : 1 }]}
-                  >
-                    <Text variant="label" tone="accent">
-                      {loadingMore ? strings.discover.loadingMore : strings.discover.loadMore}
-                    </Text>
-                  </Pressable>
-                )}
               </View>
             )}
 
-            {!browseLoading && !hasBrowseContent && (
-              <EmptyState
-                title={browseFailed ? strings.common.loadError : strings.discover.emptyTitle}
-                body={browseFailed ? undefined : strings.discover.emptyBody}
-                actionLabel={browseFailed ? strings.common.retry : strings.discover.addPlayFab}
-                onAction={browseFailed ? loadBrowse : () => router.push("/add-play")}
-              />
+            {!browseLoading && (
+              <View style={{ gap: space["3xl"] }}>
+                {!!lead && <View style={{ paddingHorizontal: gutter }}>{lead}</View>}
+
+                {/* Above the editorial lists, and only for an account that
+                    follows somebody: a handful of people you chose beats
+                    anything written for everybody, and unlike the lists it is
+                    different for every reader. */}
+                {!browseFiltered && friendsSeen.length > 0 && (
+                  <View style={{ gap: space.md }}>
+                    <SectionHeader
+                      style={{ paddingHorizontal: gutter }}
+                      eyebrow={strings.feed.scopeFollowing}
+                      title={strings.friends.discoverHeading}
+                    />
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
+                      {friendsSeen.map(({ play }) => (
+                        <PremiereCard key={play.id} play={play} onPress={() => openPlay(play.id)} />
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
+
+                {/* Above "Népszerű" on purpose. What is on tonight is a fact
+                    and stays first; after that, three hand-made lists are a
+                    better thing to put in front of a new account than a grid
+                    ranked by an average over five reviews. */}
+                {!browseFiltered && featuredLists.length > 0 && (
+                  <View style={{ gap: space.sm, paddingHorizontal: gutter }}>
+                    <SectionHeader
+                      eyebrow={strings.discover.featuredEyebrow}
+                      title={strings.lists.headerTitle}
+                      action={strings.discover.seeAll}
+                      onAction={() => setMode("lists")}
+                    />
+                    {featuredLists.map((list) => (
+                      <ListCard
+                        key={list.id}
+                        list={list}
+                        playsById={listCovers}
+                        onPress={() => router.push({ pathname: "/list/[id]", params: { id: list.id } })}
+                      />
+                    ))}
+                  </View>
+                )}
+
+                {premieres.length > 0 && (
+                  <View style={{ gap: space.md }}>
+                    <SectionHeader
+                      style={{ paddingHorizontal: gutter }}
+                      eyebrow={strings.discover.premieresEyebrow}
+                      title={strings.discover.premieresTitle}
+                      action={showAllPremieres ? strings.discover.seeLess : strings.discover.seeAll}
+                      onAction={() => setShowAllPremieres((s) => !s)}
+                    />
+                    {showAllPremieres ? (
+                      <Grid style={{ paddingHorizontal: gutter }}>
+                        {premieres.map((p) => (
+                          <TrendingCard key={p.id} play={p} onPress={() => openPlay(p.id)} />
+                        ))}
+                      </Grid>
+                    ) : (
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
+                        {premieres.map((p) => (
+                          <PremiereCard key={p.id} play={p} onPress={() => openPlay(p.id)} />
+                        ))}
+                      </ScrollView>
+                    )}
+                  </View>
+                )}
+
+                {trending.length > 0 && (
+                  <View style={{ gap: space.md, paddingHorizontal: gutter }}>
+                    <SectionHeader
+                      // The heading follows both the sort and the scope.
+                      // "Népszerű" is a claim about ratings; leaving it up
+                      // while the grid is ordered by premiere date would
+                      // describe the wrong list, and so would leaving it up
+                      // over a list that is mostly productions which closed
+                      // years ago. The eyebrow carries the scope, the title
+                      // the claim.
+                      eyebrow={
+                        includeArchived
+                          ? strings.discover.trendingEyebrowArchive
+                          : browseSort !== "rating"
+                            ? strings.discover.trendingEyebrowSorted
+                            : strings.discover.trendingEyebrow
+                      }
+                      title={
+                        includeArchived || browseSort !== "rating"
+                          ? city
+                            ? city
+                            : strings.discover.allPlaysTitle
+                          : city
+                            ? strings.discover.trendingTitleInCity(city)
+                            : strings.discover.trendingTitle
+                      }
+                      // How many there are, not how many fit. The grid used
+                      // to stop at forty with nothing saying whether that was
+                      // the answer or the limit.
+                      action={strings.discover.showingCount(trending.length, trendingTotal)}
+                    />
+                    <Grid>
+                      {trending.map((p) => (
+                        <TrendingCard key={p.id} play={p} onPress={() => openPlay(p.id)} />
+                      ))}
+                    </Grid>
+                    {trending.length < trendingTotal && (
+                      <Button
+                        variant="outline"
+                        label={loadingMore ? strings.discover.loadingMore : strings.discover.loadMore}
+                        disabled={loadingMore}
+                        onPress={loadMoreTrending}
+                        style={styles.loadMore}
+                      />
+                    )}
+                    {/* The rare favour a reader does the catalogue: a
+                        production the sync has not found. It used to be a
+                        floating "+" in the header, where it competed with the
+                        one action the app is built around. */}
+                    <Button
+                      variant="text"
+                      label={strings.discover.addPlayFab}
+                      onPress={() => router.push("/add-play")}
+                      style={{ alignSelf: "center" }}
+                    />
+                  </View>
+                )}
+
+                {!hasBrowseContent && (
+                  <EmptyState
+                    eyebrow={strings.discover.title}
+                    title={browseFailed ? strings.common.loadError : strings.discover.emptyTitle}
+                    body={browseFailed ? undefined : strings.discover.emptyBody}
+                    actionLabel={browseFailed ? strings.common.retry : strings.discover.addPlayFab}
+                    onAction={browseFailed ? loadBrowse : () => router.push("/add-play")}
+                  />
+                )}
+              </View>
             )}
           </ScrollView>
         )}
       </Screen>
+    </View>
+  );
+}
+
+/**
+ * The hero's proportions on a phone: a touch taller than square, so a
+ * landscape production still fills the frame and a portrait poster is not
+ * beheaded, with room under the scrim for three lines and a button.
+ */
+const HERO_ASPECT = 4 / 4.6;
+
+/**
+ * The next evening, as the thing the screen is for.
+ *
+ * "What is on tonight" used to be a 132pt thumbnail in a rail. Here it is the
+ * lead: the full poster with the title, the curtain time and the theatre set
+ * on it, and the one filled gold button on the screen. Everything on the
+ * image takes its colour from `overlay` rather than from the palette — the
+ * scrim under it is the stage in every theme.
+ */
+function TonightHero({ entry, onPress, tall }: { entry: ProgramEntry; onPress: () => void; tall: boolean }) {
+  const styles = useStyles();
+
+  const isToday = budapestDayKey(entry.startsAt) === todayInBudapest();
+  const genre = entry.genreNormalized ? strings.genres[entry.genreNormalized] ?? entry.genreNormalized : undefined;
+  const credits = [
+    entry.director ? strings.discover.heroDirected(entry.director) : undefined,
+    genre,
+    entry.runtimeMinutes != null ? formatRuntimeMinutes(entry.runtimeMinutes) : undefined,
+  ].filter(Boolean);
+
+  // The image is the pressable and the button sits beside it in the tree, not
+  // inside it: a Pressable within a Pressable renders as a <button> inside a
+  // <button> on the web, which the DOM forbids.
+  return (
+    <View style={[styles.hero, tall ? styles.heroTall : { aspectRatio: HERO_ASPECT }]}>
+      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={entry.title} style={StyleSheet.absoluteFill}>
+        <PosterPlaceholder poster={entry.poster} title={entry.title} seed={entry.playId} height="100%" radius={0} scrim priority="high" />
+      </Pressable>
+      <View style={styles.heroBadge} pointerEvents="none">
+        <Text variant="eyebrow" style={{ color: overlay.onImageAccent }}>
+          {isToday ? strings.discover.heroTonight : strings.discover.heroNext(formatWeekday(entry.startsAt))}
+        </Text>
+      </View>
+      <View style={styles.heroCaption} pointerEvents="box-none">
+        <Text variant="eyebrow" style={{ color: overlay.onImageAccent }}>
+          {formatTime(entry.startsAt)} · {entry.venueName}
+        </Text>
+        <Text variant="display" numberOfLines={2} style={{ color: overlay.onImageHeading }}>
+          {entry.title}
+        </Text>
+        {credits.length > 0 && (
+          <Text variant="bodySmall" numberOfLines={2} style={{ color: overlay.onImageText }}>
+            {credits.join(" · ")}
+          </Text>
+        )}
+        <View style={styles.heroActions}>
+          <Button label={strings.discover.heroOpen} onPress={onPress} style={styles.heroButton} />
+        </View>
+      </View>
     </View>
   );
 }
@@ -1015,6 +1064,14 @@ function PremiereCard({ play, onPress }: { play: Play; onPress: () => void }) {
   );
 }
 
+/**
+ * One production in a grid: the poster and two lines, nothing on the artwork.
+ *
+ * The rating used to be a black pill over the image and every tile wore a
+ * status badge, so forty tiles carried eighty pieces of chrome over the one
+ * thing worth looking at. Now the rating sits at the end of the venue line and
+ * the status appears only when it is news — see StatusBadge's `inline`.
+ */
 function TrendingCard({ play, onPress }: { play: Play; onPress: () => void }) {
   const styles = useStyles();
 
@@ -1025,24 +1082,26 @@ function TrendingCard({ play, onPress }: { play: Play; onPress: () => void }) {
     <Pressable onPress={onPress} style={{ gap: space.sm }} accessibilityRole="button" accessibilityLabel={play.title}>
       <View style={{ aspectRatio: TILE_ASPECT }}>
         <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} height="100%" radius={radius.md} preferThumb />
-        {/* Unrated plays used to show a gold "0.0" badge, which reads as a
-            rock-bottom score rather than as "nobody has rated this yet". */}
-        {hasRatings && (
-          <View style={styles.ratingBadge}>
-            <MaskIcon state="on" size={11} />
-            <Text variant="caption" tone="accent">
-              {play.rating.overall.toFixed(1)}
-            </Text>
-          </View>
-        )}
       </View>
-      <Text variant="label" numberOfLines={2}>
-        {play.title}
-      </Text>
-      <Text variant="caption" tone="faint" numberOfLines={2}>
-        {venue?.name}
-      </Text>
-      <StatusBadge status={play.status} size="sm" />
+      <View style={{ gap: 3 }}>
+        <Text variant="label" numberOfLines={2}>
+          {play.title}
+        </Text>
+        <View style={styles.tileMeta}>
+          <Text variant="caption" tone="faint" numberOfLines={1} style={{ flexShrink: 1 }}>
+            {venue?.name}
+          </Text>
+          {hasRatings && (
+            <View style={styles.tileRating}>
+              <MaskIcon state="on" size={10} />
+              <Text variant="caption" tone="accent">
+                {play.rating.overall.toFixed(1)}
+              </Text>
+            </View>
+          )}
+        </View>
+        <StatusBadge status={play.status} inline />
+      </View>
     </Pressable>
   );
 }
@@ -1090,165 +1149,18 @@ function PersonResultRow({ person, onPress }: { person: PersonSearchResult; onPr
   );
 }
 
-
-/**
- * The month and day of a performance, as Budapest sees them.
- *
- * Built with an explicit time zone rather than from the device's: a 19:00
- * curtain is 17:00 UTC, and a reader in another zone would otherwise be shown
- * the wrong day for a show they are booking in Hungary.
- */
-function budapestDatePart(iso: string, part: "month" | "day"): string {
-  return new Intl.DateTimeFormat("hu-HU", {
-    timeZone: "Europe/Budapest",
-    ...(part === "month" ? { month: "short" as const } : { day: "numeric" as const }),
-  }).format(new Date(iso));
-}
-
-/**
- * One evening on the "Közelgő előadások" timeline.
- *
- * The date sits outside the card, in its own column with a rule running down
- * from it, so somebody scanning for "when" reads one left-aligned strip of
- * dates instead of hunting for a stamp inside each image. Today is named
- * rather than dated: "Ma" is the answer a reader is looking for, and a
- * reader who wants the number has the rest of the row.
- *
- * The last row draws no rule. A line trailing off the bottom of the section
- * would promise more evenings below it than there are.
- */
-function UpcomingRow({
-  entry,
-  isLast,
-  onPress,
-}: {
-  entry: ProgramEntry;
-  isLast: boolean;
-  onPress: () => void;
-}) {
-  const styles = useStyles();
-
-  const isToday = budapestDayKey(entry.startsAt) === todayInBudapest();
-  const genreLabel = entry.genreNormalized
-    ? strings.genres[entry.genreNormalized] ?? entry.genreNormalized
-    : undefined;
-
-  return (
-    <View style={styles.upcomingRow}>
-      <View style={styles.upcomingDateCol}>
-        <View style={[styles.upcomingDateBox, isToday && styles.upcomingDateBoxToday]}>
-          <Text variant="caption" tone={isToday ? "accent" : "faint"} style={styles.upcomingMonth}>
-            {isToday ? strings.discover.upcomingToday : budapestDatePart(entry.startsAt, "month")}
-          </Text>
-          <Text variant="subheading" tone={isToday ? "accent" : "default"}>
-            {budapestDatePart(entry.startsAt, "day")}
-          </Text>
-        </View>
-        {!isLast && <View style={styles.upcomingLine} />}
-      </View>
-
-      <Pressable
-        style={styles.upcomingBody}
-        onPress={onPress}
-        accessibilityRole="button"
-        accessibilityLabel={entry.title}
-      >
-        <PosterPlaceholder
-          poster={entry.poster}
-          title={entry.title}
-          seed={entry.playId}
-          height={122}
-          radius={radius.md}
-          preferThumb
-        />
-        <Text variant="subheading" numberOfLines={2}>
-          {entry.title}
-        </Text>
-        <View style={styles.upcomingMeta}>
-          <Text variant="caption" tone="faint" numberOfLines={1} style={{ flexShrink: 1 }}>
-            {formatTime(entry.startsAt)} · {entry.venueName}
-          </Text>
-          {/* Absent rather than blank when the source published no genre —
-              0016 leaves it null on purpose, and an empty pill would claim a
-              classification the catalogue does not have. */}
-          {!!genreLabel && (
-            <View style={styles.genrePill}>
-              <Text variant="caption" tone="dim">{genreLabel}</Text>
-            </View>
-          )}
-        </View>
-      </Pressable>
-    </View>
-  );
-}
 const useStyles = makeStyles((colors) => StyleSheet.create({
-
-  upcomingRow: { flexDirection: "row", gap: space.md, alignItems: "stretch" },
-  upcomingDateCol: { width: 60, alignItems: "center", gap: space.sm },
-  upcomingDateBox: {
-    width: 60,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    paddingVertical: space.sm,
-    alignItems: "center",
-    gap: 2,
-  },
-  upcomingDateBoxToday: { borderColor: colors.goldTintBorder, backgroundColor: colors.goldTintBg },
-  upcomingMonth: { textTransform: "uppercase", letterSpacing: 0.06 },
-  /* Runs from the date box to the bottom of the row, so the dates read as one
-     column rather than as a stack of unrelated boxes. */
-  upcomingLine: { width: 1, flex: 1, backgroundColor: colors.hairline, minHeight: space.md },
-  upcomingBody: { flex: 1, minWidth: 0, gap: space.sm },
-  upcomingMeta: { flexDirection: "row", alignItems: "center", gap: space.sm },
-  genrePill: {
-    backgroundColor: colors.neutralTintBg,
-    borderRadius: radius.pill,
-    paddingHorizontal: 9,
-    paddingVertical: 3,
-  },
-  personRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.md,
-    paddingVertical: space.sm,
-  },
-  /* Search, mode and filters, and nothing else. The gaps are `md` rather than
-     `lg`: with three rows left instead of five, `lg` between them read as a
-     gap where something had been taken out. */
   header: {
     paddingHorizontal: gutter,
-    paddingBottom: space.md,
-    gap: space.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.hairlineSoft,
   },
-  titleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  /* The title block inside a scroll body that does not pad its own children —
-     browse and Műsor both run full-bleed rails. */
-  scrolledTitle: { paddingHorizontal: gutter, paddingTop: space.md },
-  /* Deliberately not a filled gold circle. The tab bar's raised "+" is one,
-     and it opens the check-in — the thing this app is for. This "+" adds a
-     production the catalogue is missing, which is a rare favour a reader does
-     us, and when the two wore the same gold circle and the same glyph they
-     were on screen together with nothing to tell them apart. Outlined, it
-     still reads as an add and still clears the 44pt target, but it no longer
-     competes with the one action the screen is built around. */
-  fab: {
-    width: minTouchTarget,
-    height: minTouchTarget,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    backgroundColor: colors.surface,
-    alignItems: "center",
-    justifyContent: "center",
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: space.md,
   },
-  /* A field, not a banner. It was set at `md`/`lg` padding, which made it the
-     largest control on the screen for a query most sessions never type.
-     `sm`/`md` still clears the 40pt a text cursor wants and gives about ten
-     points back to the content below. */
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
@@ -1257,45 +1169,67 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.hairline,
     borderRadius: radius.md,
-    paddingVertical: space.sm,
     paddingHorizontal: space.md,
+    minHeight: minTouchTarget,
   },
-  chipRow: { gap: space.sm, paddingRight: gutter },
-  segmented: {
-    flexDirection: "row",
+  tabs: { flexDirection: "row", gap: space["2xl"], marginTop: space.sm },
+  tab: { paddingVertical: space.md - 2, borderBottomWidth: 2, borderBottomColor: "transparent" },
+  tabActive: { borderBottomColor: colors.gold },
+  chipRow: { gap: space.sm, paddingHorizontal: gutter, paddingVertical: space.md },
+  rowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  scrollBody: { paddingBottom: 100 },
+
+  // `flex-start`, not `stretch`: the programme beside the hero is six rows
+  // tall, and a hero stretched to match became a portrait twice the height of
+  // the poster it was showing.
+  leadWide: { flexDirection: "row", gap: space["2xl"], alignItems: "flex-start" },
+  leadSide: {
+    flex: 1,
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.hairline,
-    borderRadius: radius.md,
-    padding: 3,
-    gap: 3,
+    borderColor: colors.hairlineSoft,
+    borderRadius: radius.lg,
+    paddingHorizontal: space.lg,
+    paddingTop: space.lg,
+    paddingBottom: space.xs,
   },
-  segment: { flex: 1, alignItems: "center", paddingVertical: space.sm, borderRadius: radius.sm },
-  segmentActive: { backgroundColor: colors.surface2 },
-  scrollBody: { padding: gutter, paddingBottom: 100, gap: space.lg },
-  rail: { gap: space.lg, paddingHorizontal: gutter },
-  railCard: { width: 132, gap: space.sm },
-  rowBetween: { flexDirection: "row", alignItems: "baseline", justifyContent: "space-between" },
-  noResults: { alignItems: "center", gap: space.md, paddingVertical: space["3xl"] },
-  loadMore: {
-    alignSelf: "center",
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    borderRadius: 999,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    marginTop: space.sm,
+  leadStacked: { marginTop: space["2xl"] },
+
+  hero: {
+    borderRadius: radius.lg,
+    overflow: "hidden",
+    backgroundColor: colors.surface2,
+    width: "100%",
   },
-  ratingBadge: {
+  heroTall: { flex: 1.35, aspectRatio: 1.15, alignSelf: "flex-start" },
+  heroBadge: {
     position: "absolute",
-    top: space.sm,
-    right: space.sm,
+    top: space.lg,
+    left: space.lg,
     backgroundColor: overlay.onImage,
     borderRadius: radius.pill,
-    paddingVertical: 3,
-    paddingHorizontal: space.sm,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+  },
+  heroCaption: {
+    position: "absolute",
+    left: space.lg,
+    right: space.lg,
+    bottom: space.lg,
+    gap: 6,
+  },
+  heroActions: { flexDirection: "row", alignItems: "center", gap: space.lg, marginTop: space.sm },
+  heroButton: { paddingVertical: 10, paddingHorizontal: space.lg, borderRadius: radius.md },
+
+  rail: { gap: space.lg, paddingHorizontal: gutter },
+  railCard: { width: 132, gap: space.sm },
+  tileMeta: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: space.sm },
+  tileRating: { flexDirection: "row", alignItems: "center", gap: 4 },
+  personRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 3,
+    gap: space.md,
+    paddingVertical: space.sm,
   },
+  loadMore: { alignSelf: "center", minWidth: 220 },
 }));

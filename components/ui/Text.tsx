@@ -20,7 +20,10 @@ import { useColors } from "@/theme/styles";
  */
 export function Text({
   variant = "body",
-  tone = "default",
+  // Left undefined rather than defaulted to "default": a few roles — the
+  // eyebrow, the numeral — carry their own tone, and theme/type.ts applies it
+  // only when the call site has named none.
+  tone,
   style,
   ...rest
 }: RNTextProps & {

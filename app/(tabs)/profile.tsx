@@ -14,6 +14,7 @@ import { PlayRow } from "@/components/ui/PlayRow";
 import { MaskRatingRow } from "@/components/icons/MaskIcon";
 import { ChevronRightIcon, SettingsIcon } from "@/components/icons/Icons";
 import { Screen } from "@/components/ui/Screen";
+import { SignedOutState } from "@/components/ui/SignedOutState";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 import { currentSeasonStart } from "@/utils/season";
@@ -98,12 +99,9 @@ export default function ProfileScreen() {
         <View style={styles.signedOutBar}>
           <SettingsButton onPress={() => router.push("/settings")} />
         </View>
-        <View style={[styles.emptyState, { flex: 1, justifyContent: "center" }]}>
-          <Text variant="body" tone="dim" style={{ marginBottom: space.lg }}>
-            {strings.profile.signInPrompt}
-          </Text>
-          <Button label={strings.profile.signInButton} onPress={() => router.push("/sign-in")} />
-        </View>
+        <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+          <SignedOutState lead="diary" />
+        </ScrollView>
       </View>
     );
   }
@@ -164,7 +162,7 @@ export default function ProfileScreen() {
           )}
 
           <View style={{ marginTop: 12, gap: 2 }}>
-            <Text variant="title">{user.name}</Text>
+            <Text variant="display">{user.name}</Text>
             <Text variant="bodySmall" tone="faint">
               {[`@${user.handle}`, user.city].filter(Boolean).join(" · ")}
             </Text>
@@ -389,7 +387,7 @@ function Stat({ value, label, gold = false }: { value: number; label: string; go
 
   return (
     <View style={styles.stat}>
-      <Text variant="heading" tone={gold ? "accent" : "default"}>
+      <Text variant="numeral" tone={gold ? "accent" : "default"}>
         {value}
       </Text>
       <Text variant="caption" tone="faint" style={{ textAlign: "center" }}>

@@ -15,6 +15,7 @@ import { PlayRow } from "@/components/ui/PlayRow";
 import { MaskRatingRow } from "@/components/icons/MaskIcon";
 import { ReportSheet } from "@/components/ui/ReportSheet";
 import { ContentColumn } from "@/components/ui/Screen";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 import { makeStyles } from "@/theme/styles";
@@ -156,7 +157,7 @@ export default function UserProfileScreen() {
           <View style={styles.profileRow}>
             <Avatar uri={user.avatarUrl} initials={user.initials} size={72} serif />
             <View style={{ flex: 1, gap: 2 }}>
-              <Text variant="subheading">{user.name}</Text>
+              <Text variant="title">{user.name}</Text>
               <Text variant="bodySmall" tone="faint">
                 {[`@${user.handle}`, user.city].filter(Boolean).join(" · ")}
               </Text>
@@ -212,7 +213,7 @@ export default function UserProfileScreen() {
           </View>
 
           <View style={{ gap: space.sm }}>
-            <Text variant="subheading">{strings.people.diaryTitle}</Text>
+            <SectionHeader title={strings.people.diaryTitle} action={loaded && diary.length > 0 ? strings.profile.playsSeen + ": " + diary.length : undefined} />
             {/* A list, like the profile's own diary: a column of poster
                 stand-ins tells you nothing about what someone has seen. */}
             {loaded && diary.length === 0 ? (
@@ -330,7 +331,7 @@ export default function UserProfileScreen() {
 function Stat({ value, label }: { value: number; label: string }) {
   return (
     <View style={{ alignItems: "center", flex: 1 }}>
-      <Text variant="subheading">{value}</Text>
+      <Text variant="numeral" tone="default">{value}</Text>
       <Text variant="caption" tone="faint">{label}</Text>
     </View>
   );

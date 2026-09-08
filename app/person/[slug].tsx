@@ -13,6 +13,7 @@ import { PlayRow } from "@/components/ui/PlayRow";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { FollowSubjectButton } from "@/components/ui/FollowSubjectButton";
 import { ContentColumn } from "@/components/ui/Screen";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
@@ -119,7 +120,7 @@ export default function PersonScreen() {
               <View style={styles.header}>
                 <Avatar initials={personInitials(profile.displayName)} size={64} serif />
                 <View style={{ flex: 1, gap: 4 }}>
-                  <Text variant="title">{profile.displayName}</Text>
+                  <Text variant="display">{profile.displayName}</Text>
                   <Text variant="bodySmall" tone="faint">
                     {summaryLine(profile)}
                   </Text>
@@ -153,7 +154,11 @@ export default function PersonScreen() {
               </View>
 
               <View style={{ gap: space.md }}>
-                <Text variant="heading">{strings.person.creditsHeading}</Text>
+                <SectionHeader
+                  eyebrow={strings.person.credits}
+                  title={strings.person.creditsHeading}
+                  action={String(credits.length)}
+                />
                 {credits.map((credit) => {
                   const label = creditLabel(credit.roles, credit.directed, strings.person.director);
                   const venue = venues.get(credit.play.venueId)?.name;
@@ -222,7 +227,7 @@ function Stat({ value, label, gold = false }: { value: number; label: string; go
 
   return (
     <View style={styles.stat}>
-      <Text variant="heading" tone={gold ? "accent" : "default"}>
+      <Text variant="numeral" tone={gold ? "accent" : "default"}>
         {value}
       </Text>
       <Text variant="caption" tone="faint" style={{ textAlign: "center" }}>

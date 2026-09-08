@@ -1,6 +1,6 @@
 import { Pressable, Text, StyleSheet, View, ActivityIndicator } from "react-native";
 import { colors } from "@/theme/colors";
-import { overlay } from "@/theme/tokens";
+import { overlay, space } from "@/theme/tokens";
 import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
 import { makeStyles } from "@/theme/styles";
@@ -17,7 +17,13 @@ export function Button({
 }: {
   label: string;
   onPress?: () => void;
-  variant?: "primary" | "outline";
+  /**
+   * `primary` is the one filled gold control a screen gets. `outline` is a
+   * secondary commitment — follow, cancel. `text` is a link out or a quiet
+   * alternative under a primary ("Jegyek ↗", "Bejelentkezés"); it keeps the
+   * button's height so a row of the three lines up, but paints nothing.
+   */
+  variant?: "primary" | "outline" | "text";
   icon?: React.ReactNode;
   style?: object;
   /** Blocks presses and dims the button — use for "already submitting". */
@@ -30,7 +36,7 @@ export function Button({
   const fontsLoaded = useAppFonts();
   const isPrimary = variant === "primary";
   const isBlocked = disabled || loading;
-  const labelColor = isPrimary ? colors.onAccent : colors.text;
+  const labelColor = isPrimary ? colors.onAccent : variant === "text" ? colors.gold : colors.text;
   return (
     <Pressable
       onPress={onPress}
@@ -39,7 +45,12 @@ export function Button({
       accessibilityLabel={accessibilityLabel ?? label}
       aria-busy={loading}
       accessibilityState={{ disabled: isBlocked, busy: loading }}
-      style={[styles.base, isPrimary ? styles.primary : styles.outline, isBlocked && styles.blocked, style]}
+      style={[
+        styles.base,
+        isPrimary ? styles.primary : variant === "text" ? styles.text : styles.outline,
+        isBlocked && styles.blocked,
+        style,
+      ]}
     >
       {loading ? <ActivityIndicator size="small" color={labelColor} /> : icon}
       <Text
@@ -110,6 +121,9 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   outline: {
     borderWidth: 1,
     borderColor: colors.hairline,
+  },
+  text: {
+    paddingHorizontal: space.sm,
   },
   blocked: {
     opacity: 0.55,

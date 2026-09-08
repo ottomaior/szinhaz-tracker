@@ -149,6 +149,13 @@ export const overlay = {
    * had not been anyone's default yet.
    */
   onImageHeading: "#f8f4fb",
+  /**
+   * The accent, on artwork. `colors.gold` is claret on the printed theme,
+   * which on a scrimmed photograph is a dark red on near-black; this is the
+   * lit gold in every theme, because the scrim under it is the stage in every
+   * theme.
+   */
+  onImageAccent: "#ecd08a",
 } as const;
 
 /**
