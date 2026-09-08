@@ -21,6 +21,15 @@
 /kutatas.html
   Cache-Control: public, max-age=0, must-revalidate
 
+# The legal documents are generated from the app's own text at deploy time
+# and must read the same as the app the moment either changes.
+/adatvedelem
+  Cache-Control: public, max-age=0, must-revalidate
+/feltetelek
+  Cache-Control: public, max-age=0, must-revalidate
+/impresszum
+  Cache-Control: public, max-age=0, must-revalidate
+
 /shots/*
   Cache-Control: public, max-age=86400
 

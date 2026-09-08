@@ -204,7 +204,7 @@ dialog button { position: absolute; top: -14px; right: -14px; width: 40px; heigh
 <footer class="foot">
   <div class="shell foot__in">
     <p>Vastaps — magyar színházi napló.</p>
-    <p><a href="https://szinhaz-tracker-production.up.railway.app/legal/adatvedelem">Adatvédelem</a> &nbsp;·&nbsp; <a href="mailto:ottomaior@protonmail.com?subject=Vastaps%20k%C3%A9rd%C5%91%C3%ADv">Kapcsolat</a></p>
+    <p><a href="/adatvedelem">Adatvédelem</a> &nbsp;·&nbsp; <a href="mailto:ottomaior@protonmail.com?subject=Vastaps%20k%C3%A9rd%C5%91%C3%ADv">Kapcsolat</a></p>
   </div>
 </footer>
 
@@ -237,8 +237,10 @@ dialog button { position: absolute; top: -14px; right: -14px; width: 40px; heigh
   var PICK = DESIGN.pickCount;
   var MISSING = DESIGN.missing;
   var MISSING_LABELS = DESIGN.missingLabels;
-  var APP = "https://szinhaz-tracker-production.up.railway.app/";
-  var PRIVACY = APP + "legal/adatvedelem";
+  // The app's address stays off this page while the alpha is closed: the way
+  // in is to ask for an invite, the same door the landing page offers.
+  var INVITE = "mailto:ottomaior@protonmail.com?subject=Vastaps%20alfa%20%E2%80%93%20teszteln%C3%A9k";
+  var PRIVACY = "/adatvedelem";
   var CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>';
   var CROSS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg>';
 
@@ -427,7 +429,7 @@ dialog button { position: absolute; top: -14px; right: -14px; width: 40px; heigh
       '<h1>' + (already ? "Ezt már beküldted." : "Megvan. Köszönjük!") + '</h1>' +
       '<p class="lede">' + (already ? "Ebből a böngészőből már érkezett válasz, és egy ember egy szavazat. Ha másvalaki töltené ki, más eszközön vagy privát ablakban megteheti." : "A legtöbbet most azzal segítesz, ha továbbküldöd egy ismerősödnek, aki jár színházba. Egy ember egy szavazat — és minden szavazat számít, amíg kevesen vagyunk.") + "</p></div>" +
       '<div class="thanks__acts"><button class="btn btn--gold" type="button" data-share data-url="' + url + '">Továbbküldöm</button>' +
-      '<a class="btn btn--ghost" href="' + APP + '">Megnézem az appot</a></div>' +
+      '<a class="btn btn--ghost" href="' + INVITE + '">Kérek meghívót az appba</a></div>' +
       '<p class="faint" id="share-note"></p></div>';
   }
 

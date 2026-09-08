@@ -67,9 +67,15 @@ nyit; a kapcsolat szekció pedig a meghívással kezd. Az app címe szándékosa
 nem szerepel a markupban: néhány ember használ egy félkész buildet, és a
 bejutás módja az, hogy írni kell. Amikor az app megnyílik, a három gomb
 visszakapja a linkjét, a hero megjegyzése és az első GYIK-bejegyzés kikerül,
-a kapcsolat szövege pedig elveszti az első bekezdését. A lábléc három jogi
-linkje továbbra is az app hosztjára mutat, mert a kérdőív adatvédelmi
-tájékoztatója ott lakik.
+a kapcsolat szövege pedig elveszti az első bekezdését. A lábléc jogi linkjei
+ezen a hoszton lévő statikus másolatokra mutatnak — `/impresszum`,
+`/adatvedelem`, `/feltetelek` —, amelyeket a `scripts/render-legal.ts`
+állít elő az `i18n/legal.ts`-ből, ugyanabból a szövegből, amit az app is
+megjelenít; így az oldalon semmi nem nevezi meg az app címét. A
+`deploy:landing` először ezeket generálja újra; kézzel az `npm run
+render:legal` teszi meg. Amíg az `i18n/legal.ts` üzemeltetői adatai
+nincsenek kitöltve, ugyanazt a „még készül” feliratot viselik, amit az app
+saját útvonalai mutatnak.
 
 ## A közzététele
 
