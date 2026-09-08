@@ -4,11 +4,58 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0b0403">
-<title>Vastaps</title>
+<title>Vastaps — magyar színházi napló</title>
 <meta name="description" content="Magyar színházi napló — nézd meg, mi megy ma este, és jegyezd fel, amit láttál.">
+<link rel="canonical" href="https://vastaps.pages.dev/">
+
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+<!-- ── The share card ───────────────────────────────────────────────────
+     A link to this page is pasted into Messenger and Slack far more often
+     than it is typed into an address bar, and without these it arrived as a
+     grey rectangle with a bare domain under it. `og.png` is rendered from
+     `og.html` by `npm run og` — regenerate it when either changes, because
+     scrapers cache the image hard. The URLs are absolute on purpose: every
+     scraper resolves them against nothing. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Vastaps">
+<meta property="og:url" content="https://vastaps.pages.dev/">
+<meta property="og:title" content="Vastaps — magyar színházi napló">
+<meta property="og:description" content="Nézd meg, mi megy ma este Budapesten és Debrecenben. Jegyezd fel, amit láttál, és évek múlva is tudni fogod, melyik este volt az.">
+<meta property="og:image" content="https://vastaps.pages.dev/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Vastaps — a magyar színház, egy naplóban. Az app hírfolyama egy telefonon, színpadi fényben.">
+<meta property="og:locale" content="hu_HU">
+<meta property="og:locale:alternate" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Vastaps — magyar színházi napló">
+<meta name="twitter:description" content="Nézd meg, mi megy ma este Budapesten és Debrecenben. Jegyezd fel, amit láttál.">
+<meta name="twitter:image" content="https://vastaps.pages.dev/og.png">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500;6..96,600;6..96,700&family=Sora:wght@300;400;500;600;700&display=swap">
+
+<!-- Enough structure for a search result to carry the name, the icon and a
+     sentence rather than a guess. Deliberately no `offers` block: pricing
+     is not settled, and a price of zero in here is a promise. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Vastaps",
+  "url": "https://vastaps.pages.dev/",
+  "applicationCategory": "LifestyleApplication",
+  "operatingSystem": "Web, iOS, Android",
+  "inLanguage": ["hu", "en"],
+  "image": "https://vastaps.pages.dev/og.png",
+  "description": "Magyar színházi napló: Budapest és Debrecen színházainak műsora egy helyen, és egy napló az előadásokról, amelyeket láttál.",
+  "author": { "@type": "Person", "name": "Maior Ottó" }
+}
+</script>
 <style>
 /* ── Tokens ───────────────────────────────────────────────────────────────
    The palette is the app's own `velvetDark` (theme/themes.ts), one shade
@@ -165,10 +212,10 @@ html { scroll-behavior: smooth; }
 /* ── Hero: the stage ─────────────────────────────────────────────────────
    Two soft beams from the top and a warm pool of light on the floor. The
    phone is the lit object; everything else in the section is dark. */
-.hero { position: relative; padding-top: clamp(1.75rem, 4vw, 3.25rem); padding-bottom: clamp(3rem, 5vw, 4.5rem); overflow: hidden; }
+.hero { position: relative; padding-top: clamp(1.75rem, 4vw, 3.25rem); padding-bottom: clamp(3rem, 5vw, 4.5rem); overflow: hidden; --rig-x: 50%; --rig-y: 26%; }
 .hero__light { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
 .beam {
-  position: absolute; top: -18%; left: 50%; width: 46vw; height: 92vh;
+  position: absolute; top: -18%; left: var(--rig-x); width: 46vw; height: 92vh;
   background: linear-gradient(to bottom, rgba(219,177,85,0.17), rgba(219,177,85,0.045) 42%, rgba(219,177,85,0) 72%);
   filter: blur(46px);
   clip-path: polygon(43% 0, 57% 0, 100% 100%, 0 100%);
@@ -178,7 +225,7 @@ html { scroll-behavior: smooth; }
 .beam--l { transform: translateX(-96%) rotate(-13deg); transform-origin: top center; }
 .beam--r { transform: translateX(-4%) rotate(13deg); transform-origin: top center; animation-delay: 0.22s; }
 .pool {
-  position: absolute; left: 50%; top: 26%; width: min(900px, 128vw); aspect-ratio: 1.75;
+  position: absolute; left: var(--rig-x); top: var(--rig-y); width: min(900px, 128vw); aspect-ratio: 1.75;
   transform: translateX(-50%);
   background: radial-gradient(ellipse at center, rgba(219,177,85,0.28), rgba(178,131,36,0.10) 38%, rgba(11,4,3,0) 68%);
   filter: blur(18px);
@@ -206,6 +253,46 @@ html { scroll-behavior: smooth; }
 .hero__meta span { display: inline-flex; align-items: center; gap: 0.55rem; }
 .hero__meta span + span::before { content: ""; width: 3px; height: 3px; border-radius: 50%; background: var(--gold-deep); }
 @keyframes rise-in { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+
+/* Stacked, the copy comes first and the phone stands underneath it, so the
+   light has to point down there too rather than staying up in the type.
+   Two buttons of different widths read as ragged when they are centred one
+   above the other, so below the fold of a phone they take the full measure;
+   and the dot separators are dropped, because a wrapped row leaves one
+   stranded at the head of the second line looking like a stray bullet. */
+@media (max-width: 899px) {
+  .hero { --rig-y: 46%; }
+  /* At a phone's width the two beams are only ~180px each, so the same blur
+     that reads as light on a monitor leaves their clipped edges showing as a
+     hard-sided shape behind the headline. More blur, less shape. */
+  .beam { filter: blur(66px); }
+  .hero__cta { flex-direction: column; align-self: stretch; }
+  .hero__cta .btn { width: 100%; }
+  .hero__meta { flex-direction: column; gap: 0.4rem; }
+  .hero__meta span + span::before { content: none; }
+}
+
+/* Above the fold, the page has one job: say what this is and offer the door.
+   Stacked, the phone alone is 560px tall, which pushed the headline across
+   the fold on a laptop and the button clean off it. Wide enough for two
+   columns, the copy takes the left and the phone keeps its place in the
+   light on the right; below that the copy simply comes first. The beams and
+   the pool follow the phone rather than staying nailed to the page centre. */
+@media (min-width: 900px) {
+  .hero { --rig-x: 71%; padding-bottom: clamp(2.5rem, 4vw, 3.75rem); }
+  .hero__in {
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+    align-items: center;
+    gap: clamp(2.25rem, 4.5vw, 4rem);
+    text-align: left;
+  }
+  .hero__phone { grid-column: 2; justify-self: center; }
+  .hero__copy { align-items: flex-start; max-width: none; }
+  .hero h1 { font-size: clamp(2.45rem, 3.7vw, 3.85rem); }
+  .hero__lede { text-align: left; max-width: 34ch; }
+  .hero__cta, .hero__meta { justify-content: flex-start; }
+}
 
 /* ── Phone frame ─────────────────────────────────────────────────────────── */
 .phone { position: relative; width: min(var(--w, 300px), 78vw); flex: none; transform: translateY(var(--py, 0px)); will-change: transform; }
@@ -407,17 +494,6 @@ html { scroll-behavior: smooth; }
     </div>
 
     <div class="shell hero__in">
-      <div class="hero__phone">
-        <div class="phone" style="--w: 264px" data-parallax="0.045">
-          <div class="phone__body">
-            <div class="phone__screen">
-              <img src="shots/feed.webp" width="810" height="1761" alt="A Vastaps hírfolyama: Maior Ottó megnézte a Scævola – Gianni Schicchit a Csokonai Nemzeti Színházban, négy maszkkal értékelve." data-t-alt="altFeed">
-              <span class="phone__glare"></span>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div class="hero__copy">
         <p class="eyebrow hero__eyebrow" data-t="heroEyebrow">Magyar színházi napló</p>
         <h1 data-t="heroTitle">A magyar színház,<br><em>egy naplóban</em>.</h1>
@@ -438,6 +514,17 @@ html { scroll-behavior: smooth; }
           <span data-t="metaCities">Budapest és Debrecen</span>
           <span data-t="metaSync">Éjszakánként frissül</span>
         </p>
+      </div>
+
+      <div class="hero__phone">
+        <div class="phone" style="--w: 264px" data-parallax="0.045">
+          <div class="phone__body">
+            <div class="phone__screen">
+              <img src="shots/feed.webp" width="810" height="1761" alt="A Vastaps hírfolyama: Maior Ottó megnézte a Scævola – Gianni Schicchit a Csokonai Nemzeti Színházban, négy maszkkal értékelve." data-t-alt="altFeed">
+              <span class="phone__glare"></span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -739,7 +826,7 @@ html { scroll-behavior: smooth; }
           ottomaior@protonmail.com
         </a>
         <div class="hero__cta" style="margin-top: 0.4rem">
-          <a class="btn btn--gold" href="https://szinhaz-tracker-production.up.railway.app/" data-t="ctaOpen2">Megnyitom az appot</a>
+          <a class="btn btn--gold" href="https://szinhaz-tracker-production.up.railway.app/" data-t="ctaOpen2">Megnyitom az appot</a>
         </div>
       </div>
     </div>

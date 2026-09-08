@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Vastaps">
+  <!-- The nav's brand mark on its own ground. A transparent gold mark
+       disappears against a light tab strip, so the ink square travels with
+       it and the icon reads the same in every browser and on a home screen. -->
+  <rect width="64" height="64" rx="14" fill="#0b0403"/>
+  <g transform="translate(32 32) scale(0.78) translate(-32 -32)" fill="#dbb155">
+    <path d="M4 9H60V14Q46 23 32 15Q18 23 4 14Z"/>
+    <path d="M6 15H23C20 27 20 41 22 51Q14 56 6 52Z"/>
+    <path d="M58 15H41C44 27 44 41 42 51Q50 56 58 52Z"/>
+    <path d="M32 26.5l2.06 5.67 6.02.2-4.75 3.71 1.67 5.8L32 38.5l-5 3.38 1.67-5.8-4.75-3.71 6.02-.2z"/>
+  </g>
+</svg>

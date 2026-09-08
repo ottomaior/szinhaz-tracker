@@ -18,7 +18,8 @@
     "test:watch": "vitest",
     "deploy:landing": "tsx scripts/deploy-landing.ts",
     "promo": "tsx scripts/render-promo.ts",
-    "tour": "tsx scripts/render-tour.ts"
+    "tour": "tsx scripts/render-tour.ts",
+    "og": "tsx scripts/render-og.ts"
   },
   "dependencies": {
     "@expo-google-fonts/bodoni-moda": "^0.2.3",

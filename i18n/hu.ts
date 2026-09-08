@@ -66,7 +66,15 @@ export const strings = {
 
   discover: {
     title: "Felfedezés",
-    searchPlaceholder: "Keresés: darabok, színházak, színészek…",
+    /**
+     * No "Keresés:" prefix — the magnifier next to it already says that, and
+     * with the prefix the line ran past the end of the field on a 375pt
+     * phone and was cut mid-word ("…színés"). What the field needs to say is
+     * what you may type into it, and that now fits.
+     */
+    searchPlaceholder: "Darabok, színházak, színészek",
+    /** Spelt out for a screen reader, which has no magnifier to go on. */
+    searchLabel: "Keresés darabok, színházak és színészek között",
     filterAll: "Mind",
     /**
      * What each filter is, shown on its chip while nothing is chosen and as

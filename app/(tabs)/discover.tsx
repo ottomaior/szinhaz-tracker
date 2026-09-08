@@ -533,7 +533,7 @@ export default function DiscoverScreen() {
         accessibilityRole="button"
         accessibilityLabel={strings.discover.addPlayFab}
       >
-        <PlusIcon size={16} />
+        <PlusIcon size={18} color={colors.gold} />
       </Pressable>
     </View>
   );
@@ -555,7 +555,7 @@ export default function DiscoverScreen() {
               returnKeyType="search"
               placeholder={strings.discover.searchPlaceholder}
               placeholderTextColor={colors.textFaint}
-              accessibilityLabel={strings.discover.searchPlaceholder}
+              accessibilityLabel={strings.discover.searchLabel}
               style={{ flex: 1, fontFamily: bodyFont(fontsLoaded), fontSize: inputFontSize, color: colors.text }}
             />
             {/* Clearing a search by backspacing through it is tedious on a
@@ -1228,11 +1228,20 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   /* The title block inside a scroll body that does not pad its own children —
      browse and Műsor both run full-bleed rails. */
   scrolledTitle: { paddingHorizontal: gutter, paddingTop: space.md },
+  /* Deliberately not a filled gold circle. The tab bar's raised "+" is one,
+     and it opens the check-in — the thing this app is for. This "+" adds a
+     production the catalogue is missing, which is a rare favour a reader does
+     us, and when the two wore the same gold circle and the same glyph they
+     were on screen together with nothing to tell them apart. Outlined, it
+     still reads as an add and still clears the 44pt target, but it no longer
+     competes with the one action the screen is built around. */
   fab: {
     width: minTouchTarget,
     height: minTouchTarget,
     borderRadius: radius.pill,
-    backgroundColor: colors.gold,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
   },

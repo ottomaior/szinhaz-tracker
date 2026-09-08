@@ -4,14 +4,38 @@
     {
       "name": "expo-web",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["expo", "start", "--web"],
+      "runtimeArgs": [
+        "expo",
+        "start",
+        "--web"
+      ],
       "port": 8081
     },
     {
       "name": "static-export",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["--yes", "serve", "dist", "-l", "8090", "--no-clipboard"],
+      "runtimeArgs": [
+        "--yes",
+        "serve",
+        "dist",
+        "-l",
+        "8090",
+        "--no-clipboard"
+      ],
       "port": 8090
+    },
+    {
+      "name": "landing",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "--yes",
+        "serve",
+        "landing",
+        "-l",
+        "8099",
+        "--no-clipboard"
+      ],
+      "port": 8099
     }
   ]
 }
