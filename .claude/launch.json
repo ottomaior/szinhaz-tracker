@@ -36,6 +36,19 @@
         "--no-clipboard"
       ],
       "port": 8099
+    },
+    {
+      "name": "landing-8107",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "--yes",
+        "serve",
+        "landing",
+        "-l",
+        "8107",
+        "--no-clipboard"
+      ],
+      "port": 8107
     }
   ]
 }
