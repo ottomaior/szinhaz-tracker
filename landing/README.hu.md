@@ -34,23 +34,28 @@ eszközskálázással, majd 810 képpont szélesre átméretezve és WebP formá
 kódolva a `sharp` segítségével.
 
 Csak olyan képernyők kerültek bele, amelyek **kijelentkezve** is
-megjelennek — ezért áll a készlet a Felfedezésből, a Műsor naptárból, a
-keresésből, egy darabból, egy alkotóból, egy nyilvános profilból és egy
-listából. A Profil, a Kívánságlista és az évadösszegző munkamenet nélkül
-bejelentkezési felszólítást ad vissza, tehát üres képernyőként fényképeződne.
+megjelennek — a Felfedezés, a Műsor naptár, a keresés, egy darab, egy alkotó,
+egy nyilvános profil és egy lista —, egyetlen kivétellel: a hero hírfolyama
+csak bejelentkezve látható, azt egy demófiókból fényképeztük (lásd alább). A
+Profil, a Kívánságlista és az évadösszegző munkamenet nélkül bejelentkezési
+felszólítást ad vissza, tehát üres képernyőként fényképeződne.
 
 Az újrafényképezés a fenti felvétel újrafuttatását jelenti; nincs hozzá
 szkript a tárházban, mert dev szerver és böngésző-binárist igényel, ami csak
 fejlesztői gépen van meg.
 
-Egyikük szándékosan retusált. A `user.webp` nyilvános profilja a szerző saját
-fiókja, a neve pedig a kapcsolat szekcióba tartozik, és sehova máshova az
-oldalon; ezért a felvétel előtt a megjelenített nevet, a felhasználónevet és
-az avatár monogramját a DOM-ban egy helyettesre cseréltük, **Tóth Eszterre**,
-aki nem létező fiók. Minden más a képen — a darabszám, a napló, az
-értékelések — valódi. Ha ezt a képernyőt újra kell fényképezni, ugyanezt a
-cserét kell megismételni (az `alt` szöveg és annak angol változata is őt
-nevezi meg).
+Valódi ember egyiken sem szerepel. A szerző neve a kapcsolat szekcióba
+tartozik, és sehova máshova az oldalon, az alfatesztelők pedig nem
+vállalkoztak plakátra; ezért a két embert mutató kép — a hero hírfolyama
+(`feed.webp`) és a nyilvános profil (`user.webp`) — három demófiókból
+készült, amelyek az éles adatbázisban élnek: **Tóth Eszter**, **Kovács
+Bence** és **Nagy Zsófia**. Valódi fiókok, valódi bejegyzésekkel valódi
+produkciókról; követik, kedvelik és kommentelik egymást. A hírfolyam Eszter
+*Követettek* füle, amelyen csak a saját köre látszik, így valódi személy nem
+kerülhet a képbe. A profil az övé, kijelentkezve fényképezve. A felvétel
+után egyik kép sincs szerkesztve. A fiókok demótartalomként maradnak, amíg
+az alfa hírfolyama vékony; ne hozz létre továbbiakat, és valódi fiókot soha
+ne fényképezz.
 
 ## Amíg az app zárt alfatesztben fut
 
@@ -74,6 +79,15 @@ a `.env`-be — hogy melyik honnan való, az `.env.example` írja le —, és a
 `vastaps` projektbe publikál. A többit a `scripts/deploy-landing.ts`
 magyarázza, azt is, hogy a wrangler miért `npx`-en át fut, nem pedig
 `devDependencies`-ként.
+
+A közzététel először a `scripts/stamp-shots.ts`-t futtatja, amely az
+`index.html` és az `og.html` minden `shots/*.webp` hivatkozását
+`shots/nev.webp?v=<tartalomhash>` alakra írja át. A képernyőképek egy napig
+gyorstárazódnak (lásd a következő bekezdést), és egy azonos fájlnéven
+újrafényképezett kép a régi önmagát mutatta minden telefonon, amelyen az
+oldal aznap reggel nyitva volt; a fájllal együtt változó URL-től az
+újratelepítés azonnal látszik. Kézzel az `npm run stamp:shots` futtatja egy
+kép cseréje után; az eredményt commitolni kell.
 
 Szándékosan külön tárhely. Az `nginx.conf` az `expo export` kimenetét
 szolgálja ki a `dist/` könyvtárból, ez a könyvtár benne van a

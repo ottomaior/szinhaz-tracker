@@ -28,22 +28,28 @@ taken against `npx expo start --web` in a headless browser driven over the
 Chrome DevTools Protocol at 402×874 with a device scale factor of 3, then
 resized to 810px wide and encoded as WebP with `sharp`.
 
-Only screens that render **signed out** are in there, which is why the set is
-Discover, the listings calendar, search, a production, a performer, a public
-profile and a list — Profile, Watchlist and the season recap all return a
-sign-in prompt without a session, so they photograph as an empty screen.
+Only screens that render **signed out** are in there — Discover, the listings
+calendar, search, a production, a performer, a public profile and a list —
+with one exception: the feed in the hero, which is signed-in only and was
+captured from a demo account (below). Profile, Watchlist and the season recap
+return a sign-in prompt without a session, so they photograph as an empty
+screen.
 
 Re-taking them means re-running that capture; there is no script checked in
 for it, because it needs a dev server and a browser binary that only exist on
 a development machine.
 
-One of them is doctored on purpose. The public profile in `user.webp` is the
-author’s own account, and his name belongs in the contact section and nowhere
-else on the page; so before the capture the display name, the handle and the
-avatar initials were swapped in the DOM for a stand-in, **Tóth Eszter**, who
-is not a real account. Everything else in the shot — the count, the diary,
-the ratings — is real. Re-shooting that screen means doing the same swap
-again (the `alt` text and its English entry name her too).
+Nobody real appears in any of them. The author’s name belongs in the contact
+section and nowhere else on the page, and no alpha tester agreed to be on a
+poster, so the two shots that show people — the feed in the hero
+(`feed.webp`) and the public profile (`user.webp`) — come from three demo
+accounts that live in the production database: **Tóth Eszter**, **Kovács
+Bence** and **Nagy Zsófia**. They are real accounts with real entries against
+real productions, following, liking and commenting on one another; the feed
+is Eszter’s *Követettek* tab, which shows only her circle, so no real person
+can drift into frame. The profile is hers, signed out. Nothing in either shot
+is edited after capture. The accounts stay as demo content while the alpha
+feed is thin; do not create more of them, and never capture a real account.
 
 ## While the app is in closed alpha
 
@@ -66,6 +72,14 @@ It needs `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` in `.env` — see
 `.env.example` for where each comes from — and publishes to the `vastaps`
 project. `scripts/deploy-landing.ts` explains the rest, including why
 wrangler is run through `npx` rather than added to `devDependencies`.
+
+The deploy first runs `scripts/stamp-shots.ts`, which rewrites every
+`shots/*.webp` reference in `index.html` and `og.html` as
+`shots/name.webp?v=<content hash>`. The screenshots are cached for a day
+(next paragraph), and a re-taken shot under the same filename kept showing
+its old self on any phone that had the page open that morning; a URL that
+changes with the file makes a redeploy visible at once. Run it by hand with
+`npm run stamp:shots` after replacing a shot, and commit the result.
 
 It is a separate host on purpose. `nginx.conf` serves the `expo export`
 output from `dist/`, this directory is in `.dockerignore`, and the runtime
