@@ -10,7 +10,7 @@ azt a [README.hu.md](README.hu.md) meséli el; ez a fájl a terv és az aktuáli
 állapot, hogy egy hosszabb szünet után is fel lehessen venni a fonalat anélkül,
 hogy mindent újra ki kellene találni.
 
-Utoljára frissítve: 2026. szeptember 7.
+Utoljára frissítve: 2026. szeptember 8.
 
 ---
 
@@ -182,8 +182,9 @@ fázisnak saját „mikor van kész" definíció kell — innen a 4.5 és a 4.6.
   - A `jegy.hu` `robots.txt`-je csak a `/ticket/` és `/invoice/` útvonalakat tiltja, `Crawl-delay: 20` mellett — bejárható, de lassú.
   - A `sui generis` adatbázis-jogi aggály, amit a README a `port.hu` kapcsán felvet, itt kevésbé áll, mivel az InterTicket saját közlése szerint csak a jegyértékesítési platformot üzemelteti a helyszín számára. Ezt el kell dönteni és rögzíteni.
 - **4.3 Fejnélküli böngésző.** Opcionális, Playwrightra épülő letöltés a `sync/lib/http.ts`-ben, amit csak az azt igénylő adapterek használnak, hogy az olcsó `cheerio` út maradjon az alapértelmezés.
-- **4.4 Szinkronizáló job.** Mátrix-jobra bontva (forráscsoportonként egy futtató), eltolt ütemezéssel; a `sync_runs` marad a napló.
+- **4.4 Szinkronizáló job.** Mátrix-jobra bontva (forráscsoportonként egy futtató), eltolt ütemezéssel; a `sync_runs` marad a napló. *Szeptember 8-án kész:* a cron `0 4`-ről `47 3 * * *`-ra került, mert a GitHub az egész órára ütemezett jobot 08:20 UTC körül indította, és egy ilyen késői futás az aznap reggeli merge előtti értelmezővel építette újra a katalógust. Az első futás az új percen az ellenőrzés.
 - **4.5 A pontosság mint önálló munkafolyam.**
+  - ~~A váltott szereplők elvesztek.~~ **Kész.** A `sync/lib/performers.ts` a közreműködést az általa megnevezett emberekre bontja, a `run.ts` minden forrásra alkalmazza, a `sync/adapters/csokonai.ts` pedig egy sor minden előadóelemét olvassa, nem csak az elsőt — lásd a README *Egy szerep, több ember* részét. A több emberhez rendelt szerephelyek száma a két Csokonai-forrásnál 203-ról 292-re nőtt; a teljes katalógusban több mint 650 van.
   - **A Vígszínháznak egyáltalán nincs szereposztás-adata** — ez az egyetlen forrás, ahol semmi nem érhető el, így a produkciói láthatatlanok egy színészkeresésben, és a szereposztás-sávjuk üres. Egy Budapestre teljes katalógusban ez a város egyik legnagyobb színháza, épp az a funkció hiányzik róla, amiért a személyoldalak léteznek. Kell egy második forrás.
   - Az `is_event` (`0034`) címre épülő heurisztika, ami hat sort talál el; a szókészletet újra kell ellenőrizni azon, amit az új források hoznak.
   - Figyelni kell a `genre_source` `venue_default` arányát — egy feltételezett értékek fölötti műfajszűrő aszerint particionálja a katalógust, melyik scraper írta az adott sort.
@@ -221,7 +222,7 @@ alapján született, amik nemcsak kevesek, hanem hibásak is voltak.
 - **5.2 Termékhiányok.** Játszóhely-/színházoldal (a követett színházak ma szűrt Felfedezésre visznek, mert nincs saját oldaluk). A szerzők neve nem kattintható, pedig a színészeké és a rendezőké igen.
 - **5.3 A Supabase CLI bevezetése.** 36 migráció ment fel kézzel, és a README azt mondja egy új fejlesztőnek, hogy futtassa le mindet sorban. `supabase link` + `supabase db push`, plusz generált `database.types.ts`.
 - **5.4 SEO és megosztás.** Route-onkénti `<title>`/`<meta description>` és Open Graph. Az 1. fázis kiderítette, hogy az `expo-router/head` *eljut* a statikus exportba, így ez képernyőnkénti `<Head>` hozzáadása, nem új infrastruktúra. Közben **ki kell venni a `<title>`-t az `app/+html.tsx`-ből**: ma minden exportált oldal két `<title>` elemet szállít — előbb a react-helmetét, aztán a shell beégetettjét. Ártalmatlan volt, amíg ugyanazt mondták; most, hogy eltérhetnek, bármi, ami az utolsó találatot veszi, rossz címet olvas.
-- **5.5 A 22 effekt, ami szinkron módon állít state-et.** A `react-hooks` 6 — az
+- **5.5 A 23 effekt, ami szinkron módon állít state-et.** A `react-hooks` 6 — az
   `eslint-config-expo` 57 újdonsága — tíz képernyőn jelzi őket, és az `.eslintrc.js`-ben a szabály
   `warn`, nem `error`, hogy a frissítésnek, ami felszínre hozta őket, ne kelljen egyben meg is
   javítania mindet. Mindegyik egy `setState` egy egyébként aszinkron effekt szinkron, korai
@@ -230,6 +231,41 @@ alapján született, amik nemcsak kevesek, hanem hibásak is voltak.
   state-ben" szagok, és a javítás az, hogy az értéket képernyőnként újra származtatottként fogalmazzuk
   meg, nem tároltként. Nem sürgős — egyik sem ismert hiba —, de a figyelmeztetések száma a mérőszám,
   és annak csak csökkennie szabad.
+
+---
+
+## A második felvonás — a tervezési kör · **kész**
+
+2026. szeptember 8-án összeolvasztva és kitelepítve, a `cast-alternates` tetején.
+A README *A második felvonás* része számol be arról, mi és miért változott; ez
+itt az, amit maga után hagy.
+
+| | Mi |
+|---|---|
+| S.1 | A Bársony újravágva (szilvafekete háttér, bordó felületek, pezsgőarany); a Színlap bordó kiemelést kapott és a világos alapértelmezés lett; a Levendula opcióvá fokozva. Minden szövegtoken mind az öt témában, mindhárom háttéren megfelel az AA-nak |
+| S.2 | Két tipográfiai szerep (`numeral`, `eyebrow`), `SectionHeader`, a `Button` `text` változata, a `StatusBadge` `inline` formája és a `StatusInline`, a szakaszként szedett `EmptyState`, a `SignedOutState` |
+| S.3 | Felfedezés: rögzített cím, várossor és keresőikon; Felfedezés / Műsor / Listák szöveges fülekként; a következő este mint vezérkép; `ProgramRow` a hétre és a naptárra; csempék, amik semmit sem hordanak a képen; kéthasábos vezérkép 900pt-tól |
+| S.4 | Előadás oldala: cím a plakáton, egy arany cselekvés, értékelések hajszálvonalakon, időpontok táblázatban a jegypénztár linkjével, színházkövetés pirulaként, szereposztás listaként, szinopszis hajtás mögött |
+| S.5 | Hírfolyam, profil, kívánságlista, alkotó-, lista- és felhasználóoldalak ugyanazokkal a fejlécekkel; a fiók nélküli látogató indításonként egyszer a Felfedezésen landol |
+| S.6 | `TopBar` az `expanded` töréspontól; az elavult `shadow*` és `pointerEvents` propok lecserélve |
+| S.7 | A nyitóoldal és a megosztókártya ugyanabban a palettában újravágva, a kiadott felület képernyőképeivel |
+
+Ellenőrizve 375 és 1280 szélességen, Bársonyban és Színlapon, kijelentkezve és
+bejelentkezve (egy azóta törölt eldobható fiókkal), a fejlesztői szerveren és a
+Railway-buildön. Natívon nem volt kipróbálva: a `boxShadow` stringek és a
+témánkénti `makeStyles` út az a két dolog, amit egy eszközön érdemes megnézni.
+
+**Amit felszínre hozott, egyik sem blokkoló:**
+
+- A színházoldal továbbra is a legnagyobb termékhiány (5.2): az előadás
+  oldalán a színházsor és a kívánságlistán a követett színházak is szeretnének
+  valahová vezetni.
+- A hírfolyam kártyája megtartja a cím-a-plakáton elrendezést; egy sok
+  bejegyzésű, bejelentkezett hírfolyam az egyetlen képernyő, amit nem láttunk
+  valódi mennyiséggel.
+- A `PremiereCard` és a `TrendingCard` továbbra is csempénként kéri le a
+  színházát (`useVenue`); egy `getVenuesByIds` menet, mint a profilon, egy
+  kérést spórolna csempénként.
 
 ---
 

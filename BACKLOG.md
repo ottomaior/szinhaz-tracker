@@ -6,7 +6,7 @@ Where the project stands, and what is left. The narrative of *why* each thing
 was built lives in [README.md](README.md); this file is the plan and the
 running state, so work can be picked up after a gap without re-deriving it.
 
-Last updated: 7 September 2026.
+Last updated: 8 September 2026.
 
 ---
 
@@ -173,8 +173,9 @@ definition of correct — hence 4.5 and 4.6.
   - `jegy.hu`'s `robots.txt` disallows only `/ticket/` and `/invoice/`, with `Crawl-delay: 20` — crawlable but slow.
   - The `sui generis` database-right concern the README raises about `port.hu` applies less cleanly here, since InterTicket states it only operates the ticketing platform for the venue. A judgement to make and record.
 - **4.3 Headless fetching.** Optional Playwright-backed fetch in `sync/lib/http.ts`, used only by adapters that declare they need it, so the cheap `cheerio` path stays the default.
-- **4.4 Sync job.** Split into a matrix job (one runner per source group) and stagger the schedule; `sync_runs` stays the record.
+- **4.4 Sync job.** Split into a matrix job (one runner per source group) and stagger the schedule; `sync_runs` stays the record. *Done on 8 September:* the cron moved from `0 4` to `47 3 * * *`, because GitHub had been starting the on-the-hour job around 08:20 UTC, and one such late run rebuilt the catalogue with a parser from before that morning's merge. The first run on the new minute is the check.
 - **4.5 Accuracy as an explicit workstream.**
+  - ~~Alternates were dropped.~~ **Done.** `sync/lib/performers.ts` splits a credit into the people it names, applied to every source in `run.ts`, and `sync/adapters/csokonai.ts` reads every performer element in a row rather than the first — see the README's *One part, several people*. Role slots credited to more than one person went from 203 to 292 across the two Csokonai sources; the whole catalogue has over 650.
   - **Vígszínház has no cast data at all** — the one source where nothing is reachable, so its productions are invisible to a performer search and its cast strips are empty. In a Budapest-complete catalogue this is one of the largest theatres in the city missing the feature the person pages exist for. Needs a second source.
   - `is_event` (`0034`) is a title heuristic matching six rows; the vocabulary needs rechecking against whatever the new sources bring.
   - Watch the `venue_default` share of `genre_source` — a genre filter over assumed values partitions the catalogue by which scraper wrote each row.
@@ -211,7 +212,7 @@ but wrong.
 - **5.2 Product gaps.** A venue/theatre detail screen (followed venues currently route to a filtered Discover because no venue page exists). Playwright names are not linkable, though performers and directors are.
 - **5.3 Adopt the Supabase CLI.** 36 migrations have been applied by hand, and the README tells a new developer to run them all in order. `supabase link` + `supabase db push`, plus generated `database.types.ts`.
 - **5.4 SEO and sharing.** Per-route `<title>`/`<meta description>` and Open Graph. Phase 1 established that `expo-router/head` *does* reach the static export, so this is adding `<Head>` per screen, not new infrastructure. While doing it, **remove the `<title>` from `app/+html.tsx`**: every exported page currently ships two `<title>` elements — react-helmet's first, then the shell's hardcoded one. Harmless while they said the same thing; now that they can differ, anything taking the last match reads the wrong title.
-- **5.5 The 22 effects that set state synchronously.** `react-hooks` 6 — new in
+- **5.5 The 23 effects that set state synchronously.** `react-hooks` 6 — new in
   `eslint-config-expo` 57 — flags them across ten screens, and `.eslintrc.js` has the rule at
   `warn` rather than `error` so the upgrade that surfaced them did not also have to fix them. Each
   one is a `setState` on a synchronous early-exit branch of an otherwise-async effect: clearing a
@@ -219,6 +220,39 @@ but wrong.
   indexes has loaded. They are genuine derived-state-in-an-effect smells and the fix is to restate
   the value as derived rather than stored, screen by screen. Not urgent — none of them is a known
   bug — but the warning count is the measure, and it should only ever go down.
+
+---
+
+## The second act — the design pass · **done**
+
+Merged and deployed on 8 September 2026, on top of `cast-alternates`. The
+README's *The second act* section is the account of what changed and why; this
+is what it leaves behind.
+
+| | What |
+|---|---|
+| S.1 | Bársony re-cut (plum-black ground, claret surfaces, champagne gold); Színlap given a claret accent and made the light default; Levendula demoted to an option. Every text token clears AA on all three grounds in all five themes |
+| S.2 | Two type roles (`numeral`, `eyebrow`), `SectionHeader`, `Button`'s `text` variant, `StatusBadge`'s `inline` form and `StatusInline`, `EmptyState` set as a section, `SignedOutState` |
+| S.3 | Discover: title, city line and search icon pinned; Felfedezés / Műsor / Listák as text tabs; the next evening as a hero; `ProgramRow` for the week and the calendar; tiles with nothing on the artwork; two-column lead from 900pt |
+| S.4 | Play detail: title on the poster, one gold action, ratings on hairlines, showtimes as a table with the box-office link, venue follow as a pill, cast as a list, synopsis behind a fold |
+| S.5 | Feed, profile, watchlist, person, list, user pages on the same headers; a signed-out visitor lands on Discover once per launch |
+| S.6 | `TopBar` from the `expanded` breakpoint; the deprecated `shadow*` and `pointerEvents` props replaced |
+| S.7 | The landing page and the share card re-cut in the same palette with screenshots of the shipped design |
+
+Verified at 375 and 1280, in Bársony and Színlap, signed out and signed in
+(with a throwaway account since deleted), on the dev server and on the Railway
+build. Native was not exercised: the `boxShadow` strings and the per-theme
+`makeStyles` path are the two things worth a look on a device.
+
+**Follow-ups it surfaced, none blocking:**
+
+- A venue page is still the biggest product gap (5.2): the venue row on play
+  detail and the followed theatres on the watchlist both want somewhere to go.
+- The feed card keeps its title-on-poster layout; a signed-in feed with many
+  entries is the one screen not seen with real volume.
+- `PremiereCard` and `TrendingCard` still fetch their venue per tile
+  (`useVenue`); a `getVenuesByIds` pass like the profile's would remove a
+  request per tile.
 
 ---
 

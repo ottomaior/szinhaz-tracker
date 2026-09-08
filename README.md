@@ -79,10 +79,12 @@ eas.json                 the three EAS build profiles
 app/                     expo-router screens (file-based routing)
   _layout.tsx             root stack: tabs + play detail + check-in/add-play/auth modals
   (tabs)/
-    _layout.tsx            tab navigator, custom TabBar
-    index.tsx               Feed
-    discover.tsx             Discover — two modes (browse rails / Műsor
-                              calendar), ranked search, sort and filters
+    _layout.tsx            tab navigator — TabBar on phones, TopBar from 900pt
+    index.tsx               Feed (a signed-out visitor is handed to Discover
+                              once per launch)
+    discover.tsx             Discover — three tabs: browse, led by the next
+                              evening and the week as a programme; the Műsor
+                              calendar; and Listák. Ranked search, sort, filters
     watchlist.tsx             Watchlist
     profile.tsx                Profile
   play/[id].tsx           Play Detail
@@ -90,7 +92,8 @@ app/                     expo-router screens (file-based routing)
   list/[id].tsx           One list and what is on it
   entry/[id].tsx          One evening: who was on, where you sat, what it cost
   season/[start].tsx      One évad in review, September to August
-  lists.tsx               Editorial lists, and yours (modal)
+  lists.tsx               Editorial lists, and yours (modal; the same body,
+                          components/ui/ListsBody, is Discover's Listák tab)
   inbox.tsx               What the nightly sync learned that you asked about
   checkin.tsx             Log a Performance — date, rating, review (modal)
   onboarding.tsx          "Which of these have you seen?" — a first-run grid
@@ -106,13 +109,15 @@ components/
                           generator so no two copies can drift
   ui/                     Button, Chip, SelectChip, DateField, Avatar,
                           FollowSubjectButton, PosterPlaceholder, ReviewSocial,
-                          TabBar
+                          SectionHeader, ProgramRow, StatusBadge, EmptyState,
+                          SignedOutState, ListsBody, TabBar, TopBar
 
 theme/                    design tokens — the single source of truth for
-                          the "Velvet Curtain" visual system
+                          the "Velvet Curtain" visual system, re-cut in the
+                          second act (see "The second act" below)
   colors.ts               palette, with the OKLCH value each hex came from
   typography.ts           the two brand faces and their fallbacks
-  type.ts                 the type scale: eight named roles
+  type.ts                 the type scale: ten named roles
   tokens.ts               spacing, radii, elevation, breakpoints, max widths
 
 contexts/AuthContext.tsx  Supabase session state, wraps the whole app
@@ -176,12 +181,13 @@ sync/                     standalone Node script (`npm run sync`; add
 
 ## Design system
 
-Colors and type live in `theme/`. The house palette is the same "Velvet
-Curtain" system from the design canvas: a near-black warm burgundy
-background, a warm gold accent, Bodoni Moda for display type, Sora for UI
-text, and a custom theatrical-mask icon used everywhere a star rating
-would normally go. It is now one of four a reader can choose between — see
-"Four palettes" below — but it is still the one the app is designed around.
+Colors and type live in `theme/`. The house palette is the "Velvet Curtain"
+system from the design canvas, re-cut in September 2026: a plum-black stage,
+claret surfaces, a champagne gold accent, Bodoni Moda for display type, Sora
+for UI text, and a custom theatrical-mask icon used everywhere a star rating
+would normally go. It is one of five a reader can choose between — see "Five
+palettes" below — and the one the app is designed around; its printed twin,
+Színlap, is the light default.
 
 `theme/themes.ts` holds the palettes and documents which OKLCH value each
 hex constant was converted from, in case one needs adjusting later — React
@@ -192,37 +198,60 @@ palette a given platform sees.
 Two rules are worth knowing before adding a screen:
 
 - **Never set a font size by hand.** `components/ui/Text` takes a `variant`
-  (display / title / heading / subheading / body / bodySmall / label /
-  caption) and a `tone`. Sizes used to be typed at each call site, which is
-  how the app accumulated twenty of them. The one exception is `TextInput`,
-  which cannot use that component and takes `inputFontSize` — 16px, because
-  iOS Safari zooms the page whenever a focused field's text is smaller.
+  (display / title / heading / numeral / subheading / body / bodySmall /
+  label / caption / eyebrow) and a `tone`. Sizes used to be typed at each
+  call site, which is how the app accumulated twenty of them. The one
+  exception is `TextInput`, which cannot use that component and takes
+  `inputFontSize` — 16px, because iOS Safari zooms the page whenever a
+  focused field's text is smaller. Two roles carry a tone of their own:
+  `numeral` (a curtain time, a score, the day of the month — Bodoni, in the
+  accent by default) and `eyebrow` (the small tracked capitals above a heading
+  or on artwork).
 - **Bodoni Moda is display type only, 19px and up.** It is a didone: the
   thick/thin contrast that gives the app its playbill character at title size
   collapses into mush at caption size, where the hairlines fall below a pixel.
-  `theme/type.ts` enforces this — every role below `heading` is Sora.
+  `theme/type.ts` enforces this — every role below `heading` is Sora, and
+  `numeral` sits at 22px for the same reason.
+- **A section introduces itself one way.** `components/ui/SectionHeader` is
+  an eyebrow, a Bodoni heading and a trailing link or count on the baseline,
+  and every screen uses it. The context a heading used to cram into its text
+  ("Népszerű itt: Debrecen") goes on the eyebrow instead.
+- **One filled gold control per screen.** Gold means "the action", or "you
+  can still go and see this". Everything else is outlined, text (`Button`'s
+  `text` variant) or an icon. Status is a dot in a sentence — `StatusInline` —
+  and a pill only when it is news: in a grid, `StatusBadge`'s `inline` form
+  says nothing at all for a running production, since running is what a
+  browsing grid is *of*.
 
-`textFaint` has been lifted twice, both times for the same reason. `#80716d`
-measured 4.29:1 against the background; `#8a7a75` fixed that but was still
-4.37:1 on `surface` and 3.85:1 on `surface2` — and this is the colour that
-carries metadata at the app's smallest sizes *inside cards*, which is exactly
-where those two grounds are. It is now `#9a8a84`: 6.04 / 5.41 / 4.76, passing
-on all three.
+`textFaint` is the token that decides whether a theme passes: it carries
+metadata at the app's smallest sizes *inside cards*, which is exactly where
+the two surface grounds are. It was lifted twice under the old palette, and
+the re-cut keeps the rule — in Bársony it is `#9f8e8a`, 6.36 / 6.01 / 5.47
+against `bg` / `surface` / `surface2`.
 
 Layout is responsive rather than phone-only, because the web export ships.
 `hooks/useBreakpoint.ts` reads the viewport at runtime (react-native-web has
 no media queries inside `StyleSheet.create`), `components/ui/Screen` caps and
-centres content, and `components/ui/Grid` computes tile widths from its own
-measured width rather than percentages.
+centres content, `components/ui/Grid` computes tile widths from its own
+measured width rather than percentages, and from the `expanded` breakpoint
+`app/(tabs)/_layout.tsx` swaps the bottom tab bar for `components/ui/TopBar`.
 
-## Four palettes, and how a theme reaches the screen
+## Five palettes, and how a theme reaches the screen
 
 The reader picks a theme in Settings, reached from the gear on their profile:
-**Bársony** (the original velvet), **Színlap** (the same playbill printed —
-warm cream and ink), **Letisztult** (neutral, achromatic) and **Éjszakai**
-(cool charcoal), plus a **Rendszer szerint** option that follows the device.
-The choice is kept on the device in `AsyncStorage`, not in the profile: a
-theme is a property of the screen you are reading on, not of who you are.
+**Bársony** (the house style, and the dark default), **Színlap** (the same
+playbill printed — cream stock, ink, and the curtain's claret where the stage
+has gold; the light default), **Levendula** (a lilac wash with a violet
+accent), **Letisztult** (neutral, achromatic) and **Éjszakai** (cool
+charcoal), plus a **Rendszer szerint** option that follows the device. The
+choice is kept on the device in `AsyncStorage`, not in the profile: a theme is
+a property of the screen you are reading on, not of who you are.
+
+The two defaults are one brand at two times of day. Levendula was the light
+default until September 2026, which meant a phone in light mode opened a
+lilac app under a landing page that had just sold it velvet and gold; the
+`gold` token names a role, not a hue, and on paper that role is carried by
+the claret (`#7a2433`) rather than by the mustard ochre it used to be.
 
 Only colour varies. Bodoni Moda, the mask glyph, the spacing grid and the
 radii are the app's identity rather than a preference.
@@ -258,9 +287,12 @@ Two consequences worth knowing before adding a colour:
   `rgba(var(--vc-gold-rgb), 0.15)` and `color-mix()` are unavailable, and
   every alpha a theme needs — the badge tints, the tab bar's glow, the raised
   top edge — is its own token. That is why the palette is 18 tokens, not 12.
-- **The alpha goes in the token, and `shadowOpacity` stays 1.** When the
-  colour is a custom property, react-native-web's `createBoxShadowValue`
-  short-circuits before applying `shadowOpacity` and drops it.
+- **Depth is one `boxShadow` string per palette.** React Native 0.86
+  deprecated the four `shadow*` props, so `elevation.floating` in
+  `theme/tokens.ts` and the tab bar's glow are `"0 8px 24px var(--vc-shadow)"`
+  and the like: the web passes the string through to CSS with the custom
+  property intact, and native parses the same string on the new architecture.
+  The alpha still lives inside the colour token.
 
 Some colours deliberately do not follow the theme, and each says so where it
 lives: the modal scrims and the chrome laid over production photographs
@@ -271,9 +303,60 @@ take the whole feature down to the link-sharing fallback — and because the
 artefact that leaves the app should look like the app, not like one reader's
 display preference.
 
-Native has no custom properties and no picker: it reads the velvet palette
-directly, which is why `app.json` still pins `userInterfaceStyle: "dark"`.
-The asymmetry is deliberate.
+Native has no custom properties, so there the switch is React's job:
+`theme/colors.ts` resolves `colors.bg` against whichever palette is active
+through a Proxy, and `theme/styles.ts`'s `makeStyles` rebuilds each screen's
+stylesheet per theme, which is why every stylesheet in the app is a factory
+rather than a module-level `StyleSheet.create` — `theme/palette.test.ts`
+fails the build on any that is not. The splash and the OS chrome are pinned
+to the dark side in `app.config.ts`, and the status bar takes a side per
+theme at runtime.
+
+## The second act: one house, lit the same way everywhere
+
+The app had a coherent token system and a landing page that sold velvet and
+gold, and did not yet wear either with confidence. In September 2026 the
+whole surface was re-cut, keeping every screen, route, service and the theme
+mechanism, and changing how the product carries itself. Five rules, and what
+they did to each screen:
+
+- **Every screen opens with a lead.** Discover leads with the next evening
+  there is anything on — the poster, the curtain time and the theatre set on
+  it under a scrim, and the one filled gold button on the screen — then the
+  rest of the week as a programme. The search field, a boxed mode switch, a
+  chip row and the city header used to be pinned above the rails, which on a
+  375pt phone cost around 440pt before the first poster; now the pinned bar
+  is the title and three text tabs, and the chips scroll with the content.
+  Play detail puts the title, the credits and the theatre on the poster.
+- **Headings speak Bodoni, facts speak Sora.** `SectionHeader` everywhere,
+  `numeral` for curtain times and scores, `eyebrow` for context.
+- **Lists look like lists, posters look like posters.** `ProgramRow` — a
+  date or time in the lead column, a small still, the title, one line of
+  facts — replaces the 16:5 banner rows Discover used to draw for each
+  evening and the boxed cards in Műsor. Grid tiles carry nothing on the
+  artwork: the rating sits at the end of the venue line, and the status
+  appears only when it is not "running". Showtimes on play detail are a
+  table on hairlines; the cast is a list with the whole role visible rather
+  than a strip of circles that cut "Zoltán, a narrátor" after one word.
+- **One gold thing per screen.** Play detail had three stacked full-width
+  bars, two of them gold, before the showtimes. It has one, with the watchlist
+  and add-to-list as icon buttons beside it and the venue follow as a compact
+  pill on a row of its own.
+- **Desktop is a different room.** From 900pt the bottom tab bar becomes a
+  top bar with the brand, the four sections, the log button and the reader's
+  face; Discover's lead goes two-column. Phones keep the raised "+".
+
+Two smaller things follow from the same reasoning. A visitor with no account
+used to land on a feed of strangers' evenings; the feed now hands them to
+Discover once per launch (`app/(tabs)/index.tsx`), and the tab stays
+reachable. And the two account tabs, signed out, used to be one dim sentence
+in a dark void — `SignedOutState` says what a diary and a watchlist are for,
+with the tab the reader is on leading the list.
+
+Nothing here animates that did not before: the skeleton pulse stays, and the
+atmosphere comes from the ground, the scrim over photography, and the type.
+The landing page at `landing/` was re-cut in the same palette with
+screenshots of the shipped design, and the share card with it.
 
 ## Finding a play, and finding out when
 
@@ -614,6 +697,42 @@ suspended compound Hungarian writes when two prizes share one suffix.
 The effect is visible: Molnár Levente's four spellings become one page of nine
 credits, and Ágoston Péter merges with the ALL CAPS spelling another house uses.
 
+### One part, several people
+
+A theatre publishes one line per *part*, not one per person, and a part is
+regularly covered by more than one performer: alternating leads printed
+"Ács Eszter / Battai Lili Lujza", a chorus listed as a run of names.
+`play_cast` is keyed on (play_id, name, role) precisely so each of them can
+hold a row against the same character, and until September 2026 most
+adapters wrote the whole string into `name` as though it were one person —
+or, in Csokonai's case, took `split("/")[0]` and threw the rest away.
+
+`sync/lib/performers.ts` decides where a credit's boundaries are, and
+`sync/run.ts` applies it to every source, for the same reason `dedupeCast`
+lives there: the shape belongs to the table. Splitting is all-or-nothing and
+deliberately strict, because the two mistakes do not cost the same — leaving
+a credit unsplit is what the theatre already publishes, while splitting
+something that is not a list invents people and gives them pages. So
+"Numen/For Use + Ivana Jonke" and "Molnár Levente - Liszt-díjas, érdemes
+művész" stay whole while the chorus beside them divides.
+
+Csokonai needed a second fix, because it prints alternates two ways. Guests
+share one element, slash-joined, which the splitter handles. Company members
+get one linked element *each*, and the adapter read only the first — so
+Faluvégi Fanni was missing from Pünkösdi Kató in *Csókos asszony* on the
+live site even after the splitting landed. `sync/adapters/csokonai.ts` now
+reads every performer element in a row, with the live page as a fixture. The
+catalogue went from 203 to 292 role slots credited to more than one person
+across the two Csokonai sources alone.
+
+One operational lesson came with it. The scheduled sync is declared for
+04:00 UTC and GitHub had been starting it around 08:20, because every job
+scheduled for the same minute is queued together and the top of the hour is
+the most crowded slot; on 8 September that four-hour drift meant the day's
+catalogue was rebuilt with the parser from *before* that morning's merge.
+The cron is now `47 3 * * *`, an off-peak minute, and the workflow file says
+why.
+
 ### Half the directing work is not in the cast table
 
 945 productions name a director and only 122 of those directors also appear in
@@ -826,8 +945,8 @@ watchlist. The watchlist answers "am I going to this", which is one question
 with one answer; a list answers "what does this belong with", which is
 open-ended and can be several at once.
 
-Discover carries the first three editorial lists, between "Műsoron most" and
-"Népszerű" — above the ranked grid on purpose, since that grid's average is
+Discover carries the first three editorial lists, between the week's
+programme and "Népszerű" — above the ranked grid on purpose, since that grid's average is
 exactly what this feature exists to stand in for. The section hides itself the
 moment a city, theatre, venue-type or genre filter is on: an editorial list is
 a piece of writing about the catalogue rather than a query over it, so it
@@ -1617,12 +1736,12 @@ version that leaves the app has to be the version inside it.
 
 ### One asymmetry to know about
 
-The palette picker is web-only, and stays that way. It works by swapping CSS
-custom properties on the document element, and native has none. A native build
-is Velvet Curtain and nothing else, which is why `userInterfaceStyle` and the
-splash background are both pinned dark in `app.config.ts` and should stay
-pinned — the OS chrome, the splash and the palette all have to give the same
-answer.
+The palette picker works on both platforms, but differently: on the web it
+swaps CSS custom properties on the document element, on native it re-renders
+through `PaintContext` (see *Five palettes* above). What is pinned is the
+part the OS draws before the app has said anything — `userInterfaceStyle` and
+the splash background are dark in `app.config.ts` and should stay so, since a
+splash has no way of knowing which theme the reader chose.
 
 ### What is still missing
 
@@ -1687,9 +1806,9 @@ access", which is true of only one of them):
   makes a full pass slow.
 
 Ten adapters are live and enabled by default, covering eight theatres in two
-cities and supplying about 1,160 productions — roughly 310 currently playing or
-announced, and 850 that the theatres themselves file under their archives —
-along with 400 upcoming showtimes. Archived rows carry `plays.is_archived`,
+cities and supplying about 1,200 productions — roughly 300 currently playing or
+announced, and just under 900 that the theatres themselves file under their
+archives — along with close to 500 upcoming showtimes. Archived rows carry `plays.is_archived`,
 which keeps them out of Discover's browse rails while leaving them searchable
 and loggable, so you can still record a play you saw years ago (see
 `0005_archive_and_reconcile.sql`).

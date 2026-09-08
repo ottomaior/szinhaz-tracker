@@ -84,10 +84,13 @@ app/                     expo-router képernyők (fájlalapú útvonalak)
   _layout.tsx             gyökér stack: tabok + előadás oldal + rögzítés/
                           előadás-felvitel/auth modálok
   (tabs)/
-    _layout.tsx            tab navigátor, saját TabBar
-    index.tsx               Feed
-    discover.tsx             Felfedezés — két mód (böngésző sávok / Műsor
-                              naptár), rangsorolt keresés, rendezés, szűrők
+    _layout.tsx            tab navigátor — telefonon TabBar, 900pt-tól TopBar
+    index.tsx               Feed (a be nem jelentkezett látogatót indításonként
+                              egyszer a Felfedezésre küldi)
+    discover.tsx             Felfedezés — három fül: böngészés, a következő
+                              estével az élén és a héttel műsorlistaként; a
+                              Műsor naptár; és a Listák. Rangsorolt keresés,
+                              rendezés, szűrők
     watchlist.tsx             Figyelőlista
     profile.tsx                Profil
   play/[id].tsx           Előadás részletei
@@ -95,7 +98,9 @@ app/                     expo-router képernyők (fájlalapú útvonalak)
   list/[id].tsx           Egy lista és a tartalma
   entry/[id].tsx          Egy este: kiket láttál, hol ültél, mennyibe került
   season/[start].tsx      Egy évad összegzése, szeptembertől augusztusig
-  lists.tsx               Szerkesztői listák és a sajátjaid (modál)
+  lists.tsx               Szerkesztői listák és a sajátjaid (modál; ugyanaz a
+                          törzs, a components/ui/ListsBody, a Felfedezés
+                          Listák füle)
   inbox.tsx               Amit az éjszakai szinkron megtudott, és te kérdezted
   checkin.tsx             Előadás rögzítése — dátum, értékelés, vélemény (modál)
   onboarding.tsx          "Mit láttál már?" — első indítás rácsa a színházak
@@ -111,14 +116,16 @@ components/
                           ikongenerátor, hogy egyik példány se csússzon el
   ui/                     Button, Chip, SelectChip, DateField, Avatar,
                           FollowSubjectButton, PosterPlaceholder, ReviewSocial,
-                          TabBar
+                          SectionHeader, ProgramRow, StatusBadge, EmptyState,
+                          SignedOutState, ListsBody, TabBar, TopBar
 
 theme/                    tervezési tokenek — a „Velvet Curtain" vizuális
-                          rendszer egyetlen forrása
+                          rendszer egyetlen forrása, a második felvonásban
+                          újravágva (lásd lejjebb: „A második felvonás")
   colors.ts               a paletta, mellette az OKLCH érték, amiből az adott
                           hexa származik
   typography.ts           a két márkabetű és a visszaesési sorrendjük
-  type.ts                 a tipográfiai skála: nyolc megnevezett szerep
+  type.ts                 a tipográfiai skála: tíz megnevezett szerep
   tokens.ts               térközök, lekerekítések, árnyékszintek, töréspontok,
                           maximális szélességek
 
@@ -187,12 +194,13 @@ sync/                     önálló Node szkript (`npm run sync`; a `-- --dry-ru
 
 ## Tervezési rendszer
 
-A színek és a tipográfia a `theme/`-ben laknak. A paletta ugyanaz a „Velvet
-Curtain" rendszer, mint a tervezővásznon: majdnem fekete, meleg bordó háttér,
-meleg arany kiemelőszín, Bodoni Moda a kiemelt szövegre, Sora a felület
-szövegére, és egy saját színházi álarc ikon mindenütt, ahol egyébként csillagos
-értékelés lenne. Ez ma már a négy választható paletta egyike — lásd lejjebb a
-„Négy paletta" részt —, de továbbra is ez az, amire az app tervezve van.
+A színek és a tipográfia a `theme/`-ben laknak. A paletta a tervezővászon
+„Velvet Curtain" rendszere, 2026 szeptemberében újravágva: szilvafekete
+színpad, bordó felületek, pezsgőarany kiemelőszín, Bodoni Moda a kiemelt
+szövegre, Sora a felület szövegére, és egy saját színházi álarc ikon mindenütt,
+ahol egyébként csillagos értékelés lenne. Ez az öt választható paletta egyike —
+lásd lejjebb az „Öt paletta" részt — és az, amire az app tervezve van; a
+nyomtatott párja, a Színlap, a világos alapértelmezés.
 
 A `theme/themes.ts` tartja a palettákat, és dokumentálja, melyik hexa konstans
 melyik OKLCH értékből lett átváltva, arra az esetre, ha később hangolni kell
@@ -203,39 +211,60 @@ eldönti, melyik palettát látja az adott platform.
 Két szabályt érdemes ismerni, mielőtt bárki új képernyőt ír:
 
 - **Sose állíts be betűméretet kézzel.** A `components/ui/Text` egy `variant`-ot
-  (display / title / heading / subheading / body / bodySmall / label / caption)
-  és egy `tone`-t vár. Korábban a méretek a hívás helyén voltak beírva — így
-  gyűlt össze belőlük húsz. Az egyetlen kivétel a `TextInput`, ami nem tudja
-  használni ezt a komponenst, és `inputFontSize`-t kap: 16px, mert az iOS Safari
-  ránagyít az oldalra, ha egy fókuszált mező szövege ennél kisebb.
+  (display / title / heading / numeral / subheading / body / bodySmall / label /
+  caption / eyebrow) és egy `tone`-t vár. Korábban a méretek a hívás helyén
+  voltak beírva — így gyűlt össze belőlük húsz. Az egyetlen kivétel a
+  `TextInput`, ami nem tudja használni ezt a komponenst, és `inputFontSize`-t
+  kap: 16px, mert az iOS Safari ránagyít az oldalra, ha egy fókuszált mező
+  szövege ennél kisebb. Két szerepnek saját tónusa van: a `numeral` (kezdési
+  idő, pontszám, a hónap napja — Bodoni, alapból a kiemelőszínben) és az
+  `eyebrow` (a kis, ritkított kapitális egy cím fölött vagy egy képen).
 - **A Bodoni Moda csak kiemelt szövegre való, 19px-től felfelé.** Didone betű: a
   vastag-vékony kontraszt, ami címméretben megadja az appnak a színlap-
   karakterét, képaláírás-méretben masszává olvad, mert a hajszálvonalak egy pixel
   alá esnek. A `theme/type.ts` ezt ki is kényszeríti — a `heading` alatti minden
-  szerep Sora.
+  szerep Sora, és a `numeral` ugyanezért 22px-en ül.
+- **Egy szakasz egyféleképpen mutatkozik be.** A `components/ui/SectionHeader`
+  egy eyebrow, egy Bodoni cím és egy záró link vagy szám az alapvonalon, és
+  minden képernyő ezt használja. Amit egy cím korábban a szövegébe zsúfolt
+  („Népszerű itt: Debrecen"), az az eyebrow-ra kerül.
+- **Képernyőnként egy kitöltött arany vezérlő.** Az arany azt jelenti: „a
+  cselekvés", vagy „ezt még meg tudod nézni". Minden más körvonalas, szöveges
+  (a `Button` `text` változata) vagy ikon. Az állapot egy pont egy mondatban —
+  `StatusInline` —, és csak akkor jelvény, ha hír: rácsban a `StatusBadge`
+  `inline` formája egy futó előadásról semmit sem mond, hiszen a futó az, *amiből*
+  egy böngészőrács áll.
 
-A `textFaint` kétszer is világosodott, mindkétszer ugyanazért. A `#80716d`
-4,29:1-et mért a háttérhez képest; a `#8a7a75` ezt megoldotta, de a
-`surface`-en még mindig 4,37:1 volt, a `surface2`-n pedig 3,85:1 — és pont ez a
-szín viszi az app legkisebb méretű metaadatait, méghozzá jellemzően *kártyán
-belül*, vagyis épp azon a két háttéren. Most `#9a8a84`: 6,04 / 5,41 / 4,76,
-mindhárom háttéren megfelel.
+A `textFaint` az a token, ami eldönti, megfelel-e egy téma: az app legkisebb
+méretű metaadatait viszi, méghozzá jellemzően *kártyán belül*, vagyis épp a két
+felületháttéren. A régi palettán kétszer világosodott, és az újravágás tartja
+a szabályt — a Bársonyban `#9f8e8a`: 6,36 / 6,01 / 5,47 a `bg` / `surface` /
+`surface2` háttérhez képest.
 
 Az elrendezés reszponzív, nem csak telefonra való, mert a webes kiadás is
 kimegy. A `hooks/useBreakpoint.ts` futásidőben olvassa a nézetablakot (a
 react-native-webben nincs media query a `StyleSheet.create`-en belül), a
 `components/ui/Screen` maximalizálja és középre húzza a tartalmat, a
-`components/ui/Grid` pedig a saját mért szélességéből számol csempeszélességet,
-nem százalékból.
+`components/ui/Grid` a saját mért szélességéből számol csempeszélességet, nem
+százalékból, az `expanded` töréspontól pedig az `app/(tabs)/_layout.tsx` az
+alsó fülsávot a `components/ui/TopBar`-ra cseréli.
 
-## Négy paletta, és hogyan jut el egy téma a képernyőig
+## Öt paletta, és hogyan jut el egy téma a képernyőig
 
 Az olvasó a Beállításokban választ témát, ahová a profilján lévő fogaskerék
-vezet: **Bársony** (az eredeti), **Színlap** (ugyanaz a színlap, nyomtatva —
-meleg krém és tinta), **Letisztult** (semleges, szürke) és **Éjszakai** (hűvös
-szürke sötét mód), valamint egy **Rendszer szerint** opció, ami az eszközt
-követi. A választás az eszközön marad, `AsyncStorage`-ban, nem a profilban: a
-téma annak a képernyőnek a tulajdonsága, amin olvasol, nem a tiéd.
+vezet: **Bársony** (a ház stílusa, és a sötét alapértelmezés), **Színlap**
+(ugyanaz a színlap, nyomtatva — krém papír, tinta, és a függöny bordója ott,
+ahol a színpadon arany van; a világos alapértelmezés), **Levendula** (halvány
+lila, ibolya kiemeléssel), **Letisztult** (semleges, szürke) és **Éjszakai**
+(hűvös szürke sötét mód), valamint egy **Rendszer szerint** opció, ami az
+eszközt követi. A választás az eszközön marad, `AsyncStorage`-ban, nem a
+profilban: a téma annak a képernyőnek a tulajdonsága, amin olvasol, nem a tiéd.
+
+A két alapértelmezés egy márka, a nap két szakában. 2026 szeptemberéig a
+Levendula volt a világos alapértelmezés, vagyis egy világos módú telefon lila
+appot nyitott meg egy olyan nyitóoldal alatt, ami épp bársonyt és aranyat adott
+el; a `gold` token szerepet nevez meg, nem árnyalatot, és papíron ezt a
+szerepet a bordó (`#7a2433`) viszi, nem a korábbi mustársárga okker.
 
 Csak a szín változik. A Bodoni Moda, az álarc ikon, a térköz-rács és a
 lekerekítések az app identitása, nem beállítás.
@@ -272,9 +301,12 @@ Két következmény, amit érdemes tudni, mielőtt bárki új színt vesz fel:
   `color-mix()` nem elérhető, és minden alfa, amire egy témának szüksége van —
   a jelvények árnyalatai, a fülsáv fénye, a kiemelt felső él — külön token.
   Ezért 18 tokenes a paletta, nem 12.
-- **Az alfa a tokenbe kerül, a `shadowOpacity` pedig 1 marad.** Ha a szín egy
-  custom property, a react-native-web `createBoxShadowValue`-ja még a
-  `shadowOpacity` alkalmazása előtt kilép, és eldobja azt.
+- **A mélység palettánként egy `boxShadow` string.** A React Native 0.86
+  elavulttá tette a négy `shadow*` propot, ezért a `theme/tokens.ts`
+  `elevation.floating`-je és a fülsáv fénye `"0 8px 24px var(--vc-shadow)"` és
+  hasonló: a web a stringet változatlanul, a custom propertyvel együtt adja
+  tovább a CSS-nek, natíven pedig az új architektúra ugyanezt a stringet
+  értelmezi. Az alfa továbbra is a színtokenben lakik.
 
 Néhány szín szándékosan nem követi a témát, és mindegyik ott is leírja, miért:
 a modálisok sötétítése és az előadásfotókra fektetett kezelőelemek (`overlay` a
@@ -284,9 +316,61 @@ nem tud `var()`-t feloldani — az `addColorStop` kivételt dob rá, amitől az
 egész funkció a link-megosztásos tartalékra esne vissza —, és mert ami elhagyja
 az appot, az app képét kell vinnie, nem egy olvasó megjelenítési beállításáét.
 
-A natív oldalon nincs custom property és nincs témaválasztó: ott közvetlenül a
-bársony paletta megy, ezért marad az `app.json`-ban a
-`userInterfaceStyle: "dark"`. Az aszimmetria szándékos.
+A natív oldalon nincs custom property, ott tehát a váltás a React dolga: a
+`theme/colors.ts` egy Proxyn keresztül az épp aktív palettához oldja fel a
+`colors.bg`-t, a `theme/styles.ts` `makeStyles`-a pedig témánként újraépíti
+minden képernyő stíluslapját — ezért gyár minden stíluslap az appban, nem
+modulszintű `StyleSheet.create`, és a `theme/palette.test.ts` elbuktatja a
+buildet, ha valamelyik nem az. Az indítóképernyő és a rendszer kerete az
+`app.config.ts`-ben a sötét oldalhoz van rögzítve, a státuszsáv pedig
+futásidőben témánként választ oldalt.
+
+## A második felvonás: egy ház, mindenütt ugyanúgy megvilágítva
+
+Az appnak koherens tokenrendszere és egy bársonyt-aranyat eladó nyitóoldala
+volt, de egyiket sem viselte még magabiztosan. 2026 szeptemberében az egész
+felület újra lett vágva úgy, hogy minden képernyő, útvonal, service és a
+témamechanizmus megmaradt, és az változott, ahogyan a termék hordja magát. Öt
+szabály, és hogy mit tettek az egyes képernyőkkel:
+
+- **Minden képernyő egy vezérképpel nyit.** A Felfedezés a következő olyan
+  estével kezd, amikor egyáltalán van valami — a plakát, a kezdési idő és a
+  színház a képre szedve egy sötétítés alatt, és a képernyő egyetlen kitöltött
+  arany gombja —, majd a hét többi estéje jön műsorlistaként. A keresőmező, egy
+  dobozos módváltó, egy chipsor és a városfejléc korábban a sávok fölé volt
+  rögzítve, ami egy 375pt-os telefonon nagyjából 440pt-ba került az első plakát
+  előtt; most a rögzített sáv a cím és három szöveges fül, a chipek pedig a
+  tartalommal görgetnek. Az előadás oldala a címet, az alkotókat és a színházat
+  a plakátra teszi.
+- **A címek Bodoniul beszélnek, a tények Sorául.** Mindenütt `SectionHeader`,
+  `numeral` a kezdési időknek és pontszámoknak, `eyebrow` a kontextusnak.
+- **A lista listának néz ki, a plakát plakátnak.** A `ProgramRow` — dátum vagy
+  idő a bal oszlopban, egy kis kép, a cím, egy sor tény — váltja a 16:5-ös
+  szalagsorokat, amiket a Felfedezés korábban minden estére rajzolt, és a Műsor
+  dobozos kártyáit. A rácscsempék semmit sem hordanak a képen: az értékelés a
+  színházsor végén ül, az állapot pedig csak akkor jelenik meg, ha nem
+  „műsoron". Az előadás oldalán az időpontok hajszálvonalakra szedett táblázat;
+  a szereposztás lista, amin a teljes szerep látszik, nem körök sávja, ami a
+  „Zoltán, a narrátor"-t egy szó után levágta.
+- **Képernyőnként egy arany dolog.** Az előadás oldalán három egymásra rakott,
+  teljes szélességű sáv volt az időpontok előtt, kettő közülük arany. Most egy
+  van, mellette a kívánságlista és a listára tétel ikongombként, a
+  színházkövetés pedig kompakt pirula egy saját sorban.
+- **Az asztali gép másik szoba.** 900pt-tól az alsó fülsáv felső sávvá válik a
+  márkával, a négy szekcióval, a naplózás gombbal és az olvasó arcával; a
+  Felfedezés vezérképe kéthasábos lesz. A telefonon marad a kiemelt „+".
+
+Két kisebb dolog ugyanebből a gondolatmenetből következik. A fiók nélküli
+látogató korábban idegenek estéinek hírfolyamán landolt; a hírfolyam most
+indításonként egyszer átadja a Felfedezésnek (`app/(tabs)/index.tsx`), és a fül
+elérhető marad. A két fiókfül pedig kijelentkezve egy fakó mondat volt egy sötét
+űrben — a `SignedOutState` elmondja, mire való a napló és a kívánságlista, és
+azzal a füllel kezdi a felsorolást, amelyiken az olvasó áll.
+
+Semmi sem animál, ami eddig nem: a csontváz lüktetése marad, a hangulat a
+háttérből, a fotók fölötti sötétítésből és a tipográfiából jön. A `landing/`
+nyitóoldala ugyanebben a palettában lett újravágva a kiadott felület
+képernyőképeivel, és vele a megosztókártya is.
 
 ## Hogyan találsz meg egy előadást, és mikor játsszák
 
@@ -647,6 +731,41 @@ A hatás látszik: Molnár Levente négy írásmódja egyetlen, kilenc közremű
 tartalmazó oldallá válik, Ágoston Péter pedig összeolvad a CSUPA NAGYBETŰS
 írásmóddal, amit egy másik ház használ.
 
+### Egy szerep, több ember
+
+Egy színház *szerepenként* tesz közzé egy sort, nem emberenként, és egy
+szerepet rendszeresen többen is játszanak: a váltott főszereplők „Ács Eszter /
+Battai Lili Lujza" alakban, egy kórus nevek sorozataként. A `play_cast` pont
+azért (play_id, name, role) kulcsú, hogy mindegyikük saját sort kaphasson
+ugyanannál a figuránál, és 2026 szeptemberéig a legtöbb adapter mégis az egész
+stringet írta a `name`-be, mintha egy ember volna — a Csokonai esetében pedig
+`split("/")[0]`-lal vette az elsőt, és a többit eldobta.
+
+A `sync/lib/performers.ts` dönti el, hol vannak egy közreműködés határai, a
+`sync/run.ts` pedig minden forrásra alkalmazza, ugyanazért, amiért a
+`dedupeCast` is ott lakik: a forma a tábláé. A szétválasztás mindent-vagy-semmit
+és szándékosan szigorú, mert a két hiba nem ugyanannyiba kerül — egy
+szét nem vágott közreműködés az, amit a színház ma is közöl, egy olyan
+szétvágása viszont, ami nem lista, embereket talál ki és oldalt ad nekik. Így a
+„Numen/For Use + Ivana Jonke" és a „Molnár Levente - Liszt-díjas, érdemes
+művész" egyben marad, míg a mellettük álló kórus szétválik.
+
+A Csokonainak egy második javítás is kellett, mert kétféleképpen nyomtatja a
+váltásokat. A vendégek egy elemen osztoznak, perjellel — ezt a szétválasztó
+kezeli. A társulati tagok viszont *fejenként* egy-egy linkelt elemet kapnak, és
+az adapter csak az elsőt olvasta — így Faluvégi Fanni a szétválasztás után is
+hiányzott Pünkösdi Kató mellől a *Csókos asszony*ban az éles oldalon. A
+`sync/adapters/csokonai.ts` most egy sor minden előadóelemét beolvassa, az
+éles oldallal mint fixture-rel. A két Csokonai-forrásnál a több emberhez
+rendelt szerephelyek száma 203-ról 292-re nőtt.
+
+Jött vele egy üzemeltetési tanulság is. Az ütemezett szinkron 04:00 UTC-re van
+bejelentve, és a GitHub 08:20 körül indította, mert az ugyanarra a percre
+ütemezett jobokat együtt sorolja be, és az egész óra a legzsúfoltabb hely;
+szeptember 8-án ez a négyórás csúszás azt jelentette, hogy a napi katalógus az
+aznap reggeli merge *előtti* értelmezővel épült újra. A cron most `47 3 * * *`,
+egy csúcsidőn kívüli perc, és a workflow-fájl leírja, miért.
+
 ### A rendezői munka fele nincs benne a szereposztástáblában
 
 945 produkció nevez meg rendezőt, és ezek közül csak 122 rendező szerepel a
@@ -869,7 +988,7 @@ kívánságlista arra válaszol, hogy "elmegyek-e erre" — egy kérdés, egy v�
 a lista pedig arra, hogy "mivel tartozik ez össze", ami nyitott, és egyszerre
 több is lehet.
 
-A Felfedezés az első három szerkesztői listát viszi, a "Műsoron most" és a
+A Felfedezés az első három szerkesztői listát viszi, a hét műsorlistája és a
 "Népszerű" közé — szándékosan a rangsorolt rács fölé, hiszen épp annak az
 átlagnak a helyére készült ez a funkció. A blokk eltűnik, amint város-,
 színház-, helyszíntípus- vagy műfajszűrő van bekapcsolva: a szerkesztői lista a
@@ -1695,12 +1814,12 @@ van.
 
 ### Egy aszimmetria, amit érdemes tudni
 
-A palettaválasztó csak webes, és az is marad. Úgy működik, hogy CSS custom
-propertyket cserél a dokumentumelemen, és natíven ilyenek nincsenek. Egy natív
-build a Bársony paletta, és semmi más — ezért van az `app.config.ts`-ben a
-`userInterfaceStyle` és az indítóképernyő háttere is sötétre rögzítve, és ezért
-kell rögzítve maradniuk: a rendszer kerete, az indítóképernyő és a paletta
-mindnek ugyanazt a választ kell adnia.
+A palettaválasztó mindkét platformon működik, csak másképp: a weben CSS custom
+propertyket cserél a dokumentumelemen, natíven a `PaintContext`-en keresztül
+újrarenderel (lásd fentebb: *Öt paletta*). Az van rögzítve, amit a rendszer
+azelőtt rajzol, hogy az app bármit mondott volna — az `app.config.ts`-ben a
+`userInterfaceStyle` és az indítóképernyő háttere sötét, és az is marad, mert
+egy indítóképernyő nem tudhatja, melyik témát választotta az olvasó.
 
 ### Ami még hiányzik
 
@@ -1764,9 +1883,9 @@ tiltja az automatikus hozzáférést", ami csak az egyikre igaz):
   lassú egy teljes kör.
 
 Tíz adapter él és alapból be van kapcsolva, nyolc színházat fed le két
-városban, együtt nagyjából 1160 produkciót adnak — ebből körülbelül 310 fut most
-vagy meg van hirdetve, 850 pedig olyan, amit maguk a színházak sorolnak az
-archívumukba —, valamint 400 közelgő játszási időpontot. Az archív sorok
+városban, együtt nagyjából 1200 produkciót adnak — ebből körülbelül 300 fut most
+vagy meg van hirdetve, alig 900 alatti pedig olyan, amit maguk a színházak
+sorolnak az archívumukba —, valamint közel 500 közelgő játszási időpontot. Az archív sorok
 `plays.is_archived`-et kapnak, ami kiveszi őket a Felfedezés böngészősávjaiból,
 de kereshetők és rögzíthetők maradnak, így évekkel ezelőtt látott előadást is
 fel lehet vinni (lásd `0005_archive_and_reconcile.sql`).
