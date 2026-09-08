@@ -24,8 +24,8 @@ html, body { width: 1200px; height: 630px; overflow: hidden; }
 
 body {
   position: relative;
-  background: #0b0403;
-  color: #f5ede4;
+  background: #0a0507;
+  color: #f6efe6;
   font-family: "Sora", system-ui, sans-serif;
   display: flex;
   align-items: center;
@@ -39,7 +39,7 @@ body {
 .rig { position: absolute; inset: 0; pointer-events: none; }
 .beam {
   position: absolute; top: -22%; left: 74%; width: 420px; height: 150%;
-  background: linear-gradient(to bottom, rgba(219,177,85,0.20), rgba(219,177,85,0.05) 44%, rgba(219,177,85,0) 74%);
+  background: linear-gradient(to bottom, rgba(228,191,114,0.20), rgba(228,191,114,0.05) 44%, rgba(228,191,114,0) 74%);
   filter: blur(44px);
   clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%);
 }
@@ -48,11 +48,11 @@ body {
 .pool {
   position: absolute; left: 74%; top: 20%; width: 880px; aspect-ratio: 1.75;
   transform: translateX(-50%);
-  background: radial-gradient(ellipse at center, rgba(219,177,85,0.26), rgba(178,131,36,0.09) 38%, rgba(11,4,3,0) 68%);
+  background: radial-gradient(ellipse at center, rgba(228,191,114,0.26), rgba(169,124,46,0.09) 38%, rgba(10,5,7,0) 68%);
   filter: blur(16px);
 }
 /* A gold hairline along the top edge — the pelmet above a stage. */
-.pelmet { position: absolute; inset: 0 0 auto; height: 4px; background: linear-gradient(90deg, rgba(219,177,85,0), #dbb155 22%, #ecd08a 50%, #dbb155 78%, rgba(219,177,85,0)); }
+.pelmet { position: absolute; inset: 0 0 auto; height: 4px; background: linear-gradient(90deg, rgba(228,191,114,0), #e4bf72 22%, #f0d38f 50%, #e4bf72 78%, rgba(228,191,114,0)); }
 
 .copy { position: relative; z-index: 1; width: 620px; display: flex; flex-direction: column; gap: 22px; }
 
@@ -62,19 +62,19 @@ body {
 
 .eyebrow {
   font-size: 17px; font-weight: 500; letter-spacing: 0.2em;
-  text-transform: uppercase; color: #dbb155;
+  text-transform: uppercase; color: #e4bf72;
 }
 
 h1 {
   font-family: "Bodoni Moda", serif;
   font-size: 68px; font-weight: 500; line-height: 1.02; letter-spacing: -0.022em;
 }
-h1 em { font-style: italic; font-weight: 400; color: #dbb155; }
+h1 em { font-style: italic; font-weight: 400; color: #e4bf72; }
 
-.sub { font-size: 22px; font-weight: 300; line-height: 1.5; color: #b9a69e; max-width: 42ch; text-wrap: balance; }
+.sub { font-size: 22px; font-weight: 300; line-height: 1.5; color: #c2afa8; max-width: 42ch; text-wrap: balance; }
 
-.meta { display: flex; gap: 18px; align-items: center; font-size: 17px; color: #9a8a84; font-variant-numeric: tabular-nums; }
-.meta i { width: 4px; height: 4px; border-radius: 50%; background: #b28324; }
+.meta { display: flex; gap: 18px; align-items: center; font-size: 17px; color: #9f8e8a; font-variant-numeric: tabular-nums; }
+.meta i { width: 4px; height: 4px; border-radius: 50%; background: #a97c2e; }
 
 /* The phone is bled off the bottom on purpose: it reads as a real object
    standing in the light rather than a picture pasted onto a rectangle. */
@@ -86,10 +86,10 @@ h1 em { font-style: italic; font-weight: 400; color: #dbb155; }
   box-shadow:
     0 2px 2px rgba(245,237,228,0.10) inset,
     0 44px 92px -30px rgba(0,0,0,0.85),
-    0 0 84px -20px rgba(219,177,85,0.42);
+    0 0 84px -20px rgba(228,191,114,0.42);
   transform: rotate(-5deg);
 }
-.phone__screen { position: relative; border-radius: 11.4%/5.4%; overflow: hidden; background: #120505; }
+.phone__screen { position: relative; border-radius: 11.4%/5.4%; overflow: hidden; background: #0f0709; }
 .phone__screen img { display: block; width: 100%; height: auto; }
 .phone__glare {
   position: absolute; inset: 0; border-radius: inherit;
@@ -109,10 +109,10 @@ h1 em { font-style: italic; font-weight: 400; color: #dbb155; }
 <div class="copy">
   <div class="brand">
     <svg viewBox="0 0 64 64" aria-hidden="true">
-      <path d="M4 9H60V14Q46 23 32 15Q18 23 4 14Z" fill="#dbb155"/>
-      <path d="M6 15H23C20 27 20 41 22 51Q14 56 6 52Z" fill="#dbb155"/>
-      <path d="M58 15H41C44 27 44 41 42 51Q50 56 58 52Z" fill="#dbb155"/>
-      <path d="M32 26.5l2.06 5.67 6.02.2-4.75 3.71 1.67 5.8L32 38.5l-5 3.38 1.67-5.8-4.75-3.71 6.02-.2z" fill="#dbb155"/>
+      <path d="M4 9H60V14Q46 23 32 15Q18 23 4 14Z" fill="#e4bf72"/>
+      <path d="M6 15H23C20 27 20 41 22 51Q14 56 6 52Z" fill="#e4bf72"/>
+      <path d="M58 15H41C44 27 44 41 42 51Q50 56 58 52Z" fill="#e4bf72"/>
+      <path d="M32 26.5l2.06 5.67 6.02.2-4.75 3.71 1.67 5.8L32 38.5l-5 3.38 1.67-5.8-4.75-3.71 6.02-.2z" fill="#e4bf72"/>
     </svg>
     <span>Vastaps</span>
   </div>
@@ -129,7 +129,7 @@ h1 em { font-style: italic; font-weight: 400; color: #dbb155; }
   <div class="phone">
     <div class="phone__body">
       <div class="phone__screen">
-        <img id="shot" src="shots/feed.webp" width="810" height="1761" alt="">
+        <img id="shot" src="shots/discover.webp" width="810" height="1761" alt="">
         <span class="phone__glare"></span>
       </div>
     </div>

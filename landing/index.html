@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#0b0403">
+<meta name="theme-color" content="#0a0507">
 <title>Vastaps — magyar színházi napló</title>
 <meta name="description" content="Magyar színházi napló — nézd meg, mi megy ma este, és jegyezd fel, amit láttál.">
 <link rel="canonical" href="https://vastaps.pages.dev/">
@@ -65,26 +65,26 @@
 :root {
   color-scheme: dark;
 
-  --ink:        #0b0403;
-  --ink-2:      #120505;
-  --surface:    #1d0c0a;
-  --surface-2:  #251210;
-  --surface-3:  #331d1a;
+  --ink:        #0a0507;
+  --ink-2:      #0f0709;
+  --surface:    #170b0f;
+  --surface-2:  #1c0d13;
+  --surface-3:  #2a1520;
 
   --hairline:      rgba(245,237,228,0.10);
   --hairline-soft: rgba(245,237,228,0.055);
 
-  --text:  #f5ede4;
-  --dim:   #b9a69e;
-  --faint: #9a8a84;
+  --text:  #f6efe6;
+  --dim:   #c2afa8;
+  --faint: #9f8e8a;
 
-  --gold:      #dbb155;
-  --gold-deep: #b28324;
-  --gold-lift: #ecd08a;
-  --on-gold:   #120505;
-  --gold-tint:   rgba(219,177,85,0.14);
-  --gold-edge:   rgba(219,177,85,0.42);
-  --gold-glow:   rgba(219,177,85,0.40);
+  --gold:      #e4bf72;
+  --gold-deep: #a97c2e;
+  --gold-lift: #f0d38f;
+  --on-gold:   #140709;
+  --gold-tint:   rgba(228,191,114,0.14);
+  --gold-edge:   rgba(228,191,114,0.42);
+  --gold-glow:   rgba(228,191,114,0.40);
 
   --display: "Bodoni Moda", "Bodoni MT", "Didot", "Times New Roman", serif;
   --sans: "Sora", ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
@@ -195,7 +195,7 @@ html { scroll-behavior: smooth; }
   font-size: 0.95rem; font-weight: 600; text-decoration: none; cursor: pointer;
   border: 1px solid transparent; transition: transform 0.16s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
-.btn--gold { background: var(--gold); color: var(--on-gold); box-shadow: 0 0 0 rgba(219,177,85,0); }
+.btn--gold { background: var(--gold); color: var(--on-gold); box-shadow: 0 0 0 rgba(228,191,114,0); }
 .btn--gold:hover { background: var(--gold-lift); box-shadow: 0 8px 34px -12px var(--gold-glow); }
 .btn--ghost { border-color: var(--hairline); color: var(--text); background: rgba(245,237,228,0.03); }
 .btn--ghost:hover { border-color: var(--gold-edge); background: var(--gold-tint); }
@@ -216,7 +216,7 @@ html { scroll-behavior: smooth; }
 .hero__light { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
 .beam {
   position: absolute; top: -18%; left: var(--rig-x); width: 46vw; height: 92vh;
-  background: linear-gradient(to bottom, rgba(219,177,85,0.17), rgba(219,177,85,0.045) 42%, rgba(219,177,85,0) 72%);
+  background: linear-gradient(to bottom, rgba(228,191,114,0.17), rgba(228,191,114,0.045) 42%, rgba(228,191,114,0) 72%);
   filter: blur(46px);
   clip-path: polygon(43% 0, 57% 0, 100% 100%, 0 100%);
   opacity: 0;
@@ -227,7 +227,7 @@ html { scroll-behavior: smooth; }
 .pool {
   position: absolute; left: var(--rig-x); top: var(--rig-y); width: min(900px, 128vw); aspect-ratio: 1.75;
   transform: translateX(-50%);
-  background: radial-gradient(ellipse at center, rgba(219,177,85,0.28), rgba(178,131,36,0.10) 38%, rgba(11,4,3,0) 68%);
+  background: radial-gradient(ellipse at center, rgba(228,191,114,0.28), rgba(169,124,46,0.10) 38%, rgba(10,5,7,0) 68%);
   filter: blur(18px);
   opacity: 0;
   animation: beam-up 1.7s ease-out 0.1s forwards;
@@ -458,10 +458,10 @@ html { scroll-behavior: smooth; }
   <div class="shell nav__in">
     <a class="brand" href="#top">
       <svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
-        <path d="M4 9H60V14Q46 23 32 15Q18 23 4 14Z" fill="#dbb155"/>
-        <path d="M6 15H23C20 27 20 41 22 51Q14 56 6 52Z" fill="#dbb155"/>
-        <path d="M58 15H41C44 27 44 41 42 51Q50 56 58 52Z" fill="#dbb155"/>
-        <path d="M32 26.5l2.06 5.67 6.02.2-4.75 3.71 1.67 5.8L32 38.5l-5 3.38 1.67-5.8-4.75-3.71 6.02-.2z" fill="#dbb155"/>
+        <path d="M4 9H60V14Q46 23 32 15Q18 23 4 14Z" fill="#e4bf72"/>
+        <path d="M6 15H23C20 27 20 41 22 51Q14 56 6 52Z" fill="#e4bf72"/>
+        <path d="M58 15H41C44 27 44 41 42 51Q50 56 58 52Z" fill="#e4bf72"/>
+        <path d="M32 26.5l2.06 5.67 6.02.2-4.75 3.71 1.67 5.8L32 38.5l-5 3.38 1.67-5.8-4.75-3.71 6.02-.2z" fill="#e4bf72"/>
       </svg>
       <span class="brand__name">Vastaps</span>
     </a>
@@ -510,7 +510,7 @@ html { scroll-behavior: smooth; }
 
         </div>
         <p class="hero__meta">
-          <span data-t="metaPlays">1213 produkció</span>
+          <span data-t="metaPlays">1199 produkció</span>
           <span data-t="metaCities">Budapest és Debrecen</span>
           <span data-t="metaSync">Éjszakánként frissül</span>
         </p>
@@ -520,7 +520,7 @@ html { scroll-behavior: smooth; }
         <div class="phone" style="--w: 264px" data-parallax="0.045">
           <div class="phone__body">
             <div class="phone__screen">
-              <img src="shots/feed.webp" width="810" height="1761" alt="A Vastaps hírfolyama: Maior Ottó megnézte a Scævola – Gianni Schicchit a Csokonai Nemzeti Színházban, négy maszkkal értékelve." data-t-alt="altFeed">
+              <img src="shots/discover.webp" width="810" height="1761" alt="A Vastaps Felfedezés képernyője: a következő este a Káli holtak a Katona József Színházban, plakáttal, kezdési idővel és egy Megnézem gombbal; alatta a hét további estéi." data-t-alt="altFeed">
               <span class="phone__glare"></span>
             </div>
           </div>
@@ -554,7 +554,7 @@ html { scroll-behavior: smooth; }
         <div class="phone" style="--w: 320px; margin-top: 1.5rem" data-parallax="0.03">
           <div class="phone__body">
             <div class="phone__screen">
-              <img src="shots/discover.webp" width="810" height="1761" loading="lazy" alt="A Felfedezés képernyő: „Műsoron most” sávban az Anyegin, a Káli holtak és A Pál utcai fiúk, alatta a közelgő előadások napokra bontva." data-t-alt="altDiscover">
+              <img src="shots/discover2.webp" width="810" height="1761" loading="lazy" alt="A Felfedezés képernyő folytatása: a következő esték műsorlistaként — dátum, kezdési idő, színház és műfaj soronként —, alatta a szerkesztői listák." data-t-alt="altDiscover">
               <span class="phone__glare"></span>
             </div>
           </div>
@@ -597,7 +597,7 @@ html { scroll-behavior: smooth; }
         <div class="phone phone--tilt" style="--w: 288px; --tilt: 4deg" data-parallax="0.05">
           <div class="phone__body">
             <div class="phone__screen">
-              <img src="shots/musor.webp" width="810" height="1761" loading="lazy" alt="A Műsor naptárnézet: 2026. szeptember 7., egy előadás — Anyegin 19:30-kor az Örkény István Színház Stúdiójában." data-t-alt="altMusor">
+              <img src="shots/musor.webp" width="810" height="1761" loading="lazy" alt="A Műsor naptárnézet: 2026. szeptember 11., két előadás — az „Izzik a galagonya” a Csokonai Nemzeti Színházban 19:00-kor, és a Káli holtak a Katona Kamrájában 18:00-kor." data-t-alt="altMusor">
               <span class="phone__glare"></span>
             </div>
           </div>
@@ -615,7 +615,7 @@ html { scroll-behavior: smooth; }
           <div class="phone phone--tilt" style="--w: 288px; --tilt: -4deg" data-parallax="0.05">
             <div class="phone__body">
               <div class="phone__screen">
-                <img src="shots/play.webp" width="810" height="1761" loading="lazy" alt="A Pál utcai fiúk adatlapja a Csokonai Nemzeti Színházból: plakát, 4,0-s átlag, és külön sáv a színészi játékra, a rendezésre és a díszletre." data-t-alt="altPlay">
+                <img src="shots/play.webp" width="810" height="1761" loading="lazy" alt="A Lidércek, Shaxpeare, Delírium adatlapja az Örkény István Színházból: a cím és az alkotók a plakáton, alatta a „Műsoron” állapot a következő időponttal, egy naplózás gomb, és 5,0-s átlag külön sávval a színészi játékra, a rendezésre és a díszletre." data-t-alt="altPlay">
                 <span class="phone__glare"></span>
               </div>
             </div>
@@ -673,7 +673,7 @@ html { scroll-behavior: smooth; }
         <div class="split__copy" data-reveal>
           <p class="eyebrow" data-t="p1Eyebrow">Színészek és rendezők</p>
           <h2 data-t="p1Title">Ki volt az a színésznő a második felvonásban?</h2>
-          <p class="body-dim" data-t="p1Body">A katalógus 2424 névvel indul. Rákeresel egy színészre, és előjön minden előadás, amiben játszott — szereppel, évszámmal, színházzal. A rendezők ugyanígy.</p>
+          <p class="body-dim" data-t="p1Body">A katalógus 2557 névvel indul — ha egy szerepet ketten játszanak, mindkettőjüket tudja. Rákeresel egy színészre, és előjön minden előadás, amiben játszott — szereppel, évszámmal, színházzal. A rendezők ugyanígy.</p>
           <p class="body-dim" data-t="p1Body2">Ha bejelentkezel, szólunk, amikor egy követett alkotó új előadásban lép színpadra.</p>
         </div>
         <div class="split__art duo" data-reveal>
@@ -739,7 +739,7 @@ html { scroll-behavior: smooth; }
         <article class="tile" data-reveal>
           <svg class="tile__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.9 1.8-1.8 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-1 .8-1.8 1.8-1.8H16a5 5 0 0 0 5-5c0-3.9-4-7-9-7Z"/><circle cx="7.7" cy="11.2" r="1.1" fill="currentColor" stroke="none"/><circle cx="11" cy="7.7" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.6" r="1.1" fill="currentColor" stroke="none"/></svg>
           <h3 data-t="tile5T">Öt téma</h3>
-          <p data-t="tile5B">Sötét bordó, hűvös szén, krémszínű műsorfüzet, halvány lila és tiszta fehér. Mindegyikben minden szövegszín 4,5:1 fölött van — és bejelentkezés nélkül is át lehet váltani.</p>
+          <p data-t="tile5B">Bársony a sötétben, Színlap a világosban — ugyanaz a ház, lámpafényben és nyomtatva —, mellettük levendula, letisztult fehér és éjszakai szén. Mindegyikben minden szövegszín 4,5:1 fölött van, és bejelentkezés nélkül is át lehet váltani.</p>
         </article>
 
         <article class="tile" data-reveal>
@@ -754,9 +754,9 @@ html { scroll-behavior: smooth; }
 
   <!-- ── Tally ────────────────────────────────────────────────────────── -->
   <section class="tally" aria-label="A katalógus számokban" data-t-label="tallyLabel">
-    <div class="tally__cell"><span class="tally__n" data-count="1213">1213</span><span class="tally__k" data-t="tally1">Produkció</span></div>
-    <div class="tally__cell"><span class="tally__n" data-count="2424">2424</span><span class="tally__k" data-t="tally2">Alkotó</span></div>
-    <div class="tally__cell"><span class="tally__n" data-count="454">454</span><span class="tally__k" data-t="tally3">Meghirdetett időpont</span></div>
+    <div class="tally__cell"><span class="tally__n" data-count="1199">1199</span><span class="tally__k" data-t="tally1">Produkció</span></div>
+    <div class="tally__cell"><span class="tally__n" data-count="2557">2557</span><span class="tally__k" data-t="tally2">Alkotó</span></div>
+    <div class="tally__cell"><span class="tally__n" data-count="486">486</span><span class="tally__k" data-t="tally3">Meghirdetett időpont</span></div>
     <div class="tally__cell"><span class="tally__n" data-count="1960" data-plain="1">1960</span><span class="tally__k" data-t="tally4">A legrégebbi bemutató</span></div>
   </section>
 
@@ -773,7 +773,7 @@ html { scroll-behavior: smooth; }
         <div class="specs__row"><dt class="specs__k">Supabase · Postgres · RLS</dt><dd class="specs__v" data-t="spec2">Ki mit lát, az sorszinten, az adatbázisban dől el — nem az appban.</dd></div>
         <div class="specs__row"><dt class="specs__k" data-t="spec3K">Tíz beolvasó</dt><dd class="specs__v" data-t="spec3">Minden éjjel újraolvassa a színházak saját oldalait. Jegyirodai közvetítő nélkül.</dd></div>
         <div class="specs__row"><dt class="specs__k">WCAG AA</dt><dd class="specs__v" data-t="spec4">Mind az öt témában minden szövegszín 4,5:1 kontraszt fölött van, kártyán is.</dd></div>
-        <div class="specs__row"><dt class="specs__k">expo-router</dt><dd class="specs__v" data-t="spec5">Minden képernyőnek saját URL-je van, és megosztható — a darabtól az alkotóig.</dd></div>
+        <div class="specs__row"><dt class="specs__k">expo-router</dt><dd class="specs__v" data-t="spec5">Minden képernyőnek saját URL-je van, és megosztható — a darabtól az alkotóig. Telefonon alsó fülsor, asztali gépen felső menü: ugyanaz az app, kétféle szobában.</dd></div>
         <div class="specs__row"><dt class="specs__k" data-t="spec6K">Ami még nincs kész</dt><dd class="specs__v" data-t="spec6">Az iOS- és Android-build készül. A webes verzió most is működik telefonon.</dd></div>
       </dl>
     </div>
@@ -864,8 +864,8 @@ html { scroll-behavior: smooth; }
     heroTitle: "Hungarian theatre,<br><em>in one diary</em>.",
     heroLede: "See what is on tonight in Budapest and Debrecen. Note down what you saw, rate it, and years from now still know which night it was.",
     ctaOpen: "Open the app", ctaTour: "How it works",
-    metaPlays: "1,213 productions", metaCities: "Budapest and Debrecen", metaSync: "Synced nightly",
-    altFeed: "The Vastaps feed: Maior Ottó saw Scævola – Gianni Schicchi at the Csokonai National Theatre, rated four masks.",
+    metaPlays: "1,199 productions", metaCities: "Budapest and Debrecen", metaSync: "Synced nightly",
+    altFeed: "The Vastaps Discover screen: the next evening is Káli holtak at the Katona József Theatre, with the poster, the curtain time and a button to open it; below it, the rest of the week.",
 
     housesLabel: "Theatres in the catalogue",
     housesNote: "More theatres and more cities are coming — wherever people ask for them next.",
@@ -874,7 +874,7 @@ html { scroll-behavior: smooth; }
     act1: "Discover",
     d1Title: "What is on tonight, on one screen.",
     d1Lede: "Everything playing in Budapest and Debrecen in one place — not through a ticket agency, but read straight from the theatres’ own sites, every night.",
-    altDiscover: "The Discover screen: an “On now” rail with Anyegin, Káli holtak and A Pál utcai fiúk, and upcoming performances broken down by day.",
+    altDiscover: "The Discover screen, further down: the next evenings as a programme — date, curtain time, theatre and genre on each line — and the editorial lists below.",
 
     d2Eyebrow: "Listings",
     d2Title: "Not a list of plays. A list of evenings.",
@@ -884,10 +884,10 @@ html { scroll-behavior: smooth; }
     d2Point3: "<b>And the archive.</b> Close to nine hundred past productions, long since taken off. Still searchable, still loggable.",
     d2StatesLabel: "The app knows four states",
     stAnnounced: "Before opening night", stRunning: "On now", stDormant: "Dormant", stEnded: "Taken off",
-    altMusor: "The listings calendar: 7 September 2026, one performance — Anyegin at 19:30 in the Örkény István Theatre’s studio.",
+    altMusor: "The listings calendar: 11 September 2026, two performances — “Izzik a galagonya” at the Csokonai National Theatre at 19:00, and Káli holtak in the Katona’s Kamra at 18:00.",
 
     act2: "The diary",
-    altPlay: "The page for A Pál utcai fiúk at the Csokonai National Theatre: poster, a 4.0 average, and separate bars for acting, directing and set design.",
+    altPlay: "The page for Lidércek, Shaxpeare, Delírium at the Örkény István Theatre: the title and credits set on the poster, an “On now” line with the next date, a log button, and a 5.0 average with separate bars for acting, directing and set design.",
     j1Eyebrow: "Logging a performance",
     j1Title: "Five masks, three categories, one evening.",
     j1Body: "Log a performance: which night you went, where you sat, what the ticket cost. You rate the acting, the directing and the set separately — and you can write down what you made of it.",
@@ -904,7 +904,7 @@ html { scroll-behavior: smooth; }
     act3: "People",
     p1Eyebrow: "Performers and directors",
     p1Title: "Who was that actress in the second act?",
-    p1Body: "The catalogue starts with 2,424 names. Search for a performer and every production they have appeared in comes back — with the role, the year and the house. Directors work the same way.",
+    p1Body: "The catalogue starts with 2,557 names — when two people share a part, it knows both. Search for a performer and every production they have appeared in comes back — with the role, the year and the house. Directors work the same way.",
     p1Body2: "Sign in and we will tell you when someone you follow steps on stage in a new production.",
     altSearch: "Searching for “Csuja Imre”: the performer match with 49 credits, and below it 50 productions, 47 of them no longer running.",
     altPerson: "Für Anikó’s page: 48 credits at one theatre, from 2002 to 2027, with the productions and roles below.",
@@ -918,7 +918,7 @@ html { scroll-behavior: smooth; }
     tile3T: "Feed",
     tile3B: "Who saw what, and what they made of it. Follow people, or read everyone’s entries.",
     tile5T: "Five themes",
-    tile5B: "Dark burgundy, cool charcoal, cream playbill, pale lilac and plain white. Every text colour clears 4.5:1 in all five — and you can switch without signing in.",
+    tile5B: "Velvet in the dark, Playbill in the light — the same house, lit and printed — plus lavender, plain white and a night-time charcoal. Every text colour clears 4.5:1 in all five, and you can switch without signing in.",
     tile6T: "You don’t buy tickets here",
     tile6B: "Vastaps is not a box office and does not want to be. One tap takes you to the theatre’s own page, where you can actually buy the seat.",
 
@@ -933,7 +933,7 @@ html { scroll-behavior: smooth; }
     spec3K: "Ten sync adapters",
     spec3: "Re-reads the theatres’ own sites every night. No ticket-agency middleman.",
     spec4: "Every text colour clears 4.5:1 in all five themes, on cards as well as on the page.",
-    spec5: "Every screen has its own URL and can be shared — from a production to a performer.",
+    spec5: "Every screen has its own URL and can be shared — from a production to a performer. A tab bar on a phone, a top bar on a desktop: one app, two rooms.",
     spec6K: "What is not finished",
     spec6: "The iOS and Android builds are in progress. The web version already works on a phone.",
 
