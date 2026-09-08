@@ -23,7 +23,8 @@
     "promo": "tsx scripts/render-promo.ts",
     "tour": "tsx scripts/render-tour.ts",
     "og": "tsx scripts/render-og.ts",
-    "store": "tsx scripts/render-store.ts"
+    "store": "tsx scripts/render-store.ts",
+    "verify:bundle": "tsx scripts/verify-bundle.ts"
   },
   "dependencies": {
     "@expo-google-fonts/bodoni-moda": "^0.2.3",
