@@ -392,6 +392,52 @@ does not: **the person page should say what it is counting.** A line naming the
 theatres this catalogue covers turns a wrong answer into a partial one, costs an
 afternoon, and does not wait on either. Backlog 4.6's data-quality report is
 what would have caught all three of these without a spot-check.
+### T-021 · The public site has drifted from the app, privacy policy included
+type: bug · area: web · priority: high · status: open · added: 2026-09-09
+
+`vastaps.pages.dev` is assembled by hand from a moving app, and nothing in the
+deploy can tell when a piece of it has stopped being true. Three kinds of drift,
+in descending order of how much they matter.
+
+**The published privacy policy describes a product that no longer exists.**
+When the follow-gate shipped, `i18n/legal.ts` gained the sections that explain
+it — *"A Vastaps félig nyilvános napló"*, and a heading *"Ki látja, amit írsz"*
+setting out that the fact of an evening is public while the opinion is not.
+`landing/adatvedelem.html` carries none of that text; it still describes a diary
+that is public in full. The app's own legal routes render from `legal.ts` and
+are correct, so this is the published copy alone — but it is the copy a visitor
+reads, and it currently understates the protection the product actually gives
+while describing a policy the product no longer follows. `npm run render:legal`
+regenerates it from the same source; the site then has to be deployed.
+
+**The screenshots are from before the app changed.** Nine files in
+`landing/shots/`. Only `play.webp` was re-taken (9 September, 21:11) when the
+public average came off Play Detail. `feed.webp` and `user.webp` are from
+8 September at 16:16 — both predate the follow-gate, which changed precisely
+what a stranger sees on those two screens. Nothing catches this:
+`scripts/stamp-shots.ts` stamps each reference with the file's content hash so a
+*re-taken* shot defeats the CDN cache, but it does not take the picture. A shot
+nobody re-took is stamped just as happily as one somebody did.
+
+**Numbers are typed into the markup.** `data-count="1199"` against a catalogue
+that now holds 1,215 productions, and nothing keeps the two together. The search
+shot's `alt` goes further and describes the contents of the image — *"49
+közreműködéssel"*, *"50 darab, amiből 47 már nincs műsoron"* — so a re-take
+invalidates the description as well as the picture. Per T-020, that 49 was a
+partial count on the day it was taken.
+
+What would stop it recurring is small: an assertion in `check:launch` that the
+published legal HTML matches `i18n/legal.ts`, and treating a landing deploy as
+part of any change that reaches a screen the site shows, rather than as a
+separate errand that gets remembered later.
+
+**Constraints for whoever does the pass**, all previously settled and all easy
+to undo by accident: never promise the app is free; describe coverage by city
+rather than by counting theatres; the author's name belongs in the contact
+section and nowhere else — not the footer, not the FAQ, not the structured data;
+and the production quality bar is commercial, not "good enough for a side
+project".
+
 
 
 
@@ -418,4 +464,4 @@ _Nothing yet._
 
 ---
 
-Next free id: **T-021**
+Next free id: **T-022**
