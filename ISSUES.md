@@ -410,6 +410,12 @@ reads, and it currently understates the protection the product actually gives
 while describing a policy the product no longer follows. `npm run render:legal`
 regenerates it from the same source; the site then has to be deployed.
 
+> **Done, 9 September.** `npm run render:legal` re-rendered all four documents,
+> and `npm run deploy:landing` published them. Verified live: `/adatvedelem`
+> carries "félig nyilvános napló" and `/feltetelek` carries the heading "Ki
+> látja, amit írsz", all four pages answering 200. The other two kinds of drift
+> below are untouched, which is why this entry stays open.
+
 **The screenshots are from before the app changed.** Nine files in
 `landing/shots/`. Only `play.webp` was re-taken (9 September, 21:11) when the
 public average came off Play Detail. `feed.webp` and `user.webp` are from
