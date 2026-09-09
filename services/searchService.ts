@@ -12,7 +12,12 @@ import type { Play, VenueType } from "@/data/types";
  * title`, so the best answer to a search appeared wherever the alphabet
  * happened to put it.
  */
-export type SortKey = "relevance" | "next" | "premiere" | "rating" | "title";
+/*
+ * "rating" was a fifth key here. It came off with the public average it
+ * ordered by; the `search_plays` RPC still accepts it, the app just stops
+ * asking. See BrowseSort in playsService.ts.
+ */
+export type SortKey = "relevance" | "next" | "premiere" | "title";
 
 export type SearchOptions = {
   venueType?: VenueType;

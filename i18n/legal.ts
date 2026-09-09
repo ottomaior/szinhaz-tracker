@@ -496,7 +496,7 @@ export const accountDeletion: LegalDocument = {
           "a feltöltött profilképeid és a jegyekről készült fotóid"
         ),
         p(
-          "A törölt értékelések azonnal kikerülnek az előadások nyilvános átlagából is."
+          "A törölt értékelések azonnal kikerülnek az előadás átlagából is."
         ),
       ],
     },

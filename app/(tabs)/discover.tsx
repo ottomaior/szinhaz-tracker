@@ -27,7 +27,6 @@ import { searchPlays, type SortKey } from "@/services/searchService";
 import { searchPeople, type PersonSearchResult } from "@/services/peopleService";
 import type { Play, ProgramEntry, Venue, VenueType } from "@/data/types";
 import { SearchIcon, CloseIcon } from "@/components/icons/Icons";
-import { MaskIcon } from "@/components/icons/MaskIcon";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button, IconButton } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
@@ -132,14 +131,12 @@ const SEARCH_SORTS: { key: SortKey; label: string }[] = [
   { key: "relevance", label: strings.sort.relevance },
   { key: "next", label: strings.sort.next },
   { key: "premiere", label: strings.sort.premiere },
-  { key: "rating", label: strings.sort.rating },
   { key: "title", label: strings.sort.title },
 ];
 
 const BROWSE_SORTS: { key: BrowseSort; label: string }[] = [
-  { key: "rating", label: strings.sort.rating },
-  { key: "next", label: strings.sort.next },
   { key: "premiere", label: strings.sort.premiere },
+  { key: "next", label: strings.sort.next },
   { key: "title", label: strings.sort.title },
 ];
 
@@ -179,7 +176,7 @@ export default function DiscoverScreen() {
   const [genres, setGenres] = useState<string[]>([]);
   const [activeGenre, setActiveGenre] = useState<string>();
   const [searchSort, setSearchSort] = useState<SortKey>("relevance");
-  const [browseSort, setBrowseSort] = useState<BrowseSort>("rating");
+  const [browseSort, setBrowseSort] = useState<BrowseSort>("premiere");
   // Off by default: the rails answer "what can I go and see", and 731 closed
   // Budapest productions mixed into that would bury the 232 that are on. It is
   // a control rather than a constant because the archive is the larger half of
@@ -585,11 +582,11 @@ export default function DiscoverScreen() {
           value={isSearching ? searchSort : browseSort}
           // Highlighted only once it has been moved off its default, so the
           // gold on this row always means "changed".
-          defaultValue={isSearching ? "relevance" : "rating"}
+          defaultValue={isSearching ? "relevance" : "premiere"}
           options={isSearching ? searchSortOptions : browseSortOptions}
           onChange={(next) => {
             if (isSearching) setSearchSort((next as SortKey) ?? "relevance");
-            else setBrowseSort((next as BrowseSort) ?? "rating");
+            else setBrowseSort((next as BrowseSort) ?? "premiere");
           }}
         />
       )}
@@ -900,29 +897,19 @@ export default function DiscoverScreen() {
                 {trending.length > 0 && (
                   <View style={{ gap: space.md, paddingHorizontal: gutter }}>
                     <SectionHeader
-                      // The heading follows both the sort and the scope.
-                      // "Népszerű" is a claim about ratings; leaving it up
-                      // while the grid is ordered by premiere date would
-                      // describe the wrong list, and so would leaving it up
-                      // over a list that is mostly productions which closed
-                      // years ago. The eyebrow carries the scope, the title
-                      // the claim.
+                      // The heading used to swing between "Népszerű" and a
+                      // neutral title depending on the sort, because
+                      // "Népszerű" was a claim about the public average and
+                      // describing a list ordered by premiere date that way
+                      // would have been describing the wrong list. The average
+                      // is gone and so is the claim; all that is left for the
+                      // heading to carry is the scope.
                       eyebrow={
                         includeArchived
                           ? strings.discover.trendingEyebrowArchive
-                          : browseSort !== "rating"
-                            ? strings.discover.trendingEyebrowSorted
-                            : strings.discover.trendingEyebrow
+                          : strings.discover.trendingEyebrowSorted
                       }
-                      title={
-                        includeArchived || browseSort !== "rating"
-                          ? city
-                            ? city
-                            : strings.discover.allPlaysTitle
-                          : city
-                            ? strings.discover.trendingTitleInCity(city)
-                            : strings.discover.trendingTitle
-                      }
+                      title={city ? city : strings.discover.allPlaysTitle}
                       // How many there are, not how many fit. The grid used
                       // to stop at forty with nothing saying whether that was
                       // the answer or the limit.
@@ -1069,14 +1056,13 @@ function PremiereCard({ play, onPress }: { play: Play; onPress: () => void }) {
  *
  * The rating used to be a black pill over the image and every tile wore a
  * status badge, so forty tiles carried eighty pieces of chrome over the one
- * thing worth looking at. Now the rating sits at the end of the venue line and
- * the status appears only when it is news — see StatusBadge's `inline`.
+ * thing worth looking at. It moved to the end of the venue line, and then off
+ * the tile altogether with the rest of the public average. What is left is the
+ * venue and a status that appears only when it is news — see StatusBadge's
+ * `inline`.
  */
 function TrendingCard({ play, onPress }: { play: Play; onPress: () => void }) {
-  const styles = useStyles();
-
   const venue = useVenue(play.venueId);
-  const hasRatings = play.rating.count > 0;
 
   return (
     <Pressable onPress={onPress} style={{ gap: space.sm }} accessibilityRole="button" accessibilityLabel={play.title}>
@@ -1087,19 +1073,9 @@ function TrendingCard({ play, onPress }: { play: Play; onPress: () => void }) {
         <Text variant="label" numberOfLines={2}>
           {play.title}
         </Text>
-        <View style={styles.tileMeta}>
-          <Text variant="caption" tone="faint" numberOfLines={1} style={{ flexShrink: 1 }}>
-            {venue?.name}
-          </Text>
-          {hasRatings && (
-            <View style={styles.tileRating}>
-              <MaskIcon state="on" size={10} />
-              <Text variant="caption" tone="accent">
-                {play.rating.overall.toFixed(1)}
-              </Text>
-            </View>
-          )}
-        </View>
+        <Text variant="caption" tone="faint" numberOfLines={1}>
+          {venue?.name}
+        </Text>
         <StatusBadge status={play.status} inline />
       </View>
     </Pressable>
@@ -1223,8 +1199,7 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
 
   rail: { gap: space.lg, paddingHorizontal: gutter },
   railCard: { width: 132, gap: space.sm },
-  tileMeta: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: space.sm },
-  tileRating: { flexDirection: "row", alignItems: "center", gap: 4 },
+
   personRow: {
     flexDirection: "row",
     alignItems: "center",

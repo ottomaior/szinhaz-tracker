@@ -117,11 +117,6 @@ export const strings = {
     featuredListsTitle: "Szerkesztői listák",
     seeAll: "Összes",
     seeLess: "Kevesebb",
-    trendingTitle: "Népszerű",
-    // Hungarian case suffixes are irregular per place name (Budapest*en* but
-    // Debrecen*ben*), so this uses a suffix-free construction that is correct
-    // for any city the venue table happens to contain.
-    trendingTitleInCity: (city: string) => `Népszerű itt: ${city}`,
 
     /* The browse scope. Not a filter — it widens the list rather than narrowing
        it — but it lives in the same row because it is the same kind of
@@ -179,7 +174,6 @@ export const strings = {
     /* Section eyebrows: what kind of shelf each one is. */
     featuredEyebrow: "Szerkesztői válogatás",
     premieresEyebrow: "Bemutató előtt",
-    trendingEyebrow: "Legjobbra értékelt",
     trendingEyebrowSorted: "Minden előadás",
     trendingEyebrowArchive: "Az archívummal együtt",
     searchOpen: "Keresés",
@@ -316,10 +310,6 @@ export const strings = {
     tickets: "Jegyek a színház oldalán",
     ticketsFailed: "Nem sikerült megnyitni a színház oldalát.",
 
-    /** Above the histogram: how the ratings are spread, not just their average. */
-    ratingSpread: "Értékelések megoszlása",
-    ratingBand: (band: number, people: number) =>
-      `${band} maszk: ${people} értékelés`,
 
     castCrew: "Szereposztás és alkotók",
     castCount: (n: number) => (n === 1 ? "1 közreműködő" : `${n} közreműködő`),
@@ -328,16 +318,28 @@ export const strings = {
     readLess: "Kevesebb",
     venueEyebrow: "Színház",
     followingEyebrow: "Követettek",
-    ratingsEyebrow: "Értékelés",
+
+    /**
+     * The block where the public average used to be.
+     *
+     * Second person, because that is the whole point of it: the production
+     * page tells you what *you* gave it rather than what two strangers
+     * averaged to. Shown only to somebody who has rated it.
+     */
+    yourRatingTitle: "A te értékelésed",
+    yourRatingSeen: (date: string) => `Láttad: ${date}`,
+    /* An evening with no date is a real answer since 0026 — a ticked title
+       from the archives — so the caption says that rather than nothing. */
+    yourRatingUndated: "Dátum nélkül",
+    /** The way into the entry itself, on the right of the heading. */
+    yourRatingOpen: "A bejegyzés",
+    /* Above one visit the count replaces it: a single figure standing over
+       three evenings would quietly claim to be all of them. */
+    yourRatingEntries: (n: number) => `${n} bejegyzés`,
     ticketsShort: "Jegyek ↗",
     fromFollowing: "Vélemények",
     reviewsCount: (n: number) => `${n} vélemény`,
-    ratingsCount: (n: number) => `${n} értékelés`,
-    noRatingsYet: "Még nincs értékelés",
     noReviewsYet: "Erről az előadásról még senki nem írt.",
-    acting: "Színészi játék",
-    directing: "Rendezés",
-    setDesign: "Díszlet",
     hours: "óra",
     minutes: "perc",
     back: "Vissza",
@@ -922,7 +924,6 @@ export const strings = {
     relevance: "Találat",
     next: "Legközelebbi",
     premiere: "Bemutató",
-    rating: "Értékelés",
     title: "Cím",
   },
 

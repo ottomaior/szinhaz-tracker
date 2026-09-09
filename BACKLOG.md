@@ -186,10 +186,26 @@ definition of correct — hence 4.5 and 4.6.
 - **4.8** Turn on `SHOW_VENUE_TYPE_FILTER` (`app/(tabs)/discover.tsx`) — wired end to end, hidden only because every current venue is a `kőszínház`. Budapest brings `független` and `szabadtéri`; Debrecen brings the Nagyerdei szabadtéri.
 - **4.9 Capacity.** Supabase free tier is 500MB database / 1GB storage / 5GB egress, and `sync/lib/posters.ts` stores a full webp plus a thumbnail per production. Measure during 4.6; budget for Pro (~$25/mo) if confirmed.
 
-**Carry forward from Phase 1:** the browse rails rank by `plays.rating_overall`,
-which has been near-empty. Any earlier judgement about the popularity rail being
+**Carry forward from Phase 1:** the browse rails ranked by `plays.rating_overall`,
+which had been near-empty. Any earlier judgement about the popularity rail being
 "noise with a decimal point" was made against numbers that were not merely thin
 but wrong.
+
+**Settled, September 2026 — the public average is off the app.** The numbers are
+right now and still too few: an average two reviews wide is a verdict without
+evidence. Play Detail's score, its three per-dimension bars, the "Értékelések
+megoszlása" chart, the average on Discover's grid tiles and the rating sort
+itself have all been removed. What stayed is the reader's own rating on the
+production page and "A követettek szerint" — one person's opinion is information
+at any sample size, a number computed from a handful of them is not.
+
+Nothing was migrated: `recompute_play_rating()`, `rating_overall`, `rating_count`
+and `play_rating_histogram()` are all still live and still correct. **What would
+reverse this is a population of raters, not a commit** — turning it back on is UI
+work against columns that were right all along. Related, and worth doing before
+any of it returns: check-in still fills in the three sub-scores whether or not
+the person touched those rows, which is why the personal block shows only the
+overall figure.
 
 ---
 

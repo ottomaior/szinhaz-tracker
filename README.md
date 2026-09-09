@@ -136,6 +136,8 @@ utils/season.ts           which évad a night belongs to, and how Hungarian
                           season_start_year() in the database
 utils/authRetry.ts        one retry, on a fresh token, for a request the
                           server refused because the old one had expired
+utils/ownRating.ts        which of your own evenings a production page quotes
+                          back at you, once the public average came off it
 
 data/types.ts             domain types (Play, Venue, Review, User, …)
 services/supabase.ts      the Supabase client (reads EXPO_PUBLIC_SUPABASE_*)
@@ -349,8 +351,10 @@ they did to each screen:
   date or time in the lead column, a small still, the title, one line of
   facts — replaces the 16:5 banner rows Discover used to draw for each
   evening and the boxed cards in Műsor. Grid tiles carry nothing on the
-  artwork: the rating sits at the end of the venue line, and the status
-  appears only when it is not "running". Showtimes on play detail are a
+  artwork: the venue is the second line and the status appears only when it
+  is not "running". (The rating used to sit at the end of the venue line,
+  until the public average came off — see "Well liked, or divisive".)
+  Showtimes on play detail are a
   table on hairlines; the cast is a list with the whole role visible rather
   than a strip of circles that cut "Zoltán, a narrátor" after one word.
 - **One gold thing per screen.** Play detail had three stacked full-width
@@ -428,9 +432,10 @@ is 0.00; the threshold sits at 0.6.
 
 Discover also gained a sort control. The options differ between search and
 browse on purpose — "relevance" needs a query to be relevant to, so it is not
-offered where nothing is typed — and the "Népszerű" heading changes to
-"Előadások" under any sort but rating, because the heading is a claim about
-what the list is.
+offered where nothing is typed — and the heading used to change from "Népszerű"
+to "Előadások" under any sort but rating, because the heading is a claim about
+what the list is. Both the rating sort and "Népszerű" have since gone with the
+public average, so the grid is "Előadások" always.
 
 ### Showtimes were collected and never shown
 
@@ -479,7 +484,8 @@ silently means "as many as we bother to load" is the same class of thing as a
 counter nothing increments.
 
 Paging needs a **stable sort**, which the old query did not have. Ordering by
-rating alone leaves hundreds of rows tied at 0.0 and Postgres is free to arrange
+rating alone left hundreds of rows tied at 0.0 — and every column the grid can
+be ordered by since leaves ties of its own — and Postgres is free to arrange
 ties differently per request, so a row on page one could reappear on page two
 while another was never returned at all. Every browse query now carries `id` as
 a tiebreaker. Checked by paging Debrecen to the end: 242 cards for 242 rows.
@@ -490,9 +496,9 @@ go and see" would bury the 232 that are on. But the archive is the *larger* half
 of this catalogue and exists precisely so old productions stay findable and
 loggable, so refusing to show it anywhere in Discover was the other half of the
 same mistake. There is now a scope control in the filter row — "Ami most megy" /
-"Az archívummal együtt" — and the heading changes with it, because a grid
-labelled "Népszerű" that is mostly productions which closed years ago describes
-the wrong list.
+"Az archívummal együtt" — and the eyebrow changes with it, because a grid
+labelled as what is on that is mostly productions which closed years ago
+describes the wrong list.
 
 The scope had to reach the **filter options too**, not just the grid. A city,
 venue or genre chip list built from current work only cannot reach half of what
@@ -662,14 +668,37 @@ somebody who saw a production three times and rated it 5 each time carried three
 times the weight of somebody who saw it once, and the public rating quietly
 became a measure of enthusiasm times attendance. It now averages per person
 first and then across people. `rating_count` counts people too, since that is
-what "55 értékelés" claims on screen.
+what "55 értékelés" claimed on screen while the count was still printed there.
 
 ### Well liked, or divisive
 
 A production could say 4.2 with no way to show whether that was eleven fives and
 two ones. `play_rating_histogram()` returns one row per whole-mask band, always
-all five so the axis is complete, and Play Detail draws it above the log button
-whenever more than one person has rated — a single rating has no spread.
+all five so the axis is complete, and Play Detail drew it above the log button
+whenever more than one person had rated — a single rating has no spread.
+
+**September 2026: the whole public average came off the app, and the chart with
+it.** Everything above is still true and still built; it is simply no longer
+drawn. The reason is arithmetic rather than design. An average over the number
+of people using this app is two reviews wide, and two reviews is not a summary
+of anything — it is a number carrying the authority of a number and none of the
+evidence. The chart then spent a third of a production page saying the same
+thing again in bars, with two columns of five.
+
+What replaced it on Play Detail is the one rating on that screen which is not a
+claim about a crowd: **your own**, shown only to you, so that months later the
+page can answer "what did I make of this". Alongside it stays "A követettek
+szerint" — what the specific people you follow gave it — which carries real
+information at any sample size, because you know who they are. The rule the
+change followed: *an individual saying what they thought stays; a number
+computed from a handful of them does not.* Individual masks are still on every
+feed card and every review row.
+
+Nothing was migrated. `recompute_play_rating()` still fires, `rating_overall`
+and `rating_count` are still correct, and `play_rating_histogram()` still
+answers. What would bring the average back is a population of raters, not a
+commit — and when there is one, this is UI work against columns that were right
+all along.
 
 ## What else is she in
 
@@ -840,9 +869,12 @@ The obvious implementation writes today's date and some default rating. Both
 would have undone the two things this schema had just fixed.
 
 Today's date is precisely the bug `0022_diary_dates.sql` exists to correct. And a
-fabricated rating does not stay private: `plays.rating_overall` is computed from
-these rows and printed on Play Detail, so fifteen invented fours from one pass
-through onboarding would move the public score of fifteen real productions.
+fabricated rating did not stay private: `plays.rating_overall` is computed from
+these rows and was printed on Play Detail, so fifteen invented fours from one
+pass through onboarding would have moved the public score of fifteen real
+productions. The average is no longer shown — see "Well liked, or divisive" —
+but the column is still computed from these rows, and a rating nobody gave is
+still a rating nobody gave.
 
 So `0026_seen_without_a_date.sql` makes both columns nullable, and the
 distinction Letterboxd draws between *watched* and a *diary entry* becomes
@@ -854,7 +886,11 @@ expressible here too:
 | `rating_overall` null | seen it, not putting a number on it |
 
 Check-in still fills in both — it defaults the date to today and the rating to
-four — so ordinary logging is unchanged.
+four — so ordinary logging is unchanged. It also fills in the three sub-scores,
+which is a smaller version of the same mistake and is why the personal rating
+block on Play Detail shows only the overall figure: a bar reading "Rendezés 3.0"
+that the reader never chose is a number this app invented and then attributed
+to them.
 
 One line of `recompute_play_rating()` changed with it. `avg()` already skipped
 nulls, so an unrated tick never moved an average on its own; `rating_count` was
@@ -912,11 +948,18 @@ Lists are the most-copied idea in film logging, and here they do a second job
 the film apps do not need them for: they are the only way to put something worth
 reading in front of a brand-new account.
 
-Discover's browse rails rank by `plays.rating_overall`, an average computed from
-four reviews across 1,214 productions. That is not a popularity signal, it is
-noise with a decimal point. Ten hand-made lists over the same catalogue is a
+Discover's browse rails ranked by `plays.rating_overall`, an average computed
+from four reviews across 1,214 productions. That is not a popularity signal, it
+is noise with a decimal point. Ten hand-made lists over the same catalogue is a
 better first screen, and unlike a popularity signal it needs no users to exist
 first.
+
+The argument won twice. The lists shipped in 0025, and in September 2026 the
+rating sort came off the grid altogether along with the average it ordered by:
+arranging a public list by a number nobody can see is still publishing that
+number, one step further down. The grid opens on **Bemutató** now, and the
+"Népszerű" heading went with the sort, since that word was only ever a claim
+about the average.
 
 So `0025_lists.sql` gives both kinds the same two tables. A list somebody makes
 for themselves, and a list written from the SQL editor and marked `is_featured`.
@@ -961,8 +1004,9 @@ with one answer; a list answers "what does this belong with", which is
 open-ended and can be several at once.
 
 Discover carries the first three editorial lists, between the week's
-programme and "Népszerű" — above the ranked grid on purpose, since that grid's average is
-exactly what this feature exists to stand in for. The section hides itself the
+programme and the browse grid — above it on purpose, since that grid's average
+was exactly what this feature exists to stand in for. The average has since gone
+entirely, which is the same argument carried to its end. The section hides itself the
 moment a city, theatre, venue-type or genre filter is on: an editorial list is
 a piece of writing about the catalogue rather than a query over it, so it
 cannot answer a filter, and leaving it up while it ignored one would be worse
@@ -1075,6 +1119,9 @@ liked", which is not the question anybody asks standing in front of a listing.
 That one is closer to "would *I* like this", and the cheapest honest proxy —
 long before there is enough data for anything resembling collaborative
 filtering — is what the handful of people you chose to follow made of it.
+The argument aged well: the average is off the app now and this section is one
+of the two rating signals that stayed, because a name you recognise beside a
+score is information at any sample size.
 `0033_friends_ratings.sql` adds the two reads: who among your follows has seen a
 production, and what they have been to lately.
 
@@ -1220,8 +1267,10 @@ auth.uid()` — so every check-in by somebody who did not add the production
 themselves silently changed nothing. Measured before the fix: of the 14 reviews
 carrying a rating, **13 sat on productions still reading `rating_overall = 0.0`
 and `rating_count = 0`**. Play Detail's score, the histogram above the log
-button, and the "Népszerű" rail that sorts by `rating_overall` were all reading
-a column that ordinary use had never written.
+button, and the "Népszerű" rail that sorted by `rating_overall` were all reading
+a column that ordinary use had never written. (All three have since been taken
+off the app — see "Well liked, or divisive" — but the column they were reading
+is still maintained, and it is still maintained correctly because of this fix.)
 
 The one row that did have a rating is what hid it: a production whose rater also
 created it, which is precisely the case the policy lets through.

@@ -368,10 +368,16 @@ function applyVenueFilters(query: any, filters?: VenueFilters) {
  * Narrower than the search sort keys on purpose: "relevance" needs a query to
  * be relevant to, so it is not offered where there is nothing typed.
  */
-export type BrowseSort = "rating" | "next" | "premiere" | "title";
+/*
+ * "rating" was the fourth key and the default. It came off with the public
+ * average it ordered by: a grid arranged by a number nobody can see is
+ * still publishing that number, one place further down. The column is
+ * still maintained — see the README on what would turn the average back
+ * on — this list simply no longer offers to sort by it.
+ */
+export type BrowseSort = "next" | "premiere" | "title";
 
 const BROWSE_ORDER: Record<BrowseSort, { column: string; ascending: boolean }> = {
-  rating: { column: "rating_overall", ascending: false },
   next: { column: "next_perf_at", ascending: true },
   premiere: { column: "premiere_date", ascending: false },
   title: { column: "title", ascending: true },
@@ -438,12 +444,12 @@ export async function getNowPlaying(filters?: VenueFilters): Promise<Play[]> {
  */
 export async function getTrending(
   filters?: VenueFilters,
-  sort: BrowseSort = "rating",
+  sort: BrowseSort = "premiere",
   page = 0
 ): Promise<{ plays: Play[]; total: number }> {
   const needsJoin = !!(filters?.venueType || filters?.city);
   const select: string = needsJoin ? PLAY_SELECT_WITH_VENUE_FILTERS : PLAY_SELECT;
-  const order = BROWSE_ORDER[sort] ?? BROWSE_ORDER.rating;
+  const order = BROWSE_ORDER[sort] ?? BROWSE_ORDER.premiere;
   const from = page * TRENDING_PAGE_SIZE;
 
   // `count: "exact"` alongside the page, so the screen can say how many there
@@ -455,10 +461,10 @@ export async function getTrending(
     .select(select, { count: "exact" })
     .order(order.column, { ascending: order.ascending, nullsFirst: false })
     // A stable tiebreaker, and it matters far more now that there are pages:
-    // ordering by rating alone leaves hundreds of rows tied at 0, and Postgres
-    // is free to return them in a different arrangement per request — so a row
-    // on page one could reappear on page two while another was never returned
-    // at all.
+    // every column offered here leaves rows tied — hundreds share a premiere
+    // date or have no next performance at all — and Postgres is free to return
+    // the tied ones in a different arrangement per request, so a row on page
+    // one could reappear on page two while another was never returned at all.
     .order("id", { ascending: true })
     .range(from, from + TRENDING_PAGE_SIZE - 1);
   query = applyBrowseScope(query, filters);
@@ -1441,21 +1447,14 @@ async function solePerformanceOn(playId: string, dayKey: string): Promise<string
   }
 }
 
-/**
- * How a production's ratings are spread, one count per whole-star band.
- *
- * Always five rows, including the bands nobody chose, so the caller draws a
- * complete axis rather than a chart with holes in it.
+/*
+ * `getRatingHistogram()` stood here and read the `play_rating_histogram`
+ * RPC, which drew the "Értékelések megoszlása" bars on a production page.
+ * The section came off with the public average above it. The RPC is still
+ * in the database and still correct — it computes on demand and stores
+ * nothing — so bringing the chart back is this wrapper and a component,
+ * not a migration.
  */
-export async function getRatingHistogram(playId: string): Promise<number[]> {
-  const { data, error } = await supabase.rpc("play_rating_histogram", { target_play_id: playId });
-  if (error) throw error;
-  const bands = [0, 0, 0, 0, 0];
-  for (const row of (data ?? []) as { band: number; people: number }[]) {
-    if (row.band >= 1 && row.band <= 5) bands[row.band - 1] = row.people;
-  }
-  return bands;
-}
 
 export async function searchVenues(query: string): Promise<Venue[]> {
   if (!query.trim()) return [];

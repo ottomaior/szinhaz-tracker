@@ -1,14 +1,13 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { View, ScrollView, StyleSheet, Pressable, Share, Platform, Linking } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
-import { gutter, overlay, radius, space } from "@/theme/tokens";
+import { gutter, overlay, space } from "@/theme/tokens";
 import {
   addToWatchlist,
   getPlayById,
   getReviewsForPlay,
-  getRatingHistogram,
   getUpcomingPerformances,
   getUserById,
   getVenueById,
@@ -34,6 +33,7 @@ import { getFriendRatings, type FriendRating } from "@/services/friendsService";
 import { formatLongDate, formatShowtime } from "@/utils/datetime";
 import { personSlug } from "@/utils/people";
 import { strings } from "@/i18n/hu";
+import { pickOwnRating } from "@/utils/ownRating";
 import { closeModal } from "@/utils/navigation";
 import { makeStyles } from "@/theme/styles";
 
@@ -80,7 +80,6 @@ export default function PlayDetailScreen() {
   const [inWatchlist, setInWatchlist] = useState(false);
   const [watchlistBusy, setWatchlistBusy] = useState(false);
   const [notice, setNotice] = useState<string>();
-  const [histogram, setHistogram] = useState<number[]>([0, 0, 0, 0, 0]);
   const [listSheetOpen, setListSheetOpen] = useState(false);
   const [friendRatings, setFriendRatings] = useState<FriendRating[]>([]);
   const [synopsisOpen, setSynopsisOpen] = useState(false);
@@ -100,20 +99,39 @@ export default function PlayDetailScreen() {
         getVenueById(p.venueId).then(setVenue).catch(() => setVenue(undefined));
       })
       .catch(() => setLoadFailed(true));
-    getReviewsForPlay(id)
-      .then(setReviews)
-      .catch(() => setReviews([]));
     // An empty list on failure is the right fallback: ShowtimeList then says
     // why there is nothing to show rather than rendering a broken section.
     getUpcomingPerformances(id)
       .then(setPerformances)
       .catch(() => setPerformances([]));
-    // All zeroes on failure, which the render guard reads as "nothing to draw"
-    // — the average above is still correct and still shown.
-    getRatingHistogram(id)
-      .then(setHistogram)
-      .catch(() => setHistogram([0, 0, 0, 0, 0]));
   }, [id]);
+
+  /**
+   * The reviews, re-read every time this screen comes back into focus.
+   *
+   * On mount alone would do for a list of other people's opinions, and did
+   * while that was all this was for. It will not do now that the reader's own
+   * rating is drawn from the same rows: "Előadás naplózása" pushes a route,
+   * so this screen stays mounted underneath it, and somebody who logs the
+   * evening and comes straight back would find nothing where their rating
+   * should be.
+   */
+  useFocusEffect(
+    useCallback(() => {
+      if (!id) return;
+      let active = true;
+      getReviewsForPlay(id)
+        .then((rows) => {
+          if (active) setReviews(rows);
+        })
+        .catch(() => {
+          if (active) setReviews([]);
+        });
+      return () => {
+        active = false;
+      };
+    }, [id])
+  );
 
   // Keyed on the session as well as the production: "the people you follow" is
   // a different answer for a different account, and the same screen is reached
@@ -145,6 +163,17 @@ export default function PlayDetailScreen() {
       .then(setInWatchlist)
       .catch(() => setInWatchlist(false));
   }, [id, session]);
+
+  /**
+   * Which of the reader's own evenings this page quotes back at them.
+   *
+   * Free of a query: `getReviewsForPlay` returns every review for the
+   * production with no limit, so the reader's own entries are already here.
+   * The rule for choosing between several of them is in `utils/ownRating.ts`
+   * with a test, because getting it wrong shows somebody last year's verdict
+   * and looks entirely correct on screen.
+   */
+  const own = useMemo(() => pickOwnRating(reviews, session?.user?.id), [reviews, session]);
 
   async function toggleWatchlist() {
     if (!play) return;
@@ -218,7 +247,6 @@ export default function PlayDetailScreen() {
 
   if (!play) return null;
 
-  const hasRatings = play.rating.count > 0;
   const scheduling = schedulingParts(play);
   const genreLabel = play.genreNormalized ? strings.genres[play.genreNormalized] ?? play.genreNormalized : undefined;
   // What goes on the eyebrow over the poster: where, what kind, how long.
@@ -382,37 +410,47 @@ export default function PlayDetailScreen() {
             </Text>
           )}
 
-          {/* On hairlines rather than in a box: a card here made the rating
-              the heaviest object on the screen, above the title. It is a
-              figure and three bars, and the figure is set as one. */}
-          <View style={styles.ratingBlock}>
-            <View style={styles.ratingSummary}>
-              {/* A play with no reviews used to render a bold gold "0.0", which
-                  reads as a terrible score rather than as "not rated yet". */}
-              <Text variant="display" tone={hasRatings ? "accent" : "faint"}>
-                {hasRatings ? play.rating.overall.toFixed(1) : strings.common.noRating}
-              </Text>
-              {hasRatings && <MaskRatingRow rating={play.rating.overall} size={12} gap={2} />}
-              <Text variant="caption" tone="faint">
-                {hasRatings ? strings.playDetail.ratingsCount(play.rating.count) : strings.playDetail.noRatingsYet}
-              </Text>
-            </View>
-            <View style={{ flex: 1, gap: space.md }}>
-              <RatingBar label={strings.playDetail.acting} value={hasRatings ? play.rating.acting : 0} muted={!hasRatings} />
-              <RatingBar label={strings.playDetail.directing} value={hasRatings ? play.rating.directing : 0} muted={!hasRatings} />
-              <RatingBar label={strings.playDetail.setDesign} value={hasRatings ? play.rating.setDesign : 0} muted={!hasRatings} />
-            </View>
-          </View>
+          {/* What the public average used to be.
 
-          {/* The average alone cannot tell "everyone liked it" from "the room
-              split down the middle", and those are different productions. Shown
-              only from two people up: a single rating has no spread, and one bar
-              at full height beside four empty ones would overstate a sample of
-              one. */}
-          {play.rating.count > 1 && histogram.some((n) => n > 0) && (
+              The average, the three per-dimension bars and the distribution
+              chart under them all came off together: with the platform this
+              early, an average two people wide has the authority of a figure
+              and none of the evidence, and the chart spent a third of the
+              screen saying the same thing in bars. The column is still
+              maintained in the database — see the README — so this comes back
+              as a component when there are enough people to mean something.
+
+              What stands here instead is the one rating on this screen that is
+              not a claim about a crowd: yours. Absent for a signed-out reader
+              and for anybody who has not rated the production, rather than
+              drawn empty — the block it replaced used to render a bold gold
+              "0.0" that read as a terrible score rather than as no answer.
+
+              Only the overall figure, deliberately. Check-in seeds the three
+              sub-scores and saves them whether or not the person touched those
+              rows, so drawing them back here would hand somebody a "Rendezés
+              3.0" they never chose. They can return once check-in stops
+              answering for people. */}
+          {own && (
             <View style={{ gap: space.sm }}>
-              <Text variant="eyebrow" tone="faint">{strings.playDetail.ratingSpread}</Text>
-              <RatingHistogram bands={histogram} />
+              <SectionHeader
+                title={strings.playDetail.yourRatingTitle}
+                action={own.entries > 1 ? strings.playDetail.yourRatingEntries(own.entries) : strings.playDetail.yourRatingOpen}
+                onAction={() => router.push({ pathname: "/entry/[id]", params: { id: own.entry.id } })}
+              />
+              {/* On hairlines rather than in a box: a card here made the rating
+                  the heaviest object on the screen, above the title. */}
+              <View style={styles.ratingBlock}>
+                <View style={styles.ratingSummary}>
+                  <Text variant="display" tone="accent">{own.rating.toFixed(1)}</Text>
+                  <MaskRatingRow rating={own.rating} size={12} gap={2} />
+                </View>
+                <Text variant="caption" tone="faint" style={{ flex: 1 }}>
+                  {own.entry.seenAt
+                    ? strings.playDetail.yourRatingSeen(formatLongDate(`${own.entry.seenAt}T12:00:00Z`))
+                    : strings.playDetail.yourRatingUndated}
+                </Text>
+              </View>
             </View>
           )}
 
@@ -620,68 +658,6 @@ function formatRuntime(minutes: number) {
   return `${hours} ${strings.playDetail.hours} ${rest} ${strings.playDetail.minutes}`;
 }
 
-/**
- * The spread of a production's ratings, one column per whole-mask band.
- *
- * Vertical rather than the horizontal bars used for the acting/directing
- * averages just above, and deliberately so: those three are one value each on a
- * shared 0–5 scale, which reads as a comparison down a column. This is a
- * distribution over an axis, and the axis is the point — the shape of five
- * columns is what separates "everyone liked it" from "the room split".
- *
- * Heights are relative to the busiest band, so the tallest column always fills
- * the plot regardless of how many people have rated. A band nobody chose still
- * draws a hairline, which is what makes the empty ones read as zero rather than
- * as missing.
- */
-function RatingHistogram({ bands }: { bands: number[] }) {
-  const styles = useStyles();
-
-  const peak = Math.max(...bands, 1);
-  return (
-    <View style={styles.histogram} accessibilityRole="image" accessibilityLabel={bands.map((n, i) => strings.playDetail.ratingBand(i + 1, n)).join(", ")}>
-      {bands.map((count, i) => (
-        <View key={i} style={styles.histogramColumn}>
-          <View style={styles.histogramPlot}>
-            <View
-              style={[
-                styles.histogramBar,
-                {
-                  height: `${Math.max(2, (count / peak) * 100)}%`,
-                  // The band holding the most ratings is the one the reader is
-                  // looking for; the rest recede rather than competing with it.
-                  backgroundColor: count === peak && count > 0 ? colors.gold : colors.goldDeep,
-                  opacity: count === 0 ? 0.25 : 1,
-                },
-              ]}
-            />
-          </View>
-          <Text variant="caption" tone="faint">{i + 1}</Text>
-        </View>
-      ))}
-    </View>
-  );
-}
-
-function RatingBar({ label, value, muted }: { label: string; value: number; muted: boolean }) {
-  const styles = useStyles();
-
-  const pct = Math.max(0, Math.min(1, value / 5)) * 100;
-  return (
-    <View style={styles.bar}>
-      <Text variant="caption" tone="dim" style={styles.barLabel} numberOfLines={1}>
-        {label}
-      </Text>
-      <View style={styles.barTrack}>
-        <View style={[styles.barFill, { width: `${pct}%` }]} />
-      </View>
-      <Text variant="label" tone={muted ? "faint" : "default"} style={styles.barValue}>
-        {muted ? strings.common.noRating : value.toFixed(1)}
-      </Text>
-    </View>
-  );
-}
-
 function ReviewRow({ review }: { review: Review }) {
   const styles = useStyles();
 
@@ -753,18 +729,7 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     borderBottomColor: colors.hairlineSoft,
   },
   ratingSummary: { alignItems: "center", gap: space.xs, width: 96 },
-  bar: { flexDirection: "row", alignItems: "center", gap: space.sm },
-  barLabel: { width: 84 },
-  barTrack: { flex: 1, height: 4, borderRadius: 2, backgroundColor: colors.surface2, overflow: "hidden" },
-  barFill: { height: "100%", backgroundColor: colors.gold },
-  barValue: { width: 28, textAlign: "right" },
 
-  histogram: { flexDirection: "row", alignItems: "flex-end", gap: space.sm, height: 78 },
-  histogramColumn: { flex: 1, alignItems: "center", gap: 6 },
-  // The bars grow from the bottom of a fixed plot, so the five columns share a
-  // baseline and the row's height does not change with the data.
-  histogramPlot: { width: "100%", height: 54, justifyContent: "flex-end" },
-  histogramBar: { width: "100%", borderRadius: radius.sm },
 
   venueRow: {
     flexDirection: "row",

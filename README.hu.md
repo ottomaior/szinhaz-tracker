@@ -145,6 +145,8 @@ utils/season.ts           melyik évadba tartozik egy este, és hogyan írja le 
                           adatbázisfüggvény kliensoldali fele
 utils/authRetry.ts        egy újrapróbálkozás friss tokennel, ha a kiszolgáló
                           a lejárt régi miatt utasította vissza a kérést
+utils/ownRating.ts        melyik saját estédet idézi vissza az előadásoldal,
+                          miután a nyilvános átlag lekerült róla
 
 data/types.ts             domain típusok (Play, Venue, Review, User, …)
 services/supabase.ts      a Supabase kliens (az EXPO_PUBLIC_SUPABASE_*-ot olvassa)
@@ -364,9 +366,11 @@ szabály, és hogy mit tettek az egyes képernyőkkel:
 - **A lista listának néz ki, a plakát plakátnak.** A `ProgramRow` — dátum vagy
   idő a bal oszlopban, egy kis kép, a cím, egy sor tény — váltja a 16:5-ös
   szalagsorokat, amiket a Felfedezés korábban minden estére rajzolt, és a Műsor
-  dobozos kártyáit. A rácscsempék semmit sem hordanak a képen: az értékelés a
-  színházsor végén ül, az állapot pedig csak akkor jelenik meg, ha nem
-  „műsoron". Az előadás oldalán az időpontok hajszálvonalakra szedett táblázat;
+  dobozos kártyáit. A rácscsempék semmit sem hordanak a képen: a második sor a
+  színház, az állapot pedig csak akkor jelenik meg, ha nem „műsoron". (Az
+  értékelés a színházsor végén ült, amíg a nyilvános átlag le nem került —
+  lásd a „Szeretett, vagy megosztó" részt.) Az előadás oldalán az időpontok
+  hajszálvonalakra szedett táblázat;
   a szereposztás lista, amin a teljes szerep látszik, nem körök sávja, ami a
   „Zoltán, a narrátor"-t egy szó után levágta.
 - **Képernyőnként egy arany dolog.** Az előadás oldalán három egymásra rakott,
@@ -447,8 +451,10 @@ szövegre 0,00; a küszöb 0,6-nál van.
 A Felfedezés rendezésvezérlőt is kapott. A lehetőségek szándékosan mások
 keresésben és böngészésben — a "találat" szerinti rendezéshez kell egy lekérdezés,
 amihez viszonyítani lehet, ezért ott nem jelenik meg, ahol nincs beírva semmi —,
-és a "Népszerű" felirat "Előadások"-ra vált minden olyan rendezésnél, ami nem
-értékelés szerinti, mert a felirat állítás arról, hogy mi ez a lista.
+és a "Népszerű" felirat "Előadások"-ra váltott minden olyan rendezésnél, ami nem
+értékelés szerinti, mert a felirat állítás arról, hogy mi ez a lista. Azóta az
+értékelés szerinti rendezés és a „Népszerű" is lekerült a nyilvános átlaggal
+együtt, így a rács mindig „Előadások".
 
 ### A játszási időpontokat begyűjtöttük, de sosem mutattuk meg
 
@@ -512,9 +518,9 @@ az archívum ennek a katalógusnak a *nagyobbik* fele, és épp azért van, hogy
 régi produkciók megtalálhatók és naplózhatók maradjanak — vagyis az, hogy a
 Felfedezésen sehol nem volt elérhető, ugyanannak a hibának a másik fele volt.
 Mostantól van egy terjedelem-vezérlő a szűrősorban — „Ami most megy" / „Az
-archívummal együtt" —, és a cím is változik vele, mert egy „Népszerű" feliratú
-rács, ami többségében évekkel ezelőtt lezárt produkciókat tartalmaz, rossz
-listát ír le.
+archívummal együtt" —, és az eyebrow is változik vele, mert egy olyan rács, ami
+azt állítja magáról, hogy ez megy most, miközben többségében évekkel ezelőtt
+lezárt produkciókat tartalmaz, rossz listát ír le.
 
 A terjedelemnek **a szűrőopciókig is el kellett érnie**, nem csak a rácsig. Egy
 város-, színház- vagy műfajlista, ami csak az aktuális munkából épül, nem éri el
@@ -574,7 +580,7 @@ megerősítés meg is nevezi, mi megy vele: egy kívánságlista-sor egy koppint
 visszatenni, egy naplóbejegyzés viszont dátumot, szereposztást, helyet, jegyárat,
 fotót és beszélgetést hordozhat. A tetszések, a hozzászólások és a `review_cast`
 kaszkádolnak, a `recompute_play_rating()` pedig töröléskor is lefut, így a
-produkció nyilvános átlaga magától helyreáll.
+produkció átlaga magától helyreáll.
 
 ### Amit egy színház csinál, de nem előadás
 
@@ -696,15 +702,37 @@ látott egy produkciót és mindháromszor 5-öst adott, háromszoros súllyal
 szerepelt ahhoz képest, aki egyszer látta, és a nyilvános értékelés észrevétlenül
 a lelkesedés és a látogatásszám szorzatává vált. Mostantól előbb személyenként
 átlagol, aztán a személyek között. A `rating_count` is embereket számol, mert a
-képernyőn az "55 értékelés" ezt állítja.
+képernyőn az "55 értékelés" ezt állította, amíg a szám még ki volt írva.
 
 ### Szeretett, vagy megosztó
 
 Egy produkció kiírhatta, hogy 4,2, és sehogy nem tudta megmutatni, hogy ez
 tizenegy ötös és két egyes-e. A `play_rating_histogram()` maszksávonként egy sort
 ad vissza, mindig mind az ötöt, hogy a tengely teljes legyen, és az Előadás
-részletei oldal a naplózó gomb fölé rajzolja, amint egynél többen értékelték —
+részletei oldal a naplózó gomb fölé rajzolta, amint egynél többen értékelték —
 egyetlen értékelésnek nincs szórása.
+
+**2026. szeptember: a nyilvános átlag teljes egészében lekerült az appról, és
+vele a diagram is.** A fentiek továbbra is igazak és továbbra is meg vannak
+építve; egyszerűen nem rajzoljuk ki őket. Az ok inkább számtani, mint tervezői.
+Ennyi felhasználó mellett egy átlag két vélemény széles, két vélemény pedig nem
+összefoglalása semminek — egy szám tekintélyét viseli, a bizonyítékát nem. A
+diagram pedig egy előadásoldal harmadát arra költötte, hogy ugyanezt még egyszer
+elmondja sávokban, öt oszlopból kettővel.
+
+Az Előadás részletei oldalon az az egyetlen értékelés maradt a helyén, ami nem
+egy tömegről szóló állítás: **a sajátod**, csak neked, hogy hónapokkal később is
+megmondja az oldal, mit gondoltál róla. Mellette megmarad az "A követettek
+szerint" — hogy hányast adtak azok, akiket követsz —, ami bármekkora mintán
+valódi információ, mert tudod, kik ők. A szabály, amit a változtatás követett:
+*aki elmondja, mit gondolt, marad; egy maroknyi emberből számolt szám nem.* Az
+egyéni maszkok ott vannak minden hírfolyam-kártyán és minden vélemény sorában.
+
+Migráció nem történt. A `recompute_play_rating()` továbbra is fut, a
+`rating_overall` és a `rating_count` továbbra is helyes, és a
+`play_rating_histogram()` továbbra is válaszol. Az átlagot nem egy commit hozza
+vissza, hanem az értékelők száma — és amikor meglesz, az felületi munka lesz
+olyan oszlopokon, amelyek végig jók voltak.
 
 ## Miben játszik még?
 
@@ -878,10 +906,13 @@ A kézenfekvő megvalósítás a mai dátumot és valamilyen alapértelmezett é
 ír be. Mindkettő pont azt rontaná el, amit ez a séma épp most javított meg.
 
 A mai dátum pontosan az a hiba, amiért a `0022_diary_dates.sql` létezik. A
-kitalált értékelés pedig nem marad magánügy: a `plays.rating_overall` ezekből a
-sorokból számolódik, és az Előadás részletei oldalon jelenik meg — vagyis egyetlen
-onboarding-menetben kitalált tizenöt négyes tizenöt valódi produkció nyilvános
-pontszámát mozdítaná el.
+kitalált értékelés pedig nem maradt magánügy: a `plays.rating_overall` ezekből a
+sorokból számolódik, és korábban az Előadás részletei oldalon jelent meg —
+vagyis egyetlen onboarding-menetben kitalált tizenöt négyes tizenöt valódi
+produkció nyilvános pontszámát mozdította volna el. Az átlagot már nem mutatjuk
+— lásd a „Szeretett, vagy megosztó" részt —, de az oszlop továbbra is ezekből a
+sorokból számolódik, és egy értékelés, amit senki nem adott, továbbra is olyan
+értékelés, amit senki nem adott.
 
 Ezért a `0026_seen_without_a_date.sql` mindkét oszlopot nullozhatóvá teszi, és
 így itt is kifejezhetővé válik a különbség, amit a Letterboxd a *megnézett* és a
@@ -954,11 +985,19 @@ A lista a filmnaplózás legtöbbet másolt ötlete, itt viszont van egy másodi
 feladata is, amire a filmes appoknak nincs szükségük: ez az egyetlen mód, hogy
 egy vadonatúj fiók elé valami olvasnivalót tegyünk.
 
-A Felfedezés böngészősávjai a `plays.rating_overall` szerint rangsorolnak, ami
+A Felfedezés böngészősávjai a `plays.rating_overall` szerint rangsoroltak, ami
 négy értékelésből számolt átlag 1 214 produkción. Ez nem népszerűségi jelzés,
 hanem tizedesponttal ellátott zaj. Tíz kézzel készített lista ugyanezen a
 katalóguson jobb első képernyő — és a népszerűségi jelzéssel ellentétben nem kell
 hozzá, hogy előbb legyenek felhasználók.
+
+Az érvelés kétszer nyert. A listák a 0025-ben elkészültek, 2026 szeptemberében
+pedig az értékelés szerinti rendezés is lekerült a rácsról azzal az átlaggal
+együtt, ami szerint rendezett: egy nyilvános listát olyan szám szerint sorba
+rakni, amit senki nem lát, még mindig annak a számnak a közzététele, csak eggyel
+lejjebb. A rács most **Bemutató** szerint nyílik, a „Népszerű" felirat pedig a
+rendezéssel együtt ment, hiszen az a szó mindig is az átlagról szóló állítás
+volt.
 
 Ezért a `0025_lists.sql` mindkét fajtát ugyanazon a két táblán tartja: a saját
 magának készített listát, és az SQL-szerkesztőből írt, `is_featured` jelzésű
@@ -1006,8 +1045,9 @@ a lista pedig arra, hogy "mivel tartozik ez össze", ami nyitott, és egyszerre
 több is lehet.
 
 A Felfedezés az első három szerkesztői listát viszi, a hét műsorlistája és a
-"Népszerű" közé — szándékosan a rangsorolt rács fölé, hiszen épp annak az
-átlagnak a helyére készült ez a funkció. A blokk eltűnik, amint város-,
+böngészőrács közé — szándékosan fölé, hiszen épp annak a rácsnak az átlaga
+helyére készült ez a funkció. Az átlag azóta teljesen eltűnt, ami ugyanennek az
+érvelésnek a végigvitele. A blokk eltűnik, amint város-,
 színház-, helyszíntípus- vagy műfajszűrő van bekapcsolva: a szerkesztői lista a
 katalógusról szóló írás, nem lekérdezés fölötte, tehát nem tud válaszolni a
 szűrőre — ott hagyni úgy, hogy közben figyelmen kívül hagyja, rosszabb lenne,
@@ -1127,6 +1167,10 @@ hozzá, jóval azelőtt, hogy elég adat lenne bármiféle kollaboratív szűré
 hogy mit gondolt róla az a néhány ember, akit te választottál. A
 `0033_friends_ratings.sql` két lekérdezést ad hozzá: ki látta a követettjeid
 közül ezt a produkciót, és hol jártak mostanában.
+
+Az érvelés jól öregedett: az átlag mára lekerült az appról, és ez a rész az egyik
+a két megmaradt értékelés-jelzésből — mert egy név, amit felismersz, egy pontszám
+mellett bármekkora mintán információ.
 
 Mindkettő RPC, mert a kliensoldali alternatíva az volna, hogy lekérjük az összes
 követést, aztán az összes véleményt, aztán az összes profilt, és JavaScriptben
@@ -1279,7 +1323,9 @@ javítás előtt mérve: az értékelést hordozó 14 kritikából **13 olyan el
 ült, amelyik továbbra is `rating_overall = 0.0` és `rating_count = 0` értéket
 mutatott**. Az előadásoldal pontszáma, a naplózás gombja fölötti hisztogram és a
 `rating_overall` szerint rendező „Népszerű" sáv mind egy olyan oszlopot
-olvasott, amelyet a rendes használat soha nem írt.
+olvasott, amelyet a rendes használat soha nem írt. (Mindhárom lekerült azóta az
+appról — lásd a „Szeretett, vagy megosztó" részt —, de az oszlop, amit olvastak,
+továbbra is karban van tartva, és épp ennek a javításnak köszönhetően helyesen.)
 
 Az az egyetlen sor, amelyiken mégis volt értékelés, épp ezt takarta el: egy
 olyan előadás, amelynek az értékelője egyben a felvevője is — pontosan az az

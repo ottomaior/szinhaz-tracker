@@ -196,9 +196,25 @@ fázisnak saját „mikor van kész" definíció kell — innen a 4.5 és a 4.6.
 - **4.9 Kapacitás.** A Supabase ingyenes csomagja 500MB adatbázis / 1GB tárhely / 5GB kimenő forgalom, a `sync/lib/posters.ts` pedig produkciónként egy teljes webp és egy bélyegkép tárol. A 4.6 során mérni kell; ha megerősíti, be kell tervezni a Pro csomagot (kb. 25 USD/hó).
 
 **A 1. fázisból ide vihető tanulság:** a böngészősávok a `plays.rating_overall`
-szerint rendeznek, ami eddig gyakorlatilag üres volt. Minden korábbi ítélet
+szerint rendeztek, ami eddig gyakorlatilag üres volt. Minden korábbi ítélet
 arról, hogy a népszerűségi sáv „tizedesponttal ellátott zaj", olyan számok
 alapján született, amik nemcsak kevesek, hanem hibásak is voltak.
+
+**Eldőlt, 2026. szeptember — a nyilvános átlag lekerült az appról.** A számok
+mostanra helyesek, de továbbra is kevesen vannak: egy két vélemény széles átlag
+bizonyíték nélküli ítélet. Lekerült az előadásoldal pontszáma, a három
+szempontsáv, az „Értékelések megoszlása" diagram, a Felfedezés rácscsempéin lévő
+átlag és maga az értékelés szerinti rendezés is. Maradt az olvasó saját
+értékelése az előadásoldalon és az „A követettek szerint" — egy ember véleménye
+bármekkora mintán információ, egy maroknyi emberből számolt szám nem.
+
+Migráció nem történt: a `recompute_play_rating()`, a `rating_overall`, a
+`rating_count` és a `play_rating_histogram()` mind élnek és helyesek. **Ezt nem
+egy commit fordítja vissza, hanem az értékelők száma** — visszakapcsolni felületi
+munka lesz olyan oszlopokon, amik végig jók voltak. Kapcsolódik, és bármelyikük
+visszatérése előtt érdemes megcsinálni: a naplózó űrlap továbbra is kitölti a
+három szempontot akkor is, ha az ember hozzá sem nyúlt — ezért mutat a személyes
+blokk csak összesített pontszámot.
 
 ---
 
