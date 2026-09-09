@@ -343,6 +343,12 @@ export const strings = {
     /* Above one visit the count replaces it: a single figure standing over
        three evenings would quietly claim to be all of them. */
     yourRatingEntries: (n: number) => `${n} bejegyzés`,
+    /* Labels for the three per-dimension bars inside that block. Restored
+       with the bars themselves: these describe one person's own answer now,
+       not an average of everybody's. */
+    acting: "Színészi játék",
+    directing: "Rendezés",
+    setDesign: "Díszlet",
     ticketsShort: "Jegyek ↗",
     fromFollowing: "Vélemények",
     reviewsCount: (n: number) => `${n} vélemény`,

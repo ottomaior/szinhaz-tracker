@@ -700,6 +700,25 @@ answers. What would bring the average back is a population of raters, not a
 commit — and when there is one, this is UI work against columns that were right
 all along.
 
+**The three per-dimension bars came back, on the other side of that rule.** They
+had come off with the average, but for a second reason of their own: the
+check-in form seeded the acting, direction and set-design scores at 4 / 3 / 4 and
+saved them whether or not anybody touched those rows, so drawing them would have
+quoted people opinions they never gave. The form now leaves all four ratings
+unset until they are tapped and writes null for the ones that stay that way, and
+with that the sub-scores are as much the person's own as the figure beside them —
+so they belong in "A te értékelésed", which shows one individual's answer and
+never an average. A dimension left unanswered draws an empty track and a dash,
+and an entry that answered none of the three drops the column entirely rather
+than showing three dashes. Entries written before that change still carry the
+invented numbers and still show them: they were never migrated away, on the
+principle that the app cannot tell a seeded 4 from a meant one and deleting
+somebody's stored answer is not a decision a bug fix gets to make.
+
+This is not the average coming back by the side door. These are three numbers one
+named person gave one production, shown to that person; the thing that is still
+waiting on a population of raters is any figure computed *across* people.
+
 ## What else is she in
 
 `play_cast` has been the largest table in the database — 6,397 credits over
