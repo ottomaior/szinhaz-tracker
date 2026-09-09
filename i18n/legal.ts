@@ -154,10 +154,13 @@ export const privacyPolicy: LegalDocument = {
       heading: "A legfontosabb, amit érdemes előre tudni",
       blocks: [
         p(
-          "A Vastaps nyilvános napló. Amit egy előadásról beírsz — hogy láttad, mikor, hányra értékelted, mit írtál róla, kik léptek fel aznap este, sőt a feltöltött jegyfotó is — bárki számára olvasható, aki megnyitja az alkalmazást, akkor is, ha nincs fiókja. Ez nem mellékhatás, hanem a szolgáltatás lényege: a napló attól ér valamit, hogy mások is olvassák."
+          "A Vastaps félig nyilvános napló, és érdemes tudni, hol húzódik a határ. Az, hogy egy előadást láttál és mikor, bárki számára olvasható, aki megnyitja az alkalmazást, akkor is, ha nincs fiókja. Ez a szolgáltatás lényege: így lehet egyáltalán megtalálni azokat, akiket érdemes követni."
         ),
         p(
-          "Két dolog következik ebből, amit érdemes elolvasni, mielőtt beírsz valamit. A jegyfotón a legtöbb magyar színházban rajta van a neved és a foglalási azonosítód — ezt a képet nyilvánosnak szánod, amikor feltöltöd. És a naplód együtt olvasva elárulja, mikor nem vagy otthon; ez ugyanaz a megfontolás, mint bármelyik közösségi oldalon."
+          "Amit viszont az előadásról gondoltál, azt csak te látod, és azok, akik követnek téged. Ide tartozik az értékelésed, a leírt véleményed, a címkéid, az ülőhelyed, a jegy ára, a feltöltött jegyfotó, az aznap esti szereposztás, valamint a bejegyzésed kedvelései és hozzászólásai. Aki nem követ, annak a bejegyzésed annyit mond: itt jártál."
+        ),
+        p(
+          "Két dolog következik ebből, amit érdemes elolvasni, mielőtt beírsz valamit. A jegyfotó fájlja nyilvános tárhelyen van: a hivatkozását már nem adjuk ki annak, aki nem követ, de akinek egyszer a birtokába került, az később is meg tudja nyitni — a legtöbb magyar színházban pedig rajta van a neved és a foglalási azonosítód. És a naplód együtt olvasva elárulja, mikor nem vagy otthon, még akkor is, ha az értékelések rejtve maradnak: a dátumok maguk nyilvánosak. Ez ugyanaz a megfontolás, mint bármelyik közösségi oldalon."
         ),
         p(
           "Amit senki más nem lát: az e-mail-címed, a jelszavad és az értesítéseid (a postaláda tartalma a te kívánságlistád sorrendje, ezért csak neked olvasható)."
@@ -332,10 +335,13 @@ export const termsOfService: LegalDocument = {
       ],
     },
     {
-      heading: "Amit írsz, az nyilvános",
+      heading: "Ki látja, amit írsz",
       blocks: [
         p(
-          "A naplóbejegyzéseid, az értékeléseid, a kritikáid, a nyilvánosnak jelölt listáid, a követéseid, a kedveléseid és a hozzászólásaid bárki számára láthatók — beleértve a feltöltött jegyfotókat is. Ezt nem lehet fiókszinten kikapcsolni. Amit nem szánsz nyilvánosnak, azt ne írd ide."
+          "Az, hogy egy előadást megnéztél és mikor, bárki számára látható, ahogy a nyilvánosnak jelölt listáid és az is, hogy kiket követsz. Amit az előadásról gondoltál — az értékelésed, a kritikád, a címkéid, az ülőhelyed, a jegy ára, a jegyfotó, az aznapi szereposztás, a bejegyzésed kedvelései és hozzászólásai — csak neked és a követőidnek látszik."
+        ),
+        p(
+          "Ez a határ nem állítható fiókszinten: nem lehet a bejegyzéseidet teljesen elrejteni, és nem lehet mindenki számára megnyitni sem. Aki követ, az látja a véleményeidet; a követőidet pedig te választod meg annyiban, hogy bárkit blokkolhatsz. Amit senkinek nem szánsz, azt ne írd ide."
         ),
         p(
           "A tartalmad a tiéd marad. Azzal, hogy közzéteszed, nem kizárólagos, díjmentes engedélyt adsz nekünk arra, hogy a szolgáltatás működtetéséhez tároljuk és megjelenítsük. Ez az engedély a tartalom törlésével megszűnik."

@@ -62,6 +62,14 @@ export const strings = {
     followingEmptyBody: "Kövess másokat, és itt látod majd, mit néznek meg.",
     followingEmptyAction: "Színházbarátok keresése",
     findPeople: "Színházbarátok",
+    /* Where a rating would be, on an entry whose author this reader does not
+       follow. Names the person, because "follow somebody" is advice and
+       "follow Ottó" is a next step — and because the card is already about
+       them. See 0041: the columns are withheld by the database, and this is
+       only the sentence that explains the gap. */
+    followToSee: (name: string) => `Kövesd ${name} bejegyzéseit, hogy lásd, mit gondolt róla.`,
+    /* The same, before the author's profile has loaded. */
+    followToSeeGeneric: "Kövesd a szerzőt, hogy lásd, mit gondolt róla.",
   },
 
   /**
