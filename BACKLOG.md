@@ -6,6 +6,10 @@ Where the project stands, and what is left. The narrative of *why* each thing
 was built lives in [README.md](README.md); this file is the plan and the
 running state, so work can be picked up after a gap without re-deriving it.
 
+Loose bugs, rough edges and feature ideas do not live here — they go to
+[ISSUES.md](ISSUES.md), which is an inbox rather than a plan. An idea that gets
+accepted graduates from there into a phase below.
+
 Last updated: 8 September 2026.
 
 ---

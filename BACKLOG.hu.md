@@ -10,6 +10,10 @@ azt a [README.hu.md](README.hu.md) meséli el; ez a fájl a terv és az aktuáli
 állapot, hogy egy hosszabb szünet után is fel lehessen venni a fonalat anélkül,
 hogy mindent újra ki kellene találni.
 
+Az elszórt hibák, apró szépséghibák és ötletek nem itt laknak, hanem az
+[ISSUES.md](ISSUES.md) fájlban, ami nem terv, hanem gyűjtőhely. Ami ötletből
+vállalt munka lesz, az onnan lép elő az alábbi fázisok valamelyikébe.
+
 Utoljára frissítve: 2026. szeptember 8.
 
 ---
