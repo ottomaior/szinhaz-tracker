@@ -1,6 +1,7 @@
 import { View, Pressable } from "react-native";
 import Svg, { Path, Ellipse } from "react-native-svg";
 import { useColors } from "@/theme/styles";
+import { strings } from "@/i18n/hu";
 import { fillPaint, paint, strokePaint } from "@/components/icons/svgPaint";
 import {
   MASK_BODY_PATH,
@@ -67,27 +68,47 @@ export function MaskRatingRow({
   gap = 4,
   onPressMask,
 }: {
-  rating: number;
+  /**
+   * `undefined` is "not answered", and draws as five empty masks with nothing
+   * selected. That is also how a 0 would draw, so it is only unambiguous
+   * because nothing in the app stores a 0: `rating_overall` and the three
+   * dimensions under it are constrained to 0.5-5 (0001). Sighted readers get
+   * the distinction from whatever the caller puts beside the row — see
+   * `SubRatingRow` in app/checkin.tsx — and screen readers from the label
+   * below.
+   */
+  rating: number | undefined;
   size?: number;
   gap?: number;
-  /** Optional: called with (index 1-5) when a mask is tapped, for editable ratings. */
-  onPressMask?: (value: number) => void;
+  /**
+   * Optional: called when a mask is tapped, for editable ratings. Passes 1-5,
+   * or `undefined` when the tap was on the mask that is already the whole
+   * rating — which is the only way back out of a rating once it is given.
+   */
+  onPressMask?: (value: number | undefined) => void;
 }) {
-  const filled = Math.round(rating);
+  const filled = rating === undefined ? 0 : Math.round(rating);
   return (
     <View
       style={{ flexDirection: "row", gap }}
       accessibilityRole={onPressMask ? "radiogroup" : "image"}
-      accessibilityLabel={onPressMask ? undefined : `${filled}/5`}
+      accessibilityLabel={
+        onPressMask ? undefined : rating === undefined ? strings.common.notRated : `${filled}/5`
+      }
     >
       {Array.from({ length: 5 }).map((_, i) =>
         onPressMask ? (
           <Pressable
             key={i}
-            onPress={() => onPressMask(i + 1)}
+            // Compared against `rating` and not against `filled`, so that
+            // tapping the fifth mask on a stored 4.5 rounds it up to a 5
+            // rather than clearing it. Only a tap on the exact whole number
+            // already given is read as "I did not mean to answer this".
+            onPress={() => onPressMask(rating === i + 1 ? undefined : i + 1)}
             hitSlop={6}
             accessibilityRole="radio"
             accessibilityLabel={`${i + 1}/5`}
+            accessibilityHint={rating === i + 1 ? strings.common.clearRating : undefined}
             aria-checked={filled === i + 1}
             accessibilityState={{ checked: filled === i + 1 }}
           >

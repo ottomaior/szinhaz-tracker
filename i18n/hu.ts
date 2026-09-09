@@ -26,6 +26,13 @@ export const strings = {
     retry: "Újrapróbálom",
     loadError: "Nem sikerült betölteni. Ellenőrizd a kapcsolatot.",
     noRating: "—",
+    /* Spoken where the visible cue for "no answer" is an empty row of masks
+       or a dash, neither of which reads aloud as anything. */
+    notRated: "Nincs értékelve",
+    /* Spoken on the mask that is already the whole rating, which is the one
+       that clears it. There is no visual affordance for that on the mask
+       itself, so the hint is the only place a screen reader hears about it. */
+    clearRating: "Koppints rá újra az értékelés törléséhez.",
   },
 
   tabs: {
@@ -390,6 +397,9 @@ export const strings = {
     acting: "Színészi játék",
     directing: "Rendezés",
     setAndCostume: "Díszlet és jelmez",
+    /* All four rows are optional, and tapping the mask you already chose is
+       the only way back to "not answered" once you have answered. */
+    clearRatingHint: "A kiválasztott maszkra újra koppintva törölheted az értékelést.",
     momentTags: "Élmény címkék",
     tagStandingOvation: "Állótapsot kapott",
     tagCried: "Megkönnyeztem",
