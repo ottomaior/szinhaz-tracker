@@ -321,6 +321,79 @@ three. Left as an open follow-up when the design pass merged. The follow-gate
 shipping on 9 September makes it more pressing, not less: the Mindenki feed now
 carries every evening logged, with the opinion masked on the ones you do not
 follow.
+### T-019 · Your own profile opens with an empty 118pt band
+type: bug · area: design · priority: med · status: open · added: 2026-09-09
+
+`app/(tabs)/profile.tsx:117` renders `styles.cover` — a `View` 118pt tall,
+filled with `colors.surface2`, holding **nothing** — and adds `insets.top + 16`
+of padding on top of that. The avatar then pulls back up into it with
+`marginTop: -40`. It is a cover-photo slot with no cover photo, and it is the
+first thing you see on your own profile: on a phone it costs most of what is
+above the fold before a single word about you appears.
+
+The two profile screens already disagree about it. `app/user/[id].tsx` — someone
+else's profile — has no band at all; its avatar sits in an ordinary row with
+`marginTop: space.md` (`:341`). So one of the two layouts is already the
+answer; the question is which.
+
+Two directions. **Remove it**, and let your own profile match the public one —
+cheapest, and it takes the `-40` overlap with it, which is the only thing
+holding the avatar in place today. Or **give it something to hold**: a chosen
+production's poster, or the palette the account is reading in. That is the more
+interesting answer and the more expensive one, and it needs a decision about
+where such an image would come from, since nothing in the schema stores one.
+
+Worth settling alongside T-017, the venue page: both are questions about what a
+header is for in this app, and answering them separately is how two screens end
+up disagreeing again.
+### T-020 · A person page shows a partial career and does not say so
+type: bug · area: data · priority: high · status: open · added: 2026-09-09
+
+Spot-checked Faluvégi Fanni against port.hu. The app credits her on nine
+productions, more than port.hu lists — but three of port.hu's are missing here,
+and each is missing for a different reason. Nothing about this is specific to
+her; the three causes are structural.
+
+**1. The theatre is not covered.** *Figaro lakodalma* is at the Magyar Állami
+Operaház, which is not one of the ten venues in the database. Anyone who works
+outside the eight houses actually scraped has a partial page, and the page
+presents it as a complete one. Worth noting for whatever eventually matches
+titles across sources: port.hu prints *Figaro lakodalma* where this catalogue
+holds *Figaro házassága* — one Mozart opera, two Hungarian titles.
+
+**2. The production is here, with nobody in it.** Both Csokonai rows for *A
+varázsfuvola* have **zero** `play_cast` rows, so no performer's page can reach
+them. This is T-007's problem in a smaller shape: Vígszínház is the extreme case
+with 579 productions and no cast data at all, but it is not the only place cast
+capture silently returns nothing.
+
+**3. The cast we hold is a different staging's.** Csokonai's *Bohémélet* has 36
+cast rows and she is not among them, while port.hu credits her in a premiere
+dated February 2026. The archived record appears to carry an earlier staging's
+cast, and the revival was never picked up as a production of its own — so the
+newer work is invisible and the older cast reads as current.
+
+**One bounded piece, smaller than it first looks.** 66 (venue, title) pairs hold
+137 rows between them, but most are genuine restagings — Vígszínház has staged
+*Játék a kastélyban* four times and each row carries its own premiere date.
+Only **4 rows** have neither a premiere date nor a cast, which is the only case
+where a revival and a duplicate cannot be told apart by anything. Both *A
+varázsfuvola* rows are among those four.
+
+**What is not the answer: reading port.hu.** It is excluded on the EU *sui
+generis* database right over a compiled listings database — a legal judgement,
+recorded in the README, and not a robots.txt one, since robots.txt permits it.
+Using it as a checking oracle by hand, as here, is a different act from
+ingesting it.
+
+So the fix is two things that already have homes — wider coverage (backlog 4.2)
+and cast capture that fails loudly rather than silently (4.5) — plus one that
+does not: **the person page should say what it is counting.** A line naming the
+theatres this catalogue covers turns a wrong answer into a partial one, costs an
+afternoon, and does not wait on either. Backlog 4.6's data-quality report is
+what would have caught all three of these without a spot-check.
+
+
 
 ---
 
@@ -345,4 +418,4 @@ _Nothing yet._
 
 ---
 
-Next free id: **T-019**
+Next free id: **T-021**
