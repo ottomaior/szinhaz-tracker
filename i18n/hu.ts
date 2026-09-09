@@ -442,6 +442,11 @@ export const strings = {
     rewatchNotice: (count: number) =>
       count === 1 ? "Ezt már láttad egyszer — ez a második alkalom." : `Ezt már ${count}-szer láttad.`,
 
+    /* Everything from here to `stubHint` belongs to four questions the form
+       no longer asks — the cast, the seat, the price and the ticket photo.
+       Kept rather than deleted: entries that answered them still show them on
+       the entry screen, and if any of the four comes back it should come back
+       already written rather than hastily retranslated. */
     /* Who was on that night — the one question a film log never has to ask. */
     castLabel: "Kiket láttál?",
     castHint: "Koppints azokra, akik aznap este játszottak. Ha beugró volt, vedd fel a nevét.",
