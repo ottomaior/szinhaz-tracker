@@ -734,6 +734,88 @@ Migráció nem történt. A `recompute_play_rating()` továbbra is fut, a
 vissza, hanem az értékelők száma — és amikor meglesz, az felületi munka lesz
 olyan oszlopokon, amelyek végig jók voltak.
 
+**A három részértékelés-sáv visszakerült, a szabály másik oldalán.** Az átlaggal
+együtt kerültek le, de volt egy saját okuk is: a naplózó űrlap 4 / 3 / 4 értéken
+indította a színészi játék, a rendezés és a díszlet pontszámát, és attól
+függetlenül mentette őket, hogy valaki hozzányúlt-e azokhoz a sorokhoz — így a
+kirajzolásuk olyan véleményeket idézett volna az emberek szájába, amelyeket soha
+nem mondtak. Az űrlap most mind a négy értékelést üresen hagyja addig, amíg rá
+nem koppintanak, és `null`-t ír azokra, amelyek üresen maradnak; ezzel a
+részpontszámok ugyanannyira az adott ember sajátjai, mint a mellettük álló szám —
+tehát ott a helyük „A te értékelésed" blokkban, amely egyetlen ember válaszát
+mutatja, sosem átlagot. A megválaszolatlan dimenzió üres sávot és gondolatjelet
+rajzol, az olyan bejegyzés pedig, amely a háromból egyikre sem válaszolt, teljesen
+elhagyja az oszlopot ahelyett, hogy három gondolatjelet mutatna. A változtatás
+előtt írt bejegyzések továbbra is hordozzák a kitalált számokat, és meg is
+mutatják őket: sosem migráltuk el ezeket, abból az elvből kiindulva, hogy az app
+nem tudja megkülönböztetni az automatikusan beírt négyest a szándékostól, és
+valakinek az eltárolt válaszát törölni nem egy hibajavítás döntése.
+
+## A vélemény követés mögé kerül
+
+2026 szeptemberéig egy naplóbejegyzés teljes egészében nyilvános volt. A
+`reviews_select_all` a `0001` óta `using (true)` volt, a `0037` pedig csak a
+rejtett és a blokkolt sorokat vette ki belőle — így bárki, kijelentkezve, egy
+inkognitóablakban elolvashatta egy idegen értékelését, kritikáját, azt, hogy
+mennyit fizetett és hol ült. Ez tudatos modell volt, és ez a repó érvelt is
+mellette: a napló attól ér valamit, hogy mások is olvassák.
+
+**A mostani szabály:** mindenki látja, *hogy* ott voltál; azt, hogy mit
+gondoltál róla, csak te látod és azok, akik követnek téged.
+
+Minden bejegyzésen nyilvános: ki, melyik előadás, mikor, és hogy visszatérő
+nézés volt-e. A követés mögött: a négy értékelés, a leírt vélemény, a címkék, az
+ülőhely, a jegyár, a jegyfotó, az aznap esti szereposztás, a kedvelések és a
+hozzászólások száma, valamint maga a hozzászólás-szál.
+
+A vágás úgy van megválasztva, hogy a hírfolyam továbbra is az a hely maradjon,
+ahol embereket találsz. Egy kártya, amelyen „Nagy Zsófia megnézte" áll egy
+plakát fölött, épp attól teszi valakit követésre érdemessé; csak épp nem adja
+oda előre azt, amiért a követés van.
+
+**Miért nézet, és miért nem szabály.** A tény és a vélemény ugyanannak a sornak
+az oszlopai. Az RLS sorokat szűr, nem oszlopokat, a Postgres
+oszlopjogosultságai pedig szerepenkéntiek és statikusak — egyik sem tudja
+kifejezni, hogy „ezt a sort láthatod, de tizenegy oszlopa nem neked szól".
+Ezért a `0041` létrehozza a `public.reviews_readable` nézetet, amely tulajdonosi
+jogon fut, és minden olvasható sort visszaad úgy, hogy a privát oszlopokat
+kinullázza, hacsak a `private.can_see_entry(szerző)` mást nem mond; a `0042`
+pedig magát a `reviews` táblát szűkíti `user_id = auth.uid()`-ra, így a nézet az
+egyetlen út bárki más bejegyzéséhez. A maszkolás képernyőn végezve egyetlen
+PostgREST-kérésnyire hagyta volna az adatot — ugyanaz az érv, amit a `0037` a
+szolgáltatásfájlban lévő `.neq()`-ról mondott.
+
+A segédfüggvények azért élnek a `private` sémában, amiért a `0037` odatette
+őket, és amiért egyszer meg is fizetett érte: egy szabálykifejezés a kérdező
+szerep jogaival fut, tehát az általa hívott függvényt az `anon` és az
+`authenticated` **muszáj**, hogy futtathassa — a HTTP API-ról nem a jogosultság
+megvonása, hanem az elhelyezés tartja távol.
+
+**Két migráció, szándékosan.** A `0041` csak hozzáad, és a futó alkalmazás alatt
+lett alkalmazva; a `0042` zárja be az ajtót, és csak akkor ment ki, amikor már
+élt a nézetet olvasó kliens. A tábla egy lépésben való szűkítése mindenkinek
+kiürítette volna a hírfolyamát a kettő között.
+
+**Ami vele jár.** A `review_likes`, a `review_comments` és a `review_cast` is
+ahhoz a bejegyzéshez van kötve, amelyen ülnek, különben a kapu oldalt szivárog —
+egy maszkolt `like_count` semmit sem ér, amíg a mögötte lévő sorok
+megszámolhatók. A `friends_ratings` és a `friends_recent_plays` a nézetre mutat
+át, mert `security invoker` függvényként különben üres „A követettek szerint"
+blokkot adnának vissza, hibaüzenet nélkül. A `0031` évadfüggvényeit nem
+piszkáljuk, és így csendben abbahagyják a válaszolást olyan `viewer`
+argumentumra, amely nem a hívó — ezt a rést eddig senki nem vette észre.
+
+**Ami nyitva marad:** a `stubs` bucket `public: true`. Az útvonalat már nem
+adjuk ki annak, aki nem követ, de egy már meglévő hivatkozás továbbra is
+megnyílik. Az adatkezelési tájékoztató ezt ki is mondja, nem sugallja az
+ellenkezőjét; a bucket priváttá tétele aláírt URL-eket és aszinkron
+`stubUrl()`-t igényel, és érdemes megcsinálni indulás előtt.
+
+Ez nem az átlag visszatérése a hátsó ajtón. Ezek olyan számok, amelyeket egy
+konkrét ember adott egy konkrét produkcióra, és neki mutatjuk meg őket; ami
+továbbra is az értékelők számára vár, az bármilyen, *emberek között* számolt
+érték.
+
 ## Miben játszik még?
 
 A `play_cast` eddig az adatbázis legnagyobb táblája volt — 6 397 közreműködés
@@ -1133,10 +1215,16 @@ mond ítéletet: egy elgépelt plusz számjegyet fog meg.
 vezetékek már megvoltak, csak máshová mutattak: az `expo-image-picker`
 függőség, a 0013 pedig mappánkénti szabályt adott a felhasználói feltöltéseknek,
 tehát ez egy második bucket, nem új infrastruktúra. Nyilvános, mint a `posters`
-és az `avatars`, mert a napló bejegyzése is nyilvános — a `reviews_select_all` a
-0001 óta bárkinek engedi olvasni a szöveget. Ez valódi következmény, nem
-mellékes, ezért a naplózó űrlap ki is mondja, *mielőtt* elővennéd a kamerát: egy
-jegyen általában rajta van a neved és a foglalási kódod. A tulajdonlást itt is
+és az `avatars`, mert a napló bejegyzése nyilvános volt, amikor készült — a
+`reviews_select_all` a 0001-től a 0042-ig bárkinek engedte olvasni a szöveget.
+**A bucket nem változott, amikor ez igen.** A 0041 már nem adja ki a
+`stub_path`-t annak, aki nem követi a szerzőt, tehát a hivatkozás nem
+felderíthető; a fájl viszont, ha valakinél már megvan a link, továbbra is
+letölthető, és az adatkezelési tájékoztató ezt ki is mondja ahelyett, hogy a
+kép priváttá válását sugallná. Magának a bucketnek a priváttá tétele külön
+munka — aláírt URL-ek, és a `stubUrl()` aszinkronná válik —, és érdemes
+megcsinálni indulás előtt. A naplózó űrlap közben már egyáltalán nem kér fotót
+(lásd 983d6ef), tehát új kép nem érkezik oda. A tulajdonlást itt is
 két helyen érvényesítjük, a tárhely RLS-ével a feltöltésnél és a
 `reviews_guard_stub_path`-szal a soron — ugyanazzal az érveléssel, amit a 0027
 az `avatar_path`-ról ír.
@@ -1395,9 +1483,11 @@ Még három dolog, amit egy fiók nem tudott — mind előfeltétel, nem funkci�
   `expo export` előrendereli őket, az nginx pedig sima URL-en, munkamenet
   nélkül szolgálja ki — amire a Google Play fióktörlési URL-követelményének is
   szüksége lesz majd. Az adatkezelési tájékoztató azzal kezd, amit egy sablon
-  soha nem mondana ki: hogy a `reviews_select_all` a `0001` óta bárki számára
-  olvashatóvá tesz minden naplóbejegyzést, és hogy egy jegyfotón általában rajta
-  van a neved és a foglalási azonosítód, egy nyilvános tárolóban.
+  soha nem mondana ki: hogy pontosan hol húzódik a határ a bejegyzés mindenki
+  által olvasható és a csak a követőidnek látszó fele között, és hogy egy
+  jegyfotón általában rajta van a neved és a foglalási azonosítód, egy olyan
+  tárolóban, amely azután is nyilvános marad, hogy a hozzá vezető hivatkozás
+  már nem az.
 
 ## Az évadot számoljuk, nem a naptári évet
 

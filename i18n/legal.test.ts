@@ -117,10 +117,22 @@ describe("privacy policy says the things it must", () => {
     expect(text).toContain("NAIH");
   });
 
-  it("warns that diary entries are public", () => {
-    // `reviews_select_all` in 0001_init.sql makes every diary entry
-    // world-readable, and the ticket stub lives in a public bucket. If that
-    // ever changes, this assertion is the reminder to change the copy too.
-    expect(text).toMatch(/nyilvános napló/);
+  it("says where the line between public and followers-only falls", () => {
+    // 0041 and 0042 split the entry in two: attendance is world-readable,
+    // the opinion answers to `private.can_see_entry`. The policy has to
+    // describe both halves, because getting either wrong is the kind of
+    // mistake that matters in a privacy notice — claiming more privacy than
+    // exists, or frightening people about writing that only their followers
+    // can read.
+    expect(text).toMatch(/félig nyilvános napló/);
+    expect(text).toMatch(/akik követnek téged/);
+  });
+
+  it("still warns that the ticket photo outlives the link to it", () => {
+    // The `stubs` bucket is `public: true`. 0041 stopped publishing the path
+    // to people who do not follow the author, but the file itself is still
+    // fetchable by anybody holding the URL, so the notice must not imply the
+    // photo became private.
+    expect(text).toMatch(/nyilvános tárhelyen/);
   });
 });

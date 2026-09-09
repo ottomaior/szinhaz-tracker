@@ -253,6 +253,15 @@ export interface Review {
   /** The stub, the műsorfüzet, the curtain call. Public, like the entry itself. */
   stubUrl?: string;
   /**
+   * The same file as its path in the `stubs` bucket, which is what a write
+   * takes — `stubUrl` above is derived from it and cannot be turned back.
+   *
+   * Carried so that an edit can hand the path back unchanged. `updateReview`
+   * writes `stub_path` on every call, so a form that could only read the URL
+   * had no way to say "leave the ticket alone" and silently dropped it.
+   */
+  stubPath?: string;
+  /**
    * Who was actually on that night.
    *
    * Empty for every entry that did not answer, which is most of them —
@@ -262,6 +271,20 @@ export interface Review {
   castSeen?: SeenCastMember[];
   likeCount: number;
   commentCount: number;
+  /**
+   * Whether this viewer may see what the author thought of it.
+   *
+   * True for your own entries and for anybody you follow; false for everybody
+   * else, including a signed-out reader — see 0041. When it is false, every
+   * opinion field above has already been emptied by the database before it
+   * reached here, so a screen that ignores this flag leaks nothing; it just
+   * draws an entry that looks unrated and unwritten, which is a different and
+   * wrong statement about the person.
+   *
+   * That is the whole reason this exists rather than the screens inferring it
+   * from a missing rating: since 0026, no rating is also a real answer.
+   */
+  canSeeOpinion: boolean;
 }
 
 /** One person somebody recorded as having been on stage the night they went. */

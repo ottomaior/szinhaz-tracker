@@ -174,6 +174,18 @@ export default function PlayDetailScreen() {
    * and looks entirely correct on screen.
    */
   const own = useMemo(() => pickOwnRating(reviews, session?.user?.id), [reviews, session]);
+  // The ones with an opinion this reader is allowed to read. `reviews` itself
+  // stays whole, because `pickOwnRating` above and the count of who has been
+  // are both about attendance, which is nobody's secret.
+  const readableReviews = useMemo(() => reviews.filter((r) => r.canSeeOpinion), [reviews]);
+  // Whether that evening answered any of the three dimensions at all. Checked
+  // for `undefined` rather than for falsiness, because 0.5 is a rating and 0 is
+  // not a value anything stores.
+  const hasOwnSubRatings =
+    own !== undefined &&
+    (own.entry.ratingActing !== undefined ||
+      own.entry.ratingDirecting !== undefined ||
+      own.entry.ratingSetDesign !== undefined);
 
   async function toggleWatchlist() {
     if (!play) return;
@@ -426,11 +438,16 @@ export default function PlayDetailScreen() {
               drawn empty — the block it replaced used to render a bold gold
               "0.0" that read as a terrible score rather than as no answer.
 
-              Only the overall figure, deliberately. Check-in seeds the three
-              sub-scores and saves them whether or not the person touched those
-              rows, so drawing them back here would hand somebody a "Rendezés
-              3.0" they never chose. They can return once check-in stops
-              answering for people. */}
+              The three per-dimension bars are back, and they are the other
+              half of the same rule. They came off because check-in seeded them
+              and saved them whether or not the person touched those rows, so
+              drawing them would have handed somebody a "Rendezés 3.0" they
+              never chose. Since a4c777d the form leaves them unset unless they
+              are answered, and null means "did not answer" all the way to the
+              screen — so what is drawn here is now what this person said, the
+              same as the figure beside it, and never a number filled in for
+              them. They are their own scores and not an average, which is why
+              they belong on this side of the line the block draws. */}
           {own && (
             <View style={{ gap: space.sm }}>
               <SectionHeader
@@ -445,11 +462,25 @@ export default function PlayDetailScreen() {
                   <Text variant="display" tone="accent">{own.rating.toFixed(1)}</Text>
                   <MaskRatingRow rating={own.rating} size={12} gap={2} />
                 </View>
-                <Text variant="caption" tone="faint" style={{ flex: 1 }}>
-                  {own.entry.seenAt
-                    ? strings.playDetail.yourRatingSeen(formatLongDate(`${own.entry.seenAt}T12:00:00Z`))
-                    : strings.playDetail.yourRatingUndated}
-                </Text>
+                <View style={{ flex: 1, gap: space.md }}>
+                  {/* Dropped entirely when they answered none of the three,
+                      which is now the ordinary case for a quick check-in. A
+                      column of three dashes is not information, and it would
+                      make an entry that said one honest thing look like one
+                      that failed to say four. */}
+                  {hasOwnSubRatings && (
+                    <View style={{ gap: space.md }}>
+                      <RatingBar label={strings.playDetail.acting} value={own.entry.ratingActing} />
+                      <RatingBar label={strings.playDetail.directing} value={own.entry.ratingDirecting} />
+                      <RatingBar label={strings.playDetail.setDesign} value={own.entry.ratingSetDesign} />
+                    </View>
+                  )}
+                  <Text variant="caption" tone="faint">
+                    {own.entry.seenAt
+                      ? strings.playDetail.yourRatingSeen(formatLongDate(`${own.entry.seenAt}T12:00:00Z`))
+                      : strings.playDetail.yourRatingUndated}
+                  </Text>
+                </View>
               </View>
             </View>
           )}
@@ -573,14 +604,21 @@ export default function PlayDetailScreen() {
             </View>
           )}
 
+          {/* Yours and the people you follow, and nobody else — see 0041.
+              A stranger's entry arrives with its rating and its note already
+              emptied by the database, so listing it would put a name over a
+              blank and invite the reader to wonder what was wrong with it.
+              The count follows the list rather than the query for the same
+              reason: a heading promising eight opinions above two of them is
+              the sort of number that is technically true and reads as a bug. */}
           <View style={{ gap: space.md }}>
-            <SectionHeader title={strings.playDetail.fromFollowing} action={strings.playDetail.reviewsCount(reviews.length)} />
-            {reviews.length === 0 ? (
+            <SectionHeader title={strings.playDetail.fromFollowing} action={strings.playDetail.reviewsCount(readableReviews.length)} />
+            {readableReviews.length === 0 ? (
               <Text variant="bodySmall" tone="faint">
                 {strings.playDetail.noReviewsYet}
               </Text>
             ) : (
-              reviews.map((r) => <ReviewRow key={r.id} review={r} />)
+              readableReviews.map((r) => <ReviewRow key={r.id} review={r} />)
             )}
           </View>
         </ContentColumn>
@@ -658,6 +696,39 @@ function formatRuntime(minutes: number) {
   return `${hours} ${strings.playDetail.hours} ${rest} ${strings.playDetail.minutes}`;
 }
 
+/**
+ * One dimension of a rating, as a label, a bar and a figure.
+ *
+ * Restored from before 08e9bb0, which took it off with the public averages,
+ * and narrower than it was: it drew an average then and draws one person's
+ * answer now, so the only reason left to mute a row is that the question was
+ * not answered. That is `undefined` and not a number, which is why the old
+ * separate `muted` flag is gone — there is nothing else it could have meant.
+ *
+ * An unanswered dimension prints the same dash the check-in form shows for an
+ * untouched row, never a 0.0. A gold figure reading zero is a verdict, and the
+ * whole point of the change that made these nullable is that not answering is
+ * not a verdict.
+ */
+function RatingBar({ label, value }: { label: string; value?: number }) {
+  const styles = useStyles();
+
+  const pct = value === undefined ? 0 : Math.max(0, Math.min(1, value / 5)) * 100;
+  return (
+    <View style={styles.bar}>
+      <Text variant="caption" tone="dim" style={styles.barLabel} numberOfLines={1}>
+        {label}
+      </Text>
+      <View style={styles.barTrack}>
+        <View style={[styles.barFill, { width: `${pct}%` }]} />
+      </View>
+      <Text variant="label" tone={value === undefined ? "faint" : "default"} style={styles.barValue}>
+        {value === undefined ? strings.common.noRating : value.toFixed(1)}
+      </Text>
+    </View>
+  );
+}
+
 function ReviewRow({ review }: { review: Review }) {
   const styles = useStyles();
 
@@ -729,6 +800,11 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     borderBottomColor: colors.hairlineSoft,
   },
   ratingSummary: { alignItems: "center", gap: space.xs, width: 96 },
+  bar: { flexDirection: "row", alignItems: "center", gap: space.sm },
+  barLabel: { width: 84 },
+  barTrack: { flex: 1, height: 4, borderRadius: 2, backgroundColor: colors.surface2, overflow: "hidden" },
+  barFill: { height: "100%", backgroundColor: colors.gold },
+  barValue: { width: 28, textAlign: "right" },
 
 
   venueRow: {

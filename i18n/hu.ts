@@ -26,6 +26,13 @@ export const strings = {
     retry: "Újrapróbálom",
     loadError: "Nem sikerült betölteni. Ellenőrizd a kapcsolatot.",
     noRating: "—",
+    /* Spoken where the visible cue for "no answer" is an empty row of masks
+       or a dash, neither of which reads aloud as anything. */
+    notRated: "Nincs értékelve",
+    /* Spoken on the mask that is already the whole rating, which is the one
+       that clears it. There is no visual affordance for that on the mask
+       itself, so the hint is the only place a screen reader hears about it. */
+    clearRating: "Koppints rá újra az értékelés törléséhez.",
   },
 
   tabs: {
@@ -55,6 +62,14 @@ export const strings = {
     followingEmptyBody: "Kövess másokat, és itt látod majd, mit néznek meg.",
     followingEmptyAction: "Színházbarátok keresése",
     findPeople: "Színházbarátok",
+    /* Where a rating would be, on an entry whose author this reader does not
+       follow. Names the person, because "follow somebody" is advice and
+       "follow Ottó" is a next step — and because the card is already about
+       them. See 0041: the columns are withheld by the database, and this is
+       only the sentence that explains the gap. */
+    followToSee: (name: string) => `Kövesd ${name} bejegyzéseit, hogy lásd, mit gondolt róla.`,
+    /* The same, before the author's profile has loaded. */
+    followToSeeGeneric: "Kövesd a szerzőt, hogy lásd, mit gondolt róla.",
   },
 
   /**
@@ -336,6 +351,12 @@ export const strings = {
     /* Above one visit the count replaces it: a single figure standing over
        three evenings would quietly claim to be all of them. */
     yourRatingEntries: (n: number) => `${n} bejegyzés`,
+    /* Labels for the three per-dimension bars inside that block. Restored
+       with the bars themselves: these describe one person's own answer now,
+       not an average of everybody's. */
+    acting: "Színészi játék",
+    directing: "Rendezés",
+    setDesign: "Díszlet",
     ticketsShort: "Jegyek ↗",
     fromFollowing: "Vélemények",
     reviewsCount: (n: number) => `${n} vélemény`,
@@ -390,6 +411,9 @@ export const strings = {
     acting: "Színészi játék",
     directing: "Rendezés",
     setAndCostume: "Díszlet és jelmez",
+    /* All four rows are optional, and tapping the mask you already chose is
+       the only way back to "not answered" once you have answered. */
+    clearRatingHint: "A kiválasztott maszkra újra koppintva törölheted az értékelést.",
     momentTags: "Élmény címkék",
     tagStandingOvation: "Állótapsot kapott",
     tagCried: "Megkönnyeztem",
@@ -426,6 +450,11 @@ export const strings = {
     rewatchNotice: (count: number) =>
       count === 1 ? "Ezt már láttad egyszer — ez a második alkalom." : `Ezt már ${count}-szer láttad.`,
 
+    /* Everything from here to `stubHint` belongs to four questions the form
+       no longer asks — the cast, the seat, the price and the ticket photo.
+       Kept rather than deleted: entries that answered them still show them on
+       the entry screen, and if any of the four comes back it should come back
+       already written rather than hastily retranslated. */
     /* Who was on that night — the one question a film log never has to ask. */
     castLabel: "Kiket láttál?",
     castHint: "Koppints azokra, akik aznap este játszottak. Ha beugró volt, vedd fel a nevét.",

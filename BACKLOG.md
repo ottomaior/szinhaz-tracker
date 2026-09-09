@@ -111,7 +111,13 @@ copy are reused unchanged when native push arrives; only the sender changes.
 
 Two commits on `part-a-native`. Reviews and comments are public UGC written by
 strangers, and until this the only moderation rule in the system was that a
-diary owner could delete a comment on their own entry. A real safety gap on the
+diary owner could delete a comment on their own entry.
+
+> **Superseded in part, September 2026 — see "Opinions behind a follow" below.**
+> Reviews and comments are no longer public writing by strangers: what somebody
+> thought is readable only by them and the people who follow them. Everything
+> this phase built still stands and still matters — reporting, blocking and
+> takedown all apply to writing that reaches a smaller audience the same way. A real safety gap on the
 live web product, and App Store Guideline 1.2 at review.
 
 | | What |

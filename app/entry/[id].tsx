@@ -224,6 +224,20 @@ export default function DiaryEntryScreen() {
             )}
           </View>
 
+          {/* Everything this reader is not entitled to has already been emptied
+              by `reviews_readable` — the rating above, the cast, the note, the
+              tags, the seat and the ticket all arrive blank, so the blocks
+              below simply do not render. Which would leave a screen that
+              trails off looking like an entry nobody finished.
+
+              This is the sentence that says otherwise. The page does not know
+              the author's name — it never needed it — so the generic wording
+              is the honest one here, and the way to their profile is the
+              avatar and name in the header above. */}
+          {!review.canSeeOpinion && (
+            <Text variant="bodySmall" tone="faint">{strings.feed.followToSeeGeneric}</Text>
+          )}
+
           {cast.length > 0 && (
             <View style={{ gap: space.sm }}>
               <Text variant="label" tone="dim">{strings.entry.castHeading}</Text>
@@ -365,7 +379,13 @@ export default function DiaryEntryScreen() {
 
           {/* The social half. It lives here rather than on the feed card
               because a conversation needs somewhere to be read, and the card is
-              a summary — the feed's counters lead here for the same reason. */}
+              a summary — the feed's counters lead here for the same reason.
+
+              Not mounted at all when the opinion is closed to this reader. The
+              policies in 0042 would return an empty thread and a zero count
+              anyway, but mounting it would draw a composer inviting somebody to
+              answer writing they cannot read. */}
+          {review.canSeeOpinion && (
           <View style={styles.socialBlock}>
             <ReviewSocial
               reviewId={review.id}
@@ -375,6 +395,7 @@ export default function DiaryEntryScreen() {
               autoFocusComposer={compose === "1"}
             />
           </View>
+          )}
 
           {/* Somebody else's evening, and something is wrong with it.
               Last on the screen and set as quiet caption text: this is the

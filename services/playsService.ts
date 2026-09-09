@@ -96,6 +96,13 @@ type ReviewRow = {
   stub_path: string | null;
   like_count: number;
   comment_count: number;
+  /**
+   * Present only on rows read from `reviews_readable`, which is every read of
+   * somebody else's entry. Absent — and therefore treated as true — on the
+   * own-row reads that still go to `reviews` directly, where there is nothing
+   * to hide from yourself.
+   */
+  can_see_opinion?: boolean;
   review_cast?: ReviewCastRow[];
 };
 
@@ -216,6 +223,7 @@ function toReview(row: ReviewRow): Review {
     // recorded" the way a falsy check would send it.
     priceHuf: row.price_huf ?? undefined,
     stubUrl: row.stub_path ? stubUrl(row.stub_path) : undefined,
+    stubPath: row.stub_path ?? undefined,
     castSeen: row.review_cast?.map((c) => ({
       name: c.name,
       role: c.role ?? undefined,
@@ -223,6 +231,10 @@ function toReview(row: ReviewRow): Review {
     })),
     likeCount: row.like_count,
     commentCount: row.comment_count,
+    // Defaults to true for the own-row reads that bypass the view. Defaulting
+    // the other way would blank out the check-in form the moment it loaded an
+    // entry for editing.
+    canSeeOpinion: row.can_see_opinion ?? true,
   };
 }
 
@@ -251,7 +263,7 @@ export async function getFeed(scope: FeedScope = "everyone"): Promise<FeedItem[]
     authorIds = [...(await getFollowingIds(authUser.id)), authUser.id];
   }
 
-  let reviewQuery = supabase.from("reviews").select("*").order("created_at", { ascending: false }).limit(20);
+  let reviewQuery = supabase.from("reviews_readable").select("*").order("created_at", { ascending: false }).limit(20);
   let watchlistQuery = supabase.from("watchlist_entries").select("*").order("added_at", { ascending: false }).limit(20);
   if (authorIds) {
     reviewQuery = reviewQuery.in("user_id", authorIds);
@@ -574,7 +586,7 @@ export async function getVenueById(id: string): Promise<Venue | undefined> {
 }
 
 export async function getReviewsForPlay(playId: string): Promise<Review[]> {
-  const { data, error } = await supabase.from("reviews").select("*").eq("play_id", playId).order("created_at", { ascending: false });
+  const { data, error } = await supabase.from("reviews_readable").select("*").eq("play_id", playId).order("created_at", { ascending: false });
   if (error) throw error;
   return (data ?? []).map((r) => toReview(r as ReviewRow));
 }
@@ -802,7 +814,7 @@ async function statsForUser(userId: string) {
   // screen rendered them as though they meant something.
   const [{ count: playsSeen }, { count: thisSeason }, { count: followers }, { count: following }] =
     await Promise.all([
-      supabase.from("reviews").select("id", { count: "exact", head: true }).eq("user_id", userId),
+      supabase.from("reviews_readable").select("id", { count: "exact", head: true }).eq("user_id", userId),
       // Counted on `seen_at`, not `created_at`. Those were the same thing only
       // while the app had no way to say when you were there; now they diverge in
       // the two cases that matter most — somebody catching up on last spring, and
@@ -814,7 +826,7 @@ async function statsForUser(userId: string) {
       // season has a far edge, and an entry dated into next autumn belongs to
       // next autumn.
       supabase
-        .from("reviews")
+        .from("reviews_readable")
         .select("id", { count: "exact", head: true })
         .eq("user_id", userId)
         .gte("seen_at", seasonFrom)
@@ -931,7 +943,7 @@ export type DiaryEntry = { play: Play; review: Review };
  */
 export async function getDiaryEntriesForUser(userId: string): Promise<DiaryEntry[]> {
   const { data, error } = await supabase
-    .from("reviews")
+    .from("reviews_readable")
     .select(`*, plays (${PLAY_SELECT})`)
     .eq("user_id", userId)
     // created_at breaks the tie, so two productions logged for the same evening
@@ -1203,6 +1215,12 @@ async function solePerformanceOnForReview(reviewId: string, dayKey: string): Pro
  *
  * Always `<uid>/<file>`, which is the only shape the storage policy accepts and
  * the only shape `reviews_guard_stub_path` will let into the row.
+ *
+ * Nothing calls this at the moment: check-in stopped asking for a ticket photo,
+ * on the grounds that theatres forbid shooting and a ticket carries a name and
+ * a booking code. Kept whole, with the bucket, the policy and the column, so
+ * that bringing the question back is a screen and not an infrastructure job —
+ * and because entries that already have a stub still show it.
  */
 export async function uploadStub(uri: string): Promise<string> {
   const {
@@ -1234,7 +1252,7 @@ export async function getDiaryEntry(reviewId: string): Promise<
   { review: Review; play: Play; venue?: Venue; performance?: Performance } | undefined
 > {
   const { data, error } = await supabase
-    .from("reviews")
+    .from("reviews_readable")
     .select(`*, plays (${PLAY_SELECT}), review_cast (name, role, is_alternate)`)
     .eq("id", reviewId)
     .maybeSingle();

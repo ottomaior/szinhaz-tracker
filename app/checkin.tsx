@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { View, ScrollView, StyleSheet, Pressable, TextInput } from "react-native";
-import { Image } from "expo-image";
-import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
@@ -18,7 +16,6 @@ import {
   getVenueById,
   submitReview,
   updateReview,
-  uploadStub,
 } from "@/services/playsService";
 import { searchPlays } from "@/services/searchService";
 import { useAuth } from "@/contexts/AuthContext";
@@ -75,28 +72,61 @@ export default function CheckInScreen() {
   const [performanceId, setPerformanceId] = useState<string>();
   const [priorCount, setPriorCount] = useState(0);
 
-  const [overall, setOverall] = useState(4);
-  const [acting, setActing] = useState(4);
-  const [directing, setDirecting] = useState(3);
-  const [setDesign, setSetDesign] = useState(4);
-  const [selectedTags, setSelectedTags] = useState<string[]>([strings.checkin.tagStandingOvation]);
+  // All four unset until tapped, and saved as null if they stay that way.
+  //
+  // The form used to open at 4 / 4 / 3 / 4, so somebody who wrote a paragraph
+  // and never touched the masks still filed four opinions they never gave —
+  // and those went into the production's public averages. All four columns are
+  // nullable (`rating_acting` and the two beside it since 0001, `rating_overall`
+  // since 0026) precisely so that "did not answer" has somewhere to go; it just
+  // was not being used.
+  //
+  // A null overall is a shape the rest of the app was already built for: 0026's
+  // `play_rating_histogram` drops those people with `having ... is not null`,
+  // and `rating_count` counts only the ones who gave a score, so an unrated
+  // entry neither moves the average nor pads the tally.
+  const [overall, setOverall] = useState<number | undefined>(undefined);
+  const [acting, setActing] = useState<number | undefined>(undefined);
+  const [directing, setDirecting] = useState<number | undefined>(undefined);
+  const [setDesign, setSetDesign] = useState<number | undefined>(undefined);
+  // Nothing ticked to begin with. The form used to open with "Állótapsot
+  // kapott" already on, which is a claim about the evening, and one somebody
+  // had to notice and untick to avoid making. The same reason the four ratings
+  // now start unset: a check-in should say what the person said.
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [reviewText, setReviewText] = useState("");
 
-  // The evening itself — see 0028. All four are optional, and an entry that
-  // answers none of them is still a perfectly good entry.
-  //
-  // Ticked cast is held as a set of slugs rather than of names, so that the
-  // ticked "Máthé Zsolt m.v." and a typed-in "Máthé Zsolt" cannot both end up
-  // on the same night as two people. `person_slug()` in the database folds them
-  // the same way.
+  /**
+   * The evening itself — see 0028: who was on, where you sat, what it cost, the
+   * ticket. **This form no longer asks any of it**, and holds it only so that
+   * editing an entry does not throw away what the entry already has.
+   *
+   * The four questions came off in one go. Nobody was going to name the cast
+   * from memory; a seat number and a price are a receipt rather than a memory;
+   * and a photograph is the wrong thing to ask for in a dark auditorium where
+   * shooting is usually forbidden, while a ticket is a private document with
+   * your name and booking code on it. They can come back if people ask for
+   * them, which is why nothing about them is deleted here — not the columns,
+   * not the services, not the copy in i18n, and above all not anybody's rows.
+   *
+   * So this state is now a round trip and nothing more: `applyEntry` fills it
+   * from the entry being edited and `handleSave` writes the same values back.
+   * `updateReview` writes every one of these columns unconditionally, so
+   * dropping them from the form's state instead would quietly null a seat, a
+   * price, a ticket and a cast list the moment somebody edited an old entry to
+   * fix a typo. The entry screen still shows all four, so that loss would be
+   * visible and unexplainable.
+   *
+   * Ticked cast is held as a set of slugs rather than of names, so that the
+   * ticked "Máthé Zsolt m.v." and a typed-in "Máthé Zsolt" cannot both end up
+   * on the same night as two people. `person_slug()` in the database folds them
+   * the same way.
+   */
   const [seenSlugs, setSeenSlugs] = useState<Set<string>>(new Set());
   const [alternates, setAlternates] = useState<SeenCastMember[]>([]);
-  const [alternateDraft, setAlternateDraft] = useState("");
   const [seat, setSeat] = useState("");
   const [price, setPrice] = useState("");
   const [stubPath, setStubPath] = useState<string>();
-  const [stubPreview, setStubPreview] = useState<string>();
-  const [uploadingStub, setUploadingStub] = useState(false);
 
   useEffect(() => {
     if (!loading && !session) {
@@ -148,18 +178,29 @@ export default function CheckInScreen() {
   function applyEntry(review: Review, forPlay: Play) {
     if (review.seenAt) setSeenAt(review.seenAt);
     setPerformanceId(review.performanceId);
-    // `?? ` and not `||`: a real rating is never 0, but leaving these at the
-    // form's defaults for an entry that deliberately has none is the honest
-    // starting point — the save writes whatever is on screen.
+    // Checked for `undefined` and not for falsiness: a real rating is never 0.
+    //
+    // An entry written before the ratings became optional carries the 4/4/3/4
+    // the form used to invent, and this puts those numbers back on screen
+    // rather than clearing them. They are already stored and already counted in
+    // the production's averages; dropping them because somebody opened the
+    // entry to fix a typo would be deleting an answer they never asked to
+    // delete, and the app cannot tell an invented 4 from one they meant. The
+    // save writes whatever is on screen, so old numbers survive an edit and new
+    // entries start from nothing — and somebody who does want the invented ones
+    // gone can now tap them off, which is what the hint under the masks is for.
     if (review.ratingOverall !== undefined) setOverall(review.ratingOverall);
     if (review.ratingActing !== undefined) setActing(review.ratingActing);
     if (review.ratingDirecting !== undefined) setDirecting(review.ratingDirecting);
     if (review.ratingSetDesign !== undefined) setSetDesign(review.ratingSetDesign);
     setSelectedTags(review.tags);
     setReviewText(review.text);
+    // Read back and written out again untouched: the form stopped asking these
+    // four, and an edit must not be the thing that erases them. See the state
+    // declarations above.
     setSeat(review.seat ?? "");
     setPrice(review.priceHuf !== undefined ? String(review.priceHuf) : "");
-    if (review.stubUrl) setStubPreview(review.stubUrl);
+    setStubPath(review.stubPath);
 
     // The cast splits back into ticked and typed the way the form holds it.
     const published = new Map(
@@ -286,7 +327,11 @@ export default function CheckInScreen() {
 
   // The production's published cast, deduplicated by slug. `play_cast` credits
   // a person once per role, so somebody who both acts and adapts appears twice
-  // — two tiles for one human being, and a night that would record them twice.
+  // — two entries for one human being, and a night that would record them twice.
+  //
+  // No longer a list to pick from; it is how a slug held in `seenSlugs` becomes
+  // the name and role a write needs, for the ticked cast of an entry that was
+  // filled in while the form still asked.
   const castOptions = useMemo(() => {
     const bySlug = new Map<string, { name: string; role?: string }>();
     for (const member of play?.cast ?? []) {
@@ -302,80 +347,8 @@ export default function CheckInScreen() {
     return [...bySlug.entries()].map(([slug, m]) => ({ slug, ...m }));
   }, [play]);
 
-  function toggleSeen(slug: string) {
-    setSeenSlugs((cur) => {
-      const next = new Set(cur);
-      if (next.has(slug)) next.delete(slug);
-      else next.add(slug);
-      return next;
-    });
-  }
-
-  function addAlternate() {
-    const name = alternateDraft.trim();
-    if (!name) return;
-    const slug = personSlug(name);
-    // Somebody who is in the published cast is not a beugró, however they were
-    // typed. Ticking them instead keeps the one meaningful flag meaningful.
-    const listed = slug ? castOptions.find((c) => c.slug === slug) : undefined;
-    if (listed) {
-      setSeenSlugs((cur) => new Set(cur).add(listed.slug));
-      setAlternateDraft("");
-      return;
-    }
-    if (slug && alternates.some((a) => personSlug(a.name) === slug)) {
-      setAlternateDraft("");
-      return;
-    }
-    setAlternates((cur) => [...cur, { name, isAlternate: true }]);
-    setAlternateDraft("");
-  }
-
-  function removeAlternate(name: string) {
-    setAlternates((cur) => cur.filter((a) => a.name !== name));
-  }
-
-  async function handlePickStub() {
-    if (uploadingStub) return;
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      setError(strings.checkin.stubPermission);
-      return;
-    }
-    const picked = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.85,
-      // No fixed aspect: a ticket stub is a long thin thing and a curtain call
-      // is landscape, and cropping either to a square loses the half that
-      // matters.
-      allowsEditing: false,
-    });
-    if (picked.canceled || !picked.assets?.[0]) return;
-
-    const asset = picked.assets[0];
-    setStubPreview(asset.uri);
-    setError(undefined);
-    setUploadingStub(true);
-    try {
-      setStubPath(await uploadStub(asset.uri));
-    } catch {
-      setStubPreview(undefined);
-      setStubPath(undefined);
-      setError(strings.checkin.stubUploadFailed);
-    } finally {
-      setUploadingStub(false);
-    }
-  }
-
-  function removeStub() {
-    setStubPreview(undefined);
-    setStubPath(undefined);
-  }
-
-  const seenCount = seenSlugs.size + alternates.length;
-
   async function handleSave() {
-    if (!play || saving || uploadingStub) return;
+    if (!play || saving) return;
 
     // Parsed before anything is written, and refused rather than guessed at —
     // see `utils/money.ts`, which is where the separator handling and the
@@ -393,12 +366,20 @@ export default function CheckInScreen() {
       const entry = {
         seenAt,
         performanceId,
+        // Undefined for any of the four they left alone; `submitReview` and
+        // `updateReview` both write `?? null`, so an unanswered question is
+        // stored as null and left out of the production's averages rather than
+        // counted as a number nobody gave.
         ratingOverall: overall,
         ratingActing: acting,
         ratingDirecting: directing,
         ratingSetDesign: setDesign,
         text: reviewText.trim(),
         tags: selectedTags,
+        // Empty on a new entry, because the form no longer asks; on an edit,
+        // whatever the entry already had, handed straight back. These four
+        // columns are written on every update, so passing nothing would delete
+        // them — see the state declarations.
         seat,
         priceHuf,
         stubPath,
@@ -547,142 +528,39 @@ export default function CheckInScreen() {
           <View style={styles.overallBlock}>
             <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.checkin.overallRating}</Text>
             <MaskRatingRow rating={overall} size={26} gap={6} onPressMask={setOverall} />
+            {/* A readout rather than a dash, and always on screen. The sub-rows
+                below can hang their "not answered" cue off the label, but this
+                block is centred and stacked, so anything that appears and
+                disappears here shoves the three rows under it up and down on
+                the first tap. One line that always says something holds the
+                height still and gives the score a figure to be read as. */}
+            <Text variant="caption" tone="faint">
+              {overall === undefined ? strings.common.notRated : `${overall}/5`}
+            </Text>
           </View>
 
           <SubRatingRow label={strings.checkin.acting} value={acting} onChange={setActing} />
           <SubRatingRow label={strings.checkin.directing} value={directing} onChange={setDirecting} />
           <SubRatingRow label={strings.checkin.setAndCostume} value={setDesign} onChange={setSetDesign} />
+
+          {/* Nothing on a filled mask suggests it can be tapped off again, and
+              a rating given by accident is otherwise permanent — you can move
+              it, but not take it back. Said once for all four rows. */}
+          <Text variant="caption" tone="faint">{strings.checkin.clearRatingHint}</Text>
         </View>
 
-        {/* Who was on. The single most-asked question in theatre logging, and
-            the reason understudies.org exists as a site of its own: a cast
-            sheet is posted in the foyer on the night and published nowhere
-            afterwards, so an audience record is the only record there is. */}
-        <View style={{ gap: 10 }}>
-          <View style={styles.rowBetween}>
-            <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.checkin.castLabel}</Text>
-            {seenCount > 0 && (
-              <Text variant="caption" tone="accent">{strings.checkin.castSelectedCount(seenCount)}</Text>
-            )}
-          </View>
-          <Text variant="caption" tone="dim">
-            {castOptions.length > 0 ? strings.checkin.castHint : strings.checkin.castNoneKnown}
-          </Text>
+        {/* Four questions came off here: who was on, where you sat, what it
+            cost, and a photograph of the ticket. Removed from the form only —
+            the columns, the services and the copy all stand, and an entry that
+            answered them still shows all four on the entry screen and still
+            keeps them through an edit.
 
-          {castOptions.length > 0 && (
-            <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
-              {castOptions.map((member) => (
-                <Chip
-                  key={member.slug}
-                  label={member.name}
-                  active={seenSlugs.has(member.slug)}
-                  onPress={() => toggleSeen(member.slug)}
-                />
-              ))}
-            </View>
-          )}
-
-          {alternates.length > 0 && (
-            <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
-              {alternates.map((a) => (
-                <Chip
-                  key={a.name}
-                  label={`${a.name} · ${strings.checkin.castAlternateBadge}`}
-                  active
-                  // Tapping it takes it off again: the only way back out of a
-                  // name typed by mistake.
-                  onPress={() => removeAlternate(a.name)}
-                />
-              ))}
-            </View>
-          )}
-
-          <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
-            <TextInput
-              value={alternateDraft}
-              onChangeText={setAlternateDraft}
-              placeholder={strings.checkin.castAlternatePlaceholder}
-              placeholderTextColor={colors.textFaint}
-              accessibilityLabel={strings.checkin.castAddAlternate}
-              onSubmitEditing={addAlternate}
-              returnKeyType="done"
-              style={[styles.field, { flex: 1, fontFamily: bodyFont(fontsLoaded), fontSize: inputFontSize, color: colors.text }]}
-            />
-            <Pressable
-              onPress={addAlternate}
-              disabled={!alternateDraft.trim()}
-              accessibilityRole="button"
-              style={[styles.addButton, { opacity: alternateDraft.trim() ? 1 : 0.4 }]}
-            >
-              <Text variant="label">{strings.checkin.castAdd}</Text>
-            </Pressable>
-          </View>
-        </View>
-
-        {/* Seat and price. Two nullable columns with a surprising payoff: the
-            season page can eventually say what the évad cost and which part of
-            the house you always end up in. */}
-        <View style={{ gap: 10 }}>
-          <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.checkin.seatLabel}</Text>
-          <TextInput
-            value={seat}
-            onChangeText={setSeat}
-            placeholder={strings.checkin.seatPlaceholder}
-            placeholderTextColor={colors.textFaint}
-            accessibilityLabel={strings.checkin.seatLabel}
-            style={[styles.field, { fontFamily: bodyFont(fontsLoaded), fontSize: inputFontSize, color: colors.text }]}
-          />
-
-          <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.checkin.priceLabel}</Text>
-          <TextInput
-            value={price}
-            onChangeText={setPrice}
-            placeholder={strings.checkin.pricePlaceholder}
-            placeholderTextColor={colors.textFaint}
-            accessibilityLabel={strings.checkin.priceLabel}
-            keyboardType="number-pad"
-            style={[styles.field, { fontFamily: bodyFont(fontsLoaded), fontSize: inputFontSize, color: colors.text }]}
-          />
-          <Text variant="caption" tone="dim">{strings.checkin.priceHint}</Text>
-        </View>
-
-        {/* The stub. The plumbing was already built and pointed elsewhere:
-            expo-image-picker is a dependency and 0013 gave uploads a
-            per-user policy — this is a second bucket, not new infrastructure. */}
-        <View style={{ gap: 10 }}>
-          <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.checkin.stubLabel}</Text>
-          {stubPreview && (
-            <Image
-              source={{ uri: stubPreview }}
-              style={styles.stubPreview}
-              contentFit="cover"
-              transition={150}
-              accessibilityIgnoresInvertColors
-            />
-          )}
-          <View style={{ flexDirection: "row", gap: space.lg, alignItems: "center" }}>
-            <Pressable
-              onPress={handlePickStub}
-              disabled={uploadingStub}
-              accessibilityRole="button"
-              style={styles.addButton}
-            >
-              <Text variant="label">
-                {uploadingStub
-                  ? strings.checkin.stubUploading
-                  : stubPreview
-                    ? strings.checkin.stubReplace
-                    : strings.checkin.stubAdd}
-              </Text>
-            </Pressable>
-            {stubPreview && !uploadingStub && (
-              <Pressable onPress={removeStub} hitSlop={8} accessibilityRole="button">
-                <Text variant="label" tone="dim">{strings.checkin.stubRemove}</Text>
-              </Pressable>
-            )}
-          </View>
-          <Text variant="caption" tone="dim">{strings.checkin.stubHint}</Text>
-        </View>
+            Nobody was going to name a cast from memory, a seat number and a
+            price are a receipt rather than a memory, and a photograph is the
+            wrong thing to ask for in a dark auditorium where shooting is
+            usually forbidden — while a ticket carries your name and booking
+            code, which is not what somebody uploading to a public diary means
+            to publish. If people ask for any of them, they come back. */}
 
         <View style={{ gap: 8 }}>
           <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.checkin.momentTags}</Text>
@@ -799,10 +677,30 @@ function PlayPicker({ insetTop, onCancel, onPick }: { insetTop: number; onCancel
   );
 }
 
-function SubRatingRow({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+function SubRatingRow({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  /** `undefined` until they touch it, and saved as null if it stays that way. */
+  value: number | undefined;
+  /** Passed `undefined` when they tap the mask they already chose. */
+  onChange: (v: number | undefined) => void;
+}) {
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-      <Text variant="bodySmall" tone="dim">{label}</Text>
+    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: space.md }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm, flexShrink: 1 }}>
+        <Text variant="bodySmall" tone="dim" numberOfLines={1}>{label}</Text>
+        {/* Five empty masks say "nothing selected" and "zero out of five" in
+            the same picture, and the second one is a verdict. The dash is the
+            same answer the production page gives for an unrated production
+            rather than printing a gold 0.0. It sits by the label and not by
+            the masks so that the masks do not jump sideways when it goes. */}
+        {value === undefined && (
+          <Text variant="bodySmall" tone="faint">{strings.common.noRating}</Text>
+        )}
+      </View>
       <MaskRatingRow rating={value} size={16} onPressMask={onChange} />
     </View>
   );
@@ -862,29 +760,6 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   },
   sectionLabel: {
     letterSpacing: 0.2,
-  },
-  rowBetween: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: space.md,
-  },
-  addButton: {
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    borderRadius: 999,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-  },
-  // 3:2, like the add-play preview: what people photograph is a ticket on a
-  // table or a lit stage, and neither belongs in a 2:3 poster slot.
-  stubPreview: {
-    width: "100%",
-    aspectRatio: 3 / 2,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    backgroundColor: colors.surface,
   },
   textArea: {
     backgroundColor: colors.surface,
