@@ -253,6 +253,15 @@ export interface Review {
   /** The stub, the műsorfüzet, the curtain call. Public, like the entry itself. */
   stubUrl?: string;
   /**
+   * The same file as its path in the `stubs` bucket, which is what a write
+   * takes — `stubUrl` above is derived from it and cannot be turned back.
+   *
+   * Carried so that an edit can hand the path back unchanged. `updateReview`
+   * writes `stub_path` on every call, so a form that could only read the URL
+   * had no way to say "leave the ticket alone" and silently dropped it.
+   */
+  stubPath?: string;
+  /**
    * Who was actually on that night.
    *
    * Empty for every entry that did not answer, which is most of them —

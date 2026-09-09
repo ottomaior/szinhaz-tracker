@@ -216,6 +216,7 @@ function toReview(row: ReviewRow): Review {
     // recorded" the way a falsy check would send it.
     priceHuf: row.price_huf ?? undefined,
     stubUrl: row.stub_path ? stubUrl(row.stub_path) : undefined,
+    stubPath: row.stub_path ?? undefined,
     castSeen: row.review_cast?.map((c) => ({
       name: c.name,
       role: c.role ?? undefined,
@@ -1203,6 +1204,12 @@ async function solePerformanceOnForReview(reviewId: string, dayKey: string): Pro
  *
  * Always `<uid>/<file>`, which is the only shape the storage policy accepts and
  * the only shape `reviews_guard_stub_path` will let into the row.
+ *
+ * Nothing calls this at the moment: check-in stopped asking for a ticket photo,
+ * on the grounds that theatres forbid shooting and a ticket carries a name and
+ * a booking code. Kept whole, with the bucket, the policy and the column, so
+ * that bringing the question back is a screen and not an infrastructure job —
+ * and because entries that already have a stub still show it.
  */
 export async function uploadStub(uri: string): Promise<string> {
   const {
