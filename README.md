@@ -715,6 +715,63 @@ invented numbers and still show them: they were never migrated away, on the
 principle that the app cannot tell a seeded 4 from a meant one and deleting
 somebody's stored answer is not a decision a bug fix gets to make.
 
+## Opinions behind a follow
+
+Until September 2026 a diary entry was public in full. `reviews_select_all` was
+`using (true)` from `0001`, and `0037` only narrowed it to exclude hidden and
+blocked rows — so anybody, signed out, in an incognito window, could read a
+stranger's rating, their review, what they paid and where they sat. That was a
+deliberate model, and this repository argued for it: the diary is worth
+something because other people read it.
+
+**The rule now:** everyone sees *that* you went; only you and the people who
+follow you see what you thought.
+
+Public on every entry: who, which production, when, whether it was a rewatch.
+Behind the follow: the four ratings, the review text, the tags, the seat, the
+price, the ticket photo, the cast recorded that night, the like and comment
+counts, and the comment thread.
+
+The split is chosen so the feed still works as the place you find people. A card
+saying "Nagy Zsófia megnézte" over a poster is what makes somebody worth
+following; it just no longer hands over the thing following is *for*.
+
+**Why a view and not a policy.** The fact and the opinion are columns on the same
+row. RLS filters rows, not columns, and Postgres's column privileges are
+per-role and static — neither can express "you may see this row, but eleven of
+its columns are not for you". So `0041` adds `public.reviews_readable`, an
+owner-run view returning every readable row with the private columns nulled
+unless `private.can_see_entry(author)` says otherwise, and `0042` narrows
+`reviews` itself to `user_id = auth.uid()` so the view is the only way to
+anybody else's entry. Doing the masking in a screen would have left the data one
+PostgREST request away — the same argument `0037` made about `.neq()` in a
+service file.
+
+The helpers live in `private` for the reason `0037` set out and paid for: a
+policy expression runs with the privileges of the querying role, so a helper it
+calls **must** be executable by `anon` and `authenticated`, and is kept off the
+HTTP API by placement rather than by grants.
+
+**Two migrations, deliberately.** `0041` is additive and was applied under the
+running app; `0042` closes the door and went out only once a client reading the
+view was live. Narrowing the table in one step would have emptied the feed for
+everybody in between.
+
+**What comes with it.** `review_likes`, `review_comments` and `review_cast` are
+gated on the entry they hang off, or the gate leaks around the side — a masked
+`like_count` means nothing while the rows behind it can be counted.
+`friends_ratings` and `friends_recent_plays` are repointed at the view, since as
+`security invoker` functions they would otherwise return an empty "A követettek
+szerint" with no error to explain it. The `0031` season functions are left
+alone, and quietly stop answering for a `viewer` argument that is not the
+caller — a hole nobody had noticed.
+
+**Still open:** the `stubs` bucket is `public: true`. The path is no longer
+published to non-followers, but a link somebody already holds still resolves.
+The privacy notice says so rather than implying otherwise; making the bucket
+private needs signed URLs and an asynchronous `stubUrl()`, and is worth doing
+before launch.
+
 This is not the average coming back by the side door. These are three numbers one
 named person gave one production, shown to that person; the thing that is still
 waiting on a population of raters is any figure computed *across* people.
@@ -1107,10 +1164,15 @@ The upper bound is not a judgement about ticket prices; it catches a stray digit
 The plumbing already existed and pointed elsewhere: `expo-image-picker` is a
 dependency and 0013 gave user uploads a per-folder policy, so this is a second
 bucket rather than new infrastructure. It is public, like `posters` and
-`avatars`, because a diary entry is public — `reviews_select_all` has let anyone
-read the text since 0001. That is a real consequence rather than an incidental
-one, so the check-in form says it in as many words *before* the camera comes
-out: a ticket usually has your name and booking code printed on it. Ownership is
+`avatars`, because a diary entry was public when it was built — `reviews_select_all`
+let anyone read the text from 0001 until 0042. **The bucket did not change when
+that did.** 0041 stops publishing `stub_path` to anybody who does not follow the
+author, so the link is no longer discoverable; the file behind a link somebody
+already holds is still fetchable, and the privacy notice says so rather than
+implying the photo became private. Making the bucket itself private is a
+separate job — signed URLs, and `stubUrl()` becomes asynchronous — and worth
+doing before launch. The check-in form no longer asks for a photo at all (see
+983d6ef), so nothing new is arriving in there meanwhile. Ownership is
 enforced in both places, storage RLS on the upload and
 `reviews_guard_stub_path` on the row, for the reason 0027 gives about
 `avatar_path`.
@@ -1354,9 +1416,10 @@ features:
   routes so `expo export` pre-renders them and nginx serves them at a plain URL
   with no session — which is also what Google Play's account-deletion URL
   requirement will need. The privacy policy leads with the thing a template
-  would never say: that `reviews_select_all` has made every diary entry
-  world-readable since `0001`, and that a ticket stub usually carries your name
-  and booking code into a public bucket.
+  would never say: exactly where the line falls between the half of an entry
+  everybody can read and the half only your followers can, and that a ticket
+  stub usually carries your name and booking code into a bucket that stays
+  public even now that the link to it does not.
 
 ## Counting the évad, not the calendar year
 

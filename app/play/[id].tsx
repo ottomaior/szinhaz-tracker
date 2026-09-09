@@ -174,6 +174,10 @@ export default function PlayDetailScreen() {
    * and looks entirely correct on screen.
    */
   const own = useMemo(() => pickOwnRating(reviews, session?.user?.id), [reviews, session]);
+  // The ones with an opinion this reader is allowed to read. `reviews` itself
+  // stays whole, because `pickOwnRating` above and the count of who has been
+  // are both about attendance, which is nobody's secret.
+  const readableReviews = useMemo(() => reviews.filter((r) => r.canSeeOpinion), [reviews]);
   // Whether that evening answered any of the three dimensions at all. Checked
   // for `undefined` rather than for falsiness, because 0.5 is a rating and 0 is
   // not a value anything stores.
@@ -600,14 +604,21 @@ export default function PlayDetailScreen() {
             </View>
           )}
 
+          {/* Yours and the people you follow, and nobody else — see 0041.
+              A stranger's entry arrives with its rating and its note already
+              emptied by the database, so listing it would put a name over a
+              blank and invite the reader to wonder what was wrong with it.
+              The count follows the list rather than the query for the same
+              reason: a heading promising eight opinions above two of them is
+              the sort of number that is technically true and reads as a bug. */}
           <View style={{ gap: space.md }}>
-            <SectionHeader title={strings.playDetail.fromFollowing} action={strings.playDetail.reviewsCount(reviews.length)} />
-            {reviews.length === 0 ? (
+            <SectionHeader title={strings.playDetail.fromFollowing} action={strings.playDetail.reviewsCount(readableReviews.length)} />
+            {readableReviews.length === 0 ? (
               <Text variant="bodySmall" tone="faint">
                 {strings.playDetail.noReviewsYet}
               </Text>
             ) : (
-              reviews.map((r) => <ReviewRow key={r.id} review={r} />)
+              readableReviews.map((r) => <ReviewRow key={r.id} review={r} />)
             )}
           </View>
         </ContentColumn>

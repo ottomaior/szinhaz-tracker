@@ -271,6 +271,20 @@ export interface Review {
   castSeen?: SeenCastMember[];
   likeCount: number;
   commentCount: number;
+  /**
+   * Whether this viewer may see what the author thought of it.
+   *
+   * True for your own entries and for anybody you follow; false for everybody
+   * else, including a signed-out reader — see 0041. When it is false, every
+   * opinion field above has already been emptied by the database before it
+   * reached here, so a screen that ignores this flag leaks nothing; it just
+   * draws an entry that looks unrated and unwritten, which is a different and
+   * wrong statement about the person.
+   *
+   * That is the whole reason this exists rather than the screens inferring it
+   * from a missing rating: since 0026, no rating is also a real answer.
+   */
+  canSeeOpinion: boolean;
 }
 
 /** One person somebody recorded as having been on stage the night they went. */

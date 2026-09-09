@@ -475,6 +475,23 @@ function CheckinCard({
         </View>
       </Pressable>
 
+      {/* An entry whose opinion is not this reader's to see. The card above
+          still says who went and to what — that is what the feed is for, and
+          what makes somebody worth following — but the rating, the note and
+          the whole social row stop here.
+
+          Said rather than left blank. A card that simply ended after the
+          poster would read as an entry nobody bothered to rate, which is a
+          claim about the person; this says the rating exists and names the way
+          in. See 0041 for where the emptiness is actually enforced — by then
+          the database has already withheld the columns, and this line is only
+          the explanation. */}
+      {!review.canSeeOpinion ? (
+        <Text variant="caption" tone="faint">
+          {user ? strings.feed.followToSee(user.name) : strings.feed.followToSeeGeneric}
+        </Text>
+      ) : (
+      <>
       <View style={styles.cardFooter}>
         {/* Absent for a "seen it, not rating it" entry. Rendering a zero-mask
             row would read as one star out of five rather than as no opinion. */}
@@ -519,6 +536,8 @@ function CheckinCard({
 
       {!!review.text && (
         <Text variant="bodySmall" tone="dim">{`„${review.text}”`}</Text>
+      )}
+      </>
       )}
 
       <View style={styles.divider} />
