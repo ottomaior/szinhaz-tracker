@@ -734,6 +734,28 @@ Migráció nem történt. A `recompute_play_rating()` továbbra is fut, a
 vissza, hanem az értékelők száma — és amikor meglesz, az felületi munka lesz
 olyan oszlopokon, amelyek végig jók voltak.
 
+**A három részértékelés-sáv visszakerült, a szabály másik oldalán.** Az átlaggal
+együtt kerültek le, de volt egy saját okuk is: a naplózó űrlap 4 / 3 / 4 értéken
+indította a színészi játék, a rendezés és a díszlet pontszámát, és attól
+függetlenül mentette őket, hogy valaki hozzányúlt-e azokhoz a sorokhoz — így a
+kirajzolásuk olyan véleményeket idézett volna az emberek szájába, amelyeket soha
+nem mondtak. Az űrlap most mind a négy értékelést üresen hagyja addig, amíg rá
+nem koppintanak, és `null`-t ír azokra, amelyek üresen maradnak; ezzel a
+részpontszámok ugyanannyira az adott ember sajátjai, mint a mellettük álló szám —
+tehát ott a helyük „A te értékelésed" blokkban, amely egyetlen ember válaszát
+mutatja, sosem átlagot. A megválaszolatlan dimenzió üres sávot és gondolatjelet
+rajzol, az olyan bejegyzés pedig, amely a háromból egyikre sem válaszolt, teljesen
+elhagyja az oszlopot ahelyett, hogy három gondolatjelet mutatna. A változtatás
+előtt írt bejegyzések továbbra is hordozzák a kitalált számokat, és meg is
+mutatják őket: sosem migráltuk el ezeket, abból az elvből kiindulva, hogy az app
+nem tudja megkülönböztetni az automatikusan beírt négyest a szándékostól, és
+valakinek az eltárolt válaszát törölni nem egy hibajavítás döntése.
+
+Ez nem az átlag visszatérése a hátsó ajtón. Ezek olyan számok, amelyeket egy
+konkrét ember adott egy konkrét produkcióra, és neki mutatjuk meg őket; ami
+továbbra is az értékelők számára vár, az bármilyen, *emberek között* számolt
+érték.
+
 ## Miben játszik még?
 
 A `play_cast` eddig az adatbázis legnagyobb táblája volt — 6 397 közreműködés
