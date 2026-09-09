@@ -134,6 +134,8 @@ utils/money.ts            reading a forint amount out of a text field, and the
 utils/season.ts           which évad a night belongs to, and how Hungarian
                           spells the season's name — the client half of
                           season_start_year() in the database
+utils/authRetry.ts        one retry, on a fresh token, for a request the
+                          server refused because the old one had expired
 
 data/types.ts             domain types (Play, Venue, Review, User, …)
 services/supabase.ts      the Supabase client (reads EXPO_PUBLIC_SUPABASE_*)

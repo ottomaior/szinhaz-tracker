@@ -143,6 +143,8 @@ utils/money.ts            forintösszeg kiolvasása szövegmezőből, és a kül
 utils/season.ts           melyik évadba tartozik egy este, és hogyan írja le a
                           magyar az évad nevét — a season_start_year()
                           adatbázisfüggvény kliensoldali fele
+utils/authRetry.ts        egy újrapróbálkozás friss tokennel, ha a kiszolgáló
+                          a lejárt régi miatt utasította vissza a kérést
 
 data/types.ts             domain típusok (Play, Venue, Review, User, …)
 services/supabase.ts      a Supabase kliens (az EXPO_PUBLIC_SUPABASE_*-ot olvassa)
