@@ -285,5 +285,17 @@ export interface WatchlistEntry {
 
 /** A single feed activity — a check-in/review or a watchlist add. */
 export type FeedItem =
-  | { kind: "checkin"; review: Review }
+  | {
+      kind: "checkin";
+      review: Review;
+      /**
+       * Whether the person reading this feed has liked the entry.
+       *
+       * On the item rather than on `Review` because it is a fact about the
+       * reader, not about the evening: the same entry is liked for one
+       * viewer and not for the next, and a `Review` is passed around this
+       * app as the entry itself.
+       */
+      likedByMe: boolean;
+    }
   | { kind: "watchlist"; entry: WatchlistEntry };

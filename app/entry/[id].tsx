@@ -40,7 +40,7 @@ import { makeStyles } from "@/theme/styles";
 export default function DiaryEntryScreen() {
   const styles = useStyles();
 
-  const { id } = useLocalSearchParams<{ id?: string }>();
+  const { id, compose } = useLocalSearchParams<{ id?: string; compose?: string }>();
   const router = useRouter();
   const { session } = useAuth();
 
@@ -367,7 +367,13 @@ export default function DiaryEntryScreen() {
               because a conversation needs somewhere to be read, and the card is
               a summary — the feed's counters lead here for the same reason. */}
           <View style={styles.socialBlock}>
-            <ReviewSocial reviewId={review.id} reviewOwnerId={review.userId} />
+            <ReviewSocial
+              reviewId={review.id}
+              reviewOwnerId={review.userId}
+              // Set by the comment icon on a feed card, which is somebody
+              // asking to write rather than to read.
+              autoFocusComposer={compose === "1"}
+            />
           </View>
 
           {/* Somebody else's evening, and something is wrong with it.

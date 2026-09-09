@@ -54,6 +54,30 @@ export async function getLikeState(reviewId: string): Promise<LikeState> {
   return { count: rows.length, likedByMe: !!me && rows.some((r) => r.user_id === me) };
 }
 
+/**
+ * Which of these entries this viewer has already liked.
+ *
+ * One query for a whole feed page rather than `getLikeState` twenty times:
+ * the feed cards need only the half of that answer the counter cannot supply.
+ * The count itself stays on `reviews.like_count`, which the 0032 triggers
+ * maintain — reading the number from the rows here as well is how a card and
+ * the evening it opens get to disagree about the same like.
+ *
+ * Signed-out readers never ask: nobody is in the set, and the heart on a card
+ * is an invitation to sign in rather than a state.
+ */
+export async function getLikedReviewIds(reviewIds: string[]): Promise<Set<string>> {
+  if (reviewIds.length === 0) return new Set();
+  const me = await currentUserId();
+  if (!me) return new Set();
+  const { data, error } = await supabase
+    .from("review_likes")
+    .select("review_id")
+    .eq("user_id", me)
+    .in("review_id", reviewIds);
+  if (error) throw error;
+  return new Set((data ?? []).map((row) => (row as { review_id: string }).review_id));
+}
 export async function likeReview(reviewId: string): Promise<void> {
   const me = await currentUserId();
   if (!me) throw new Error("not signed in");

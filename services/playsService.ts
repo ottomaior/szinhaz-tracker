@@ -1,5 +1,6 @@
 import { supabase, SUPABASE_URL } from "@/services/supabase";
 import { getFollowingIds } from "@/services/followService";
+import { getLikedReviewIds } from "@/services/socialService";
 import { avatarUrl } from "@/services/profileService";
 import { budapestDayKey } from "@/utils/datetime";
 import { currentSeasonStart, seasonRange } from "@/utils/season";
@@ -264,8 +265,20 @@ export async function getFeed(scope: FeedScope = "everyone"): Promise<FeedItem[]
   if (reviewsError) throw reviewsError;
   if (watchlistError) throw watchlistError;
 
+  const reviews = (reviewRows ?? []).map((r) => toReview(r as ReviewRow));
+
+  // Never allowed to fail the feed. The hearts are the smallest thing on the
+  // card, and a page of evenings replaced by "Nem sikerült betölteni" because
+  // one of them could not be coloured in would be a poor trade.
+  let liked = new Set<string>();
+  try {
+    liked = await getLikedReviewIds(reviews.map((r) => r.id));
+  } catch {
+    liked = new Set();
+  }
+
   const items: FeedItem[] = [
-    ...(reviewRows ?? []).map((r): FeedItem => ({ kind: "checkin", review: toReview(r as ReviewRow) })),
+    ...reviews.map((review): FeedItem => ({ kind: "checkin", review, likedByMe: liked.has(review.id) })),
     ...(watchlistRows ?? []).map(
       (w): FeedItem => ({
         kind: "watchlist",

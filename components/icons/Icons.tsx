@@ -1,6 +1,6 @@
 import Svg, { Path, Circle, Rect } from "react-native-svg";
 import { colors } from "@/theme/colors";
-import { strokePaint } from "@/components/icons/svgPaint";
+import { paint, strokePaint } from "@/components/icons/svgPaint";
 
 type IconProps = { size?: number; color?: string; strokeWidth?: number };
 
@@ -116,12 +116,25 @@ export function SearchIcon({ size = 17, color = colors.textFaint, strokeWidth = 
   );
 }
 
-export function HeartIcon({ size = 16, color = colors.textFaint, strokeWidth = 1.6 }: IconProps) {
+/**
+ * The one icon in the set that is ever filled.
+ *
+ * A like is a state, not an action, and an outline that only changes colour
+ * is a weak way to say "you did this" — on a phone, at arm's length, against a
+ * production photograph. Filled and outlined are legible at a glance where two
+ * shades of the same outline are not.
+ */
+export function HeartIcon({
+  size = 16,
+  color = colors.textFaint,
+  strokeWidth = 1.6,
+  filled = false,
+}: IconProps & { filled?: boolean }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
         d="M20.8 7.6a4.6 4.6 0 0 0-7.8-3.3L12 5.3l-1-1a4.6 4.6 0 0 0-7.8 3.3c0 2 1 3.6 2.5 5.1L12 19l6.3-6.3c1.5-1.5 2.5-3.1 2.5-5.1z"
-        {...strokePaint(color)}
+        {...(filled ? paint(color, color) : strokePaint(color))}
         strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeLinejoin="round"

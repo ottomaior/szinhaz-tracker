@@ -1244,6 +1244,25 @@ kell hely, ahol elolvasható; a kártya a számokat viszi, és odavezet. Ugyanez
 érvelés küldi a tetszés- és hozzászólás-értesítést a bejegyzésre, nem a produkció
 adatlapjára, ami ennek a rossz vége.
 
+**A szív vezérlő, a buborék link, és nem oszthattak tovább egy érintési
+felületet.** A két számláló egyetlen `Pressable` volt, ami megnyitotta az estét.
+Ez a hozzászólás-ikonnak helyes — minden appban ezt teszi, és a szálat el kell
+tudni olvasni valahol —, a szívnek viszont nem: a szív mindenhol kapcsoló, ahol
+bárki valaha megnyomott egyet. Az a szív, ami érintésre továbbvisz, akkor is
+elrontottnak látszik, ha semmi nem hibázott. A szív tehát most helyben kedvel,
+azonnal átbillenve és az írás bukásakor visszagördülve, a buborék pedig továbbra
+is az estére vezet — de `?compose=1`-gyel, ami fókuszált hozzászólás-mezővel
+nyitja meg, hogy a 0-t mutató buborék ne egy üres szálban érjen véget.
+Kijelentkezve mindkettő a bejelentkezéshez visz: ez a legjobb pillanat, amit az
+app kap a kérdésre, hiszen az olvasó épp talált egy estét, amire válaszolna.
+
+A hírfolyam ehhez egyetlen új tényt tanul meg — *ezek közül melyiket kedveltem* —,
+oldalanként egy lekérdezésből, nem kártyánként egyből; és a `getFeed` úgy készült,
+hogy ennek a hibája ne bukhassa meg magát a hírfolyamot: a ki nem színezhető
+szívek nem érnek meg egy oldalnyi estét. Maga a szám továbbra is a
+`reviews.like_count`-ból jön és sehonnan máshonnan — ez akadályozza meg, hogy egy
+kártya és a mögötte lévő este ugyanarról a tetszésről mást állítson.
+
 ## Egy harmadik számláló, ami sosem volt igaz — és a kijárat az alkalmazásból
 
 A `0032` őszintévé tette a kedvelés- és hozzászólás-számlálókat, és le is írta,

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { View, StyleSheet, Pressable, TextInput } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
@@ -39,10 +39,19 @@ import { makeStyles } from "@/theme/styles";
 export function ReviewSocial({
   reviewId,
   reviewOwnerId,
+  autoFocusComposer = false,
 }: {
   reviewId: string;
   /** Who owns the entry — they may remove any comment under it. */
   reviewOwnerId: string;
+  /**
+   * Open with the comment box focused and the keyboard up.
+   *
+   * Set when the reader arrived by tapping the comment icon on a feed card,
+   * which is a request to say something rather than to read: without it, a
+   * bubble reading 0 leads to an empty thread and a second scroll.
+   */
+  autoFocusComposer?: boolean;
 }) {
   const styles = useStyles();
 
@@ -59,6 +68,23 @@ export function ReviewSocial({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string>();
   const [loaded, setLoaded] = useState(false);
+
+  /**
+   * Focused once and only once.
+   *
+   * After `loaded` rather than on mount: the thread renders above the box,
+   * so focusing before the comments arrive would scroll the reader to a
+   * position that moves out from under them a moment later. The ref guard is
+   * what keeps a later re-render from stealing focus back from somebody who
+   * has since tapped elsewhere.
+   */
+  const composer = useRef<TextInput>(null);
+  const focused = useRef(false);
+  useEffect(() => {
+    if (!autoFocusComposer || focused.current || !loaded || !session) return;
+    focused.current = true;
+    composer.current?.focus();
+  }, [autoFocusComposer, loaded, session]);
 
   // Which comment the report sheet is open for, and the ones already reported
   // by this viewer in this session. The set is local rather than fetched: a
@@ -160,7 +186,7 @@ export function ReviewSocial({
           accessibilityLabel={session ? strings.social.like : strings.social.signInToLike}
           style={styles.likeButton}
         >
-          <HeartIcon size={18} color={liked ? colors.gold : colors.textFaint} />
+          <HeartIcon size={18} color={liked ? colors.gold : colors.textFaint} filled={liked} />
           <Text variant="label" tone={liked ? "accent" : "dim"}>
             {strings.social.like}
           </Text>
@@ -230,6 +256,7 @@ export function ReviewSocial({
         {session ? (
           <View style={{ gap: space.sm }}>
             <TextInput
+              ref={composer}
               value={draft}
               onChangeText={setDraft}
               placeholder={strings.social.commentPlaceholder}

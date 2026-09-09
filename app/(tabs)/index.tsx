@@ -13,6 +13,7 @@ import {
   type FeedScope,
 } from "@/services/playsService";
 import { getUnreadCount } from "@/services/notificationService";
+import { likeReview, unlikeReview } from "@/services/socialService";
 import type { FeedItem, Play, User, Venue, Review, WatchlistEntry } from "@/data/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { BellIcon, CommentIcon, HeartIcon } from "@/components/icons/Icons";
@@ -231,8 +232,14 @@ export default function FeedScreen() {
               key={feedItemKey(item)}
               item={item}
               onOpenPlay={(id) => router.push(`/play/${id}`)}
-              onOpenEntry={(reviewId) =>
-                router.push({ pathname: "/entry/[id]", params: { id: reviewId } })
+              // `compose` opens the evening with the comment box already
+              // focused, so tapping a bubble that reads 0 lands somewhere you
+              // can actually answer rather than on an empty thread.
+              onOpenEntry={(reviewId, options) =>
+                router.push({
+                  pathname: "/entry/[id]",
+                  params: options?.compose ? { id: reviewId, compose: "1" } : { id: reviewId },
+                })
               }
             />
           ))}
@@ -300,11 +307,18 @@ function FeedCardRouter({
 }: {
   item: FeedItem;
   onOpenPlay: (id: string) => void;
-  /** The evening itself, where the likes and the conversation live. */
-  onOpenEntry: (reviewId: string) => void;
+  /** The evening itself, where the conversation lives. */
+  onOpenEntry: (reviewId: string, options?: { compose?: boolean }) => void;
 }) {
   if (item.kind === "checkin")
-    return <CheckinCard review={item.review} onOpenPlay={onOpenPlay} onOpenEntry={onOpenEntry} />;
+    return (
+      <CheckinCard
+        review={item.review}
+        likedByMe={item.likedByMe}
+        onOpenPlay={onOpenPlay}
+        onOpenEntry={onOpenEntry}
+      />
+    );
   return <WatchlistCard entry={item.entry} onOpenPlay={onOpenPlay} />;
 }
 
@@ -346,14 +360,32 @@ function CardByline({ user, action, meta }: { user: User; action: string; meta: 
 
 function CheckinCard({
   review,
+  likedByMe,
   onOpenPlay,
   onOpenEntry,
 }: {
   review: Review;
+  likedByMe: boolean;
   onOpenPlay: (id: string) => void;
-  onOpenEntry: (reviewId: string) => void;
+  onOpenEntry: (reviewId: string, options?: { compose?: boolean }) => void;
 }) {
   const styles = useStyles();
+
+  const router = useRouter();
+  const { session } = useAuth();
+
+  // Seeded from the feed payload and owned by the card from then on, so a
+  // like survives the next `getFeed` reordering the page underneath it.
+  const [liked, setLiked] = useState(likedByMe);
+  const [likes, setLikes] = useState(review.likeCount);
+  const [likeBusy, setLikeBusy] = useState(false);
+
+  // A refresh is the one thing allowed to overrule the card: it is a newer
+  // answer to the same question, from the same server.
+  useEffect(() => {
+    setLiked(likedByMe);
+    setLikes(review.likeCount);
+  }, [likedByMe, review.likeCount]);
 
   const [play, setPlay] = useState<Play>();
   const [user, setUser] = useState<User>();
@@ -370,6 +402,36 @@ function CheckinCard({
       .then(setUser)
       .catch(() => setUser(undefined));
   }, [review]);
+
+  /**
+   * Flipped straight away and rolled back if the write fails — the same
+   * bargain `ReviewSocial` makes on the evening screen, for the same reason:
+   * a toggle that waits for a round trip gets pressed twice.
+   *
+   * A signed-out tap is not a failure. It is the most natural moment in the
+   * app to ask somebody to sign in — they have just found an evening worth
+   * saying something about — so it goes to sign-in rather than doing nothing.
+   */
+  async function toggleLike() {
+    if (likeBusy) return;
+    if (!session) {
+      router.push("/sign-in");
+      return;
+    }
+    const next = !liked;
+    setLiked(next);
+    setLikes((n) => Math.max(0, n + (next ? 1 : -1)));
+    setLikeBusy(true);
+    try {
+      if (next) await likeReview(review.id);
+      else await unlikeReview(review.id);
+    } catch {
+      setLiked(!next);
+      setLikes((n) => Math.max(0, n + (next ? -1 : 1)));
+    } finally {
+      setLikeBusy(false);
+    }
+  }
 
   if (!play || !user) return null;
 
@@ -422,25 +484,37 @@ function CheckinCard({
           <View />
         )}
 
-        {/* Both counters lead to the evening, where the conversation actually
-            is: a feed card is a summary, and a thread read inside one would be
-            a thread nobody can reply to without losing their place. */}
-        <Pressable
-          onPress={() => onOpenEntry(review.id)}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel={strings.social.commentsHeading}
-          style={styles.counters}
-        >
-          <View style={styles.counter}>
-            <HeartIcon size={15} color={colors.textFaint} />
-            <Text variant="caption" tone="faint">{review.likeCount}</Text>
-          </View>
-          <View style={styles.counter}>
+        {/* Two controls, not one. They used to share a single press target that
+            opened the evening, and a heart that answers a tap by navigating
+            somewhere reads as broken: a heart is a toggle in every app anybody
+            has ever used. So the heart likes, here, without leaving the feed —
+            and the bubble keeps leading to the evening, which is what a comment
+            icon does everywhere and is the only place a thread can be read. */}
+        <View style={styles.counters}>
+          <Pressable
+            onPress={toggleLike}
+            disabled={likeBusy}
+            hitSlop={10}
+            accessibilityRole="button"
+            aria-pressed={liked}
+            accessibilityState={{ selected: liked }}
+            accessibilityLabel={session ? strings.social.like : strings.social.signInToLike}
+            style={styles.counter}
+          >
+            <HeartIcon size={15} color={liked ? colors.gold : colors.textFaint} filled={liked} />
+            <Text variant="caption" tone={liked ? "accent" : "faint"}>{likes}</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => onOpenEntry(review.id, { compose: true })}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={strings.social.commentsHeading}
+            style={styles.counter}
+          >
             <CommentIcon size={15} color={colors.textFaint} />
             <Text variant="caption" tone="faint">{review.commentCount}</Text>
-          </View>
-        </Pressable>
+          </Pressable>
+        </View>
       </View>
 
       {!!review.text && (

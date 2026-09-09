@@ -1187,6 +1187,25 @@ conversation needs somewhere to be read; the card carries the counts and leads
 there. The same reasoning sends a like or comment notification to the entry
 rather than to the production page, which is the wrong end of it.
 
+**The heart is a control, the bubble is a link, and they had to stop sharing a
+press target.** Both counters were one `Pressable` that opened the evening,
+which is right for a comment icon — that is what a comment icon does in every
+app, and the thread has to be read somewhere — and wrong for a heart, which is
+a toggle everywhere anyone has ever tapped one. A heart answering a tap by
+navigating reads as broken even though nothing failed. So the heart likes in
+place now, optimistically and rolled back if the write fails, and the bubble
+still leads to the evening — but with `?compose=1`, which opens it with the
+comment box focused, so a bubble reading 0 does not land on an empty thread.
+A signed-out tap on either goes to sign-in: it is the best moment the app gets
+to ask, since the reader has just found an evening worth answering.
+
+The feed learns one extra fact for this — *which of these entries have I liked*
+— in a single query per page, not one per card, and `getFeed` is written so a
+failure there cannot fail the feed: hearts that cannot be coloured in are not
+worth a page of evenings. The count itself still comes from `reviews.like_count`
+and nowhere else, which is what stops a card and the evening it opens from
+disagreeing about the same like.
+
 ## A third counter that was never true, and the way out of the app
 
 `0032` made the like and comment counters honest and wrote down why they had
