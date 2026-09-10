@@ -722,9 +722,21 @@ feature the person pages exist for. From backlog 4.5.
 > open all 579 pages, and a production whose page is not opened must not read as
 > a production with nobody in it — `replace_play_cast` believes an empty list
 > and deletes. So `SyncedPlay.cast` gained a third state: `undefined` is "not
-> looked at", and the runner skips the RPC for it. The same distinction catches
-> the shell pages this site answers with under a long run — *Toldi* came back
-> empty three times in the first full run and had its 22 credits on the retry.
+> looked at", and the runner skips the RPC for it.
+
+> That same distinction turned out to be needed for a second reason, and the
+> first version of it was not enough. Under a run of several hundred requests
+> this site returns partial pages with a 200, in two different shapes: the cast
+> section missing altogether, which is what happened to *Toldi* three runs in a
+> row, and the section present but empty, which is what happened to
+> *Sommerreise* and *A csárdáskirálynő* — and the second shape got past a guard
+> that only checked whether the section existed, so both lost their stored
+> credits. Neither shape is distinguishable from a production that genuinely
+> credits nobody, and the ones that genuinely do carry no section either. So
+> the parser now reports `undefined` whenever a page names nobody at all: this
+> source can add a cast and never remove one, and an empty answer means "ask
+> again". A production whose cast really is withdrawn keeps a stale one until
+> somebody notices, which is much the smaller failure.
 
 ### T-032 · Faces for the people: portraits from the theatres' company pages
 type: idea · area: catalogue · size: M · status: done · added: 2026-09-10 · started: 2026-09-10 · done: 2026-09-10

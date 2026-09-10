@@ -185,20 +185,28 @@ export function isOwnHouse(locationName?: string): boolean {
  * it is removed as an element rather than by matching text — `.text()` would
  * otherwise glue it to the surname and slug "Kovács Olivérm.v.".
  *
- * Undefined when the page carries no cast section at all, which is not the
- * same as a section listing nobody. Two things produce it: a gala or a
- * festival night that genuinely has no cast, and — the reason this
- * distinction is load-bearing — a shell page. Under a run of several hundred
- * requests this site occasionally answers 200 with the navigation and no
- * content, and *Toldi* returning "nobody is in it" would then delete the
- * twenty-two people who are. Undefined leaves the stored rows alone; see
- * `cast` in sync/lib/types.ts.
+ * Undefined whenever the page yields nobody, which on this source is never a
+ * statement that nobody is in it.
+ *
+ * Under a run of several hundred requests this site returns partial pages,
+ * and it does so in two shapes: sometimes the whole cast section is missing,
+ * sometimes the section is there with no names inside it. Both were seen in
+ * one afternoon — *Toldi* came back sectionless three times, and *Sommerreise*
+ * and *A csárdáskirálynő* came back with an empty section on a later run,
+ * which cost them their stored credits before this said so. Neither shape can
+ * be told apart from a genuinely uncredited production, and the productions
+ * that genuinely credit nobody are galas and festival nights that carry no
+ * section either.
+ *
+ * So the honest reading is that this source can add a cast and never remove
+ * one: an empty answer means "ask again", not "there is nobody". Undefined
+ * leaves the stored rows alone — see `cast` in sync/lib/types.ts — and a
+ * production whose cast really is withdrawn keeps a stale one until somebody
+ * notices, which is much the smaller failure.
  */
 export function parseProductionCast(html: string): { name: string; role: string }[] | undefined {
   const $ = cheerio.load(html);
   const cast: { name: string; role: string }[] = [];
-
-  if (!$('section[class*="ProductionCast_block"]').length) return undefined;
 
   $('section[class*="ProductionCast_block"]')
     .find("dt")
@@ -222,7 +230,7 @@ export function parseProductionCast(html: string): { name: string; role: string 
         });
     });
 
-  return cast;
+  return cast.length ? cast : undefined;
 }
 
 /** A production that has been announced but has not opened yet. */
@@ -334,12 +342,12 @@ export function toSyncedPlay(
  * keeps whatever is already stored, so a single 404 in a run of hundreds
  * costs a warning rather than a production's whole credit list.
  *
- * Asked twice when the first answer carries no cast section, because over a
- * run of several hundred requests this site returns the odd shell page — the
- * navigation, the footer, and none of the content, with a 200. Three
+ * Asked twice when the first answer yields nobody, because over a run of
+ * several hundred requests this site returns partial pages with a 200. Three
  * productions came back that way on the first full run and all three had a
- * full cast on a second ask. The retry costs one request each for the handful
- * of pages that genuinely have no cast, which is a gala or a festival night.
+ * full cast on a second ask. The retry costs one extra request each for the
+ * handful of pages that genuinely have no cast, which is a gala or a festival
+ * night.
  */
 async function fetchCast(slug?: string): Promise<{ name: string; role: string }[] | undefined> {
   if (!slug) return undefined;

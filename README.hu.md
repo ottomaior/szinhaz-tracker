@@ -2160,8 +2160,13 @@ levett előadás szereposztása már nem változik. Amitől ez biztonságos, az 
 senkit nem tüntet fel, és felülírja a tároltat, az `undefined` viszont azt, hogy
 ez a futás nem is nézte meg, és a tárolt sorok maradnak. Enélkül egy éjszakai
 futás ötszáz produkció szereposztását törölte volna abban a pillanatban, hogy
-nem nyitja meg többé az oldalukat — és ugyanez a védelem fogja ki azokat az üres
-vázoldalakat is, amelyeket ez a site hosszabb futás közben néha visszaad.
+nem nyitja meg többé az oldalukat. Ugyanez a megkülönböztetés fedi le azokat a
+félig renderelt oldalakat is, amelyeket ez a site hosszabb futás közben
+visszaad: kétféle alakban jönnek — hiányzik a szereposztás-blokk, vagy megvan,
+de üres —, és egyik sem különböztethető meg egy olyan produkciótól, amely
+tényleg senkit nem tüntet fel. Ezért a parser azt mondja, hogy „nem tudom",
+valahányszor egy oldal senkit nem nevez meg: ez a forrás hozzá tud adni
+szereposztást, elvenni soha.
 
 A **Madách** külön megjegyzést kíván. A `robots.txt`-je a Cloudflare
 content-signals sablonszövege és semmi más — az egész fájl kommentekből áll,

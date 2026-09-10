@@ -221,17 +221,18 @@ describe("parseProductionCast", () => {
     expect(palCast).toContainEqual({ name: "Nádas Gábor Dávid", role: "A fiatalabb Pásztor" });
   });
 
-  it("says it does not know when the page has no cast section", () => {
+  it("says it does not know when the page names nobody", () => {
     /*
-     * A shell page — this site answers one occasionally under a long run —
-     * must not read as "nobody is in it". That would be believed, and
-     * *Toldi*'s twenty-two credits would be deleted by the next sync.
+     * A partial page — this site answers with one regularly under a long run —
+     * must not read as "nobody is in it". That would be believed, and the
+     * production's stored credits deleted. Both shapes of partial page are
+     * pinned here because both were seen: the section missing entirely, which
+     * cost *Toldi* three attempts, and the section present but empty, which
+     * cost *Sommerreise* and *A csárdáskirálynő* their credits before this
+     * case was handled.
      */
     expect(parseProductionCast("<html><body><h1>Semmi</h1></body></html>")).toBeUndefined();
-  });
-
-  it("reports an empty cast only when the section itself is empty", () => {
-    expect(parseProductionCast('<html><body><section class="ProductionCast_block__x"></section></body></html>')).toEqual([]);
+    expect(parseProductionCast('<html><body><section class="ProductionCast_block__x"></section></body></html>')).toBeUndefined();
   });
 });
 

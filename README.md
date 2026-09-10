@@ -2073,8 +2073,11 @@ distinction that makes this safe is in `SyncedPlay.cast`: an empty list means
 the source credits nobody and replaces what is stored, while `undefined` means
 this run did not look and the stored rows stand. Without it a nightly run
 would delete five hundred productions' credits the moment it stopped opening
-their pages — and the same guard catches the shell pages this site
-occasionally answers with under a long run.
+their pages. The same distinction covers the partial pages this site returns
+under a long run, which come in two shapes — the cast section missing, and the
+section present but empty — and neither is distinguishable from a production
+that credits nobody. So the parser reports "I do not know" whenever a page
+names nobody: this source can add a cast and never remove one.
 
 **Madách** needs a note of its own. Its `robots.txt` is Cloudflare's
 content-signals boilerplate and nothing else — the whole file is comments
