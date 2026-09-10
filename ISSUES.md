@@ -206,41 +206,50 @@ show timestamps at all, which is a design change rather than a content one.
 
 Bugs and chores, confirmed and unclaimed.
 
-### T-002 · A rehearsal reads as a performance in the calendar
-type: bug · area: catalogue · priority: high · status: open · added: 2026-09-09
+### T-025 · A visiting company's production is filed as the host theatre's own
+type: bug · area: data · priority: high · status: open · added: 2026-09-10
 
-Csokonai's own calendar carries a qualifier line under the title on some
-occurrences — `énekkari próba` on both „Izzik a galagonya” slots on 12 September
-2026, and elsewhere `Társalgó`, `PedagógusTér`. The app shows those two rows as
-`Csokonai Teátrum · Próza`, indistinguishable from the evening performance of
-the same production, so a Saturday listing reads as six performances when some
-of them are rehearsals.
+Found while disproving T-002. Csokonai hosts other companies — the IX.
+MagdaFeszt programme, and touring shows on the Nagyerdei open-air stage — and
+every one of those productions is in the catalogue as a Csokonai production.
+`Abigél` is the Kolozsvári Állami Magyar Színház's staging, directed by
+Eszenyi Enikő; the app credits it to Csokonai. `Csárdáskirálynő` in September
+is the Szigligeti Színház Nagyvárad's.
 
-The qualifier is **not stored anywhere** — this is a capture bug, not a display
-one. `fetchCalendarMonth()` in `sync/adapters/csokonai.ts:329` reads day, time,
-title, `Játszóhely:` and the genre span out of `.calendar-item` and drops every
-other `<p>` in the block, and `performances` (`0001_init.sql:63`) has no column
-that could hold it: `room`, `starts_at`, `source_key`. Confirmed against
-production — both rows for that date are plain `room: Csokonai Teátrum` with
-nothing else. Nothing in the app can be surfacing it today.
+**The signal is right there and is being thrown away.** The line under the
+title says so in as many words — *"a Kolozsvári Állami Magyar Színház
+előadása"* — on the calendar and again as the first `<p>` under the `<h1>` of
+the production's own page. `fetchPlayDetail()` in `sync/adapters/csokonai.ts`
+reads the title, author, synopsis, director, runtime, poster, premiere and
+cast out of that page and steps straight over this line.
 
-Not a case for hiding them: both slots are ticketed on the source site
-(`Jegyvásárlás`, and a bérlet label), so they are real events someone can
-attend. A tag on the row is the right answer, as Ottó proposed. Note that the
-adapter already has a mechanism for the *other* shape of this problem —
-productions that are not productions at all (`Csokonai Társalgó`,
-`Színházbejárás`, `Csokonai közTér`) are filtered out by carrying no genre term.
-This is the per-occurrence case, which that filter cannot see.
+**What it costs, concretely.** `Az a szép, fényes nap` is a MagdaFeszt guest
+production carrying **12 `play_cast` rows**, so twelve performers now have a
+Csokonai credit on their person page for an evening Csokonai did not stage.
+That is T-020's problem pointing the other way: the page is not only missing
+work, it is attributing work to the wrong house — and the coverage note added
+for T-020 does not catch it, because the theatre named there is real.
 
-Two things to decide when it is built. **Where the qualifier lives** — a
-`note`/`qualifier` column on `performances` is the honest home, but it means a
-migration and a re-sync. **What it does to check-in** — someone who checks in
-at a rehearsal and rates it is rating the production, which quietly pollutes
-`recompute_play_rating()`.
+**Not the same thing as `is_festival`.** That flag already works: all 13
+MagdaFeszt rows carry `is_festival` and `festival_name`, and
+`genre_normalized` is correctly null rather than "IX. MagdaFeszt". Knowing an
+evening is part of a festival is not knowing whose production it is, and the
+touring `Csárdáskirálynő` is a guest performance with no festival at all.
 
-Open question: whether the other adapters (Nemzeti, Madách, Katona, Vojtina,
-Central) have the same per-occurrence qualifier in their calendars and are
-dropping it too. Not checked.
+**Roughly.** Capture the line in `fetchPlayDetail()`. It is one field on the
+production, not on the showtime — verified across two months, 32 productions,
+no occurrence disagreeing with another. Then decide what it means: a
+`produced_by` on `plays` is the honest shape, since the venue stays right
+(the evening really is at Csokonai) while the company is somebody else.
+
+**Two things to settle before building it.** The line is one slot carrying
+several kinds of thing — `dráma` and `daljáték` are genre subtitles, not
+companies — so something has to tell provenance from subtitle; *"… előadása"*
+is the obvious tell and, like every heuristic in this catalogue, will not know
+when it stops being right (see T-008). And whether the other sources print a
+subtitle of their own is unchecked — that was T-002's open question, reframed
+and still worth an answer.
+
 ### T-003 · A superseded draft of the follow-gate migrations is applied to the live database
 type: bug · area: data · priority: med · status: open · added: 2026-09-09
 
@@ -324,8 +333,18 @@ productions by title, deliberately narrow: checked against all 1,205 titles at
 the time, it matches six rows. Every theatre added from here brings its own
 vocabulary for the same thing, and a heuristic does not know when it has stopped
 being right — a miss simply shows up in Discover as a play. Recheck the
-vocabulary whenever a source lands. Related: T-002, the same problem one level
-down, at the individual showtime.
+vocabulary whenever a source lands. This used to point at T-002 as the same
+problem one level down, at the individual showtime; T-002 turned out not to be
+a problem at all, so this is the only level it happens on.
+
+**Concrete misses, found 10 September while investigating T-002 — the
+prediction has already come true.** Csokonai's IX. MagdaFeszt programme is 13
+rows, and at least four of them are not productions: *IV. Szabó Magda-díj
+átadása* (an award ceremony), *Szabó Magda irodalmi séta* (a literary walk),
+*Öregembert játszani – irodalomterápiás workshop*, and *Ókút-maraton*. All four
+are in Discover as plays. None uses the vocabulary 0034 checked for, because a
+festival brings its own — which is exactly what this entry said would happen
+and why the count of matches was recorded rather than trusted.
 
 ### T-009 · The share card draws nothing in a native build
 type: bug · area: native · priority: med · status: open · added: 2026-09-09
@@ -684,8 +703,82 @@ origins at `/`, so a wildcard on each host covers both routes at once.
 Ideas that were considered and declined, and bugs that turned out not to be.
 The reason matters more than the entry.
 
-_Nothing yet._
+### T-002 · A rehearsal reads as a performance in the calendar
+type: bug · area: catalogue · priority: high · status: dropped · added: 2026-09-09 · dropped: 2026-09-10
+
+Csokonai's own calendar carries a qualifier line under the title on some
+occurrences — `énekkari próba` on both „Izzik a galagonya” slots on 12 September
+2026, and elsewhere `Társalgó`, `PedagógusTér`. The app shows those two rows as
+`Csokonai Teátrum · Próza`, indistinguishable from the evening performance of
+the same production, so a Saturday listing reads as six performances when some
+of them are rehearsals.
+
+The qualifier is **not stored anywhere** — this is a capture bug, not a display
+one. `fetchCalendarMonth()` in `sync/adapters/csokonai.ts:329` reads day, time,
+title, `Játszóhely:` and the genre span out of `.calendar-item` and drops every
+other `<p>` in the block, and `performances` (`0001_init.sql:63`) has no column
+that could hold it: `room`, `starts_at`, `source_key`. Confirmed against
+production — both rows for that date are plain `room: Csokonai Teátrum` with
+nothing else. Nothing in the app can be surfacing it today.
+
+Not a case for hiding them: both slots are ticketed on the source site
+(`Jegyvásárlás`, and a bérlet label), so they are real events someone can
+attend. A tag on the row is the right answer, as Ottó proposed. Note that the
+adapter already has a mechanism for the *other* shape of this problem —
+productions that are not productions at all (`Csokonai Társalgó`,
+`Színházbejárás`, `Csokonai közTér`) are filtered out by carrying no genre term.
+This is the per-occurrence case, which that filter cannot see.
+
+Two things to decide when it is built. **Where the qualifier lives** — a
+`note`/`qualifier` column on `performances` is the honest home, but it means a
+migration and a re-sync. **What it does to check-in** — someone who checks in
+at a rehearsal and rates it is rating the production, which quietly pollutes
+`recompute_play_rating()`.
+
+Open question: whether the other adapters (Nemzeti, Madách, Katona, Vojtina,
+Central) have the same per-occurrence qualifier in their calendars and are
+dropping it too. Not checked.
+
+> **Dropped, 10 September — the premise is wrong, in two separate ways.**
+
+> **`énekkari próba` is not a rehearsal of anything.** It is the subtitle of
+> a production. `„Izzik a galagonya”` is a public participatory piece — its
+> own detail page calls it *"rendhagyó zenei kísérlet"*, says *"Az esemény
+> nyilvános"* and *"Zenei előképzettség nem szükséges"*, and notes that a
+> television crew is filming. It has a director (ifj. Vidnyánszky Attila), a
+> cast, a premiere date of 11 September 2026, and tickets. The catalogue
+> holds it as a Csokonai production with genre `próza` and five
+> performances, which is correct. Somebody who checks in at one of those
+> evenings attended it, and rating it rates the thing they saw.
+
+> **The line is not per-occurrence either.** Checked across the September
+> and October calendars: 32 productions with occurrences, and **not one**
+> carries two different values of that line. It is a per-production subtitle
+> echoed onto every showtime, and it is on the production's own detail page
+> as the first `<p>` under the `<h1>` — so there is nothing here that a
+> column on `performances` would be the right home for. Both decisions the
+> entry said it would need — where the qualifier lives, and what it does to
+> `recompute_play_rating()` — dissolve with the premise.
+
+> **What the line actually holds**, from those two months: genre subtitles
+> (`dráma`, `tragikomédia`, `daljáték`, `zenés játék`), descriptive ones
+> (`énekkari próba`, `közösségi színházi előadás`) and — the useful case —
+> provenance: *"a Kolozsvári Állami Magyar Színház előadása"*, *"a
+> Szigligeti Színház Nagyvárad előadása"*. That last kind is a real bug and
+> is now T-025.
+
+> **The entry's open question is moot as posed.** It asked whether the other
+> adapters drop the same per-occurrence qualifier; nothing here is
+> per-occurrence, so there is no such thing to drop. Whether the other
+> sources print a production subtitle is a live question and belongs to
+> T-025.
+
+> **What the entry got right, and is worth keeping:** the `Csokonai
+> Társalgó` / `Színházbejárás` / `Csokonai közTér` items really are filtered
+> out by carrying no genre term — confirmed across both months — and that
+> filter really cannot see anything at the showtime level. It simply did not
+> need to here.
 
 ---
 
-Next free id: **T-025**
+Next free id: **T-026**
