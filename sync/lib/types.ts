@@ -71,3 +71,34 @@ export type SyncAdapter = {
   name: string; // matches sync_runs.source
   run: () => Promise<SyncedPlay[]>;
 };
+
+/**
+ * One member of a theatre's company, as its own company page lists them.
+ *
+ * This is what a portrait is made from — see `person_portraits` in
+ * 0049_faces_for_the_people.sql. The name is as printed with the guest marker
+ * removed, so that `personSlug()` in utils/people.ts lands on the same slug
+ * the cast rows do; the slug itself is computed by the runner, not here.
+ */
+export type SyncedPerson = {
+  name: string;
+  /** What the house calls them on that page: `színművész`, `bábszínész`. */
+  role?: string;
+  /** The member's own page on the theatre's site. */
+  sourceUrl: string;
+  imageUrl: string;
+  /** Photographer, when the page names one. Neither Debrecen site does. */
+  credit?: string;
+};
+
+/**
+ * A source of portraits rather than of productions.
+ *
+ * Kept separate from `SyncAdapter` because it produces a different thing and
+ * lands in a different table; the runner has a stage for each.
+ */
+export type CompanyAdapter = {
+  name: string;
+  venueId: string;
+  run: () => Promise<SyncedPerson[]>;
+};

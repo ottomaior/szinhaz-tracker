@@ -83,6 +83,27 @@ export async function mirrorPoster(
   credit: string | null,
   existing: Pick<PosterState, "posterChecksum" | "posterEtag" | "posterPath">
 ): Promise<MirrorOutcome> {
+  return mirrorImage(supabase, `plays/${playId}`, sourceUrl, credit, existing);
+}
+
+/**
+ * The same, for any image that belongs to something in the catalogue.
+ *
+ * Split out of `mirrorPoster` when portraits arrived (0049): a performer's
+ * photograph from a company page wants exactly this treatment — one download,
+ * a webp and a thumbnail, a blurhash, the ETag kept for next time — and the
+ * only thing that differs is where in the bucket it lands. `folder` is that:
+ * `plays/<id>` for a poster, `people/<slug>` for a portrait. The `PosterState`
+ * field names are kept as they are, because the poster columns on `plays` and
+ * the image columns on `person_portraits` are the same set under two prefixes.
+ */
+export async function mirrorImage(
+  supabase: StorageClient,
+  folder: string,
+  sourceUrl: string,
+  credit: string | null,
+  existing: Pick<PosterState, "posterChecksum" | "posterEtag" | "posterPath">
+): Promise<MirrorOutcome> {
   const headers: Record<string, string> = { "User-Agent": USER_AGENT };
   // Only worth asking if we already hold the file the ETag describes.
   if (existing.posterEtag && existing.posterPath) headers["If-None-Match"] = existing.posterEtag;
@@ -140,8 +161,8 @@ export async function mirrorPoster(
 
   // Content-addressed: the same bytes always land on the same path, so a
   // re-upload is idempotent and the CDN can cache it forever.
-  const posterPath = `plays/${playId}/${checksum}.webp`;
-  const posterThumbPath = `plays/${playId}/${checksum}-thumb.webp`;
+  const posterPath = `${folder}/${checksum}.webp`;
+  const posterThumbPath = `${folder}/${checksum}-thumb.webp`;
 
   for (const [path, body] of [
     [posterPath, full],

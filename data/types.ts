@@ -183,6 +183,25 @@ export interface ProgramEntry {
   venueCity: string;
 }
 
+/**
+ * A performer's photograph, from their theatre's own company page.
+ *
+ * Keyed on the person slug and read in bulk for whatever names are on screen;
+ * most people in the catalogue have none, and the avatar's initials are the
+ * ordinary case rather than a failure. See 0049_faces_for_the_people.sql.
+ */
+export interface Portrait {
+  slug: string;
+  url: string;
+  /** 400px wide: enough for any avatar the app draws. */
+  thumbUrl: string;
+  blurhash?: string;
+  credit?: string;
+  venueId: string;
+  /** The member's page on the theatre's site. */
+  sourceUrl: string;
+}
+
 /** A day with something on it, for the program date picker. */
 export interface ProgramDay {
   /** `YYYY-MM-DD`, in Budapest. */

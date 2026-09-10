@@ -23,9 +23,12 @@ import { nemzetiAdapter } from "./adapters/nemzeti";
 import { centralAdapter } from "./adapters/central";
 import { madachAdapter } from "./adapters/madach";
 import { vigszinhazAdapter } from "./adapters/vigszinhaz";
+import { csokonaiCompanyAdapter } from "./adapters/csokonai-company";
+import { vojtinaCompanyAdapter } from "./adapters/vojtina-company";
 import { splitPerformers } from "./lib/performers";
-import { mirrorPoster } from "./lib/posters";
-import type { SyncAdapter, SyncedPlay } from "./lib/types";
+import { mirrorImage, mirrorPoster } from "./lib/posters";
+import { personSlug } from "../utils/people";
+import type { CompanyAdapter, SyncAdapter, SyncedPlay } from "./lib/types";
 
 const DRY_RUN = process.argv.includes("--dry-run");
 
@@ -43,6 +46,20 @@ const MAX_FAILURE_RATE_FOR_RECONCILE = 0.1;
  * re-encoded once.
  */
 const MIRROR_POSTERS = !DRY_RUN && !process.argv.includes("--no-posters");
+
+/**
+ * Portraits ride the same switch as posters: they are the same kind of work
+ * (a download and a re-encode per image) and a run that is skipping one to
+ * save time wants to skip the other. `--no-posters` therefore covers both.
+ */
+const MIRROR_PORTRAITS = MIRROR_POSTERS;
+
+/**
+ * The theatres whose company pages are read for portraits. Debrecen first —
+ * see T-032 in ISSUES.md. Reachable one at a time via `--source=<name>` like
+ * the listings adapters, and run after them by default.
+ */
+const COMPANY_ADAPTERS: CompanyAdapter[] = [csokonaiCompanyAdapter, vojtinaCompanyAdapter];
 
 function errorMessageOf(e: unknown): string {
   if (e instanceof Error) return e.message;
@@ -534,12 +551,123 @@ async function runAdapter(adapter: SyncAdapter) {
   if (!playsUpserted) throw new Error(`${adapter.name}: produced no plays at all, which is almost certainly a broken scrape`);
 }
 
+/**
+ * One theatre's company page, into `person_portraits`.
+ *
+ * Keyed on `personSlug(name)` — the slug the app builds from a cast row to
+ * link to a person page — so a portrait lands on the same page the credits
+ * do without any table joining the two. The image goes through the poster
+ * pipeline under `people/<slug>/`, and the checksum and ETag the row already
+ * holds make the nightly re-run one conditional request per person.
+ *
+ * A row is never deleted here. Somebody leaving a company is still the person
+ * the photograph shows, and the catalogue keeps crediting their past work;
+ * the portrait stays with them until the same slug is refreshed from
+ * somewhere else.
+ */
+async function runCompanyAdapter(adapter: CompanyAdapter) {
+  const people = await adapter.run();
+  const seen = new Set<string>();
+  const unique = people.filter((p) => {
+    const slug = personSlug(p.name);
+    if (!slug || seen.has(slug)) return false;
+    seen.add(slug);
+    return true;
+  });
+
+  if (DRY_RUN) {
+    console.log(`[${adapter.name}] ${unique.length} people with a portrait (dry run, nothing written)`);
+    for (const p of unique.slice(0, 5)) console.log(`  ${personSlug(p.name)}  ${p.name}${p.role ? ` · ${p.role}` : ""}`);
+    return;
+  }
+  if (!MIRROR_PORTRAITS) {
+    console.log(`[${adapter.name}] skipped (--no-posters)`);
+    return;
+  }
+
+  const supabaseAdmin = getSupabaseAdmin();
+  const { data: existingRows, error: existingError } = await supabaseAdmin
+    .from("person_portraits")
+    .select("slug, image_path, image_checksum, image_etag")
+    .eq("venue_id", adapter.venueId);
+  if (existingError) throw existingError;
+  const existing = new Map(
+    ((existingRows ?? []) as { slug: string; image_path: string; image_checksum: string | null; image_etag: string | null }[]).map(
+      (r) => [r.slug, r]
+    )
+  );
+
+  let mirrored = 0;
+  let unchanged = 0;
+  let skipped = 0;
+  const now = new Date().toISOString();
+
+  for (const person of unique) {
+    const slug = personSlug(person.name);
+    const prior = existing.get(slug);
+    const outcome = await mirrorImage(supabaseAdmin as never, `people/${slug}`, person.imageUrl, person.credit ?? null, {
+      posterPath: prior?.image_path ?? null,
+      posterChecksum: prior?.image_checksum ?? null,
+      posterEtag: prior?.image_etag ?? null,
+    });
+
+    if (outcome.status === "skipped") {
+      console.warn(`[${adapter.name}] ${person.name}: ${outcome.reason}`);
+      skipped++;
+      continue;
+    }
+
+    if (outcome.status === "unchanged") {
+      // The bytes are what we have; only the words around them may have moved.
+      const { error } = await supabaseAdmin
+        .from("person_portraits")
+        .update({ name: person.name, role: person.role ?? null, source_url: person.sourceUrl, last_synced_at: now })
+        .eq("slug", slug);
+      if (error) throw error;
+      unchanged++;
+      continue;
+    }
+
+    const { state } = outcome;
+    const { error } = await supabaseAdmin.from("person_portraits").upsert(
+      {
+        slug,
+        name: person.name,
+        role: person.role ?? null,
+        venue_id: adapter.venueId,
+        source_url: person.sourceUrl,
+        image_source_url: state.posterSourceUrl,
+        image_path: state.posterPath,
+        image_thumb_path: state.posterThumbPath,
+        image_checksum: state.posterChecksum,
+        image_etag: state.posterEtag,
+        image_width: state.posterWidth,
+        image_height: state.posterHeight,
+        image_blurhash: state.posterBlurhash,
+        credit: state.posterCredit,
+        fetched_at: now,
+        last_synced_at: now,
+      },
+      { onConflict: "slug" }
+    );
+    if (error) throw error;
+    mirrored++;
+  }
+
+  console.log(
+    `[${adapter.name}] ${unique.length} people: mirrored ${mirrored}, unchanged ${unchanged}` +
+      (skipped ? `, skipped ${skipped}` : "")
+  );
+}
+
 async function main() {
   const sourceArg = process.argv.find((a) => a.startsWith("--source="))?.split("=")[1];
   const adapters = sourceArg ? ALL_ADAPTERS.filter((a) => a.name === sourceArg) : DEFAULT_ADAPTERS;
+  const companyAdapters = sourceArg ? COMPANY_ADAPTERS.filter((a) => a.name === sourceArg) : COMPANY_ADAPTERS;
 
-  if (!adapters.length) {
-    console.error(`No adapter named "${sourceArg}". Available: ${ALL_ADAPTERS.map((a) => a.name).join(", ")}`);
+  if (!adapters.length && !companyAdapters.length) {
+    const names = [...ALL_ADAPTERS, ...COMPANY_ADAPTERS].map((a) => a.name).join(", ");
+    console.error(`No adapter named "${sourceArg}". Available: ${names}`);
     process.exit(1);
   }
 
@@ -547,6 +675,19 @@ async function main() {
   const failures = results.filter((r) => r.status === "rejected");
   for (const f of failures) {
     if (f.status === "rejected") console.error(errorMessageOf(f.reason));
+  }
+
+  // Portraits after the listings, one theatre at a time: they share a crawl
+  // delay with that theatre's listings adapter and there is no hurry. A
+  // failure here is reported like an adapter failure and does not stop the
+  // recomputes below, which do not depend on it.
+  for (const adapter of companyAdapters) {
+    try {
+      await runCompanyAdapter(adapter);
+    } catch (e) {
+      console.error(`[${adapter.name}] ${errorMessageOf(e)}`);
+      failures.push({ status: "rejected", reason: e });
+    }
   }
 
   // Runs even when an adapter failed: the sources that did succeed still

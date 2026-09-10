@@ -211,6 +211,18 @@ Bugs and chores, confirmed and unclaimed.
 
 
 
+### T-033 · A guest marker without its final dot makes a second person
+type: bug · area: data · priority: low · status: open · added: 2026-09-10
+
+`person_canonical_name()` (0024) and its twin in `utils/people.ts` strip
+the guest marker only as `m.v.`; four cast rows in the catalogue print it as
+`m.v` — Csokonai's guest-artist page does the same for two names — so those
+rows slug to `…-m-v` and sit beside the dotted rows as a different person.
+Found while building T-032, whose adapter strips both forms itself. The fix
+is one optional dot in two regular expressions, plus the fixture table in
+`utils/people.test.ts`; the slug index on `play_cast` would need rebuilding
+since the expression changes.
+
 ### T-005 · Anyone can sign up with somebody else's email address
 type: bug · area: auth · priority: high · status: open · added: 2026-09-09
 
@@ -512,6 +524,58 @@ _Nothing yet._
 ---
 
 ## Done
+
+### T-032 · Faces for the people: portraits from the theatres' company pages
+type: idea · area: catalogue · size: M · status: done · added: 2026-09-10 · started: 2026-09-10 · done: 2026-09-10
+
+**The problem.** A person page opens on a 64pt circle with two initials.
+The theatres publish portraits: Csokonai's `/csoport/` pages list the
+company with a photo each, and every member's own page under `/tarsulat/`
+carries the same portrait as `og:image`. Vojtina keeps its whole company on
+one page, each with a photograph. Katona, Nemzeti, Víg and Örkény have
+társulat pages too. Ottó raised it on 10 September, pointing at the Csokonai
+leadership page, and asked for Debrecen first.
+
+**Roughly.** People are not a table — a person is `person_slug(name)` over
+`play_cast`, read through `person_profile()` (0024) — so the portrait
+needs a home keyed on the slug, and a company-page adapter per theatre that
+reads each member's name and image and files the image through the poster
+pipeline. The person page's `Avatar` already takes a `uri`.
+
+**Depends on.** A decision on rights: these are commissioned portraits, on
+the same footing as the production stills the app already shows with a
+credit, so the credit has to be captured where a site prints one.
+
+> **What the crawl found before a line was written.** Csokonai's group pages
+> carry 89 people with a photograph (leadership 8, actors 31, singers 4,
+> dance 2, youth programme 3, guest artists 28 — and none for the sixty
+> honorary members, the chorus or the artistic council in this markup);
+> Vojtina's one page carries all 13 of its company. 86 of the 89 Csokonai
+> names already resolve to a person page in the catalogue. Neither site
+> prints a photographer against a portrait, so `credit` is null throughout
+> and the column waits.
+
+> **Done for Debrecen, the same day.** `person_portraits` (0049) keys one
+> portrait on the person slug; `sync/adapters/csokonai-company.ts` walks the
+> nine group pages and `vojtina-company.ts` the one company page, and the
+> runner files each image through `mirrorImage()` — the poster pipeline
+> with the bucket folder made a parameter — under `people/<slug>/`. The
+> first run stored 76 Csokonai portraits (89 cards, 13 of them the same
+> person on two group pages) and all 13 of Vojtina's. Both company adapters
+> run after the listings adapters in the nightly job and are reachable with
+> `--source=csokonai-company` / `--source=vojtina-company`; `--no-posters`
+> skips them too.
+
+> On screen: the person page header, the cast list on a production page and
+> the people rows in search all pass the portrait to `Avatar`, which
+> already took a `uri` and falls back to initials for everyone without one.
+> Checked at phone width on Bakota Árpád, Baditz Dávid and the 57-strong
+> cast of Hegedűs a háztetőn, where 19 faces now sit beside the names.
+
+> **Left open, on purpose.** No portrait is ever deleted by the sync: a
+> person who leaves a company is still the person the photograph shows. The
+> other theatres are the obvious next step and need nothing but an adapter
+> each. And the guest-marker gap the crawl exposed is T-033.
 
 ### T-031 · Programme rows say `Próza` where the theatre says `énekkari próba`
 type: bug · area: catalogue · priority: med · status: done · added: 2026-09-10 · done: 2026-09-10
@@ -1262,4 +1326,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-032**
+Next free id: **T-034**
