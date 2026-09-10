@@ -208,27 +208,6 @@ Bugs and chores, confirmed and unclaimed.
 
 
 
-### T-028 · Six foreign keys with no index, eight indexes never used
-type: chore · area: data · priority: low · status: open · added: 2026-09-10
-
-Two halves of the same advisor pass, and they point in opposite directions.
-
-**Unindexed foreign keys**, which make the parent's deletes and the join's
-lookups scan: `notifications.play_id`, `notifications.review_id`,
-`plays.created_by`, `review_comments.user_id`, `reviews.performance_id`,
-`venues.created_by`.
-
-**Indexes never used since the counters were last reset**:
-`plays_poster_pending_idx`, `plays_author_trgm_idx`, `lists_featured_idx`,
-`review_cast_name_slug_idx`, `reviews_hidden_idx`,
-`review_comments_hidden_idx`, `reports_open_idx`, `reports_target_idx`.
-
-Neither list should be acted on literally. An unused index on a moderation
-table means nobody has been moderated yet, not that the index is wrong, and
-`plays_author_trgm_idx` exists for a search path that T-018 would start
-using. The honest read is that this is a note to re-run the advisor once
-there is traffic, and to add the six indexes, which cost nothing to be wrong
-about at this size.
 
 
 ### T-003 · A superseded draft of the follow-gate migrations is applied to the live database
@@ -503,6 +482,66 @@ _Nothing yet._
 ---
 
 ## Done
+
+### T-028 · Six foreign keys with no index, eight indexes never used
+type: chore · area: data · priority: low · status: done · added: 2026-09-10 · done: 2026-09-10
+
+Two halves of the same advisor pass, and they point in opposite directions.
+
+**Unindexed foreign keys**, which make the parent's deletes and the join's
+lookups scan: `notifications.play_id`, `notifications.review_id`,
+`plays.created_by`, `review_comments.user_id`, `reviews.performance_id`,
+`venues.created_by`.
+
+**Indexes never used since the counters were last reset**:
+`plays_poster_pending_idx`, `plays_author_trgm_idx`, `lists_featured_idx`,
+`review_cast_name_slug_idx`, `reviews_hidden_idx`,
+`review_comments_hidden_idx`, `reports_open_idx`, `reports_target_idx`.
+
+Neither list should be acted on literally. An unused index on a moderation
+table means nobody has been moderated yet, not that the index is wrong, and
+`plays_author_trgm_idx` exists for a search path that T-018 would start
+using. The honest read is that this is a note to re-run the advisor once
+there is traffic, and to add the six indexes, which cost nothing to be wrong
+about at this size.
+
+> **Done, 10 September — the six indexes.** `0046`.
+> `unindexed_foreign_keys` is gone from the advisor. The eight unused ones
+> are untouched, for the reasons the entry already gave.
+
+> **Two of the six were not hypothetical.** `reconcile()` deletes stale plays
+> on every sync run and `reconcilePerformances()` deletes stale showtimes, so
+> `notifications.play_id` and `reviews.performance_id` were being scanned
+> nightly, on tables that only grow. The other four are account deletion —
+> rare, and exactly when a table scan is least welcome.
+
+> **Partial where the column is nullable, and that is the half worth
+> knowing.** A foreign key check looks for one specific id, so it can never
+> match a null row and the nulls have no business being in the index. On
+> `plays.created_by` this is not a nicety: the column is null on **all 1,215
+> rows**, because it records a person adding a production by hand and every
+> row so far came from the sync. A plain index would have been 1,215 entries
+> of nothing, maintained on every upsert of every play, every night. The
+> partial one is 8 kB and empty.
+
+> **Checked that a partial index actually serves the check**, since that is
+> the assumption the whole choice rests on. With `enable_seqscan` off,
+> `where created_by = $1` plans as `Index Only Scan using
+> plays_created_by_idx` and `where performance_id = $1` as `Index Only Scan
+> using reviews_performance_id_idx` — Postgres proves `col = $1` implies
+> `col is not null` rather than assuming it. The linter accepts them too.
+
+> **A small joke at the entry's expense.** `unused_index` went from 8
+> findings to **14**, because six brand-new indexes have never been scanned.
+> That is the entry's own warning demonstrated within a minute of acting on
+> it: an index counter reading zero on an app with six accounts measures the
+> absence of users, not the uselessness of the index. The list is still not
+> to be acted on literally, and now has six more entries proving why.
+
+> **Still open in spirit: re-run the advisor once there is traffic.** That is
+> the only thing that will make the unused-index list mean anything, and it
+> cannot be done before launch. Recorded here rather than left as a task
+> nobody can start.
 
 ### T-027 · Thirty-four RLS policies re-evaluate auth.uid() for every row
 type: chore · area: data · priority: low · status: done · added: 2026-09-10 · done: 2026-09-10
