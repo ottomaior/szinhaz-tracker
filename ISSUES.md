@@ -765,6 +765,74 @@ _Nothing yet._
 
 ## Done
 
+### T-041 · Vígszínház's cast is in the page's data, not its markup
+type: bug · area: data · priority: high · status: done · added: 2026-09-10 · done: 2026-09-10
+
+Ottó opened *„Ha majd egyszer mindenki visszajön…"* in the app, saw no cast,
+and asked whether that was because the production is archived. It was not:
+the theatre's page for it lists fifty-seven names.
+
+**What was actually wrong.** This site renders a production page two ways,
+and which one a request gets varies. Sometimes the cast section is finished
+HTML; sometimes it is an empty `<template>` placeholder and the names arrive
+later in the same response as streamed data the browser assembles. The parser
+read only the finished form, so it reported "no cast" and the runner
+correctly left the row alone.
+
+> **This corrects T-007's own follow-up.** Earlier the same day the flapping
+> — *Toldi* empty three times then full, *Sommerreise* and *A csárdáskirálynő*
+> losing their credits between runs — was diagnosed as the site returning
+> partial pages under load, and a retry plus an "empty means ask again" rule
+> was added for it. That reasoning was wrong. The site is not flaky; it has
+> two rendering modes. The rule was kept because it is still the right
+> conservative behaviour, but it was treating a symptom.
+
+> **Fixed** by reading the streamed payload instead: `parseCastPayload`
+> reassembles the `self.__next_f.push` chunks, pulls the `"cast"` array out
+> with a bracket-counting scan, and resolves the person ids against
+> `/api/programme/persons` — 3,120 people in one request per run. The markup
+> parser is kept as a fallback. On a page that has both, the two agree
+> exactly, which is what makes preferring the payload safe.
+
+> **Where it stands.** Vígszínház went from 2,066 credits to 9,400 after a
+> `--deep` re-crawl. 213 of its 579 productions still hold none, and those
+> were sampled: their pages publish no cast in either form.
+
+### T-042 · Two archives published a cast in a shape nobody read
+type: bug · area: data · priority: med · status: done · added: 2026-09-10 · done: 2026-09-10
+
+Asked to find cast data everywhere it is scrapeable, not just at Vígszínház.
+Two theatres turned out to be publishing casts the adapters walked straight
+past, and both were archives — the part of the catalogue nobody looks at
+while writing a parser.
+
+**Centrál, 30 productions.** A production in the repertoire gets a card per
+performer with a photograph, and `central.ts` read those. Once it moves to
+`-archiv` the cards are gone and the cast becomes part of the playbill grid
+instead — in two different shapes. Some pages put the whole cast in one cell,
+a line per performer written "Kern András | Hammerschmidt". Others use an
+`<h4>Szereplők</h4>` divider after which every row means the opposite of what
+it did above it, the key being the performer and the value their character,
+until an `<h4>Alkotók</h4>` turns it back. `playbillCast` walks the grid in
+document order because the dividers are siblings of the rows, not containers.
+
+**Katona's frozen archive, 14 productions.** The cast and the creative team
+are two-column tables inside the same custom-field structure as everything
+else, so the generic field sweep read each one as a single 900-character
+value — which its own length guard, there to keep blobs out, then threw away.
+The failure was indistinguishable from a page that publishes no cast. This
+adapter had no test at all; it has one now, and its page parser was split out
+of the fetch so it could have one.
+
+> **Where it stands.** Centrál 174 credits to 583, Katona's archive 88 to
+> 554, and neither has a production without a cast any more. The catalogue
+> went from 9,675 credits to 17,924 across 4,263 people.
+
+> **What is left is genuinely unpublished**, checked by sampling each source:
+> 213 Vígszínház productions, 83 in Csokonai's archive, 33 at Örkény (its API
+> returns empty contributor lists for them — concerts, book launches, talks),
+> 14 Csokonai festival guests and events, and 2 at Vojtina.
+
 ### T-040 · A production credited without character names lost its whole cast
 type: bug · area: data · priority: high · status: done · added: 2026-09-10 · done: 2026-09-10
 
@@ -1657,4 +1725,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-040**
+Next free id: **T-043**

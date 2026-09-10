@@ -62,6 +62,13 @@ const PRODUCTION_LIMIT = 1500;
 const EVENT_LIMIT = 3000;
 
 /**
+ * Everyone the theatre has ever credited: 3,120 people, returned in one
+ * request. The cast on a production page names them by id and nothing else,
+ * so this directory is what turns those ids back into names.
+ */
+const PERSON_LIMIT = 4000;
+
+/**
  * The company's own houses.
  *
  * The productions endpoint reaches back decades and includes work the company
@@ -127,6 +134,25 @@ type RawEvent = {
 
 type RawGenre = { id: number; name?: Localized };
 
+/** One person as `/api/programme/persons` returns them. */
+type RawPersonRecord = { id: number; full_name?: Localized };
+
+/**
+ * The cast as the production page's data payload carries it.
+ *
+ * A group is a block on the page — the performers, a chorus, the band, the
+ * creative team, the director — and each of its `members` is one credit: a
+ * role and the people covering it, by id. Two or more ids under one role are
+ * alternates.
+ */
+type RawCastGroup = {
+  value?: {
+    group_name_hu?: string | null;
+    group_tye?: string | null; // the source's own spelling
+    members?: { role_name_hu?: string | null; members?: number[] }[] | null;
+  } | null;
+};
+
 /** The API returns `{items, count}` when given a limit and a bare array without. */
 function itemsOf<T>(payload: T[] | { items?: T[] }): T[] {
   return Array.isArray(payload) ? payload : payload.items ?? [];
@@ -165,6 +191,128 @@ function huHtml(value?: Localized | string | null): string | undefined {
 
 export function isOwnHouse(locationName?: string): boolean {
   return !!locationName && OWN_HOUSES.test(locationName);
+}
+
+/**
+ * The page's data payload, reassembled.
+ *
+ * Next.js streams a page as a series of `self.__next_f.push([1,"…"])` calls,
+ * each carrying a JSON-escaped slice of one long string. Concatenating them in
+ * document order gives that string back, and the production's own data —
+ * including its cast — is in there whichever way the page happened to render.
+ */
+export function flightPayload(html: string): string {
+  const chunk = /self\.__next_f\.push\(\[1,("(?:[^"\\]|\\.)*")\]\)/g;
+  const parts: string[] = [];
+  let match: RegExpExecArray | null;
+  while ((match = chunk.exec(html))) {
+    try {
+      parts.push(JSON.parse(match[1]) as string);
+    } catch {
+      // One unparseable slice is not worth losing the rest of the page over.
+    }
+  }
+  return parts.join("");
+}
+
+/**
+ * The balanced JSON value beginning at `start`, which must be a `[` or a `{`.
+ *
+ * The payload is one long string with JSON embedded in it rather than a JSON
+ * document, so the end of a value has to be found by counting brackets.
+ * Quotes and their escapes are tracked because a `]` inside a role name — and
+ * Hungarian titles do contain brackets — would otherwise end the scan early.
+ */
+function balancedValue(text: string, start: number): string | undefined {
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = start; i < text.length; i++) {
+    const c = text[i];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (c === "\\") escaped = true;
+      else if (c === '"') inString = false;
+      continue;
+    }
+    if (c === '"') inString = true;
+    else if (c === "[" || c === "{") depth++;
+    else if (c === "]" || c === "}") {
+      depth--;
+      if (depth === 0) return text.slice(start, i + 1);
+    }
+  }
+
+  return undefined;
+}
+
+/**
+ * The cast, read from the page's data rather than from its markup.
+ *
+ * This exists because the markup cannot be relied on. The site renders a
+ * production page two ways and which one a request gets varies: sometimes the
+ * cast section is finished HTML, and sometimes it is a `<template>`
+ * placeholder whose contents the browser assembles from the streamed payload.
+ * The HTML parser below reads the first and sees nothing in the second, which
+ * is why *„Ha majd egyszer mindenki visszajön…"* showed no cast in the app
+ * while showing fifty-seven names on the theatre's own site — and why *Toldi*
+ * and *A padlás* appeared to lose and regain their casts between runs. That
+ * was diagnosed as a flaky server; it was two rendering modes.
+ *
+ * The payload is present in both modes, so this is deterministic. It is also
+ * better structured than the markup: a role can name several people, which is
+ * how alternates arrive, and the groups distinguish the company from a chorus,
+ * a band and the creative team.
+ *
+ * People arrive as ids and are resolved against `/api/programme/persons`,
+ * fetched once per run. An id that resolves to nobody is dropped rather than
+ * stored as a number.
+ */
+export function parseCastPayload(html: string, nameById: Map<number, string>): { name: string; role: string }[] | undefined {
+  const payload = flightPayload(html);
+  const key = '"cast":[';
+  const at = payload.indexOf(key);
+  if (at < 0) return undefined;
+
+  const json = balancedValue(payload, at + key.length - 1);
+  if (!json) return undefined;
+
+  let groups: RawCastGroup[];
+  try {
+    groups = JSON.parse(json) as RawCastGroup[];
+  } catch {
+    return undefined;
+  }
+
+  const cast: { name: string; role: string }[] = [];
+  for (const group of groups) {
+    const value = group?.value;
+    if (!value) continue;
+    const groupName = normalizeText(value.group_name_hu) ?? "";
+
+    for (const credit of value.members ?? []) {
+      const printedRole = normalizeText(credit.role_name_hu) ?? "";
+      /*
+       * A production that credits its company without naming parts repeats
+       * the group's own heading on every row, so the role arrives as
+       * "Szereplők" eighteen times. Stored per person that plural reads
+       * wrongly, and "Szereplő" is what csokonai.ts, katona-wp.ts and
+       * vojtina.ts already call exactly this. Only the performers' group is
+       * treated this way: "Kórus" and "Zenekar" are right as they are.
+       */
+      const isEnsembleLabel = !printedRole || (value.group_tye === "actors" && printedRole === groupName);
+      const role = isEnsembleLabel ? (value.group_tye === "actors" ? "Szereplő" : groupName) : printedRole;
+      if (!role) continue;
+
+      for (const id of credit.members ?? []) {
+        const name = nameById.get(id);
+        if (name) cast.push({ name, role });
+      }
+    }
+  }
+
+  return cast.length ? cast : undefined;
 }
 
 /**
@@ -335,35 +483,44 @@ export function toSyncedPlay(
   };
 }
 
+/** The id-to-name directory the cast payload is written against. */
+async function fetchPersonNames(): Promise<Map<number, string>> {
+  const people = itemsOf(
+    await fetchJson<RawPersonRecord[] | { items?: RawPersonRecord[] }>(`${SITE_URL}/api/programme/persons?limit=${PERSON_LIMIT}`, {
+      crawlDelayMs: CRAWL_DELAY_MS,
+    })
+  );
+
+  const byId = new Map<number, string>();
+  for (const person of people) {
+    const name = hu(person.full_name);
+    if (person.id != null && name) byId.set(person.id, name);
+  }
+  return byId;
+}
+
 /**
  * One production's cast, or undefined if its page did not yield one.
+ *
+ * The payload is read first and the markup only as a fallback, because the
+ * payload is there however the page rendered while the markup is there only
+ * sometimes — see `parseCastPayload`. Keeping the markup path costs nothing
+ * and covers the case where the page's shape changes but its HTML does not.
  *
  * A dead or moved page is not a cast of nobody. Returning undefined for it
  * keeps whatever is already stored, so a single 404 in a run of hundreds
  * costs a warning rather than a production's whole credit list.
- *
- * Asked twice when the first answer yields nobody, because over a run of
- * several hundred requests this site returns partial pages with a 200. Three
- * productions came back that way on the first full run and all three had a
- * full cast on a second ask. The retry costs one extra request each for the
- * handful of pages that genuinely have no cast, which is a gala or a festival
- * night.
  */
-async function fetchCast(slug?: string): Promise<{ name: string; role: string }[] | undefined> {
+async function fetchCast(slug: string | undefined, nameById: Map<number, string>): Promise<{ name: string; role: string }[] | undefined> {
   if (!slug) return undefined;
 
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    try {
-      const html = await fetchText(`${SITE_URL}/hu/produkciok/${slug}`, { crawlDelayMs: CRAWL_DELAY_MS });
-      const cast = parseProductionCast(html);
-      if (cast) return cast;
-    } catch (e) {
-      console.warn(`[vigszinhaz] ${slug}: cast page unreadable (${e instanceof Error ? e.message : String(e)})`);
-      return undefined;
-    }
+  try {
+    const html = await fetchText(`${SITE_URL}/hu/produkciok/${slug}`, { crawlDelayMs: CRAWL_DELAY_MS });
+    return parseCastPayload(html, nameById) ?? parseProductionCast(html);
+  } catch (e) {
+    console.warn(`[vigszinhaz] ${slug}: cast page unreadable (${e instanceof Error ? e.message : String(e)})`);
+    return undefined;
   }
-
-  return undefined;
 }
 
 async function run(): Promise<SyncedPlay[]> {
@@ -377,6 +534,10 @@ async function run(): Promise<SyncedPlay[]> {
     const name = hu(genre.name);
     if (name) genreById.set(genre.id, name);
   }
+
+  // One request for the whole person directory, because every cast page names
+  // its people by id and nothing else.
+  const nameById = await fetchPersonNames();
 
   const productions = itemsOf(
     await fetchJson<RawProduction[] | { items?: RawProduction[] }>(
@@ -427,7 +588,7 @@ async function run(): Promise<SyncedPlay[]> {
      * the two cannot drift into disagreeing about what "current" means.
      */
     const isCurrent = occurrences.length > 0 || isUpcomingPremiere(production.premiere_date);
-    const cast = DEEP || isCurrent ? await fetchCast(hu(production.slug)) : undefined;
+    const cast = DEEP || isCurrent ? await fetchCast(hu(production.slug), nameById) : undefined;
 
     const play = toSyncedPlay(production, genreById, occurrences, cast);
     if (play) plays.push(play);

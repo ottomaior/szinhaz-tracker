@@ -1,7 +1,15 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { eventStartsAt, isOwnHouse, isRecentEnough, isUpcomingPremiere, parseProductionCast, toSyncedPlay } from "./vigszinhaz";
+import {
+  eventStartsAt,
+  isOwnHouse,
+  isRecentEnough,
+  isUpcomingPremiere,
+  parseCastPayload,
+  parseProductionCast,
+  toSyncedPlay,
+} from "./vigszinhaz";
 
 /**
  * Two kinds of test here, because this source is two sources.
@@ -19,6 +27,23 @@ import { eventStartsAt, isOwnHouse, isRecentEnough, isUpcomingPremiere, parsePro
 /** Production pages, recorded from the live site on 10 September 2026. */
 const allamtitkar = readFileSync(join(__dirname, "../__fixtures__/vigszinhaz-az-allamtitkar-ur.html"), "utf8");
 const palUtcaiFiuk = readFileSync(join(__dirname, "../__fixtures__/vigszinhaz-a-pal-utcai-fiuk.html"), "utf8");
+/**
+ * The third rendering mode, and the reason `parseCastPayload` exists: this
+ * page's cast section is an empty placeholder, and its fifty-five names only
+ * exist in the streamed data.
+ */
+const haMajd = readFileSync(join(__dirname, "../__fixtures__/vigszinhaz-ha-majd-egyszer.html"), "utf8");
+
+/**
+ * The person directory, trimmed to the 142 people these three pages credit.
+ *
+ * The live endpoint returns 3,120; the cast payload names people by id and
+ * nothing else, so the test needs the lookup but not all of it.
+ */
+const persons = JSON.parse(readFileSync(join(__dirname, "../__fixtures__/vigszinhaz-persons.json"), "utf8")) as {
+  items: { id: number; full_name: { hu: string } }[];
+};
+const nameById = new Map(persons.items.map((p) => [p.id, p.full_name.hu]));
 
 const CSERESZNYESKERT = {
   id: 812,
@@ -171,6 +196,64 @@ describe("toSyncedPlay", () => {
 
   it("skips a row with no title or slug", () => {
     expect(toSyncedPlay({ id: 1 }, GENRES, [])).toBeUndefined();
+  });
+});
+
+describe("parseCastPayload", () => {
+  it("reads a cast the markup does not contain at all", () => {
+    /*
+     * The page that started this: its cast section is an empty placeholder
+     * and the browser fills it in from the streamed data, so the markup
+     * parser sees nothing while the theatre's own site shows 55 names. It
+     * showed as a production with no cast in the app.
+     */
+    expect(parseProductionCast(haMajd)).toBeUndefined();
+    expect(parseCastPayload(haMajd, nameById)?.length).toBe(55);
+  });
+
+  it("agrees with the markup when the markup is there", () => {
+    // Same page, both ways, same answer — which is what makes it safe to
+    // prefer the payload everywhere rather than only where markup is missing.
+    const payload = parseCastPayload(allamtitkar, nameById);
+    const markup = parseProductionCast(allamtitkar);
+    expect(payload).toEqual(markup);
+  });
+
+  it("reads the parts, the creative team and the alternates", () => {
+    const cast = parseCastPayload(allamtitkar, nameById)!;
+    expect(cast).toContainEqual({ name: "Wunderlich József", role: "De la Mare, államtitkár" });
+    expect(cast).toContainEqual({ name: "Máté Gábor", role: "Rendező" });
+
+    const bokas = parseCastPayload(palUtcaiFiuk, nameById)!.filter((c) => c.role === "Boka").map((c) => c.name);
+    expect(bokas).toEqual(["Wunderlich József", "Medveczky Balázs", "Ertl Zsombor"]);
+  });
+
+  it("calls a performer with no part a Szereplő", () => {
+    /*
+     * An ensemble production repeats the group's own heading on every row, so
+     * the role arrives as the plural "Szereplők" fifty-five times. Stored per
+     * person that reads wrongly, and "Szereplő" is what the Csokonai, Katona
+     * and Vojtina adapters already call the same thing.
+     */
+    const cast = parseCastPayload(haMajd, nameById)!;
+    expect(cast.filter((c) => c.role === "Szereplő").length).toBe(18);
+    expect(cast.some((c) => c.role === "Szereplők")).toBe(false);
+  });
+
+  it("keeps a chorus and a band under the names the house gives them", () => {
+    // Those group headings are already singular enough to read well, unlike
+    // "Szereplők", so they are stored as printed.
+    const cast = parseCastPayload(haMajd, nameById)!;
+    expect(cast.some((c) => c.role === "Kórus")).toBe(true);
+    expect(cast.some((c) => c.role === "Zenekar")).toBe(true);
+  });
+
+  it("drops a person the directory cannot name rather than storing an id", () => {
+    expect(parseCastPayload(allamtitkar, new Map())).toBeUndefined();
+  });
+
+  it("returns nothing for a page with no cast data", () => {
+    expect(parseCastPayload("<html><body>semmi</body></html>", nameById)).toBeUndefined();
   });
 });
 

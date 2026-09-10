@@ -1,0 +1,1001 @@
+{
+ "items": [
+  {
+   "id": 2999,
+   "full_name": {
+    "hu": "Árik Péter",
+    "en": "Péter Árik"
+   }
+  },
+  {
+   "id": 118,
+   "full_name": {
+    "hu": "Árvai György",
+    "en": "György Árvai"
+   }
+  },
+  {
+   "id": 692,
+   "full_name": {
+    "hu": "Bálint Barna",
+    "en": "Barna Bálint"
+   }
+  },
+  {
+   "id": 367,
+   "full_name": {
+    "hu": "Bata Éva",
+    "en": "Éva Bata"
+   }
+  },
+  {
+   "id": 657,
+   "full_name": {
+    "hu": "Bella Máté",
+    "en": "Máté Bella"
+   }
+  },
+  {
+   "id": 1164,
+   "full_name": {
+    "hu": "Benedek Mari",
+    "en": "Mari Benedek"
+   }
+  },
+  {
+   "id": 3180,
+   "full_name": {
+    "hu": "Berán Gábor",
+    "en": "Gábor Berán"
+   }
+  },
+  {
+   "id": 1445,
+   "full_name": {
+    "hu": "Besenyi Nándor",
+    "en": "Nándor Besenyi"
+   }
+  },
+  {
+   "id": 1464,
+   "full_name": {
+    "hu": "Besenyi Norbert",
+    "en": "Norbert Besenyi"
+   }
+  },
+  {
+   "id": 1374,
+   "full_name": {
+    "hu": "Birta Márton",
+    "en": "Márton Birta"
+   }
+  },
+  {
+   "id": 1446,
+   "full_name": {
+    "hu": "Bodó Zsombor",
+    "en": "Zsombor Bodó"
+   }
+  },
+  {
+   "id": 983,
+   "full_name": {
+    "hu": "Borbiczki Ferenc",
+    "en": "Ferenc Borbiczki"
+   }
+  },
+  {
+   "id": 819,
+   "full_name": {
+    "hu": "Bölkény Balázs",
+    "en": "Balázs Bölkény"
+   }
+  },
+  {
+   "id": 639,
+   "full_name": {
+    "hu": "Brasch Bence",
+    "en": "Bence Brasch"
+   }
+  },
+  {
+   "id": 3181,
+   "full_name": {
+    "hu": "Bujtor Balázs",
+    "en": "Balázs Bujtor"
+   }
+  },
+  {
+   "id": 393,
+   "full_name": {
+    "hu": "Csapó Attila",
+    "en": "Attila Csapó"
+   }
+  },
+  {
+   "id": 357,
+   "full_name": {
+    "hu": "Csiby Gergely",
+    "en": "Gergely Csiby"
+   }
+  },
+  {
+   "id": 651,
+   "full_name": {
+    "hu": "Csontos Balázs",
+    "en": "Balázs Csontos"
+   }
+  },
+  {
+   "id": 1033,
+   "full_name": {
+    "hu": "Csőre Gábor",
+    "en": "Gábor Csőre"
+   }
+  },
+  {
+   "id": 3044,
+   "full_name": {
+    "hu": "Deák Kristóf",
+    "en": "Kristóf Deák"
+   }
+  },
+  {
+   "id": 1465,
+   "full_name": {
+    "hu": "Demjén Gergely",
+    "en": "Gergely Demjén"
+   }
+  },
+  {
+   "id": 1300,
+   "full_name": {
+    "hu": "Dés András",
+    "en": "András Dés"
+   }
+  },
+  {
+   "id": 1271,
+   "full_name": {
+    "hu": "Dés László",
+    "en": "László Dés"
+   }
+  },
+  {
+   "id": 499,
+   "full_name": {
+    "hu": "Dino Benjamin",
+    "en": "Benjamin Dino"
+   }
+  },
+  {
+   "id": 2150,
+   "full_name": {
+    "hu": [
+     "Guido Di Vona"
+    ],
+    "en": "Guido Di Vona"
+   }
+  },
+  {
+   "id": 761,
+   "full_name": {
+    "hu": "D. Mucsi Zoltán",
+    "en": "Zoltán D. Mucsi"
+   }
+  },
+  {
+   "id": 1405,
+   "full_name": {
+    "hu": "Drahota Albert",
+    "en": "Albert Drahota"
+   }
+  },
+  {
+   "id": 1406,
+   "full_name": {
+    "hu": "Dzsupin Ádám",
+    "en": "Ádám Dzsupin"
+   }
+  },
+  {
+   "id": 700,
+   "full_name": {
+    "hu": "Ertl Zsombor",
+    "en": "Zsombor Ertl"
+   }
+  },
+  {
+   "id": 443,
+   "full_name": {
+    "hu": "Eszenyi Enikő",
+    "en": "Enikő Eszenyi"
+   }
+  },
+  {
+   "id": 902,
+   "full_name": {
+    "hu": "Fábián Szabolcs",
+    "en": "Szabolcs Fábián"
+   }
+  },
+  {
+   "id": 3176,
+   "full_name": {
+    "hu": "Fáklya Erzsébet",
+    "en": "Erzsébet Fáklya"
+   }
+  },
+  {
+   "id": 1028,
+   "full_name": {
+    "hu": "Fesztbaum Béla",
+    "en": "Béla Fesztbaum"
+   }
+  },
+  {
+   "id": 1466,
+   "full_name": {
+    "hu": "Forczek Ágoston",
+    "en": "Ágoston Forczek"
+   }
+  },
+  {
+   "id": 981,
+   "full_name": {
+    "hu": "Furák Péter",
+    "en": "Péter Furák"
+   }
+  },
+  {
+   "id": 953,
+   "full_name": {
+    "hu": "Fülöp Kristóf",
+    "en": "Kristóf Fülöp"
+   }
+  },
+  {
+   "id": 247,
+   "full_name": {
+    "hu": "Gados Béla",
+    "en": "Béla Gados"
+   }
+  },
+  {
+   "id": 3177,
+   "full_name": {
+    "hu": "Gáspár Csaba",
+    "en": "Csaba Gáspár"
+   }
+  },
+  {
+   "id": 989,
+   "full_name": {
+    "hu": "Géczi Zoltán",
+    "en": "Zoltán Géczi"
+   }
+  },
+  {
+   "id": 1272,
+   "full_name": {
+    "hu": "Geszti Péter",
+    "en": "Péter Geszti"
+   }
+  },
+  {
+   "id": 588,
+   "full_name": {
+    "hu": "Gonda Kata",
+    "en": "Kata Gonda"
+   }
+  },
+  {
+   "id": 459,
+   "full_name": {
+    "hu": "Grósz Zsuzsa",
+    "en": "Zsuzsa Grósz"
+   }
+  },
+  {
+   "id": 1447,
+   "full_name": {
+    "hu": "Győrfi Erik",
+    "en": "Erik Győrfi"
+   }
+  },
+  {
+   "id": 511,
+   "full_name": {
+    "hu": "Harkányi Endre",
+    "en": "Endre Harkányi"
+   }
+  },
+  {
+   "id": 759,
+   "full_name": {
+    "hu": "Hegyi Barbara",
+    "en": "Barbara Hegyi"
+   }
+  },
+  {
+   "id": 133,
+   "full_name": {
+    "hu": "Hirtling István",
+    "en": "István Hirtling"
+   }
+  },
+  {
+   "id": 1467,
+   "full_name": {
+    "hu": "Hoffmann Zsombor",
+    "en": "Zsombor Hoffmann"
+   }
+  },
+  {
+   "id": 1302,
+   "full_name": {
+    "hu": "Horkay Barnabás",
+    "en": "Barnabás Horkay"
+   }
+  },
+  {
+   "id": 1120,
+   "full_name": {
+    "hu": "Horváth Csaba",
+    "en": "Csaba Horváth"
+   }
+  },
+  {
+   "id": 873,
+   "full_name": {
+    "hu": "Horváth Szabolcs",
+    "en": "Szabolcs Horváth"
+   }
+  },
+  {
+   "id": 256,
+   "full_name": {
+    "hu": "Huszti Gábor",
+    "en": "Gábor Huszti"
+   }
+  },
+  {
+   "id": 840,
+   "full_name": {
+    "hu": "Járó Zsuzsa",
+    "en": "Zsuzsa Járó"
+   }
+  },
+  {
+   "id": 224,
+   "full_name": {
+    "hu": "Jároli Helga",
+    "en": "Helga Jároli"
+   }
+  },
+  {
+   "id": 1449,
+   "full_name": {
+    "hu": "Jónás Roland",
+    "en": "Roland Jónás"
+   }
+  },
+  {
+   "id": 769,
+   "full_name": {
+    "hu": "Józan László",
+    "en": "László Józan"
+   }
+  },
+  {
+   "id": 714,
+   "full_name": {
+    "hu": "Juhász Bence",
+    "en": "Bence Juhász"
+   }
+  },
+  {
+   "id": 2815,
+   "full_name": {
+    "hu": "Juronics Tamás",
+    "en": "Tamás Juronics"
+   }
+  },
+  {
+   "id": 413,
+   "full_name": {
+    "hu": "Karácsonyi Zoltán",
+    "en": "Zoltán Karácsonyi"
+   }
+  },
+  {
+   "id": 1150,
+   "full_name": {
+    "hu": "Kéner Gabriella",
+    "en": "Gabriella Kéner"
+   }
+  },
+  {
+   "id": 980,
+   "full_name": {
+    "hu": "Kerek Dávid",
+    "en": "Dávid Kerek"
+   }
+  },
+  {
+   "id": 282,
+   "full_name": {
+    "hu": "Kertes Zsuzsanna",
+    "en": "Zsuzsanna Kertes"
+   }
+  },
+  {
+   "id": 1262,
+   "full_name": {
+    "hu": "Khell Csörsz",
+    "en": "Csörsz Khell"
+   }
+  },
+  {
+   "id": 2544,
+   "full_name": {
+    "hu": "Khell Zsolt",
+    "en": "Zsolt Khell"
+   }
+  },
+  {
+   "id": 533,
+   "full_name": {
+    "hu": "Kóbor Balázs",
+    "en": "Balázs Kóbor"
+   }
+  },
+  {
+   "id": 128,
+   "full_name": {
+    "hu": "Kopek Gábor",
+    "en": "Gábor Kopek"
+   }
+  },
+  {
+   "id": 64,
+   "full_name": {
+    "hu": "Kopek Janka",
+    "en": "Janka Kopek"
+   }
+  },
+  {
+   "id": 212,
+   "full_name": {
+    "hu": "Kovács Adrián",
+    "en": "Adrián Kovács"
+   }
+  },
+  {
+   "id": 65,
+   "full_name": {
+    "hu": "Kovács Krisztina",
+    "en": "Krisztina Kovács"
+   }
+  },
+  {
+   "id": 1453,
+   "full_name": {
+    "hu": "Kovács Mátyás",
+    "en": "Mátyás Kovács"
+   }
+  },
+  {
+   "id": 308,
+   "full_name": {
+    "hu": "Kovács Olivér",
+    "en": "Olivér Kovács"
+   }
+  },
+  {
+   "id": 760,
+   "full_name": {
+    "hu": "Kovács Patrícia",
+    "en": "Patrícia Kovács"
+   }
+  },
+  {
+   "id": 1560,
+   "full_name": {
+    "hu": "Kovács Tamás",
+    "en": "Tamás Kovács"
+   }
+  },
+  {
+   "id": 647,
+   "full_name": {
+    "hu": "Kőszegi Ákos",
+    "en": "Ákos Kőszegi"
+   }
+  },
+  {
+   "id": 971,
+   "full_name": {
+    "hu": "Kövesi Zsombor",
+    "en": "Zsombor Kövesi"
+   }
+  },
+  {
+   "id": 1296,
+   "full_name": {
+    "hu": "Krisztiáni István",
+    "en": "István Krisztiáni"
+   }
+  },
+  {
+   "id": 2486,
+   "full_name": {
+    "hu": "Kutrik Bence",
+    "en": "Bence Kutrik"
+   }
+  },
+  {
+   "id": 1143,
+   "full_name": {
+    "hu": "Laczkó Bálint",
+    "en": "Bálint Laczkó"
+   }
+  },
+  {
+   "id": 70,
+   "full_name": {
+    "hu": "Lajos András",
+    "en": "András Lajos"
+   }
+  },
+  {
+   "id": 1468,
+   "full_name": {
+    "hu": "Leviczky Dávid",
+    "en": "Dávid Leviczky"
+   }
+  },
+  {
+   "id": 611,
+   "full_name": {
+    "hu": "Liber Ágoston",
+    "en": "Ágoston Liber"
+   }
+  },
+  {
+   "id": 1301,
+   "full_name": {
+    "hu": "Madarász János",
+    "en": "János Madarász"
+   }
+  },
+  {
+   "id": 731,
+   "full_name": {
+    "hu": "Majsai-Nyilas Tünde",
+    "en": "Tünde Majsai-Nyilas"
+   }
+  },
+  {
+   "id": 1469,
+   "full_name": {
+    "hu": "Mákszem Bálint",
+    "en": "Bálint Mákszem"
+   }
+  },
+  {
+   "id": 152,
+   "full_name": {
+    "hu": "Marton László",
+    "en": "László Marton"
+   }
+  },
+  {
+   "id": 1127,
+   "full_name": {
+    "hu": "Máté Gábor",
+    "en": "Gábor Máté"
+   }
+  },
+  {
+   "id": 512,
+   "full_name": {
+    "hu": "Medveczky Balázs",
+    "en": "Balázs Medveczky"
+   }
+  },
+  {
+   "id": 3182,
+   "full_name": {
+    "hu": "Melega Tamás",
+    "en": "Tamás Melega"
+   }
+  },
+  {
+   "id": 388,
+   "full_name": {
+    "hu": "Mester Dávid",
+    "en": "Dávid Mester"
+   }
+  },
+  {
+   "id": 1078,
+   "full_name": {
+    "hu": "Mészáros Máté",
+    "en": "Máté Mészáros"
+   }
+  },
+  {
+   "id": 1305,
+   "full_name": {
+    "hu": "Mezei Ábel",
+    "en": "Ábel Mezei"
+   }
+  },
+  {
+   "id": 1375,
+   "full_name": {
+    "hu": "Miskolczi Renátó",
+    "en": "Renátó Miskolczi"
+   }
+  },
+  {
+   "id": 675,
+   "full_name": {
+    "hu": "Molnár András",
+    "en": "András Molnár"
+   }
+  },
+  {
+   "id": 3183,
+   "full_name": {
+    "hu": "Molnár Péter",
+    "en": "Péter Molnár"
+   }
+  },
+  {
+   "id": 71,
+   "full_name": {
+    "hu": "Nádas Gábor Dávid",
+    "en": "Gábor Dávid Nádas"
+   }
+  },
+  {
+   "id": 1456,
+   "full_name": {
+    "hu": "Nádas Zalán",
+    "en": "Zalán Nádas"
+   }
+  },
+  {
+   "id": 1457,
+   "full_name": {
+    "hu": "Nagy Csaba Mátyás",
+    "en": "Csaba Mátyás Nagy"
+   }
+  },
+  {
+   "id": 549,
+   "full_name": {
+    "hu": "Nagy Szabolcs",
+    "en": "Szabolcs Nagy"
+   }
+  },
+  {
+   "id": 1198,
+   "full_name": {
+    "hu": "Nánási Attila",
+    "en": "Attila Nánási"
+   }
+  },
+  {
+   "id": 3184,
+   "full_name": {
+    "hu": "Németh Attila",
+    "en": "Attila Németh"
+   }
+  },
+  {
+   "id": 61,
+   "full_name": {
+    "hu": "Nyomárkay Zsigmond",
+    "en": "Zsigmond Nyomárkay"
+   }
+  },
+  {
+   "id": 1412,
+   "full_name": {
+    "hu": "Orosz Gergő",
+    "en": "Gergő Orosz"
+   }
+  },
+  {
+   "id": 3185,
+   "full_name": {
+    "hu": "Ottmár Dávid",
+    "en": "Dávid Ottmár"
+   }
+  },
+  {
+   "id": 545,
+   "full_name": {
+    "hu": "Patkós Gergő",
+    "en": "Gergő Patkós"
+   }
+  },
+  {
+   "id": 1414,
+   "full_name": {
+    "hu": "Perger Mátyás",
+    "en": "Mátyás Perger"
+   }
+  },
+  {
+   "id": 3186,
+   "full_name": {
+    "hu": "Piri Béla",
+    "en": "Béla Piri"
+   }
+  },
+  {
+   "id": 1470,
+   "full_name": {
+    "hu": "Pupics Levente",
+    "en": "Levente Pupics"
+   }
+  },
+  {
+   "id": 1322,
+   "full_name": {
+    "hu": "Pusztai Judit",
+    "en": "Judit Pusztai"
+   }
+  },
+  {
+   "id": 3178,
+   "full_name": {
+    "hu": "Radics Zsuzsa",
+    "en": "Zsuzsa Radics"
+   }
+  },
+  {
+   "id": 1278,
+   "full_name": {
+    "hu": "Radnóti Zsuzsa",
+    "en": "Zsuzsa Radnóti"
+   }
+  },
+  {
+   "id": 922,
+   "full_name": {
+    "hu": "Reider Péter",
+    "en": "Péter Reider"
+   }
+  },
+  {
+   "id": 307,
+   "full_name": {
+    "hu": "Réti Adrienn",
+    "en": "Adrienn Réti"
+   }
+  },
+  {
+   "id": 495,
+   "full_name": {
+    "hu": "Röthler Balázs",
+    "en": "Balázs Röthler"
+   }
+  },
+  {
+   "id": 2491,
+   "full_name": {
+    "hu": "Rujsz Edit",
+    "en": "Edit Rujsz"
+   }
+  },
+  {
+   "id": 233,
+   "full_name": {
+    "hu": "Sarádi Zsolt",
+    "en": "Zsolt Sarádi"
+   }
+  },
+  {
+   "id": 3187,
+   "full_name": {
+    "hu": "Sebők Eszter",
+    "en": "Eszter Sebők"
+   }
+  },
+  {
+   "id": 928,
+   "full_name": {
+    "hu": "Seress Zoltán",
+    "en": "Zoltán Seress"
+   }
+  },
+  {
+   "id": 3190,
+   "full_name": {
+    "hu": "Solti Árpád",
+    "en": "Árpád Solti"
+   }
+  },
+  {
+   "id": 3188,
+   "full_name": {
+    "hu": "Sonkovics Lóránd",
+    "en": "Lóránd Sonkovics"
+   }
+  },
+  {
+   "id": 1144,
+   "full_name": {
+    "hu": "Steenhuis Raul",
+    "en": "Raul Steenhuis"
+   }
+  },
+  {
+   "id": 1471,
+   "full_name": {
+    "hu": "Szakács Richárd",
+    "en": "Richárd Szakács"
+   }
+  },
+  {
+   "id": 419,
+   "full_name": {
+    "hu": "Szántó Balázs",
+    "en": "Balázs Szántó"
+   }
+  },
+  {
+   "id": 1130,
+   "full_name": {
+    "hu": "Szász Júlia",
+    "en": "Júlia Szász"
+   }
+  },
+  {
+   "id": 1294,
+   "full_name": {
+    "hu": "Szilágyi Lóránd",
+    "en": "Lóránd Szilágyi"
+   }
+  },
+  {
+   "id": 3189,
+   "full_name": {
+    "hu": "Szitha Miklós",
+    "en": "Miklós Szitha"
+   }
+  },
+  {
+   "id": 1933,
+   "full_name": {
+    "hu": "Szűcs Edit",
+    "en": "Edit Szűcs"
+   }
+  },
+  {
+   "id": 931,
+   "full_name": {
+    "hu": "Tahi Tóth László",
+    "en": "László Tahi Tóth"
+   }
+  },
+  {
+   "id": 514,
+   "full_name": {
+    "hu": "Takács Zalán",
+    "en": "Zalán Takács"
+   }
+  },
+  {
+   "id": 250,
+   "full_name": {
+    "hu": "Telekes Péter",
+    "en": "Péter Telekes"
+   }
+  },
+  {
+   "id": 508,
+   "full_name": {
+    "hu": "Terjék Attila",
+    "en": "Attila Terjék"
+   }
+  },
+  {
+   "id": 540,
+   "full_name": {
+    "hu": "Tornyi Ildikó",
+    "en": "Ildikó Tornyi"
+   }
+  },
+  {
+   "id": 300,
+   "full_name": {
+    "hu": "Tóth András",
+    "en": "András Tóth"
+   }
+  },
+  {
+   "id": 2874,
+   "full_name": {
+    "hu": "Tóth Balázs",
+    "en": "Balázs Tóth"
+   }
+  },
+  {
+   "id": 1472,
+   "full_name": {
+    "hu": "Tóth Keve",
+    "en": "Keve Tóth"
+   }
+  },
+  {
+   "id": 523,
+   "full_name": {
+    "hu": "Turi Péter",
+    "en": "Péter Turi"
+   }
+  },
+  {
+   "id": 1473,
+   "full_name": {
+    "hu": "Valkó Bence",
+    "en": "Bence Valkó"
+   }
+  },
+  {
+   "id": 94,
+   "full_name": {
+    "hu": "Varga Miklós",
+    "en": "Miklós Varga"
+   }
+  },
+  {
+   "id": 1197,
+   "full_name": {
+    "hu": "Varga Szabolcs",
+    "en": "Szabolcs Varga"
+   }
+  },
+  {
+   "id": 504,
+   "full_name": {
+    "hu": "Virág Péter",
+    "en": "Péter Virág"
+   }
+  },
+  {
+   "id": 716,
+   "full_name": {
+    "hu": "Wiesmeyer Erik",
+    "en": "Erik Wiesmeyer"
+   }
+  },
+  {
+   "id": 584,
+   "full_name": {
+    "hu": "Wunderlich József",
+    "en": "József Wunderlich"
+   }
+  },
+  {
+   "id": 3179,
+   "full_name": {
+    "hu": "Zákányi Zsolt",
+    "en": "Zsolt Zákányi"
+   }
+  },
+  {
+   "id": 923,
+   "full_name": {
+    "hu": "Zoltán Áron",
+    "en": "Áron Zoltán"
+   }
+  }
+ ],
+ "count": 142
+}

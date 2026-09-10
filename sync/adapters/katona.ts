@@ -33,6 +33,7 @@ import * as cheerio from "cheerio";
 import { fetchText } from "../lib/http";
 import { parseHungarianDate } from "../lib/huDate";
 import { parseDurationHu } from "../lib/huDuration";
+import { normalizeText } from "../lib/normalize";
 import { VENUE_IDS } from "../venueMap";
 import { fetchCurrentSlugs } from "./katona-wp";
 import type { SyncAdapter, SyncedPlay } from "../lib/types";
@@ -103,6 +104,17 @@ async function fetchSection(path: string): Promise<string[]> {
 
 async function fetchProduction(path: string): Promise<SyncedPlay | undefined> {
   const html = await fetchText(`${BASE_URL}${path}`, { crawlDelayMs: CRAWL_DELAY_MS });
+  return parseProductionPage(html, path);
+}
+
+/**
+ * One production page of the frozen archive.
+ *
+ * Split out of the fetch so it can be tested against a recorded page, which is
+ * how every other adapter here is arranged — and what this one was missing
+ * when its cast tables went unread for months.
+ */
+export function parseProductionPage(html: string, path: string): SyncedPlay | undefined {
   const $ = cheerio.load(html);
 
   // The <title> is just the production name — no site suffix to strip here,
@@ -125,10 +137,45 @@ async function fetchProduction(path: string): Promise<SyncedPlay | undefined> {
       .join("\n\n") || undefined;
 
   const cast: { name: string; role: string }[] = [];
-  // Cast lives in the same custom-fields structure; entries that carry both a
-  // label and a value are role/performer pairs. Anything already consumed
-  // above is skipped so the metadata fields don't turn into cast members.
-  const consumed = new Set(["rendezo", "irta", "bemutato", "az-eloadas-hossza", "szinlap-kep", "helyszin", "szinlap-hely"]);
+
+  /*
+   * The cast and the creative team are two-column tables.
+   *
+   * `szereplok` and `alkotok` are field entries like the rest, but their
+   * value is a `<table>` of "role | person" rows rather than a single string:
+   * "Othello | Bányai Kelemen Barna". Read by the generic sweep below they
+   * arrive as one 900-character blob, which its own length guard then throws
+   * away — so this frozen archive held no cast for the productions that use
+   * the table form, fourteen of them, while their pages listed a full cast.
+   */
+  $("li.field-entry.szereplok, li.field-entry.alkotok").each((_, entry) => {
+    $(entry)
+      .find("tr")
+      .each((__, row) => {
+        const cells = $(row).find("td");
+        if (cells.length < 2) return;
+        const role = normalizeText($(cells[0]).text());
+        const name = normalizeText($(cells[1]).text());
+        // A stray one-column layout row, or a note in the second cell.
+        if (role && name && name.length < 120) cast.push({ role, name });
+      });
+  });
+
+  // Everything else in the same custom-fields structure; entries that carry
+  // both a label and a value are role/performer pairs. Anything already
+  // consumed above is skipped so the metadata fields don't turn into cast
+  // members, and so do the two tables just read.
+  const consumed = new Set([
+    "rendezo",
+    "irta",
+    "bemutato",
+    "az-eloadas-hossza",
+    "szinlap-kep",
+    "helyszin",
+    "szinlap-hely",
+    "szereplok",
+    "alkotok",
+  ]);
   $("li.field-entry").each((_, el) => {
     const classes = ($(el).attr("class") ?? "").split(/\s+/);
     if (classes.some((c) => consumed.has(c))) return;

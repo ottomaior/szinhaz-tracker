@@ -1,0 +1,1155 @@
+﻿<script language='JavaScript'>
+	<!--
+	function setCookie(name,value,days) {
+      var expires = '';
+      if (days) {
+        var date = new Date();
+        date.setTime(date.getTime() + (days*24*60*60*1000));
+        expires = '; expires=' + date.toUTCString();
+      }
+      document.cookie = name + '=' + (value || '')  + expires + '; path=/';
+    }
+    setCookie('screenWidth', screen.width, 30);
+
+	document.location="";
+	//-->
+	</script><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="hu" xmlns="http://www.w3.org/1999/xhtml" xml:lang="hu">
+<head>
+    <meta name="version" content="3"/>
+	<script type="text/javascript" src="/templates/2022_j4/js/jquery-1.10.2.js"></script>
+	<script type="text/javascript">
+		$.noConflict();
+	</script>
+	<script type="text/javascript">
+	    console.log("43342");
+	    function hasUrlParameter(paramName) {
+            var url = window.location.href;
+            if(url.indexOf('?' + paramName + '=') != -1)
+                return true;
+            else if(url.indexOf('&' + paramName + '=') != -1)
+                return true;
+            return false
+	    }
+
+	    function setCookie(name,value,days) {
+            var expires = "";
+            if (days) {
+                var date = new Date();
+                date.setTime(date.getTime() + (days*24*60*60*1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+        }
+        function getCookie(name) {
+            var nameEQ = name + "=";
+            var ca = document.cookie.split(';');
+            for(var i=0;i < ca.length;i++) {
+                var c = ca[i];
+                while (c.charAt(0)==' ') c = c.substring(1,c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+            }
+            return null;
+        }
+        function eraseCookie(name) {
+            document.cookie = name +'=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        }
+	</script>
+    <!-- meta name="viewport" content="width=390, initial-scale=1" /-->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="generator" content="Joomla! - Open Source Content Management">
+	<title>William Shakespeare: Othello</title>
+	<link href="/media/system/images/joomla-favicon.svg" rel="icon" type="image/svg+xml">
+	<link href="/media/system/images/favicon.ico" rel="alternate icon" type="image/vnd.microsoft.icon">
+	<link href="/media/system/images/joomla-favicon-pinned.svg" rel="mask-icon" color="#000">
+	<link href="https://archive.katonajozsefszinhaz.hu/component/finder/search?format=opensearch&amp;Itemid=199" rel="search" title="OpenSearch katonajozsefszinhaz.hu" type="application/opensearchdescription+xml">
+<link href="/media/system/css/joomla-fontawesome.min.css?2b08f6063994093edea98f314b45ab68" rel="lazy-stylesheet" /><noscript><link href="/media/system/css/joomla-fontawesome.min.css?2b08f6063994093edea98f314b45ab68" rel="stylesheet" /></noscript>
+	<link href="/media/templates/site/2022_j4/css/template.css?2b08f6063994093edea98f314b45ab68" rel="stylesheet" />
+	<link href="/media/vendor/awesomplete/css/awesomplete.css?1.1.5" rel="stylesheet" />
+	<link href="/media/sigplus/css/sigplus.min.css?v=d787ad0389f43a08dae83bd6e00966e5" rel="stylesheet" />
+	<link href="/media/sigplus/engines/boxplusx/css/boxplusx.min.css?v=035e25ce6546e42d4c95495456ee7325" rel="stylesheet" />
+	<link href="/media/sigplus/engines/slideplus/css/slideplus.min.css?v=46921fd7fd6750ffa0d141ad2b28ec1c" rel="stylesheet" />
+	<style>:root {
+		--hue: 214;
+		--template-bg-light: #f0f4fb;
+		--template-text-dark: #495057;
+		--template-text-light: #ffffff;
+		--template-link-color: var(--link-color);
+		--template-special-color: #001B4C;
+		
+	}</style>
+	<style>#boxplusx_sigplus_1001 .boxplusx-dialog, #boxplusx_sigplus_1001 .boxplusx-detail {
+background-color:rgba(255,255,255,0.8);
+color:#000;
+}
+#boxplusx_sigplus_1001 .boxplusx-detail td {
+border-color:#000;
+}
+#boxplusx_sigplus_1001 .boxplusx-navigation {
+height:60px;
+}
+#boxplusx_sigplus_1001 .boxplusx-navitem {
+width:60px;
+}
+#boxplusx_sigplus_1001 .boxplusx-dialog.boxplusx-animation {
+transition-timing-function:cubic-bezier(0.445, 0.05, 0.55, 0.95);
+}
+</style>
+	<style>#sigplus_1001 .slideplus-slot {
+width:1200px;
+aspect-ratio:1200 / 600;
+}
+#sigplus_1001 .slideplus-navigation.slideplus-top {
+display:none;
+}
+#sigplus_1001 .slideplus-pager {
+display:none;
+}
+#sigplus_1001 .slideplus-content {
+justify-content:center;
+align-items:center;
+}
+#sigplus_1001 .slideplus-stripe {
+animation-duration:800ms;
+}
+</style>
+	<style>#boxplusx_sigplus_1002 .boxplusx-dialog, #boxplusx_sigplus_1002 .boxplusx-detail {
+background-color:rgba(255,255,255,0.8);
+color:#000;
+}
+#boxplusx_sigplus_1002 .boxplusx-detail td {
+border-color:#000;
+}
+#boxplusx_sigplus_1002 .boxplusx-navigation {
+height:60px;
+}
+#boxplusx_sigplus_1002 .boxplusx-navitem {
+width:60px;
+}
+#boxplusx_sigplus_1002 .boxplusx-dialog.boxplusx-animation {
+transition-timing-function:cubic-bezier(0.445, 0.05, 0.55, 0.95);
+}
+</style>
+	<style>#sigplus_1002 .slideplus-slot {
+width:1200px;
+aspect-ratio:1200 / 600;
+}
+#sigplus_1002 .slideplus-navigation.slideplus-top {
+display:none;
+}
+#sigplus_1002 .slideplus-pager {
+display:none;
+}
+#sigplus_1002 .slideplus-content {
+justify-content:center;
+align-items:center;
+}
+#sigplus_1002 .slideplus-stripe {
+animation-duration:800ms;
+}
+</style>
+<script src="/media/mod_menu/js/menu-es5.min.js?2b08f6063994093edea98f314b45ab68" nomodule defer></script>
+	<script type="application/json" class="joomla-script-options new">{"joomla.jtext":{"MOD_FINDER_SEARCH_VALUE":"Keres\u00e9s...","JLIB_JS_AJAX_ERROR_OTHER":"Hiba mer\u00fclt fel a JSON adatok lek\u00e9r\u00e9se k\u00f6zben: HTTP %s \u00e1llapotk\u00f3d.","JLIB_JS_AJAX_ERROR_PARSE":"Elemz\u00e9si hiba t\u00f6rt\u00e9nt a k\u00f6vetkez\u0151 JSON adatok feldolgoz\u00e1sa k\u00f6zben:<br\/><code style=\"color:inherit;white-space:pre-wrap;padding:0;margin:0;border:0;background:inherit;\">%s<\/code>"},"finder-search":{"url":"\/component\/finder\/?task=suggestions.suggest&format=json&tmpl=component&Itemid=199"},"system.paths":{"root":"","rootFull":"https:\/\/archive.katonajozsefszinhaz.hu\/","base":"","baseFull":"https:\/\/archive.katonajozsefszinhaz.hu\/"},"csrf.token":"68a17c8c698d1d0b5e4c450a4372e3cc"}</script>
+	<script src="/media/system/js/core.min.js?37ffe4186289eba9c5df81bea44080aff77b9684"></script>
+	<script src="/media/com_finder/js/finder-es5.min.js?e6d3d1f535e33b5641e406eb08d15093e7038cc2" nomodule defer></script>
+	<script src="/media/vendor/awesomplete/js/awesomplete.min.js?1.1.5" defer></script>
+	<script src="/media/com_finder/js/finder.min.js?a2c3894d062787a266d59d457ffba5481b639f64" type="module"></script>
+	<script src="/media/sigplus/js/initialization.min.js?v=ff9209edd7aaded4585815a2ef79c266" defer></script>
+	<script src="/media/sigplus/engines/boxplusx/js/boxplusx.min.js?v=90aef7691cedfcbdd5536f3de3b99f2d" defer></script>
+	<script src="/media/sigplus/engines/slideplus/js/slideplus.min.js?v=dac28dfe81e6eabcf76d9a175695b884" defer></script>
+	<script>document.addEventListener("DOMContentLoaded", function () {
+__sigplusInitialize("sigplus_1001");
+__sigplusCaption("sigplus_1001", null, "{$text} ({$current}\/{$total})");
+window.sigplus=window.sigplus||{};window.sigplus.lightbox=window.sigplus.lightbox||{};window.sigplus.lightbox["#sigplus_1001 a.sigplus-image"]=(new BoxPlusXDialog({"id":"boxplusx_sigplus_1001","slideshow":0,"autostart":false,"loop":true,"navigation":"bottom","protection":false,"dir":"ltr"})).bind(document.querySelectorAll("#sigplus_1001 a.sigplus-image"));
+new SlidePlusSlider(document.querySelector("#sigplus_1001 ul"), {"rows":1,"cols":1,"loop":true,"orientation":"horizontal","step":"single","links":false,"delay":0,"timing":"sine","captions":"bottom","protection":false,"dir":"ltr"}, function (el) { return el.querySelector('.sigplus-image').getAttribute('data-title') || el.querySelector('.sigplus-image img').alt; });
+}, false);</script>
+	<script>document.addEventListener("DOMContentLoaded", function () {
+__sigplusInitialize("sigplus_1002");
+__sigplusCaption("sigplus_1002", null, "{$text} ({$current}\/{$total})");
+window.sigplus=window.sigplus||{};window.sigplus.lightbox=window.sigplus.lightbox||{};window.sigplus.lightbox["#sigplus_1002 a.sigplus-image"]=(new BoxPlusXDialog({"id":"boxplusx_sigplus_1002","slideshow":0,"autostart":false,"loop":true,"navigation":"bottom","protection":false,"dir":"ltr"})).bind(document.querySelectorAll("#sigplus_1002 a.sigplus-image"));
+new SlidePlusSlider(document.querySelector("#sigplus_1002 ul"), {"rows":1,"cols":1,"loop":true,"orientation":"horizontal","step":"single","links":false,"delay":0,"timing":"sine","captions":"bottom","protection":false,"dir":"ltr"}, function (el) { return el.querySelector('.sigplus-image').getAttribute('data-title') || el.querySelector('.sigplus-image img').alt; });
+}, false);</script>
+	<meta property="og:image" content="https://archive.katonajozsefszinhaz.hu/administrator/cache/preview/78a097e7bf64ab69c65ee05c273baa0e.jpg" />
+	<meta property="og:image:width" content="1200" />
+	<meta property="og:image:height" content="594" />
+
+	<link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600,600i,700,700i,800,800i" rel="stylesheet">
+	<link rel="stylesheet" href="/templates/2022_j4/css/site.css?a=83" type="text/css" />
+	<link rel="stylesheet" href="/templates/2022_j4/css/2022.css?a=83" type="text/css" />
+	<link rel="stylesheet" href="/templates/2022_j4/css/custom.css?a=83" type="text/css" />
+<!--[if IE]>
+	<link rel="stylesheet" type="text/css" href="/templates/2022_j4/css/2022-ie-lte9.css" />
+<![endif]-->	
+	<link rel="stylesheet" type="text/css" href="/templates/2022_j4/css/2022-ie-gte10.css" />
+	<link rel="stylesheet" href="/templates/2022_j4/css/desktop.css?a=83" type="text/css" />
+	<link rel="stylesheet" href="/templates/2022_j4/css/desktop-custom.css?a=83" type="text/css" />
+	<link rel="stylesheet" href="/templates/system/css/system.css" type="text/css" />
+
+	<link rel="stylesheet" href="/templates/2022_j4/css/akadalymentes.css?a=83" type="text/css" />
+	<script type="text/javascript" src="/templates/2022_j4/js/akadalymentes.js?a=83"></script>
+
+    <!-- Adform Tracking Code BEGIN -->
+    <script type="text/javascript">
+        window._adftrack = Array.isArray(window._adftrack) ? window._adftrack : (window._adftrack ? [window._adftrack] : []);
+        window._adftrack.push({
+            HttpHost: 'track.adform.net',
+            pm: 3591302
+        });
+        (function () { var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = 'https://s2.adform.net/banners/scripts/st/trackpoint-async.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x); })();
+    </script>
+    <noscript>
+        <p style="margin:0;padding:0;border:0;">
+            <img src="https://track.adform.net/Serving/TrackPoint/?pm=3591302" width="1" height="1" alt="" />
+        </p>
+    </noscript>
+    <!-- Adform Tracking Code END -->
+
+    <!-- Facebook Pixel Code -->
+    <script>
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window, document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '315081929793895');
+        fbq('track', 'PageView');
+    </script>
+    <noscript>
+    	<img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=315081929793895&ev=PageView&noscript=1" alt="facebook" />
+    </noscript>
+    <!-- End Facebook Pixel Code -->
+	
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-53BF7F6');</script>
+    <!-- End Google Tag Manager -->
+
+    <script>
+        function getUrlParam(paramName) {
+            var url = new URL(window.location.href);
+            return url.searchParams.get(paramName);
+        }
+
+        function setCookie(name,value,days) {
+          var expires = '';
+          if (days) {
+              var date = new Date();
+              date.setTime(date.getTime() + (days*24*60*60*1000));
+              expires = '; expires=' + date.toUTCString();
+          }
+          document.cookie = name + '=' + (value || '')  + expires + '; path=/';
+        }
+
+        function getCookie(name) {
+            var nameEQ = name + "=";
+            var ca = document.cookie.split(';');
+            for(var i=0;i < ca.length;i++) {
+                var c = ca[i];
+                while (c.charAt(0)==' ') c = c.substring(1,c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+            }
+            return null;
+        }
+
+        if (getUrlParam("devMode") == "1" || getCookie("devMode") == "1") {
+            setCookie("devMode", "1", 10);
+        } else {
+            // XXX
+//            window.location.replace("https://katona.jegymester.hu/");
+        }
+
+        if (getUrlParam("devMode") == "0") {
+            setCookie("devMode", "0", 1);
+            // XXX
+//             window.location.replace("https://katona.jegymester.hu/");
+        }
+    </script>
+</head>
+
+<body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-53BF7F6"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+
+    <a href="#fooldal-static" class="jump-to-main-content-link">Ugrás a fő tartalomra</a>
+
+	<div id="wrapper" class=" other-page">
+	    <header>
+            <div id="toptop">
+                <div class="logo">
+                    
+<div id="mod-custom296" class="mod-custom custom ">
+    <p><a href="/"><img src="/templates/2022_j4/images/logo_2022.svg" alt="Katona Jozsef Szinhaz" /></a></p></div>
+
+                </div>
+
+                <nav class="top-menu menu">
+                    
+
+                    <ul class="mod-menu mod-list nav ">
+<li class="nav-item item-195 active divider deeper parent"><span class="mod-menu__separator separator ">Előadások</span>
+<ul class="mod-menu__sub list-unstyled small"><li class="nav-item item-200 current active"><a href="/eloadasok/bemutatok" aria-current="location">Bemutatók</a></li><li class="nav-item item-201"><a href="/eloadasok/repertoar" >Repertoár</a></li><li class="nav-item item-204"><a href="/eloadasok/archivum" >Archívum</a></li><li class="nav-item item-363"><a href="/eloadasok/online" >Online</a></li></ul></li><li class="nav-item item-206"><a href="/tarsulat" >Társulat</a></li><li class="nav-item item-205 divider deeper parent"><span class="mod-menu__separator separator ">Jegyinformáció</span>
+<ul class="mod-menu__sub list-unstyled small"><li class="nav-item item-208"><a href="/mjegyek/informacio" >Információ</a></li><li class="nav-item item-207"><a href="/mjegyek/jegyek" >Jegyvásárlás</a></li><li class="nav-item item-209"><a href="/mjegyek/jegyarak-kedvezmenyek" >Jegyárak, kedvezmények</a></li><li class="nav-item item-211"><a href="/mjegyek/ajandekutalvany" >Ajándékutalvány</a></li><li class="nav-item item-347"><a href="/mjegyek/musor" >Műsor</a></li></ul></li><li class="nav-item item-212 divider deeper parent"><span class="mod-menu__separator separator ">A Katona</span>
+<ul class="mod-menu__sub list-unstyled small"><li class="nav-item item-213"><a href="/a-katona/a-katona-toertenete" >A Katona története</a></li><li class="nav-item item-214"><a href="https://archive.katonajozsefszinhaz.hu/behivo" target="_blank" rel="noopener noreferrer">Behívó</a></li><li class="nav-item item-215"><a href="/a-katona/mitos21" >Mitos21</a></li><li class="nav-item item-216"><a href="/a-katona/technikai-leiras" >Technikai leírás</a></li><li class="nav-item item-308"><a href="/a-katona/kulfoldi-vendegjatekok" >Külföld</a></li><li class="nav-item item-358"><a href="/a-katona/k-antin" >Kantin:</a></li><li class="nav-item item-367"><a href="/gifszinhaz-menu-item" >Gifszínház</a></li></ul></li><li class="nav-item item-346"><a href="/?start=00" title="Hírek">Hírek</a></li><li class="nav-item item-349 divider deeper parent"><span class="mod-menu__separator separator ">Pártolói kör</span>
+<ul class="mod-menu__sub list-unstyled small"><li class="nav-item item-350"><a href="/partoloi-kor-d/informacio-es-vasarlas" >Információ és vásárlás</a></li><li class="nav-item item-351"><a href="/partoloi-kor-d/tamogatoink" >Támogatóink</a></li><li class="nav-item item-352"><a href="/partoloi-kor-d/mecenasaink" >Mecénásaink</a></li><li class="nav-item item-368"><a href="/partoloi-kor-d/vallalati-mecenatura-program" >Vállalati együttműködési program</a></li></ul></li></ul>
+
+                    
+                </nav>
+                <div class="search">
+                    
+<form class="mod-finder js-finder-searchform form-search" action="/component/finder/search?Itemid=199" method="get" role="search">
+    <label for="mod-finder-searchword348" class="finder">Keresés</label><input type="text" name="q" id="mod-finder-searchword348" class="js-finder-search-query form-control" value="" placeholder="Keresés...">
+            <input type="hidden" name="Itemid" value="199"></form>
+
+                </div>
+                <div class="button-jegyvasarlas">
+                    
+<div id="mod-custom282" class="mod-custom custom ">
+    <p><a href="/jegyek?noCache=1">Jegyv&aacute;s&aacute;rl&aacute;s</a></p></div>
+
+                </div>
+                <div class="lang-icons">
+                    
+<div id="mod-custom284" class="mod-custom custom ">
+    <p><a href="/english">EN</a></p></div>
+
+                </div>
+                <div class="clear"></div>
+            </div>
+            <div id="header">
+                <div>
+                    <div class="menu-parent">
+                        <div id="menu" class="menu ">
+                        </div>
+                        <div id="menu-en" class="menu ">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="header-pos">
+                
+            </div>
+            <div class="clear"></div>
+        </header>
+        <div id="contents">
+            <aside id="leftside"></aside>
+
+            <main>
+                <div id="center">
+
+
+    			<div class="grid-container">
+                    <div class="cat9"><div class="com-content-article item-page rnd3" itemscope itemtype="https://schema.org/Article">
+    <meta itemprop="inLanguage" content="hu-HU">
+    
+    
+        <div class="page-header">
+        <h1 itemprop="headline">
+            William Shakespeare: Othello        </h1>
+                            </div>
+        
+        <ul class="fields-container">
+    <li class="field-entry helyszin szinlap-hely"><span class="field-value "><img src="/images/media/helyszinek/katona.svg"></span>
+</li>
+<li class="field-entry szinlap-kep "><span class="field-value "><img src="/images/media/gallery/archivum_coverek/20-21/othello_cover.jpg"></span>
+</li></ul>
+    
+    
+        <ul class="fields-container">
+    <li class="field-entry rendezo ">    <span class="field-label ">Rendező</span>
+<span class="field-value ">Sz&eacute;kely Kriszta</span>
+</li>
+<li class="field-entry irta ">    <span class="field-label ">&Iacute;rta</span>
+<span class="field-value ">William Shakespeare</span>
+</li>
+<li class="field-entry bemutato ">    <span class="field-label ">Bemutat&oacute;</span>
+<span class="field-value ">2020. okt&oacute;ber 9.</span>
+</li>
+<li class="field-entry az-eloadas-hossza ">    <span class="field-label ">Az előad&aacute;s hossza</span>
+<span class="field-value ">1 &oacute;ra 50 perc, sz&uuml;net n&eacute;lk&uuml;l</span>
+</li></ul>
+                                                <div itemprop="articleBody" class="com-content-article__body">
+        <p>Ford&iacute;totta: M&aacute;rton L&aacute;szl&oacute;</p>
+<p>&nbsp;</p>
+<p>&bdquo;Nem az vagyok, aki vagyok&rdquo; &ndash; mondja Jago, egy sz&aacute;zados, aki ezredes akar lenni. Mindenkire f&eacute;lt&eacute;keny, mindenkinek hazudik. Tiszt&aacute;ban van az emberek manipul&aacute;lhat&oacute;s&aacute;g&aacute;val, azzal, hogy a &bdquo;val&oacute;s&aacute;g&rdquo; nem egy&eacute;rtelmű, minden t&aacute;lal&aacute;s k&eacute;rd&eacute;se. Biztos &eacute;rz&eacute;kkel kitapintja a megl&eacute;vő reped&eacute;seket szerelmesek, bar&aacute;tok, sz&ouml;vets&eacute;gesek k&ouml;z&ouml;tt, &eacute;s hazugs&aacute;ggal szakad&eacute;kk&aacute; m&eacute;ly&iacute;ti. Sz&eacute;tv&aacute;lasztja a vil&aacute;got. Bizonytalans&aacute;gra, f&eacute;lelemre &eacute;s elő&iacute;t&eacute;letre &eacute;p&iacute;t, megoszt &eacute;s uralkodik. Othello hisz az &bdquo;őszinte&rdquo; Jag&oacute;nak, mert Jago brav&uacute;rosan alak&iacute;tja az őszint&eacute;t. Az Othello t&eacute;nyeken t&uacute;li vil&aacute;g&aacute;ban Desdemon&aacute;ra r&aacute;mondj&aacute;k, hogy h&aacute;zass&aacute;gt&ouml;rő, &eacute;s ezt &uacute;jdons&uuml;lt f&eacute;rje el is hiszi, mert a l&aacute;tszat ellene sz&oacute;l. A hazugs&aacute;g felnagy&iacute;tja a dolgok rosszabbik oldal&aacute;t, &eacute;s pillanatok alatt sz&eacute;tesik minden.</p>
+<p>&nbsp;</p>
+<p><em>Hol hazugs&aacute;g van, ott hazugs&aacute;g van, az ott van a b&uacute;cs&uacute;cs&oacute;kban, ahogy &iacute;gy sz&oacute;l a hitves: mikor j&ouml;ssz haza, kedves, az utc&aacute;n oly szokottan ism&eacute;telt hogy-vagy-okban, a hirtelen puh&aacute;bban szor&iacute;tott k&eacute;zfog&aacute;sban, ahogy egyszercsak szerelmed arca megfagy, mert ott van a l&eacute;gyottban, mert &aacute;lmaidban sem vagy magadban, ott van a n&aacute;szi &aacute;gyban, előtte m&aacute;r a v&aacute;gyban, vele hevert&eacute;l, ha azt hitted, szerett&eacute;l, t&aacute;ny&eacute;rban &eacute;s poh&aacute;rban, az ott van az orrban, sz&aacute;jban, hidegben &eacute;s hom&aacute;lyban, szabadban &eacute;s szob&aacute;dban, doh&aacute;nyod zamat&aacute;ba, ruh&aacute;id anyag&aacute;ba, beiv&oacute;dik, evődik velődig, eszm&eacute;ln&eacute;l, de eszme csak &ouml;v&eacute; jut eszedbe, n&eacute;zn&eacute;l, de csak azt l&aacute;tod, mit ő el&eacute;d var&aacute;zsolt, ha magadban besz&eacute;lgetsz, ő, a hazugs&aacute;g k&eacute;rdez.<br /><br /></em></p>
+<p>&nbsp;</p>
+<p>Utols&oacute; előad&aacute;s: 2024. febru&aacute;r 25.</p>    </div>
+
+        
+                                        <ul class="fields-container">
+    <li class="field-entry sajat-link hidden hu-link"><span class="field-value "><a href="https://www.katonajozsefszinhaz.hu/eloadasok/bemutatok/43342-othello" rel="nofollow noopener noreferrer" target="_blank">Visit Website</a></span>
+</li>
+<li class="field-entry galeria field-entry-after-box szinlap"><span class="field-value "><h2>GAL&Eacute;RIA</h2>
+<p><div id="sigplus_1002" class="sigplus-gallery sigplus-center sigplus-lightbox-boxplusx"><noscript class="sigplus-gallery"><ul><li><a class="sigplus-image" href="/images/media/gallery/archivum_galeriak/20-21/othello/othello_1.jpg"><img class="sigplus-preview" src="/administrator/cache/preview/000662ef8292d923c4f5814b65d0fe6c.jpg" width="1200" height="600" alt="" srcset="/administrator/cache/preview/78a097e7bf64ab69c65ee05c273baa0e.jpg 2400w, /administrator/cache/preview/000662ef8292d923c4f5814b65d0fe6c.jpg 1200w, /administrator/cache/thumb/e66a20c4d0f80bb935e6426a3be7d3d1.jpg 60w" sizes="1200px" /></a><div class="sigplus-summary"></div></li><li><a class="sigplus-image" href="/images/media/gallery/archivum_galeriak/20-21/othello/othello_2.jpg"><img class="sigplus-preview" src="/administrator/cache/preview/5682ab491d91bb81351de01e06e416d4.jpg" width="1200" height="600" alt="" srcset="/administrator/cache/preview/3073841338e80d6dc7d5cb5d9913cee8.jpg 2400w, /administrator/cache/preview/5682ab491d91bb81351de01e06e416d4.jpg 1200w, /administrator/cache/thumb/dbee3098c4df94be8dd4e2a2eb187c3f.jpg 60w" sizes="1200px" /></a><div class="sigplus-summary"></div></li><li><a class="sigplus-image" href="/images/media/gallery/archivum_galeriak/20-21/othello/othello_3.jpg"><img class="sigplus-preview" src="/administrator/cache/preview/c187ae0943c0f7a0fb67f4f44e117fbe.jpg" width="1200" height="600" alt="" srcset="/administrator/cache/preview/23dc6ea4d0560dfff7888b19a5bcfb91.jpg 2400w, /administrator/cache/preview/c187ae0943c0f7a0fb67f4f44e117fbe.jpg 1200w, /administrator/cache/thumb/39d4a881a09d2f2930210a52aa784947.jpg 60w" sizes="1200px" /></a><div class="sigplus-summary"></div></li><li><a class="sigplus-image" href="/images/media/gallery/archivum_galeriak/20-21/othello/othello_4.jpg"><img class="sigplus-preview" src="/administrator/cache/preview/0d5c947ed8ee0d72375da0da5b0800cd.jpg" width="1200" height="600" alt="" srcset="/administrator/cache/preview/0d820cb40ac94d419f9eac7959a69328.jpg 2400w, /administrator/cache/preview/0d5c947ed8ee0d72375da0da5b0800cd.jpg 1200w, /administrator/cache/thumb/2bbb325b732f190f70b99aa579e94b94.jpg 60w" sizes="1200px" /></a><div class="sigplus-summary"></div></li><li><a class="sigplus-image" href="/images/media/gallery/archivum_galeriak/20-21/othello/othello_5.jpg"><img class="sigplus-preview" src="/administrator/cache/preview/4f2f87b8fb1071b556613a1b91c8e14c.jpg" width="1200" height="600" alt="" srcset="/administrator/cache/preview/e25644e97d3e48725e939ad518f32d3d.jpg 2400w, /administrator/cache/preview/4f2f87b8fb1071b556613a1b91c8e14c.jpg 1200w, /administrator/cache/thumb/d00ac5a24c546b4f1583c13b42eeaaeb.jpg 60w" sizes="1200px" /></a><div class="sigplus-summary"></div></li><li><a class="sigplus-image" href="/images/media/gallery/archivum_galeriak/20-21/othello/othello_6.jpg"><img class="sigplus-preview" src="/administrator/cache/preview/e5e2ac253f1d0ca3e65adc894d1fcb04.jpg" width="1200" height="600" alt="" srcset="/administrator/cache/preview/21ab1a4a2aa000edf38876b97fa2b342.jpg 2400w, /administrator/cache/preview/e5e2ac253f1d0ca3e65adc894d1fcb04.jpg 1200w, /administrator/cache/thumb/8f246871e0d521f27b2f2a386475686a.jpg 60w" sizes="1200px" /></a><div class="sigplus-summary"></div></li><li><a class="sigplus-image" href="/images/media/gallery/archivum_galeriak/20-21/othello/othello_7.jpg"><img class="sigplus-preview" src="/administrator/cache/preview/15b109aa190ea6cf27065ac0e2425ab5.jpg" width="1200" height="600" alt="" srcset="/administrator/cache/preview/51dc7b30cbe321b440c678ab14d5747d.jpg 2400w, /administrator/cache/preview/15b109aa190ea6cf27065ac0e2425ab5.jpg 1200w, /administrator/cache/thumb/c6076e621a83da6e335d19950236f2b2.jpg 60w" sizes="1200px" /></a><div class="sigplus-summary"></div></li><li><a class="sigplus-image" href="/images/media/gallery/archivum_galeriak/20-21/othello/othello_8.jpg"><img class="sigplus-preview" src="/administrator/cache/preview/2b5060acdcd9e52dcd3aec8f47319ea0.jpg" width="1200" height="600" alt="" srcset="/administrator/cache/preview/76d38efb28bc24736b79d6cfb86c1233.jpg 2400w, /administrator/cache/preview/2b5060acdcd9e52dcd3aec8f47319ea0.jpg 1200w, /administrator/cache/thumb/a139d66f043c4dec4ac904882da8d285.jpg 60w" sizes="1200px" /></a><div class="sigplus-summary"></div></li><li><a class="sigplus-image" href="/images/media/gallery/archivum_galeriak/20-21/othello/othello_9.jpg"><img class="sigplus-preview" src="/administrator/cache/preview/2b13bfa765d17170a15a74e1ecd4e4d7.jpg" width="1200" height="600" alt="" srcset="/administrator/cache/preview/ac3380017162d684f15b00ba8f4d880a.jpg 2400w, /administrator/cache/preview/2b13bfa765d17170a15a74e1ecd4e4d7.jpg 1200w, /administrator/cache/thumb/fc1c754a981143f64aea953b4a8d3a61.jpg 60w" sizes="1200px" /></a><div class="sigplus-summary"></div></li><li><a class="sigplus-image" href="/images/media/gallery/archivum_galeriak/20-21/othello/othello_99.jpg"><img class="sigplus-preview" src="/administrator/cache/preview/51f04910afd9bc24603f6785ae149bf8.jpg" width="1200" height="600" alt="" srcset="/administrator/cache/preview/f782df0f8c471516dc33d8ab47bad0c2.jpg 2400w, /administrator/cache/preview/51f04910afd9bc24603f6785ae149bf8.jpg 1200w, /administrator/cache/thumb/990a9d6e5f3ec25f234760f09ffbaead.jpg 60w" sizes="1200px" /></a><div class="sigplus-summary"></div></li></ul></noscript></div></p>
+<p>&nbsp;</p></span>
+</li>
+<li class="field-entry videok fields-container-videos"><span class="field-value ">
+    <ul class="fields-container">
+        <li><span class="field-entry fields-container-videos"><span class="field-value "><p><iframe width="100%" height="100%" src="https://www.youtube.com/embed/ki16-Otyc5I?si=b3vqV9_ZjOTN_Ztw" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen="allowfullscreen"></iframe></p></span></span></li><li><span class="field-entry fields-container-videos"><span class="field-value "><p><iframe width="100%" height="100%" src="https://www.youtube.com/embed/sYZqxnl6hE0?si=wF0xME6x4U_1Npz7" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen="allowfullscreen"></iframe></p></span></span></li>    </ul>
+</span>
+</li>
+<li class="field-entry szereplok field-entry-after-box field-entry-after-left-box">    <span class="field-label ">Szereplők</span>
+<span class="field-value "><table border="0" style="width: 100%;">
+<tbody>
+<tr>
+<td>Othello</td>
+<td><a href="/tarsulat/43021">B&aacute;nyai Kelemen Barna</a></td>
+</tr>
+<tr>
+<td>Desdemona</td>
+<td><a href="/tarsulat/42830">Rujder Vivien</a></td>
+</tr>
+<tr>
+<td>Jago</td>
+<td>Kov&aacute;cs Lehel&nbsp;m.v.</td>
+</tr>
+<tr>
+<td>Emilia</td>
+<td><a href="/tarsulat/41494">Borb&eacute;ly Alexandra</a></td>
+</tr>
+<tr>
+<td>Cassio</td>
+<td><a href="/tarsulat/43020">Vizi D&aacute;vid</a></td>
+</tr>
+<tr>
+<td>Lodovico</td>
+<td><a href="/tarsulat/41505">Elek Ferenc</a></td>
+</tr>
+<tr>
+<td>Brabantio, Desdemona apja</td>
+<td><a href="/tarsulat/41533">Tak&aacute;tsy P&eacute;ter</a></td>
+</tr>
+<tr>
+<td>Montano</td>
+<td><a href="/tarsulat/41540">Vajdai Vilmos</a></td>
+</tr>
+<tr>
+<td>Rodrigo</td>
+<td><a href="/7-tarsulat/tarsulat/43452-lengyel-benjamin">Lengyel Benj&aacute;min</a></td>
+</tr>
+<tr>
+<td>Bianca</td>
+<td><a href="/7-tarsulat/tarsulat/43729-kanyo-kata">Kany&oacute; Kata</a></td>
+</tr>
+</tbody>
+</table></span>
+</li>
+<li class="field-entry musorfuzet field-entry-after-box field-entry-after-right-box">    <span class="field-label ">Műsorf&uuml;zet</span>
+<span class="field-value "><p><iframe allowfullscreen="allowfullscreen" allow="fullscreen" style="border: none; width: 100%; height: 326px;" src="//e.issuu.com/embed.html?d=othello_mf_issuu_02&amp;hideIssuuLogo=true&amp;hideShareButton=true&amp;u=katonajozsefszinhaz" width="100%" height="326px"></iframe></p></span>
+</li>
+<li class="field-entry alkotok field-entry-after-box field-entry-after-left-box">    <span class="field-label ">Alkot&oacute;k</span>
+<span class="field-value "><table border="0" style="width: 100%;">
+<tbody>
+<tr>
+<td>D&iacute;szlet</td>
+<td>Pall&oacute;s Nelli</td>
+</tr>
+<tr>
+<td>Jelmez</td>
+<td>Szl&aacute;vik Juli</td>
+</tr>
+<tr>
+<td>Dramaturg</td>
+<td><span style="background-color: #3399ff;"><span style="background-color: #ffffff;">Szab&oacute;-Sz&eacute;kely &Aacute;rmin</span><br /></span></td>
+</tr>
+<tr>
+<td>Zene</td>
+<td>Matisz Fl&oacute;ra Lili</td>
+</tr>
+<tr>
+<td>S&uacute;g&oacute;</td>
+<td>Boncza Anita</td>
+</tr>
+<tr>
+<td>&Uuml;gyelő</td>
+<td>Valovics Istv&aacute;n</td>
+</tr>
+<tr>
+<td>Asszisztens</td>
+<td>Tiwald Gy&ouml;rgy</td>
+</tr>
+<tr>
+<td>Rendező &nbsp; &nbsp;&nbsp;</td>
+<td><a href="http://www.katonajozsefszinhaz.hu/tarsulat/42279">Sz&eacute;kely Kriszta</a></td>
+</tr>
+</tbody>
+</table></span>
+</li>
+<li class="field-entry kritikak field-entry-after-box field-entry-after-right-box">    <span class="field-label ">Kritik&aacute;k</span>
+<span class="field-value "><p><a href="http://dionuszoszmagazin.blogspot.com/2020/11/kitaszitottak.html">Dion&uuml;szoszMagazin&nbsp;- Szekeres Szabolcs</a><a href="https://potszekfoglalo.hu/2020/10/armany-es-szex-avagy-kezdodik-a-jago-show/"><br />P&oacute;tsz&eacute;kfoglal&oacute;.hu - B.Kiss Csaba</a><a href="https://kutszelistilus.hu/szinhaz/kritika/770-turbuly-lilla-nem-fekete-nem-feher?fbclid=IwAR3O1e4pTcwibL-Y1nlEwnEjKnNfMQdUdqrIVmbC6vUBv0b8t0-z3XuoFxg"><br />Kutszelistilus.hu - Turbuly Lilla<br /></a><a href="https://nepszava.hu/3095712_a-cselszoves-lavinaja--modern-othello-a-katona-jozsef-szinhazban">N&eacute;pszava - Balogh Gyula</a><a href="https://kutszelistilus.hu/szinhaz/kritika/770-turbuly-lilla-nem-fekete-nem-feher?fbclid=IwAR3O1e4pTcwibL-Y1nlEwnEjKnNfMQdUdqrIVmbC6vUBv0b8t0-z3XuoFxg"><br /></a><a href="/43375-ragalomhadjarat-kritika-az-othellorol">&Eacute;let &eacute;s Irodalom - Moln&aacute;r Zs&oacute;fia</a><br /><a href="http://szinhaz.net/2020/11/04/antal-klaudia-legyel-az-akinek-latni-akarnak-vagy-inkabb-megse/">Sz&iacute;nh&aacute;z.net - Antal Klaudia</a></p>
+<hr /></span>
+</li>
+<li class="field-entry sajto field-entry-after-box field-entry-after-right-box">    <span class="field-label ">Sajt&oacute;</span>
+<span class="field-value "><p><a href="https://www.prae.hu/article/11805-testek-lelek-nelkul-szex-vagy-nelkul/">Prae.hu</a><a href="http://cornandsoda.com/ironikus-othello-bemutato-a-katonaban/"><br />cornandsoda.com</a><a href="http://izaszinhazbanjart.hu/2020-oktober/item/534-shakespeare-othello-katona-jozsef-szinhaz"><br />izaszinhazbanjart.hu</a><a href="https://mezeinezo.blog.hu/2020/10/14/katona_jozsef_szinhaz_az_elet_show-ja_shakespeare_jago_a_foszerepben_kovacs_lehel_2020_okt"><br />mezeinezo.blog.hu<br /></a><a href="https://papageno.hu/promocio/2020/10/ahogy-a-szikra-belobban-beszelgetes-banyai-kelemen-barnaval-es-kovacs-lehellel/">Interj&uacute; B&aacute;nyai Kelemen Barn&aacute;val &eacute;s Kov&aacute;cs Lehellel - papageno.hu</a></p></span>
+</li></ul></div>
+</div>
+                    
+    			</div>
+	    		<div class="clear"></div>
+            </main>
+
+            <aside id="rightside">
+                
+<div id="mod-custom318" class="mod-custom custom ">
+    <div id="social-icons">
+<a href="https://www.facebook.com/katona.budapest" target="_blank" class="faceLink"><img src="/templates/2022_j4/images/f.svg" alt="f" /></a>
+<a href="https://www.youtube.com/channel/UCNPULlGMNo937FBiiVufpmA/videos" target="_blank" class="vimeoLink"><img src="/templates/2022_j4/images/y.svg" alt="v" /></a>
+<a href="https://www.instagram.com/katonajozsefszinhaz/" target="_blank" class="instagramLink"><img src="/templates/2022_j4/images/i.svg" alt="v" /></a>
+</div>
+</div>
+
+            </aside>
+
+            <div class="clear"></div>
+        </div>
+
+        <footer>
+            <div class="clear footerTopLine">
+            </div>
+            
+            <div id="footer">
+                
+<div id="mod-custom164" class="mod-custom custom hirlevel">
+    <h3>Szeretn&eacute;k h&iacute;rlevelet kapni a Katon&aacute;t&oacute;l</h3>
+<p><input name="hirlevel-mail" type="text" id="hirlevel-mail" class="hirlevel-feliratkozas-field" placeholder="e-mail c&iacute;m" /><button class="hirlevel-feliratkozas-btn" onclick="window.location = 'https://katonajozsefszinhazhu.us9.list-manage.com/subscribe?u=12664afbd3b1dcd0d53a806ce&amp;id=4bf1dcc624&amp;MERGE0=' + jQuery('#hirlevel-mail').val()">Feliratkozom</button></p></div>
+
+                <nav class="footer-menu">
+                    <ul class="mod-menu mod-list nav ">
+<li class="nav-item item-221"><a href="/kapcsolat" >Kapcsolat</a></li><li class="nav-item item-222"><a href="/probatabla" >Próbatábla</a></li><li class="nav-item item-223"><a href="/kozerdeku-adatok" >Közérdekű adatok</a></li><li class="nav-item item-224"><a href="/sajtokapcsolat" >Sajtókapcsolat</a></li><li class="nav-item item-316"><a href="https://archive.katonajozsefszinhaz.hu/adatvedelem" >Adatkezelés</a></li><li class="nav-item item-226"><a href="/impresszum" >Impresszum</a></li></ul>
+
+                </nav>
+                
+<div id="mod-custom178" class="mod-custom custom mod_sponsors">
+    <div id="sponsors">
+<div><a href="http://budapest.hu" target="_blank" rel="noopener"><img src="/images/media/kepek/tamogatok/sponsor_budapest.svg" alt="Bp emblema A1 monokrom2" height="90" /></a><span>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;</span><a href="https://www.mastercard.hu" target="_blank" rel="noopener"><img src="/images/media/kepek/tamogatok/sponsor_mastercard.svg" alt="Mastercard" width="110" height="80" /></a></div>
+<div style="margin-top: 24px;"><a href="/fooldal/41633"><span class="tovabbi-partnerek">További partnereink</span></a></div>
+</div></div>
+
+                
+<div id="mod-custom177" class="mod-custom custom mod_footer_text">
+    <div class="only-on-mobile">
+<p><strong>C&iacute;m</strong><em>Budapest, V. ker&uuml;let, Petőfi<br /> S&aacute;ndor u. 6.</em><strong>Telefon</strong><em>+36 1 266 5200<br /> +36 1 317 4061</em><strong>E-mail</strong><em><a href="mailto:szervezes@katonaszinhaz.hu">szervezes@katonaszinhaz.hu</a></em></p>
+</div>
+<div class="only-on-desktop">
+<p><strong>C&iacute;m</strong> <strong>Telefon</strong> <strong>E-mail</strong> <em>Budapest, V. ker&uuml;let, Petőfi S&aacute;ndor u. 6.</em> <em>+36 1 266 5200, +36 1 317 4061</em> <em><a href="mailto:szervezes@katonaszinhaz.hu">szervezes@katonaszinhaz.hu</a></em></p>
+</div></div>
+
+                <div class="clear"></div>
+
+    		</div>
+        </footer>
+    </div>
+
+    <script type="text/javascript">
+		//$.noConflict();
+		var archiveFullContent = null;
+		var lastArchiveFilter = null;
+
+		// jquery ignorecase "contains" selector
+		jQuery.expr[':'].icontains = function(a, i, m) {
+			return jQuery(a).text().toUpperCase().indexOf(m[3].toUpperCase()) >= 0;
+		};
+
+
+// a 2014-es design-ban elhelyezett jobb oldali "Legközelebb játszik" balra helyezése, eloadasok eseten
+//jQuery("div.cell-right-thin-normal").find("h2:contains('Legközelebb játszik')").parent().insertAfter(jQuery("div.column-left-wide div.cell-left-wide-highlighted").last());
+
+		function imgFixSizeForce() {
+			jQuery("img").each(function() {
+				var imgWidth = jQuery(this).attr("width");
+				var imgHeight = jQuery(this).attr("height");
+
+				if (typeof imgWidth != 'undefined') {
+					jQuery(this).width(imgWidth + "px");
+				}
+				if (typeof imgHeight != 'undefined') {
+					jQuery(this).height(imgHeight + "px");
+				}
+			});
+		}
+
+		function download(d) {
+		    if (d == '0') {
+		        return;
+		    }
+		    window.location = "/file.php?filename=" + d;
+		}
+
+		function addArchiveSelector() {
+			var archiveSelector = jQuery('<div/>', {
+			    id: 'archive-selector'
+			});
+
+			var filteredArchive = jQuery('<div/>', {
+			    id: 'filtered-archive'
+			});
+
+			var clearDiv = jQuery('<div/>', {
+			    class: 'clear'
+			});
+
+			jQuery(archiveFullContent).find("h3").each(function() {
+				var selectItem = jQuery(this).text();
+				jQuery(archiveSelector).append("<div class='archive-selector-item'>" + selectItem + "</div><div class='left'>&nbsp;|&nbsp;</div>");
+				lastArchiveFilter = selectItem;
+			});
+			jQuery(archiveSelector).append(clearDiv);
+
+			jQuery(archiveSelector).insertBefore(archiveFullContent);
+			jQuery(filteredArchive).insertBefore(archiveFullContent);
+			Div = jQuery('<div/>', {
+			    class: 'clear'
+			});
+			jQuery(clearDiv).insertBefore(archiveFullContent);
+		}
+
+		function fillFilteredArchive(filter) {
+			var filteredContent = archiveFullContent.prop('outerHTML');
+			filteredContent = filteredContent.substring(filteredContent.indexOf("<h3>" + filter));
+			filteredContent = filteredContent.substring(0, (filteredContent.substring(1).indexOf("<h3>") > -1 ? filteredContent.substring(1).indexOf("<h3>") : filteredContent.length));
+
+			jQuery("#filtered-archive").html(filteredContent);
+
+			// az archivum eloadas helyszineit wrap-eljuk
+			wrapSpecifiedContent("#filtered-archive:icontains('katona józsef színház')", "katona józsef színház");
+			wrapSpecifiedContent("#filtered-archive:icontains('kamra')", "kamra");
+			wrapSpecifiedContent("#filtered-archive:icontains('sufni')", "sufni");
+
+			// soremeleseit pedig toroljuk
+			clearSpecifiedContent("#filtered-archive", "<p></p>");
+			clearSpecifiedContent("#filtered-archive", "&nbsp;");
+		}
+
+        function scrollToTop() {
+            jQuery("html, body").animate({ scrollTop: 0 }, "slow");
+        }
+
+        redirectOwnUrl();
+
+		jQuery(document).ready(function($) {
+			// amennyiben egy img-nek meg van adva width es/vagy height attributum, azt juttassuk ervenyre kozvetlen style property-ken keresztul,
+			// hogy ne a globalis 100% szeles css beallitassal keruljon megjelenitesre
+			imgFixSizeForce();
+
+            jQuery("#menu-mobile .rmm-button").click(function() {
+                scrollToTop();
+            });
+
+			// eloadasoklista honapok sorting
+			var years = {};
+            years['HÓNAP'] = 0;
+			years['JANUÁR'] = 1;
+            years['FEBRUÁR'] = 2;
+            years['MÁRCIUS'] = 3;
+            years['ÁPRILIS'] = 4;
+            years['MÁJUS'] = 5;
+            years['JÚNIUS'] = 6;
+            years['JÚLIUS'] = 7;
+            years['AUGUSZTUS'] = 8;
+            years['SZEPTEMBER'] = 9;
+            years['OKTÓBER'] = 10;
+            years['NOVEMBER'] = 11;
+            years['DECEMBER'] = 12;
+
+			var options = $("#szures-mezo-0 option");
+			var selected = $("#szures-mezo-0").val();
+			options.detach().sort(function(a,b) {
+			    var at = years[$(a).text().toUpperCase()];
+			    var bt = years[$(b).text().toUpperCase()];
+			    return (at > bt) ? 1 : ((at < bt) ? -1 : 0);
+			});
+			options.appendTo("#szures-mezo-0");
+			$("#szures-mezo-0").val(selected);
+
+//			fixFooldaliDobozokHeight();
+
+			fixEnglishSearch();
+
+            addOverlayToSzinlapImg();
+            addOverlayToSzinlapCustomFieldImg();
+            addOverlayToTarsulatImg();
+            addOverlayToSliderImg();
+
+            addClassesToFieldsContainers();
+
+            if (isHungarian()) {
+                englishArticleLink = getEnglishArticleLink();
+                if (englishArticleLink != null) {
+                    setLangLink(englishArticleLink);
+                } else if (isOnNewsPage()) {
+                    setLangLink(jQuery(location).attr('href').replace("?start", "english/?start"))
+                } else if (isOnSearchPage()) {
+                    setLangLink(jQuery(location).attr('href').replace("Itemid=195", "Itemid=31"))
+                } else if (isOnBemutatokPage()) {
+                    setLangLink(jQuery(location).attr('href').replace("/eloadasok/bemutatok", "/whats-on/premieres"))
+                } else if (isOnRepertoarPage()) {
+                    setLangLink(jQuery(location).attr('href').replace("/eloadasok/repertoar", "/whats-on/repertoire"))
+                } else if (isOnTarsulatPage()) {
+                    setLangLink(jQuery(location).attr('href').replace("/tarsulat", "/company"))
+                }
+            }
+
+            if (isEnglish()) {
+                hungarianArticleLink = getHungarianArticleLink();
+                if (hungarianArticleLink != null) {
+                    setLangLink(hungarianArticleLink);
+                } else if (isOnNewsPage()) {
+                    setLangLink(jQuery(location).attr('href').replace("english/?start", "?start"))
+                } else if (isOnSearchPage()) {
+                    setLangLink(jQuery(location).attr('href').replace("Itemid=31", "Itemid=195"))
+                } else if (isOnBemutatokPage()) {
+                    setLangLink(jQuery(location).attr('href').replace("/whats-on/premieres", "/eloadasok/bemutatok"))
+                } else if (isOnRepertoarPage()) {
+                    setLangLink(jQuery(location).attr('href').replace("/whats-on/repertoire", "/eloadasok/repertoar"))
+                } else if (isOnTarsulatPage()) {
+                    setLangLink(jQuery(location).attr('href').replace("/company", "/tarsulat"))
+                }
+            }
+
+            setSearchLabels();
+            setMenuLabel();
+
+            fixSearchNextPrevLinkInEnglish();
+
+            setFooldalKovetkezoEloadasokLinkInEnglish();
+
+            moveKovetkezoIdopontokOutOfItsParent();
+
+            separateLeftAndRightFieldEntries();
+
+			fixIFrameHeight();
+
+            redirectOwnUrl();
+
+            fixedSearchModuleLinks();
+		});
+
+		jQuery(window).resize(function() {
+//			fixFooldaliDobozokHeight();
+			fixIFrameHeight();
+		});
+
+        function fixedSearchModuleLinks() {
+            searchKeyword = jQuery("#q").val();
+            paginationLinks = jQuery("#search-results ul.pagination li.page-item a");
+            jQuery(paginationLinks).each(function(i, link) {
+                jQuery(link).attr("href", jQuery(link).attr("href") + "&q=" + searchKeyword);
+            });
+        }
+
+        function showPopup() {
+            jQuery(document).ready(function(){
+                if (!getCookie("popup_status")) {
+                    jQuery("#popup").show();
+                    jQuery("#popup").click(function() {
+                        jQuery("#popup").hide();
+                    });
+
+                    setCookie("popup_status", "1", 1);
+                }
+            });
+        }
+
+        function addOverlayToSzinlapImg() {
+            // get first img on any kind of article (anyway szinlap: cat6, cat48, ... )
+            var szinlapImg = jQuery(".item-page .com-content-article__body img").first();
+
+            if (szinlapImg.length > 0) {
+                // jpg path from img src
+                var jpgSrc = jQuery(szinlapImg[0]).attr('src');
+
+                var languagePostfix = "";
+
+                // svg path based on original path
+                var svgSrc = jpgSrc.split('.').slice(0, -1).join('.') + languagePostfix + ".svg";
+
+                // if svg exists, then we'll set it to after pseudo
+                jQuery.get(svgSrc)
+                    .done(function() {
+                        // wrap img with two div-s for overlay
+                        jQuery(szinlapImg).wrap("<div style='position: relative'><div class='szinlap-img'></div></div>");
+
+                        // set background image on after
+                        var szinlapImgClassAfterPseudo = ".szinlap-img:after {background: url('" + svgSrc + "') no-repeat;}";
+                        jQuery("<style type='text/css'> " + szinlapImgClassAfterPseudo + " </style>").appendTo("head");
+                    }).fail(function() {
+                    });
+            }
+        }
+
+        function addOverlayToSzinlapCustomFieldImg() {
+            var szinlapImg = jQuery(".szinlap-kep img").first();
+
+            if (szinlapImg.length > 0) {
+                // jpg path from img src
+                var jpgSrc = jQuery(szinlapImg[0]).attr('src');
+
+                var languagePostfix = "";
+
+                // svg path based on original path
+                var svgSrc = jpgSrc.split('.').slice(0, -1).join('.') + languagePostfix + ".svg";
+
+                // if svg exists, then we'll set it to after pseudo
+                jQuery.get(svgSrc)
+                    .done(function() {
+                        // wrap img with two div-s for overlay
+                        jQuery(szinlapImg).wrap("<div style='position: relative'><div class='szinlap-img'></div></div>");
+
+                        // set background image on after
+                        var szinlapImgClassAfterPseudo = ".szinlap-img:after {background: url('" + svgSrc + "') no-repeat;}";
+                        jQuery("<style type='text/css'> " + szinlapImgClassAfterPseudo + " </style>").appendTo("head");
+                    }).fail(function() {
+                    });
+            }
+        }
+
+        function addOverlayToTarsulatImg() {
+            // get all img-s on tarsulat article
+            var tarsulatImgs = jQuery(".cat14 .com-content-category .content-category img, .cat0 .com-content-category .content-category img, #fooldal-static .tarsulat img");
+
+            jQuery(tarsulatImgs).each(function(index) {
+                var tarsulatImg = this;
+
+                // jpg path from img src
+                var jpgSrc = jQuery(this).attr('src');
+
+                // svg path based on original path
+                var svgSrc = jpgSrc.split('.').slice(0, -1).join('.') + ".svg";
+                var svgMobilSrc = jpgSrc.split('.').slice(0, -1).join('.') + "-mobil.svg";
+
+                // if svg exists, then we'll set it to after pseudo
+                jQuery.get(svgSrc)
+                    .done(function() {
+                        // wrap img with two div-s for overlay
+                        jQuery(tarsulatImg).wrap("<div class='tarsulat-img tarsulat-img" + index + "'></div>");
+
+                        // set background image on after
+                        var tarsulatImgClassAfterPseudoHover = ".tarsulat-img" + index + ":hover:after, .tarsulat .mod-custom a:focus .tarsulat-img" + index + ":after, .tarsulat-oldal a:focus .tarsulat-img" + index + ":after {background: url('" + svgSrc + "') no-repeat;}";
+                        jQuery("<style type='text/css'> " + tarsulatImgClassAfterPseudoHover + " </style>").appendTo("head");
+
+                    }).fail(function() {
+                    });
+            });
+        }
+
+        function addOverlayToSliderImg() {
+            // get all img-s on slider
+            var sliderImgs = jQuery("#contents-slider ul li img.dj-image");
+
+            jQuery(sliderImgs).each(function(index) {
+                var sliderImg = this;
+
+                // jpg path from img src
+                var jpgSrc = jQuery(this).attr('src');
+                jpgSrc = jpgSrc.split('#').slice(0, 1).join('#');
+
+                var languagePostfix = "";
+                // svg path based on original path
+                var svgSrc = jpgSrc.split('.').slice(0, -1).join('.') + languagePostfix + ".svg";
+                var svgHoverSrc = jpgSrc.split('.').slice(0, -1).join('.') + "-hover" + languagePostfix + ".svg";
+
+                // if svg exists, then we'll set it to after pseudo
+                jQuery.get(svgSrc)
+                    .done(function() {
+                        // wrap img with two div-s for overlay
+                        jQuery(sliderImg).wrap("<div onclick='handleSliderClick(this)' class='slider-img slider-img" + index + "'></div>");
+
+                        // set background image on after
+                        var sliderImgClassAfterPseudo = ".slider-img" + index + ":after {background: url('" + svgSrc + "') no-repeat;}";
+                        var sliderImgHoverClassAfterPseudo = ".slider-img" + index + ":hover:after {background: url('" + svgHoverSrc + "') no-repeat;}";
+                        jQuery("<style type='text/css'> " + sliderImgClassAfterPseudo + " " + sliderImgHoverClassAfterPseudo + " </style>").appendTo("head");
+                    }).fail(function() {
+                    });
+            });
+        }
+
+        function handleSliderClick(element) {
+            jQuery(element).parent().find(".slide-desc a")[0].click();
+        }
+
+
+		function fixFooldaliDobozokHeight() {
+			jQuery("#fooldal-dynamic .red-bckgrd,#fooldal-dynamic .white-bckgrd").each(function() {
+				var widthPadding = jQuery(this).outerWidth() - jQuery(this).width();
+				var heightPadding = jQuery(this).outerHeight() - jQuery(this).height();
+				jQuery(this).css('min-height', (jQuery(this).width() + widthPadding) * 3 / 4 - heightPadding);
+			});
+		}
+
+		function fixIFrameHeight() {
+			// ha 100%-os szelesseg van beallitva barmelyik iframe-nek, akkor igazitsuk a magassagat az aktualis szelesseghez, 0.564 aranyban (250 x 141)
+			var iframes = jQuery(".fields-container-videos iframe");
+			jQuery.each(iframes, function(i, iframe) {
+				// az iframe width attributuma
+				var iframeWidth = jQuery(iframe).attr('width');
+				if (iframeWidth == "100%") {
+					// az iframe tenyleges kirajzolt szelessege
+		 			var iframeRealWidth = parseInt(jQuery(iframe).css('width'));
+		 			// a szelesseghez a szukseges magassag kiszamolasa
+					var iframeHeight = Math.round(parseInt(0.564 * iframeRealWidth));
+					jQuery(iframe).css('height', iframeHeight);
+				}
+			});
+		}
+
+		function wrapSpecifiedContent(search, wrappedWord) {
+			jQuery(search).html(function(_, html) {
+				return html.replace(new RegExp("(" + wrappedWord + ")", "ig"), "<div class='filtered-archive-place-title'>$1</div>");
+			});
+		}
+
+		function clearSpecifiedContent(search, clearWord) {
+			jQuery(search).html(function(_, html) {
+				return html.replace(new RegExp("(" + clearWord + ")", "ig"), "");
+			});
+		}
+
+		// a kereso az /english oldalon nem mukodik, ez esetben az action-jet root-ra kell allitani
+		function fixEnglishSearch() {
+			if (jQuery("#searchForm").attr("action") == "/english") {
+				jQuery("#searchForm").attr("action", "/");
+			}
+		}
+
+        function addClassesToFieldsContainers() {
+            customFieldsBeforeContainers = jQuery(".item-page .com-content-article__body").prevAll(".fields-container");
+            if (customFieldsBeforeContainers.length == 1) {
+                jQuery(customFieldsBeforeContainers).addClass("fields-container-before-content");
+            } else if (customFieldsBeforeContainers.length == 2) {
+                jQuery(customFieldsBeforeContainers).first().addClass("fields-container-before-content");
+                jQuery(customFieldsBeforeContainers).last().addClass("fields-container-after-title");
+            }
+            jQuery(".item-page .com-content-article__body").nextAll(".fields-container").addClass("fields-container-after-content");
+        }
+
+        function isEnglish() {
+            return jQuery(".lang-icons a:first").text() == "HU";
+        }
+
+        function isHungarian() {
+            return jQuery(".lang-icons a:first").text() == "EN";
+        }
+
+        function getEnglishArticleLink() {
+            return jQuery(".fields-container .field-entry.en-link span a").attr("href");;
+        }
+
+        function getHungarianArticleLink() {
+            return jQuery(".fields-container .field-entry.hu-link span a").attr("href");;
+        }
+
+        function setLangLink(link) {
+            jQuery(".lang-icons a").attr("href", link);
+        }
+
+        function redirectOwnUrl() {
+            return;
+            ownUrl = null;
+            ownEnglishUrl = getEnglishArticleLink();
+            ownHungarianUrl = getHungarianArticleLink();
+
+            if (jQuery(location).attr("href").indexOf("toEnglish=1") > 0) {
+                ownUrl = ownEnglishUrl;
+            } else {
+                articleIdMatch = /\/(\d+)/g.exec(jQuery(location).attr("href"));
+
+                if (articleIdMatch != null && articleIdMatch.length > 1) {
+                    articleId = articleIdMatch[1];
+
+                    if (ownEnglishUrl != null && ownEnglishUrl.indexOf(articleId) > 0) {
+                        ownUrl = ownEnglishUrl;
+                    } else if (ownHungarianUrl != null && ownHungarianUrl.indexOf(articleId) > 0) {
+                        ownUrl = ownHungarianUrl;
+                    }
+                }
+            }
+
+            if (ownUrl != null && ownUrl != jQuery(location).attr("href")) {
+               jQuery(location).attr("href", ownUrl);
+            }
+        }
+
+        function fixSearchNextPrevLinkInEnglish() {
+            if (isEnglish()) {
+                searchLinks = jQuery(".searchResultList ul li a");
+                jQuery(searchLinks).each(function(i, link) {
+                    jQuery(link).attr("href", jQuery(link).attr("href") + "&Itemid=31");
+                });
+            }
+        }
+
+        function setFooldalKovetkezoEloadasokLinkInEnglish() {
+            if (isEnglish()) {
+                kovEloadasBlock = jQuery(".kovetkezo-eloadasok .block");
+                jQuery(kovEloadasBlock).each(function(i, block) {
+                    kovEloadasLink = jQuery(block).find(".atom a");
+                    href = jQuery(kovEloadasLink).attr("href");
+                    if (href.indexOf("?")) {
+                        href = href + "&";
+                    } else {
+                        href = href + "?";
+                    }
+                    href = href + "?toEnglish=1";
+                    jQuery(kovEloadasLink).attr("href",  href);
+                });
+            }
+        }
+
+        function moveKovetkezoIdopontokOutOfItsParent() {
+            if (jQuery(".kovetkezo-idopontok-field-box").length > 0) {
+                jQuery(".kovetkezo-idopontok-field-box").parent().before(jQuery(".kovetkezo-idopontok-field-box"));
+                jQuery(".com-content-article__body").addClass("szinlap-left");
+                jQuery(".kovetkezo-idopontok-field-box").addClass("szinlap-right");
+            }
+        }
+
+        function separateLeftAndRightFieldEntries() {
+            if (jQuery(".fields-container-after-content").length > 0) {
+                jQuery('.fields-container-after-content').append('<div class="field-entry-after-left-boxes"></div>');
+                jQuery('.fields-container-after-content').append('<div class="field-entry-after-right-boxes"></div>');
+
+                jQuery(".field-entry-after-left-box").appendTo(jQuery(".field-entry-after-left-boxes"));
+                jQuery(".field-entry-after-right-box").appendTo(jQuery(".field-entry-after-right-boxes"));
+            }
+        }
+
+        function setSearchLabels() {
+            if (isEnglish()
+             && jQuery("#searchForm .searchFieldTable").length > 0
+             && jQuery(".searchintro strong").length > 0
+             && jQuery(".search-pagination-container").length > 0) {
+                jQuery(".search-title").text("Search results");
+                jQuery("#searchForm .searchFieldTable label").text("Search keyword:");
+                jQuery("#searchForm .searchFieldTable button").text("Search");
+
+                jQuery(".searchintro strong").text(jQuery(".searchintro strong").text().replace("Összesen", "Total"));
+                jQuery(".searchintro strong").text(jQuery(".searchintro strong").text().replace("találat van", "results"));
+
+                jQuery(".search-pagination-container").html(jQuery(".search-pagination-container").html().replace("oldal","page"));
+
+                if (jQuery(".searchResultList div ul li").length > 0) {
+                    jQuery(".searchResultList div ul li.pag-item-1 span").text("< Previous");
+                    jQuery(".searchResultList div ul li.pag-item-1 a").text("< Previous");
+                    jQuery(".searchResultList div ul li.pag-item-2 span").text("Next >");
+                    jQuery(".searchResultList div ul li.pag-item-2 a").text("Next >");
+                }
+            }
+        }
+
+        function setMenuLabel() {
+            if (isEnglish()) {
+                jQuery("#menu-mobile .rmm-button").text("MENU");
+            }
+        }
+
+        function isOnNewsPage() {
+            return jQuery(location).attr('href').indexOf("?start") > 0;
+        }
+
+        function isOnSearchPage() {
+            return jQuery(location).attr('href').indexOf("/component/search") > 0;
+        }
+
+        function isOnBemutatokPage() {
+            return jQuery(location).attr('href').indexOf("/eloadasok/bemutatok") > 0 || jQuery(location).attr('href').indexOf("/whats-on/premieres") > 0;
+        }
+
+        function isOnRepertoarPage() {
+            return jQuery(location).attr('href').indexOf("/eloadasok/repertoar") > 0 || jQuery(location).attr('href').indexOf("/whats-on/repertoire") > 0;
+        }
+
+        function isOnTarsulatPage() {
+            return jQuery(location).attr('href').indexOf("/tarsulat") > 0 || jQuery(location).attr('href').indexOf("/company") > 0;
+        }
+	</script>
+
+
+<script type="text/javascript">
+var _gaq = _gaq || [];
+_gaq.push(['_setAccount', 'UA-1332483-49']);
+_gaq.push(['_trackPageview']);
+(function() {
+var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+})();
+</script>
+
+<script type="text/javascript">
+var _gaq = _gaq || [];
+_gaq.push(['_setAccount', 'UA-1332483-1']);
+_gaq.push(['_trackPageview']);
+(function() {
+var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+})();
+</script>
+
+<script>
+/**
+* Function that captures a click on an outbound link in Analytics.
+* This function takes a valid URL string as an argument, and uses that URL string
+* as the event label. Setting the transport method to 'beacon' lets the hit be sent
+* using 'navigator.sendBeacon' in browser that support it.
+*/
+var captureOutboundLink = function(url) {
+   ga('send', 'event', 'outbound', 'click', url, {
+     'transport': 'beacon',
+     'hitCallback': function(){document.location = url;}
+   });
+}
+</script>
+
+<script type="text/javascript">
+function setCookie(name,value,days) {
+  var expires = '';
+  if (days) {
+      var date = new Date();
+      date.setTime(date.getTime() + (days*24*60*60*1000));
+      expires = '; expires=' + date.toUTCString();
+  }
+  document.cookie = name + '=' + (value || '')  + expires + '; path=/';
+}
+
+function getCookie(name) {
+    var nameEQ = name + "=";
+    var ca = document.cookie.split(';');
+    for(var i=0;i < ca.length;i++) {
+        var c = ca[i];
+        while (c.charAt(0)==' ') c = c.substring(1,c.length);
+        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+    }
+    return null;
+}
+
+if (getCookie('screenWidth') != screen.width) {
+	setCookie('screenWidth', screen.width, 30);
+	document.location="";
+}
+setCookie('screenWidth', screen.width, 30);
+</script>
+
+</body>
+
+<div id="popup" style="display: none;">
+  <h2>Köszöntjük megújuló honlapunkon!</h2>
+  <p>A Katona honlapja megújul. Az átállás során tapasztalható esetleges fennakadások megoldásáig türelmüket kérjük.
+     A jegyvásárlás zavartalanul működik, amennyiben azonban segítségre lenne szükségük, keressék kollégáinkat a Közönségszolgálati Irodán a szervezes@katonaszinhaz.hu címen vagy 06 1 266 5200-as telefonszamon.
+     Köszönjük!</p>
+  <button>Rendben</button>
+</div>
+
+</html>

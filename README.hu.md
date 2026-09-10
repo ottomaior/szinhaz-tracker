@@ -2059,7 +2059,7 @@ kapcsolva, kilenc színházat fed le két városban, együtt nagyjából 1240
 produkciót adnak — ebből körülbelül 340 fut most
 vagy meg van hirdetve, alig 900 alatti pedig olyan, amit maguk a színházak
 sorolnak az archívumukba —, valamint körülbelül 560 közelgő játszási időpontot,
-9400 szereposztási sort és 495 portrét. Az archív sorok
+17 900 szereposztási sort 4263 emberre és 495 portrét. Az archív sorok
 `plays.is_archived`-et kapnak, ami kiveszi őket a Felfedezés böngészősávjaiból,
 de kereshetők és rögzíthetők maradnak, így évekkel ezelőtt látott előadást is
 fel lehet vinni (lásd `0005_archive_and_reconcile.sql`).
@@ -2160,13 +2160,25 @@ levett előadás szereposztása már nem változik. Amitől ez biztonságos, az 
 senkit nem tüntet fel, és felülírja a tároltat, az `undefined` viszont azt, hogy
 ez a futás nem is nézte meg, és a tárolt sorok maradnak. Enélkül egy éjszakai
 futás ötszáz produkció szereposztását törölte volna abban a pillanatban, hogy
-nem nyitja meg többé az oldalukat. Ugyanez a megkülönböztetés fedi le azokat a
-félig renderelt oldalakat is, amelyeket ez a site hosszabb futás közben
-visszaad: kétféle alakban jönnek — hiányzik a szereposztás-blokk, vagy megvan,
-de üres —, és egyik sem különböztethető meg egy olyan produkciótól, amely
-tényleg senkit nem tüntet fel. Ezért a parser azt mondja, hogy „nem tudom",
-valahányszor egy oldal senkit nem nevez meg: ez a forrás hozzá tud adni
-szereposztást, elvenni soha.
+nem nyitja meg többé az oldalukat.
+
+**A szereposztás az oldal adatából jön, nem a markupjából**, és érdemes
+feljegyezni, miért, mert egyszer már félrediagnosztizáltuk. Ez a site kétféle
+módon rendereli a produkciós oldalt, és hogy egy kérés melyiket kapja,
+változó: hol kész HTML a szereposztás-blokk, hol üres helyőrző, amelynek a
+tartalmát a böngésző rakja össze a streamelt adatból. Egy csak a markupot
+olvasó parser tehát az egyik kérésre teljes szereposztást lát, a következőre
+semmit — ami hibásan működő szervernek látszott, annak is javítottuk, és nem
+az volt. A *„Ha majd egyszer mindenki visszajön…"* az appban szereposztás
+nélkül állt, miközben a színház saját oldalán ötvenhét név szerepelt.
+
+A `parseCastPayload` ugyanazt az adatot olvassa, amit a böngésző. Determinisz-
+tikus, és jobban strukturált is, mint a markup: egy szerephez több ember is
+tartozhat — így érkeznek a kettőzött szerepek —, a csoportjai pedig
+elkülönítik a társulatot a kórustól, a zenekartól és az alkotóktól. Az emberek
+azonosítóként jönnek, amelyeket az `/api/programme/persons` old fel: 3120 ember
+egyetlen lekérésben. Ettől az olvasástól lett ennek a háznak 2056 helyett 9400
+szereposztási sora.
 
 A **Madách** külön megjegyzést kíván. A `robots.txt`-je a Cloudflare
 content-signals sablonszövege és semmi más — az egész fájl kommentekből áll,

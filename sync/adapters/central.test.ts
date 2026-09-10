@@ -109,3 +109,49 @@ describe("parseEvents", () => {
     expect(parseEvents([{ title: "Furcsa pár" }, { start_date: "2026-09-18 19:00:00" }, {}])).toHaveLength(0);
   });
 });
+
+describe("the archive's own cast layout", () => {
+  /**
+   * A production still in the repertoire gets a card per performer with a
+   * photograph. Once it moves to `-archiv` those cards are gone and the whole
+   * cast becomes one cell of the playbill grid, written "Name | Character"
+   * with line breaks between. Reading only the cards left 29 archived
+   * productions with no cast while their pages listed twenty performers.
+   */
+  const archived = parseProductionDetail(fixture("central-illatszertar-archiv.html"));
+
+  it("reads a cast the cards do not carry", () => {
+    expect(archived?.cast.length).toBe(20);
+  });
+
+  it("puts the name and the character the right way round", () => {
+    // The pipe separates them and the name comes first here, which is the
+    // reverse of how most sources in this catalogue print a credit.
+    expect(archived?.cast).toContainEqual({ name: "Kern András", role: "Hammerschmidt" });
+    expect(archived?.cast).toContainEqual({ name: "Pokorny Lia", role: "Balázs kisasszony" });
+  });
+
+  it("reads the other archive shape, where a divider flips each row", () => {
+    /*
+     * The same grid, laid out the opposite way: an <h4>Szereplők</h4>
+     * divider, then a row per performer whose key is the person and whose
+     * value is their character — and a second divider that turns the
+     * orientation back for the creative team.
+     */
+    const siraly = parseProductionDetail(fixture("central-siraly-archiv.html"));
+    expect(siraly?.cast.length).toBe(17);
+    expect(siraly?.cast).toContainEqual({ name: "Básti Juli", role: "Arkagyina" });
+    expect(siraly?.cast).toContainEqual({ name: "Tompos Kátya", role: "Nyina Mihajlovna Zarecsnaja, fiatal lány" });
+
+    // Past the second divider the key is the job again, not a person.
+    expect(siraly?.cast).toContainEqual({ name: "Vida Gábor", role: "Ügyelő" });
+    expect(siraly?.cast.some((c) => c.name === "Ügyelő")).toBe(false);
+  });
+
+  it("still prefers the cards when a production has them", () => {
+    // A current production must not end up with everybody twice.
+    const current = parseProductionDetail(fixture("central-a-kripli.html"));
+    expect(current?.cast.length).toBe(10);
+    expect(current?.cast).toContainEqual({ name: "Básti Juli", role: "Eileen" });
+  });
+});

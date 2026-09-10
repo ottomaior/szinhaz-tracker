@@ -1974,7 +1974,7 @@ Eleven listings adapters and nine company adapters are live and enabled by
 default, covering nine theatres in two cities and supplying about 1,240
 productions — roughly 340 currently playing or announced, and just under 900
 that the theatres themselves file under their archives — along with about 560
-upcoming showtimes, 9,400 credits and 495 portraits. Archived rows carry `plays.is_archived`,
+upcoming showtimes, 17,900 credits over 4,263 people, and 495 portraits. Archived rows carry `plays.is_archived`,
 which keeps them out of Discover's browse rails while leaving them searchable
 and loggable, so you can still record a play you saw years ago (see
 `0005_archive_and_reconcile.sql`).
@@ -2073,11 +2073,24 @@ distinction that makes this safe is in `SyncedPlay.cast`: an empty list means
 the source credits nobody and replaces what is stored, while `undefined` means
 this run did not look and the stored rows stand. Without it a nightly run
 would delete five hundred productions' credits the moment it stopped opening
-their pages. The same distinction covers the partial pages this site returns
-under a long run, which come in two shapes — the cast section missing, and the
-section present but empty — and neither is distinguishable from a production
-that credits nobody. So the parser reports "I do not know" whenever a page
-names nobody: this source can add a cast and never remove one.
+their pages.
+
+**The cast is read from the page's data, not its markup**, and the reason is
+worth recording because it was misdiagnosed once. This site renders a
+production page two ways, and which one a request gets varies: sometimes the
+cast section is finished HTML, and sometimes it is an empty placeholder whose
+contents the browser assembles from the streamed payload. A parser reading
+only the markup therefore sees a full cast on one request and nothing on the
+next — which looked like a flaky server, was fixed as one, and was not one.
+*„Ha majd egyszer mindenki visszajön…"* showed no cast in the app while
+showing fifty-seven names on the theatre's own site.
+
+`parseCastPayload` reads the same data the browser does. It is deterministic,
+and it is better structured than the markup: a role can name several people,
+which is how alternates arrive, and its groups separate the company from a
+chorus, a band and the creative team. People come as ids, resolved against
+`/api/programme/persons` — 3,120 of them in one request. Reading the payload
+took this house from 2,066 credits to 9,400.
 
 **Madách** needs a note of its own. Its `robots.txt` is Cloudflare's
 content-signals boilerplate and nothing else — the whole file is comments
