@@ -151,6 +151,55 @@ service role key there was. Skipping the section when the variable is absent —
 the way a local run without Cloudflare credentials already behaves — keeps that
 decision separate from shipping the check.
 
+### T-023 · check:launch should compare the published site against its sources
+type: idea · area: infra · size: S · status: idea · added: 2026-09-10
+
+**The problem.** T-021 is what this prevents, and T-021 was found by reading
+the site rather than by anything reporting it. Three published things restate
+something the repository already holds — the legal HTML restates
+`i18n/legal.ts`, the four tallies restate the catalogue, the screenshots
+restate the app — and all three can stop being true without a single check
+failing. Two of them are cheap to assert.
+
+**Roughly.** Two assertions in `scripts/check-launch.ts`. Render `legal.ts`
+to HTML in memory and compare it with `landing/*.html` — `render-legal.ts`
+already does the rendering, so this is calling it and diffing rather than
+writing anything new. Then read the four counts out of the database and
+compare them with the `data-count` attributes, with a margin so a nightly
+sync adding two performances does not fail the build; the point is catching
+1199 against 1215, not policing the last digit.
+
+**Depends on.** Nothing for the legal half. The tally half needs database
+credentials wherever `check:launch` runs, and should skip rather than fail
+when they are absent — the same shape as T-022's auth assertions, and worth
+building together with them if both get picked up.
+
+The screenshots are the third case and are not assertable this way: no check
+can tell whether a picture still shows what the app does. `npm run shots`
+makes re-taking cheap, which is the next best thing.
+
+### T-024 · The demo accounts' evenings age, and the hero shows how long ago
+type: idea · area: web · size: S · status: idea · added: 2026-09-10
+
+**The problem.** The hero screenshot is a feed, and a feed prints how long
+ago each entry was logged. When it was first taken those rows read *3 órája*
+and *16 órája*. Re-taken on 10 September the same rows read *Tegnap* and *2
+napja*, because the demo entries behind them have not moved since 8
+September. Nothing is wrong with the picture; the product in it is simply
+getting quieter every day, and a landing page whose only visible activity is
+three weeks old reads as abandoned. It is a trap specifically for doing the
+right thing — re-taking the shot is what surfaces it.
+
+**Roughly.** Give the three demo accounts a few recent entries before any
+re-take, against productions that are actually on this week, so the hero
+reads as a live evening rather than an old one.
+
+**Depends on.** Nothing technical. It is a judgement about how much staged
+content is honest: these are real accounts with real entries against real
+productions, and adding to them to keep a marketing picture fresh is a step
+toward the picture driving the data. The alternative is a hero that does not
+show timestamps at all, which is a design change rather than a content one.
+
 ---
 
 ## Open
@@ -424,8 +473,22 @@ does not: **the person page should say what it is counting.** A line naming the
 theatres this catalogue covers turns a wrong answer into a partial one, costs an
 afternoon, and does not wait on either. Backlog 4.6's data-quality report is
 what would have caught all three of these without a spot-check.
+
+
+
+
+---
+
+## Doing
+
+_Nothing yet._
+
+---
+
+## Done
+
 ### T-021 · The public site has drifted from the app, privacy policy included
-type: bug · area: web · priority: high · status: open · added: 2026-09-09
+type: bug · area: web · priority: high · status: done · added: 2026-09-09 · done: 2026-09-10
 
 `vastaps.pages.dev` is assembled by hand from a moving app, and nothing in the
 deploy can tell when a piece of it has stopped being true. Three kinds of drift,
@@ -476,18 +539,41 @@ section and nowhere else — not the footer, not the FAQ, not the structured dat
 and the production quality bar is commercial, not "good enough for a side
 project".
 
+> **Done, 10 September — the screenshots and the numbers, the other two
+> thirds.** `feed.webp` and `user.webp` re-taken against the deployed site,
+> and the four tallies corrected: 1199 → 1207 productions, 2557 → 2565 names,
+> 486 → 497 announced dates, the 1960 oldest premiere unchanged. Both
+> languages carry the numbers, so all seven places were edited, and
+> `stamp:shots` re-hashed the two new files. Verified in a browser against
+> `landing/` on both the Hungarian and the English toggle.
 
+> **The re-take got a script, which the entry did not ask for and is the
+> reason this recurred.** `npm run shots` — `scripts/render-shots.ts`, the
+> same headless-Edge-over-CDP renderer the og, promo and store scripts use.
+> It mints a session for the demo account through `admin/generate_link`
+> rather than holding a password, and it uses a throwaway browser profile,
+> which is not fussiness: a developer's own browser is signed in as
+> themselves, so a shot taken in it is neither signed out nor free of a real
+> account. Both READMEs updated; the English one said there was no script.
 
+> **One of the two shots had not actually drifted.** The entry assumed both
+> predated the follow-gate and therefore both were wrong. Only `user.webp`
+> was: signed out, it showed Eszter's rating on all eight diary rows, and the
+> live page now shows those rows bare, which is the gate working. `feed.webp`
+> was still accurate — it is the *Követettek* tab, where you follow everyone
+> shown, and the gate masks nobody you follow. Re-taken anyway, so it is now
+> provably current rather than presumed so, but the reasoning was half right.
+> The published shot understated the app's privacy, which is the pleasanter
+> direction to be wrong in and still wrong.
 
----
+> **`search.webp` and `person.webp` were left alone deliberately.** Their alt
+> text describes what is inside those pictures — *"49 közreműködéssel"* — so
+> it stays correct as long as the picture is unchanged, and re-taking them is
+> what would invalidate it. Per T-020 that 49 is a partial count, but that is
+> a fact about the catalogue, not about the caption.
 
-## Doing
-
-_Nothing yet._
-
----
-
-## Done
+> **Not done: the prevention.** The entry asks for an assertion in
+> `check:launch`, which is now T-023.
 
 ### T-004 · Password-reset links from the live site go to the wrong origin
 type: bug · area: auth · priority: high · status: done · added: 2026-09-09 · done: 2026-09-10
@@ -545,4 +631,4 @@ _Nothing yet._
 
 ---
 
-Next free id: **T-023**
+Next free id: **T-025**

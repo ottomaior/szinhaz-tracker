@@ -35,9 +35,19 @@ captured from a demo account (below). Profile, Watchlist and the season recap
 return a sign-in prompt without a session, so they photograph as an empty
 screen.
 
-Re-taking them means re-running that capture; there is no script checked in
-for it, because it needs a dev server and a browser binary that only exist on
-a development machine.
+Re-taking them is `npm run shots` — `scripts/render-shots.ts`, which drives
+that capture and writes straight into this directory. It photographs the
+deployed site by default rather than a dev server, because the deployed site
+runs the same bundle and is the more honest source; point it somewhere else
+with `SHOTS_BASE_URL` when the change has not shipped yet. Pass a name to
+re-take one shot instead of all of them: `npm run shots -- feed`.
+
+It exists because the alternative was what actually happened. `feed.webp` and
+`user.webp` sat unchanged through the follow-gate shipping — which changed what
+a stranger sees on exactly those screens — and nothing noticed, because
+`stamp-shots.ts` stamps a picture nobody re-took just as happily as one
+somebody did. Always run `npm run stamp:shots` afterwards, or just
+`npm run deploy:landing`, which runs it first.
 
 Nobody real appears in any of them. The author’s name belongs in the contact
 section and nowhere else on the page, and no alpha tester agreed to be on a

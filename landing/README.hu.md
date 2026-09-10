@@ -40,9 +40,20 @@ csak bejelentkezve látható, azt egy demófiókból fényképeztük (lásd alá
 Profil, a Kívánságlista és az évadösszegző munkamenet nélkül bejelentkezési
 felszólítást ad vissza, tehát üres képernyőként fényképeződne.
 
-Az újrafényképezés a fenti felvétel újrafuttatását jelenti; nincs hozzá
-szkript a tárházban, mert dev szerver és böngésző-binárist igényel, ami csak
-fejlesztői gépen van meg.
+Az újrafényképezés az `npm run shots` — a `scripts/render-shots.ts`, amely
+lefuttatja a fenti felvételt, és egyenesen ebbe a mappába ír. Alapból a
+kitelepített oldalt fényképezi, nem dev szervert, mert ugyanaz a bundle fut
+rajta, és így az látszik, ami tényleg él; a `SHOTS_BASE_URL` átirányítja
+máshová, ha a változás még nincs kint. Egy név megadásával csak azt az egy
+képet készíti újra: `npm run shots -- feed`.
+
+Azért van, mert az alternatívája már megtörtént. A `feed.webp` és a
+`user.webp` változatlanul átvészelte a követés-kapu bevezetését — pedig épp
+azt változtatta meg, hogy egy idegen mit lát azokon a képernyőkön —, és semmi
+nem vette észre, mert a `stamp-shots.ts` ugyanolyan készségesen bélyegez le egy
+képet, amit senki nem fotózott újra, mint azt, amit valaki igen. Utána mindig
+fusson az `npm run stamp:shots`, vagy egyszerűen az `npm run deploy:landing`,
+amely elsőként ezt futtatja.
 
 Valódi ember egyiken sem szerepel. A szerző neve a kapcsolat szekcióba
 tartozik, és sehova máshova az oldalon, az alfatesztelők pedig nem

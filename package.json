@@ -17,6 +17,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "stamp:shots": "tsx scripts/stamp-shots.ts",
+    "shots": "tsx scripts/render-shots.ts",
     "render:legal": "tsx scripts/render-legal.ts",
     "deploy:landing": "tsx scripts/render-legal.ts && tsx scripts/stamp-shots.ts && tsx scripts/deploy-landing.ts",
     "research:report": "tsx scripts/research-report.ts",
