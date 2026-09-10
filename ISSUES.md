@@ -237,6 +237,14 @@ first, then the setting — and doing the second alone would be worse than
 leaving it. Whether custom SMTP is already configured has not been checked;
 that needs dashboard or management-API access.
 
+**Deferred on 10 September, deliberately and with an order.** Ottó is buying a
+domain first and doing the mail on top of it, which is the right sequence: a
+custom SMTP sender needs a domain whose DNS we control, because SPF and DKIM
+are records on it. So this waits on T-030, which waits on T-029. The one thing
+worth deciding separately is the provider — shared-hosting SMTP and a
+transactional service are not the same product, and a confirmation mail that
+lands in spam fails this entry exactly as completely as no mail at all.
+
 ### T-006 · Every exported page ships two `<title>` elements
 type: bug · area: web · priority: med · status: open · added: 2026-09-09
 
@@ -428,6 +436,72 @@ what would have caught all three of these without a spot-check.
 > coverage is backlog 4.2, cast capture that fails loudly rather than
 > silently is 4.5. The page is honest now; it is not complete. This closes
 > when those land.
+
+### T-029 · The name Vastaps already belongs to a Hungarian theatre company
+type: question · area: web · priority: high · status: open · added: 2026-09-10
+
+`vastaps.hu` resolves, and not to a parking page: it is the site of **VASTAPS
+PRODUKCIÓ SZÍNJÁTSZÓ TÁRSULAT**, an existing Hungarian theatre company, served
+from 79.172.252.12 on `ns.tns3.eu` / `ns.tns4.eu`. Found on 10 September while
+checking what a domain purchase would involve.
+
+The unavailable `.hu` is the smaller half. The collision is in the same sector:
+somebody searching for the app finds a theatre company and the other way round,
+the store listings would sit beside them under the same word, and anyone later
+registering the name as a trademark starts against a prior user in the same
+field. Whether that is a legal problem is a question for somebody qualified to
+answer it, not for this file — the word is an ordinary Hungarian noun, which
+cuts both ways, making the name weakly distinctive for them as well as for us.
+
+**What is actually free, checked the same day via RDAP:** `vastaps.com` and
+`vastaps.app` are unregistered; `vastaps.eu` is not delegated. So the name can
+be had everywhere except the one suffix a Hungarian product most wants.
+
+Three ways out, none chosen. Take `.com` or `.app` and live beside them.
+Qualify the name so the two are distinguishable. Or change it, which is
+cheapest today and gets dearer with every screenshot, legal page and store
+listing that carries it — the app already writes `Vastaps` in the landing site,
+both legal documents, the store listing and the research recruitment texts.
+
+Blocks T-030, and the store listing in backlog 6.
+
+### T-030 · Move off pages.dev and railway.app onto a real domain
+type: chore · area: infra · priority: med · status: open · added: 2026-09-10
+
+The app answers at `szinhaz-tracker-production.up.railway.app` and the site at
+`vastaps.pages.dev`. Both are generated hostnames belonging to somebody else's
+platform, which is fine for building and wrong for launching: they cannot be
+kept if the host ever changes, they read as provisional to anyone deciding
+whether to trust the app with a diary, and `check-launch.ts` already refuses to
+pass because custom SMTP needs a domain that is ours.
+
+**Roughly 35 places hardcode one of the two**, and they are not all in code:
+`PRODUCTION_HOST` in `app.config.ts`; every `canonical`, `og:url`, `og:image`
+and the JSON-LD block across the five landing pages; the store listing's site
+and privacy URLs; the questionnaire URL repeated inside both legal documents
+and `i18n/legal.ts`; the recruitment messages in `research/`; and the closing
+frames of `promo/scene.html` and `promo/tour.html`. A move is a sweep, not a
+DNS change.
+
+**The trap is the auth allow list, which T-004 has just been through.** The
+Supabase Site URL and redirect allow list name the Railway origin. A new domain
+needs both the bare origin and the `/**` wildcard added — T-004 established the
+hard way that a `/**` pattern does not match its own bare origin, which is
+exactly what `Linking.createURL("/")` produces. Miss that and every magic link
+and password reset breaks on the new domain while the old one keeps working,
+which is the sort of failure nobody notices until a stranger reports it.
+
+**The impresszum names the hosting provider because the Ektv. requires it.** It
+currently names Railway Corp. That block changes only if the hosting actually
+moves, not if the domain merely points somewhere new — worth being clear about,
+because the two are separate decisions and only one of them is being made.
+
+**The recommendation, for whenever this is picked up:** buy the domain wherever
+is convenient, point its nameservers at Cloudflare so the site keeps working
+the way it does now, leave the app on Railway, and treat sending mail as a
+third decision rather than something the hosting throws in — see T-005.
+
+Depends on T-029, because the name decides the domain.
 
 ---
 
@@ -1102,4 +1176,4 @@ dropping it too. Not checked.
 
 ---
 
-Next free id: **T-029**
+Next free id: **T-031**
