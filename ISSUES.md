@@ -477,6 +477,58 @@ both legal documents, the store listing and the research recruitment texts.
 
 Blocks T-030, and the store listing in backlog 6.
 
+**Checked properly, 10 September, against the registry rather than a lookup
+site.** `who.is` reports both `allotaps.hu` and `tapsvihar.hu` as "registered
+but isn't pointed at a website" — that is their boilerplate for any domain they
+cannot resolve, and it is wrong. `whois.nic.hu` answers `Nincs talalat / No
+match` for both. Worth remembering for the next domain question: for `.hu` the
+registry whois on port 43 is the only source worth believing, and it also
+rate-limits, silently returning nothing after about four rapid queries — a
+batch loop that treats an empty answer as "registered" will produce a
+confidently wrong table, which this one did before it was paced.
+
+`vastaps.hu` was created 2026-01-07 and `rivalda.hu` 2025-12-20, so both
+collisions are recent rather than ancient.
+
+**Vastaps itself can still be had off the `.hu`:** `vastaps.com` and
+`vastaps.app` are both unregistered. That is the "live beside them" option, and
+it is real.
+
+**Free on all three of `.hu`, `.com` and `.app`, checked the same day:**
+
+| Candidate | Means | Note |
+| --- | --- | --- |
+| `tapsvihar` | storm of applause | no accents, so the domain is the word exactly |
+| `allotaps` | standing ovation | loses two accents from *állótaps* |
+| `szinlapom` | my playbill | matches the `playbillLight` theme token |
+| `harmadikcsengo` | the third bell | evocative, 14 characters |
+| `szinhaznaplo` | theatre diary | descriptive rather than a name |
+| `estenaplo` | evening diary | descriptive |
+| `meghajlas` | the bow | quiet, less obvious |
+
+`estem` and `esteim` (*my evening* / *my evenings*) are free on `.hu` and
+`.app` but taken on `.com`. `felvonas`, `premierem`, `tapsom`, `elsotaps`,
+`estelap` and `szinesten` are free on `.hu`; their other suffixes were not
+checked. `reflektor.hu`, `rivalda.hu`, `szinlap.hu`, `paholy.hu`, `kulissza.hu`,
+`nezoter.hu`, `sugolyuk.hu`, `taps.hu` and `tapsrend.hu` are all taken —
+`sugolyuk.hu` by a theatre association, and `zsollye.hu` now serves a casino,
+which is its own reason to stay away from it.
+
+**Recommendation, not a decision: `Tapsvihar`.** It means the same thing
+Vastaps does, so nothing about what the app is called *for* changes; it has no
+accents, so the domain is the word spelled exactly; it is free on all three
+suffixes; and no company, venue or app surfaced using it — a search finds the
+dictionary entry and one video title. `Állótaps` is the runner-up on the same
+grounds and loses only on the accents.
+
+**The honest caveat, and it is the same one that produced this entry.** Both are
+ordinary nouns, and an ordinary noun is what let somebody else take *vastaps*
+in the first place. A compound like `Szinlapom` would be harder for anyone else
+to claim and fits a diary better, at the cost of being less punchy. And none of
+this is a trademark search: whether any of these is registered at the SZTNH in
+the software or entertainment classes has not been checked and cannot be
+checked from here.
+
 ### T-030 · Move off pages.dev and railway.app onto a real domain
 type: chore · area: infra · priority: med · status: open · added: 2026-09-10
 
