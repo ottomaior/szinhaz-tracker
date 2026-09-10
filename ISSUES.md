@@ -529,6 +529,53 @@ this is a trademark search: whether any of these is registered at the SZTNH in
 the software or entertainment classes has not been checked and cannot be
 checked from here.
 
+**Asked on 10 September whether keeping the name would be survivable for SEO.**
+Short answer: yes, and SEO is the wrong thing to decide it on — because none of
+the candidates wins that fight, including the recommended one.
+
+The search intent for *vastaps* is definitional, not navigational. The first
+page is the Arcanum dictionary, `szinonimak.hu`, `definify`, an Index.hu piece
+on why the clapping synchronises, and a We Love Budapest article from June 2025
+on where the word comes from. Google serves that because it is what people
+typing the word actually want. Displacing it means outranking Index-class
+domains on a dictionary term, which is slow and expensive and not something a
+theatre diary is going to win.
+
+**`Tapsvihar` has exactly the same problem**, and this is worth writing down so
+the recommendation above is not mistaken for an SEO argument: it is also an
+ordinary noun with dictionary and synonym pages ranking for it. Switching names
+buys the `.hu` and removes a same-sector organisation. It does not buy search
+traffic for the bare word.
+
+What is winnable either way is the qualified phrase — *vastaps app*, *vastaps
+színház napló* — once the app exists and something links to it. The bare word
+probably never is. And for an app, organic web search is not the main channel
+anyway: store search, word of mouth, press and the link handed to somebody are.
+
+**So the real cost of keeping the name is not ranking, it is the two seconds
+after somebody hears it.** They type `vastaps.hu` and arrive at Vastaps
+Produkció, an active amateur company in Kecskemét running a Tanoda training
+programme and productions into 2026 — same sector, so they may not immediately
+realise they are in the wrong place. That is a lost reader, not a ranking, and
+no amount of SEO addresses it. The domain was created 2026-01-07 by an active
+organisation; it is not going to lapse.
+
+**Other consequences, checked rather than assumed.** The app stores are fine —
+both allow duplicate display names absent a trademark, and the company ships no
+app, so a store search for the word finds ours. The trademark position is the
+real asymmetry: they are a prior user in the same class, so registering the
+name is awkward and, if they ever register it, we are the ones who move. Low
+probability, high cost. `soundcloud.com/vastaps` is already a third party,
+unrelated to either of us. Instagram, TikTok and Facebook could not be checked
+from a script — all three answer 200 for a login wall and for a missing account
+alike — so they need checking by hand while signed in.
+
+**Which makes this a preference question, not a technical one.** Keeping
+`Vastaps` on `.com` or `.app` is survivable and costs a permanent redirect of
+word-of-mouth traffic to somebody else's theatre company. Taking a free name
+costs the attachment to this one. If the two names feel equal, take the one
+where the `.hu` is ours.
+
 ### T-030 · Move off pages.dev and railway.app onto a real domain
 type: chore · area: infra · priority: med · status: open · added: 2026-09-10
 
