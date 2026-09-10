@@ -69,6 +69,53 @@ stops the same idea being re-proposed and re-argued in six months.
 
 Proposals, not plans. Unordered — nothing here is next up until it is chosen.
 
+### T-036 · Trafó, once it is decided what a production means there
+type: idea · area: catalogue · size: M · status: idea · added: 2026-09-10
+
+**The problem.** Trafó has sat in `venues` since the first seed with nothing
+behind it, and the README recorded it as unreachable — a plain fetch of
+`/programok` returning one link in 168KB. That is no longer true: the
+programme and the detail pages behind it render server-side, with a date, a
+time, a running length, a room, a genre tag and a full crew list on each. On
+10 September Ottó chose to leave it out of the Budapest round rather than
+rush it.
+
+**Roughly.** The adapter itself is an afternoon: `/programok` lists the
+season, each `/programok/{slug}` carries `og:title`, `og:image`, the date and
+time, and a *Stáblista* whose lines are labelled the way every other source's
+credits are.
+
+**Depends on.** A decision, not an API. Trafó is a receiving house, so almost
+everything is a one-off guest event: dance, performance, concerts, workshops,
+exhibitions, a *Nyitott Stúdió*, a *Performanszbusz*. There is no repertoire,
+the same evening rarely recurs, and the crew list credits alkotók rather than
+a cast in parts. So the questions come first — does a one-night guest
+performance belong in a catalogue built around "log the play you saw", does an
+exhibition, and does `produced_by` carry the visiting company for every single
+row. `is_event` (0034) and `produced_by` (T-025) are most of the machinery
+already; what is missing is the editorial line.
+
+### T-037 · Radnóti's archive is behind the one client-rendered page left
+type: idea · area: catalogue · size: S · status: idea · added: 2026-09-10
+
+**The problem.** Radnóti joined the catalogue on 10 September with its
+repertoire, its announced premieres, its programme and its company — but not
+its archive. `/archivum/` exposes exactly two production links to a plain
+fetch and builds the rest client-side, so what is reachable is a couple of
+hundred productions' worth of theatre history minus all but two of it. It was
+left alone deliberately: a back catalogue that silently holds two rows is
+worse than one that is honestly absent.
+
+**Roughly.** Either find what the page calls — it is WordPress, so an
+`admin-ajax` endpoint or a REST route is likely — or fetch the archive pages
+through a headless browser, which is backlog 4.3 and would then serve this and
+anything like it. The detail pages themselves are already understood: an
+archived production uses the same `.szindarab_adatlap` markup the adapter
+reads today, so only the index is missing.
+
+**Depends on.** Nothing else. It is additive, and the adapter would be a
+second source key prefix (`radnoti-archive`) exactly like Csokonai's split.
+
 ### T-001 · Remember which feed you want to land on
 type: idea · area: feed · size: S · status: idea · added: 2026-09-09
 
@@ -206,6 +253,39 @@ show timestamps at all, which is a design change rather than a content one.
 
 Bugs and chores, confirmed and unclaimed.
 
+### T-034 · A guest company's evening at the Nemzeti is not in the catalogue at all
+type: bug · area: catalogue · priority: med · status: open · added: 2026-09-10
+
+The Nemzeti's programme lists dates that its repertoire page does not: the
+zágrábi Horvát Nemzeti Színház's *Zászlók* on 26 September, the Kárpátaljai
+company's *Boldogok, akik nem látnak*. A visiting company's evening has no
+production page on the host's site, so the adapter — which builds its plays
+from `/repertoar` and attaches showtimes to them — has nothing to attach these
+to and drops them. Somebody looking at what is on that night sees a gap.
+
+Reading them means creating a production from a programme row alone, with a
+title, a date and a `produced_by` and nothing else. `sync/adapters/nemzeti.ts`
+already reads the provenance line (`producedByIn`) and finds nothing to use it
+on, so half of the work is done. The question is whether a row that thin
+belongs in the catalogue, and it is the same question Trafó raises.
+
+### T-035 · The Vígszínház programme carries facts about a night with nowhere to go
+type: bug · area: catalogue · priority: low · status: open · added: 2026-09-10
+
+`/api/programme/events` returns per-occurrence fields the catalogue has no
+column for: a `ticket_url`, an `is_premiere` flag, an `is_postponed` flag, and
+a `note` — *"Az előadást angol nyelven játsszuk angol és magyar felirattal"* on
+one October date, *"1. rész – Bevezető"* on another. `performances`
+(`0001_init.sql`) holds only `room`, `starts_at` and `source_key`, so all of it
+is dropped.
+
+This is the same shape as T-031, which is about the qualifier a row carries and
+the fact that `program_in_range()` cannot return one. Worth deciding once for
+both: whether a performance gets a note column, and what the app does with it.
+A surtitled English-language night is exactly the thing somebody chooses a date
+for.
+
+
 
 
 
@@ -265,15 +345,6 @@ each static page carries both. Harmless only while they agree — and backlog 5.
 is precisely about making them differ per route, at which point anything taking
 the last match reads the wrong one. Worth removing the shell's copy now, while
 it is a one-line change rather than a regression inside a feature.
-
-### T-007 · Vígszínház productions have no cast at all
-type: bug · area: data · priority: med · status: open · added: 2026-09-09
-
-The one source where no cast data is reachable. Its productions are invisible to
-a performer search and their cast strips are empty, so in a catalogue meant to
-cover Budapest properly, one of the city's largest houses is missing the feature
-the person pages exist for. Needs a second source for that theatre. From
-backlog 4.5.
 
 ### T-008 · The `is_event` vocabulary was checked against a catalogue that is about to change
 type: bug · area: catalogue · priority: med · status: open · added: 2026-09-09
@@ -624,6 +695,37 @@ _Nothing yet._
 
 ## Done
 
+### T-007 · Vígszínház productions have no cast at all
+type: bug · area: data · priority: med · status: done · added: 2026-09-09 · done: 2026-09-10
+
+The one source where no cast data was reachable. Its productions were invisible
+to a performer search and their cast strips were empty, so in a catalogue meant
+to cover Budapest properly, one of the city's largest houses was missing the
+feature the person pages exist for. From backlog 4.5.
+
+> **The premise expired.** No second source was needed: the theatre's own
+> production pages render server-side now, where they used to return a
+> navigation shell. `/hu/produkciok/{slug}` carries the whole thing — a `<dt>`
+> per part, a `<dd>` of performer chips under it, the creative team in the same
+> list, alternates as several chips beneath one part, and the guest marker in a
+> span inside the name. Three of the repo's recorded facts about this source
+> were stale, which is the lesson worth keeping: a source that could not be
+> read a month ago is worth re-reading before it is worked around.
+
+> **Where it stands.** 2,056 credits at Vígszínház, from 0. Of the current
+> repertoire, 31 of 33 productions carry a cast; the two that do not are a gala
+> and a festival night that publish none. The back catalogue gave up 45 more —
+> the rest are pages from the 1960s to the 2000s that never listed a cast at
+> all, which a single `--deep` pass established once and for all.
+
+> **The trap on the way.** Reading the cast per page means a nightly run cannot
+> open all 579 pages, and a production whose page is not opened must not read as
+> a production with nobody in it — `replace_play_cast` believes an empty list
+> and deletes. So `SyncedPlay.cast` gained a third state: `undefined` is "not
+> looked at", and the runner skips the RPC for it. The same distinction catches
+> the shell pages this site answers with under a long run — *Toldi* came back
+> empty three times in the first full run and had its 22 credits on the retry.
+
 ### T-032 · Faces for the people: portraits from the theatres' company pages
 type: idea · area: catalogue · size: M · status: done · added: 2026-09-10 · started: 2026-09-10 · done: 2026-09-10
 
@@ -675,6 +777,25 @@ credit, so the credit has to be captured where a site prints one.
 > person who leaves a company is still the person the photograph shows. The
 > other theatres are the obvious next step and need nothing but an adapter
 > each. And the guest-marker gap the crawl exposed is T-033.
+
+> **And then Budapest, on 10 September.** Seven more company adapters, one per
+> house: Vígszínház, Katona, Nemzeti, Centrál, Madách, Örkény and Radnóti. The
+> catalogue holds 495 portraits now, and 475 of them belong to somebody it
+> actually credits. Every house has faces; no city is ahead of the other.
+
+> Each site arranges its company differently and every adapter is a page's
+> worth of that difference: Vígszínház serves its portraits through Next.js's
+> resizer, so the original is recovered from the query string; Katona puts the
+> member's link in an `onclick`; Nemzeti's images come through a cropping proxy
+> that is asked for the uncropped file instead; Madách lazy-loads, so the real
+> address is only in `data-srcset`; Radnóti uses two incompatible layouts on
+> three pages of one list; and Örkény has no readable company page at all, so
+> its portraits come from `/api/contributors` — 1,166 people, 32 with a
+> photograph, which is the company.
+
+> The guest marker moved out of the Csokonai adapter into
+> `sync/lib/performers.ts` as `stripGuestMarker`, because six pages now need
+> it and a seventh house should not have to remember it.
 
 ### T-031 · Programme rows say `Próza` where the theatre says `énekkari próba`
 type: bug · area: catalogue · priority: med · status: done · added: 2026-09-10 · done: 2026-09-10
@@ -1425,4 +1546,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-034**
+Next free id: **T-038**

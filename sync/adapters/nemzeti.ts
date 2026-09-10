@@ -28,6 +28,10 @@ import { budapestLocalToUtcIso, parseHungarianDate } from "../lib/huDate";
 import { parseDurationHu } from "../lib/huDuration";
 import { normalizeText, stripHtml } from "../lib/normalize";
 import { VENUE_IDS } from "../venueMap";
+// The possessive "X előadása" reads the same on any Hungarian theatre's page,
+// so the reading of it lives in the adapter that first needed it rather than
+// being written twice. See T-025 in ISSUES.md.
+import { guestCompany } from "./csokonai";
 import type { SyncAdapter, SyncedPlay } from "../lib/types";
 
 const BASE_URL = "https://nemzetiszinhaz.hu";
@@ -170,7 +174,62 @@ export function parseProductionDetail(html: string): ProductionDetails | undefin
   };
 }
 
-export type ProgramOccurrence = { slug: string; startsAt: string; room?: string };
+/**
+ * The company that made a production, when that is not this house.
+ *
+ * The same possessive line Csokonai prints — *"a zágrábi Horvát Nemzeti
+ * Színház előadása"*, which is Zágráb's production and Zágráb's performers,
+ * hosted here. Reading it is what stops the catalogue crediting the Nemzeti
+ * with somebody else's evening, and what stopped it crediting Csokonai with
+ * the Kolozsvári guests in T-025.
+ *
+ * Two things differ from Csokonai's case, and both are why this is not simply
+ * a call to `visitingCompany`:
+ *
+ *  - This house writes the description and the provenance on one line —
+ *    "Misztériumjáték boldog Romzsa Tódor püspök tiszteletére - A Kárpátaljai
+ *    Megyei Magyar Drámai Színház előadása". Matched whole, the "company"
+ *    would swallow the description, so the line is cut at its dashes and the
+ *    parts are tried from the last backwards, the provenance being what a
+ *    Hungarian sentence puts at the end.
+ *  - A co-production names this house too: "A Nemzeti Színház és a
+ *    Kárpátaljai Megyei Magyar Drámai Színház közös előadása" is partly ours,
+ *    and crediting it away would be as wrong as crediting it here.
+ *
+ * That second check cannot be "does it contain the house's name", which is
+ * the obvious version and is wrong: the visiting company in the very case
+ * this was written for is the *zágrábi Horvát Nemzeti Színház*, Croatia's
+ * national theatre, and Hungary is not the only country with one. The house
+ * refers to itself unqualified and at the start of the phrase, where every
+ * other national theatre carries a country or a city in front of it.
+ */
+export function producedByIn(subtitle?: string): string | undefined {
+  if (!subtitle) return undefined;
+
+  for (const part of subtitle.split(/\s+[-–—]\s+/).reverse()) {
+    const company = guestCompany(part);
+    if (company && !/^nemzeti színház\b/i.test(company)) return company;
+  }
+
+  return undefined;
+}
+
+export type ProgramOccurrence = {
+  slug: string;
+  startsAt: string;
+  room?: string;
+  /**
+   * The line the programme prints under the title — "Drámai példázat a
+   * jóságról" beneath *A kaukázusi krétakör*.
+   *
+   * A property of the production rather than of the night, which is why it
+   * ends up on `SyncedPlay.subtitle` and not on the performance. It is
+   * carried here because this listing is the only page that prints it: the
+   * production's own page does not, so reading it anywhere else would mean
+   * fetching this one twice.
+   */
+  subtitle?: string;
+};
 
 /**
  * Showtimes off `/musor`.
@@ -210,6 +269,7 @@ export function parseProgram(html: string): ProgramOccurrence[] {
             `${date}T${hour.padStart(2, "0")}:${minute.padStart(2, "0")}:00`
           ),
           room,
+          subtitle: normalizeText($(playEl).find(".play-data .subtitle").first().text()),
         });
       });
   });
@@ -237,6 +297,8 @@ async function run(): Promise<SyncedPlay[]> {
     if (!details) continue;
 
     const occurrences = occurrencesBySlug.get(slug) ?? [];
+    // Every date of one production prints the same line; the first will do.
+    const subtitle = occurrences.find((o) => o.subtitle)?.subtitle;
 
     plays.push({
       sourceKey: slug,
@@ -254,6 +316,16 @@ async function run(): Promise<SyncedPlay[]> {
       premiereDate: details.premiereDate,
       synopsis: details.synopsis,
       posterUrl: details.posterUrl,
+      /*
+       * The house's own line under the title, from the programme listing.
+       *
+       * Only that listing prints it, so a production with no date announced
+       * has none here — which is the honest answer rather than a gap worth
+       * filling from somewhere else. Every occurrence of one production
+       * carries the same line; the first is taken.
+       */
+      subtitle,
+      producedBy: producedByIn(subtitle),
       cast: details.cast,
       performances: occurrences.map((o) => ({
         sourceKey: `${slug}:${o.startsAt}`,

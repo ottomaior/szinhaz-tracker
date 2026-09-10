@@ -22,16 +22,35 @@
  *
  * robots.txt is `User-agent: * / Allow: /`.
  *
- * The one field this source does not publish anywhere reachable is the cast.
- * There is no per-production endpoint (`?slug=` is accepted and ignored), the
- * production page makes no further API call, and the flight payload holds only
- * the word "Szereposztás" rather than any names. So these productions arrive
- * without a cast list, and search over performers will not find them. That is
- * a real gap, and better than inventing one.
+ * ## The cast, which used to be missing
+ *
+ * This adapter shipped without one. The API publishes no cast at any endpoint
+ * — there is no per-production route, `?slug=` is accepted and ignored — and
+ * the production page was, when this was first written, a navigation shell
+ * whose flight payload held the word "Szereposztás" and no names. So 579
+ * productions arrived with nobody in them, which is what T-007 in ISSUES.md
+ * was about: the largest house in the catalogue, invisible to a search for a
+ * performer.
+ *
+ * Rechecked on 10 September 2026 and no longer true. `/hu/produkciok/{slug}`
+ * is server-rendered now, and `section.ProductionCast_block…` carries the
+ * whole thing: a `<dt>` per part, a `<dd>` of performer chips under it, the
+ * creative team in the same list under their own labels, alternates as
+ * several chips beneath one part, and guests marked with an `m.v.` span
+ * inside the name. So the cast is read from HTML while everything else stays
+ * on the API, which is the one thing this source does better than any other.
+ *
+ * That page is fetched per production, so a run reads the current repertoire
+ * (55 pages) and says nothing about the back catalogue, which is closed
+ * productions whose casts will not change again. `--deep` reads all of them;
+ * see `DEEP` in sync/lib/options.ts and `cast` in sync/lib/types.ts for why
+ * "did not look" has to be distinguishable from "found nobody".
  */
-import { fetchJson } from "../lib/http";
+import * as cheerio from "cheerio";
+import { fetchJson, fetchText } from "../lib/http";
 import { budapestLocalToUtcIso } from "../lib/huDate";
 import { normalizeText, stripHtml } from "../lib/normalize";
+import { DEEP } from "../lib/options";
 import { VENUE_IDS } from "../venueMap";
 import type { SyncAdapter, SyncedPlay } from "../lib/types";
 
@@ -148,6 +167,64 @@ export function isOwnHouse(locationName?: string): boolean {
   return !!locationName && OWN_HOUSES.test(locationName);
 }
 
+/**
+ * The cast and creative team on a production page.
+ *
+ * The markup is a description list: `<dt>` is the part — "De la Mare,
+ * államtitkár" for a character, "Díszlettervező" for a designer, the house
+ * making no structural distinction between the two — and the `<dd>` under it
+ * holds one `<article class="Chip…">` per person. Several chips under one
+ * `<dt>` are alternates, and each gets its own row against the same part,
+ * which is what `play_cast`'s (play_id, name, role) key exists for. *A Pál
+ * utcai fiúk* is the case worth knowing: three Bokas, three Áts Feris, and a
+ * seventeen-strong "Táncosok" line.
+ *
+ * The name is read from the chip's heading and not from the image's `alt`,
+ * because a few chips carry an empty one; the `alt` is the fallback for the
+ * reverse case. The guest marker lives in a `<span>` *inside* the heading, so
+ * it is removed as an element rather than by matching text — `.text()` would
+ * otherwise glue it to the surname and slug "Kovács Olivérm.v.".
+ *
+ * Undefined when the page carries no cast section at all, which is not the
+ * same as a section listing nobody. Two things produce it: a gala or a
+ * festival night that genuinely has no cast, and — the reason this
+ * distinction is load-bearing — a shell page. Under a run of several hundred
+ * requests this site occasionally answers 200 with the navigation and no
+ * content, and *Toldi* returning "nobody is in it" would then delete the
+ * twenty-two people who are. Undefined leaves the stored rows alone; see
+ * `cast` in sync/lib/types.ts.
+ */
+export function parseProductionCast(html: string): { name: string; role: string }[] | undefined {
+  const $ = cheerio.load(html);
+  const cast: { name: string; role: string }[] = [];
+
+  if (!$('section[class*="ProductionCast_block"]').length) return undefined;
+
+  $('section[class*="ProductionCast_block"]')
+    .find("dt")
+    .each((_, dt) => {
+      const $dt = $(dt);
+      const role = normalizeText($dt.text()) ?? "";
+      if (!role) return;
+
+      // The immediate sibling only. A `<dt>` with no `<dd>` of its own would
+      // otherwise borrow the next part's performers and credit them twice.
+      const $dd = $dt.next("dd");
+
+      $dd
+        .find("article")
+        .each((__, chip) => {
+          const $chip = $(chip);
+          const $name = $chip.find('h3[class*="Chip_name"]').first().clone();
+          $name.find("span").remove();
+          const name = normalizeText($name.text()) ?? normalizeText($chip.find("img").first().attr("alt")) ?? "";
+          if (name) cast.push({ name, role });
+        });
+    });
+
+  return cast;
+}
+
 /** A production that has been announced but has not opened yet. */
 export function isUpcomingPremiere(premiereDate?: string | null, today = new Date()): boolean {
   if (!premiereDate) return false;
@@ -189,7 +266,8 @@ export function eventStartsAt(event: RawEvent): string | undefined {
 export function toSyncedPlay(
   production: RawProduction,
   genreById: Map<number, string>,
-  occurrences: { startsAt: string; room?: string }[]
+  occurrences: { startsAt: string; room?: string }[],
+  cast?: { name: string; role: string }[]
 ): SyncedPlay | undefined {
   const title = hu(production.title);
   const slug = hu(production.slug);
@@ -234,14 +312,50 @@ export function toSyncedPlay(
      * searchable and loggable, kept out of the browse rails.
      */
     isArchived: occurrences.length === 0 && !isUpcomingPremiere(production.premiere_date),
-    // Not published anywhere reachable on this source. See the file header.
-    cast: [],
+    /*
+     * Read from the production's own page, and left undefined when this run
+     * did not open it — a shallow run's archive, or a page that 404s. The
+     * runner leaves the stored rows alone in that case rather than clearing
+     * them. See the file header and `cast` in sync/lib/types.ts.
+     */
+    cast,
     performances: occurrences.map((o) => ({
       sourceKey: `${slug}:${o.startsAt}`,
       startsAt: o.startsAt,
       room: o.room,
     })),
   };
+}
+
+/**
+ * One production's cast, or undefined if its page did not yield one.
+ *
+ * A dead or moved page is not a cast of nobody. Returning undefined for it
+ * keeps whatever is already stored, so a single 404 in a run of hundreds
+ * costs a warning rather than a production's whole credit list.
+ *
+ * Asked twice when the first answer carries no cast section, because over a
+ * run of several hundred requests this site returns the odd shell page — the
+ * navigation, the footer, and none of the content, with a 200. Three
+ * productions came back that way on the first full run and all three had a
+ * full cast on a second ask. The retry costs one request each for the handful
+ * of pages that genuinely have no cast, which is a gala or a festival night.
+ */
+async function fetchCast(slug?: string): Promise<{ name: string; role: string }[] | undefined> {
+  if (!slug) return undefined;
+
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const html = await fetchText(`${SITE_URL}/hu/produkciok/${slug}`, { crawlDelayMs: CRAWL_DELAY_MS });
+      const cast = parseProductionCast(html);
+      if (cast) return cast;
+    } catch (e) {
+      console.warn(`[vigszinhaz] ${slug}: cast page unreadable (${e instanceof Error ? e.message : String(e)})`);
+      return undefined;
+    }
+  }
+
+  return undefined;
 }
 
 async function run(): Promise<SyncedPlay[]> {
@@ -292,7 +406,22 @@ async function run(): Promise<SyncedPlay[]> {
     if (!isOwnHouse(hu(production.location?.name))) continue;
     if (!isRecentEnough(production.premiere_date)) continue;
 
-    const play = toSyncedPlay(production, genreById, occurrencesByProduction.get(production.id) ?? []);
+    const occurrences = occurrencesByProduction.get(production.id) ?? [];
+    /*
+     * Whose cast page to open.
+     *
+     * Everything still playing or about to open, always: that is what
+     * somebody browsing the app is looking at, and it is 55 pages. The back
+     * catalogue only under `--deep`, because it is another 520 requests for
+     * casts that closed years ago and cannot change again.
+     *
+     * The condition matches `isArchived` below rather than restating it, so
+     * the two cannot drift into disagreeing about what "current" means.
+     */
+    const isCurrent = occurrences.length > 0 || isUpcomingPremiere(production.premiere_date);
+    const cast = DEEP || isCurrent ? await fetchCast(hu(production.slug)) : undefined;
+
+    const play = toSyncedPlay(production, genreById, occurrences, cast);
     if (play) plays.push(play);
   }
 

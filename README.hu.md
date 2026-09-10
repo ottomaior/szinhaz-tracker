@@ -2054,24 +2054,33 @@ tiltja az automatikus hozzáférést", ami csak az egyikre igaz):
   tiltja, `Crawl-delay: 20` mellett. A műsor bejárható; a késleltetés miatt lesz
   lassú egy teljes kör.
 
-Tíz adapter él és alapból be van kapcsolva, nyolc színházat fed le két
-városban, együtt nagyjából 1200 produkciót adnak — ebből körülbelül 300 fut most
+Tizenegy műsoradapter és kilenc társulati adapter él és alapból be van
+kapcsolva, kilenc színházat fed le két városban, együtt nagyjából 1240
+produkciót adnak — ebből körülbelül 340 fut most
 vagy meg van hirdetve, alig 900 alatti pedig olyan, amit maguk a színházak
-sorolnak az archívumukba —, valamint közel 500 közelgő játszási időpontot. Az archív sorok
+sorolnak az archívumukba —, valamint körülbelül 560 közelgő játszási időpontot,
+9400 szereposztási sort és 495 portrét. Az archív sorok
 `plays.is_archived`-et kapnak, ami kiveszi őket a Felfedezés böngészősávjaiból,
 de kereshetők és rögzíthetők maradnak, így évekkel ezelőtt látott előadást is
 fel lehet vinni (lásd `0005_archive_and_reconcile.sql`).
 
 | Színház | Város | Adapter(ek) | Forrás |
 |---|---|---|---|
-| Örkény István Színház | Budapest | `orkeny` | saját JSON API |
-| Katona József Színház | Budapest | `katona-wp`, `katona-archive` | WordPress + befagyasztott Joomla |
-| Nemzeti Színház | Budapest | `nemzeti` | saját oldal |
-| Centrál Színház | Budapest | `central` | saját oldal + The Events Calendar API |
-| Madách Színház | Budapest | `madach` | saját oldal |
-| Vígszínház | Budapest | `vigszinhaz` | saját JSON API |
-| Csokonai Nemzeti Színház | Debrecen | `csokonai`, `csokonai-archive` | saját oldal |
-| Vojtina Bábszínház | Debrecen | `vojtina` | saját oldal |
+| Örkény István Színház | Budapest | `orkeny`, `orkeny-company` | saját JSON API |
+| Katona József Színház | Budapest | `katona-wp`, `katona-archive`, `katona-company` | WordPress + befagyasztott Joomla |
+| Nemzeti Színház | Budapest | `nemzeti`, `nemzeti-company` | saját oldal |
+| Centrál Színház | Budapest | `central`, `central-company` | saját oldal + The Events Calendar API |
+| Madách Színház | Budapest | `madach`, `madach-company` | saját oldal |
+| Radnóti Színház | Budapest | `radnoti`, `radnoti-company` | saját oldal |
+| Vígszínház | Budapest | `vigszinhaz`, `vigszinhaz-company` | saját JSON API + saját oldalak |
+| Csokonai Nemzeti Színház | Debrecen | `csokonai`, `csokonai-archive`, `csokonai-company` | saját oldal |
+| Vojtina Bábszínház | Debrecen | `vojtina`, `vojtina-company` | saját oldal |
+
+A `-company` adapterek másfajta források: a színház saját társulati oldalát
+olvassák portrékért, nem a műsorát produkciókért, és a `person_portraits`
+táblába írnak, nem a `plays`-be (`0049_faces_for_the_people.sql`). Mostanra
+mindegyik háznak van egy — ettől lesz arca egy alkotói oldalnak: 495 portré,
+ebből 475 olyan emberé, akit a katalógus tényleg kreditál.
 
 Attól, hogy Debrecennek lett egy második helyszíne, kapcsolnak be ott a
 Felfedezés színház-chipjei: a sor elrejti magát, ha egy városban csak egy
@@ -2126,18 +2135,33 @@ a figyelmeztető fejlécet a `sync/adapters/jegymester.ts`-ben. A Csokonai
 korábban szintén ezen az elromlott platformon volt — a most működő adaptere a
 Csokonai saját oldalát olvassa.
 
-A **Vígszínház** mostanra él, és a legbőségesebb forrás az összes közül — de nem
-úgy, ahogy e fájl korábbi változata jósolta. Az oldalai kliensoldalon
-renderelnek, az RSC flight payload pedig csak a felület saját feliratszótárát
-tartalmazza: produkcióadatot egyáltalán nem. Amit az alkalmazás ténylegesen hív,
-az az `/api/programme/`, és ez minden produkciót visszaad bemutatódátummal,
-perces játékidővel, szünetszámmal és strukturált rendezővel. Két dolgot érdemes
-tudni róla: **1890-ig** nyúlik vissza, ezért a `sync/adapters/vigszinhaz.ts`
-1960-os bemutatóévnél megáll (az 1897-es évadot senki nem látta, aki ezt az
-appot használja, és a teljes behúzás egyetlen helyszínt négyszer akkorává tenne,
-mint az összes többit együtt); és ez az egyetlen forrás, ahol **szereposztás**
+A **Vígszínház** a legbőségesebb forrás az összes közül, és az, amelyet ez a
+fájl már kétszer írt le rosszul. Amit az oldal alkalmazása hív, az az
+`/api/programme/`, és ez minden produkciót visszaad bemutatódátummal, perces
+játékidővel, szünetszámmal és strukturált rendezővel; **1890-ig** nyúlik
+vissza, ezért a `sync/adapters/vigszinhaz.ts` 1960-os bemutatóévnél megáll (az
+1897-es évadot senki nem látta, aki ezt az appot használja, és a teljes behúzás
+egyetlen helyszínt négyszer akkorává tenne, mint az összes többit együtt).
+
+A helyesbítés a szereposztásról szól. Itt korábban az állt, hogy szereposztás
 sehol nem érhető el, tehát ezeket a produkciókat színészre keresve nem lehet
-megtalálni.
+megtalálni — 579 produkció, egyetlen névvel sem, ami a T-007 volt az
+`ISSUES.md`-ben, és a katalógus legnagyobb egyetlen hiánya. 2026. szeptember
+10-én újraellenőrizve ez már nem igaz: a `/hu/produkciok/{slug}` mostanra
+szerveroldalon renderel, és viszi a szerepeket, a színészeket, az alkotókat és
+a szereposztás-váltásokat is. Így a katalógus az API-ból jön, a szereposztás
+pedig az oldalról, és annak a háznak, amelynek egy sora sem volt, most 2056
+szereposztási sora van.
+
+Ez produkciónként egy lekérést jelent, ezért van `--deep` kapcsoló. Egy szokásos
+futás a jelenlegi repertoárt olvassa; a régi anyaghoz külön kérés kell, mert egy
+levett előadás szereposztása már nem változik. Amitől ez biztonságos, az a
+`SyncedPlay.cast` megkülönböztetése: az üres lista azt jelenti, hogy a forrás
+senkit nem tüntet fel, és felülírja a tároltat, az `undefined` viszont azt, hogy
+ez a futás nem is nézte meg, és a tárolt sorok maradnak. Enélkül egy éjszakai
+futás ötszáz produkció szereposztását törölte volna abban a pillanatban, hogy
+nem nyitja meg többé az oldalukat — és ugyanez a védelem fogja ki azokat az üres
+vázoldalakat is, amelyeket ez a site hosszabb futás közben néha visszaad.
 
 A **Madách** külön megjegyzést kíván. A `robots.txt`-je a Cloudflare
 content-signals sablonszövege és semmi más — az egész fájl kommentekből áll,
@@ -2148,15 +2172,30 @@ nem korlátoz engedélyt" — tehát nincs kifejezett korlátozás, és nincs be
 bejárási szabály sem. Érdemes újraolvasni, ha az a fájl valaha valódi direktívát
 kap.
 
+A **Radnóti** ugyanabban a bekezdésben szerepelt, mint a Vígszínház hiányzó
+szereposztása, és ugyanazért: itt az állt, hogy a `/repertoar/`, a
+`/bemutatok-…/` és az `/archivum/` mind bájtra azonos navigációs vázat ad
+vissza, ezért a ház a „fejnélküli böngésző kellene hozzá" kategóriába került.
+2026. szeptember 10-én újraellenőrizve az oldal hétköznapi, szerveroldalon
+renderelő WordPress. Így a Radnóti a katalógus kilencedik színháza, 23
+produkcióval, 369 szereposztási sorral és saját társulati oldallal — és nem
+kellett hozzá olyan függőség, ami eddig ne lett volna meg.
+
+Az oldalnak két szokása van, amit érdemes tudni, mert mindkettő benne van az
+adapterben. A szerkesztői kiabálnak: a kredit címkéjét és néha alatta a nevet is
+csupa nagybetűvel írják, ezért mindkettőt visszaszelídíti — a „BAUMGARTNER
+SÁNDOR" formában tárolt név a `person_slug()` szemében egy másik ember. És
+kétféle elrendezést használ az alkotói listára: egyes produkcióknál soronként
+egy kredit, másoknál az egész stáb egyetlen bekezdésben; csak az elsőt olvasva
+huszonháromból huszonegy produkció maradt rendező nélkül.
+
 Ami továbbra sincs megírva, azzal együtt, hogy élő ellenőrzéskor mi derült ki:
 
-- **Radnóti** és **Trafó** — sima HTTP-vel egyáltalán nem érhetők el. Mindkettő
-  kliensoldalon rendereli a műsorát: a Radnóti `/repertoar/`,
-  `/bemutatok-20262027/` és `/archivum/` oldala sima lekéréssel három bájtra
-  azonos navigációs vázat ad vissza, a `trafo.hu/programok` pedig egyetlen
-  linket 168KB HTML-ben. Ezekhez fejnélküli böngésző kellene a
-  szinkronfeladatban, ami egy ütemezett GitHub Actionhöz jóval nehezebb
-  függőség, mint a cheerio.
+- **Trafó** — mostanra olvasható (a `/programok` és a mögötte lévő
+  részletoldalak szerveroldalon renderelnek), és szándékosan későbbre maradt.
+  Befogadó tér: tánc, performansz, koncert, workshop és kiállítás, többnyire
+  egyszeri vendégesemények stáblistával, nem repertoár szereposztással — így
+  előbb kell eldönteni, mi számít itt produkciónak, mint adaptert írni hozzá.
 
 - **Pesti Magyar Színház** — sima lekérésre "Access Forbidden" a válasz.
 

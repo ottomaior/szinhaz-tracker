@@ -1970,24 +1970,32 @@ access", which is true of only one of them):
   with `Crawl-delay: 20`. Listings are crawlable; the crawl delay is what
   makes a full pass slow.
 
-Ten adapters are live and enabled by default, covering eight theatres in two
-cities and supplying about 1,200 productions — roughly 300 currently playing or
-announced, and just under 900 that the theatres themselves file under their
-archives — along with close to 500 upcoming showtimes. Archived rows carry `plays.is_archived`,
+Eleven listings adapters and nine company adapters are live and enabled by
+default, covering nine theatres in two cities and supplying about 1,240
+productions — roughly 340 currently playing or announced, and just under 900
+that the theatres themselves file under their archives — along with about 560
+upcoming showtimes, 9,400 credits and 495 portraits. Archived rows carry `plays.is_archived`,
 which keeps them out of Discover's browse rails while leaving them searchable
 and loggable, so you can still record a play you saw years ago (see
 `0005_archive_and_reconcile.sql`).
 
 | Theatre | City | Adapter(s) | Source |
 |---|---|---|---|
-| Örkény István Színház | Budapest | `orkeny` | own JSON API |
-| Katona József Színház | Budapest | `katona-wp`, `katona-archive` | WordPress + frozen Joomla |
-| Nemzeti Színház | Budapest | `nemzeti` | own site |
-| Centrál Színház | Budapest | `central` | own site + The Events Calendar API |
-| Madách Színház | Budapest | `madach` | own site |
-| Vígszínház | Budapest | `vigszinhaz` | own JSON API |
-| Csokonai Nemzeti Színház | Debrecen | `csokonai`, `csokonai-archive` | own site |
-| Vojtina Bábszínház | Debrecen | `vojtina` | own site |
+| Örkény István Színház | Budapest | `orkeny`, `orkeny-company` | own JSON API |
+| Katona József Színház | Budapest | `katona-wp`, `katona-archive`, `katona-company` | WordPress + frozen Joomla |
+| Nemzeti Színház | Budapest | `nemzeti`, `nemzeti-company` | own site |
+| Centrál Színház | Budapest | `central`, `central-company` | own site + The Events Calendar API |
+| Madách Színház | Budapest | `madach`, `madach-company` | own site |
+| Radnóti Színház | Budapest | `radnoti`, `radnoti-company` | own site |
+| Vígszínház | Budapest | `vigszinhaz`, `vigszinhaz-company` | own JSON API + own pages |
+| Csokonai Nemzeti Színház | Debrecen | `csokonai`, `csokonai-archive`, `csokonai-company` | own site |
+| Vojtina Bábszínház | Debrecen | `vojtina`, `vojtina-company` | own site |
+
+The `-company` adapters are a different kind of source: they read a theatre's
+own company page for portraits rather than its programme for productions, and
+they write `person_portraits` rather than `plays` (`0049_faces_for_the_people.sql`).
+Every house has one now, which is what puts a face on a person page: 495
+portraits, 475 of them belonging to somebody the catalogue actually credits.
 
 Debrecen having a second venue is what turns Discover's theatre chips on
 there: the row hides itself when a city has only one option, because a filter
@@ -2041,17 +2049,32 @@ header in `sync/adapters/jegymester.ts` for what would be needed to fix
 that. Csokonai used to be on that same broken platform too — its working
 adapter now reads Csokonai's own site instead.
 
-**Vígszínház** is now live and is the richest source of the lot, but not the
-way an earlier version of this file predicted. Its pages render client-side and
-the RSC flight payload holds only the interface's label dictionary — no
-production data at all. What the app actually calls is `/api/programme/`, which
-returns every production with a premiere date, a runtime in minutes, an
-interval count and a structured director. Two things are worth knowing about
-it: it reaches back to **1890**, so `sync/adapters/vigszinhaz.ts` stops at a
-premiere year of 1960 (nobody using this app saw the 1897 season, and importing
-the lot would make one venue four times the size of everything else); and it is
-the one source with **no cast** available anywhere reachable, so its
-productions will not be found by searching for a performer.
+**Vígszínház** is the richest source of the lot, and the one that has been
+described wrongly here twice. What the site's app calls is `/api/programme/`,
+which returns every production with a premiere date, a runtime in minutes, an
+interval count and a structured director; it reaches back to **1890**, so
+`sync/adapters/vigszinhaz.ts` stops at a premiere year of 1960 (nobody using
+this app saw the 1897 season, and importing the lot would make one venue four
+times the size of everything else).
+
+The correction is about the cast. This file used to say the cast was not
+available anywhere reachable, so its productions would never be found by
+searching for a performer — 579 productions with nobody in them, which was
+T-007 in `ISSUES.md` and the largest single hole in the catalogue. Rechecked
+on 10 September 2026 and no longer true: `/hu/produkciok/{slug}` is
+server-rendered now, and it carries the parts, the performers, the creative
+team and the alternates. So the catalogue comes from the API and the cast from
+the page, and the house that had none now has 2,056 credits.
+
+Reading them costs a request per production, which is why `--deep` exists.
+An ordinary run reads the current repertoire; the back catalogue is read only
+when asked, because a closed production's cast does not change. The
+distinction that makes this safe is in `SyncedPlay.cast`: an empty list means
+the source credits nobody and replaces what is stored, while `undefined` means
+this run did not look and the stored rows stand. Without it a nightly run
+would delete five hundred productions' credits the moment it stopped opening
+their pages — and the same guard catches the shell pages this site
+occasionally answers with under a long run.
 
 **Madách** needs a note of its own. Its `robots.txt` is Cloudflare's
 content-signals boilerplate and nothing else — the whole file is comments
@@ -2061,14 +2084,30 @@ an operator who sets no signal "neither grants nor restricts permission", so
 there is no expressed restriction and no crawl rule to honour. Worth
 re-reading if that file ever grows a real directive.
 
+**Radnóti** was in the same paragraph as Vígszínház's missing cast, and for
+the same reason: this file recorded that `/repertoar/`, `/bemutatok-…/` and
+`/archivum/` all returned byte-identical navigation shells, and filed the
+house under "needs a headless browser". Checked again on 10 September 2026 and
+the site is ordinary server-rendered WordPress. So Radnóti is the ninth
+theatre in the catalogue, with 23 productions, 369 credits and its own
+company page, and it needed no dependency that was not already here.
+
+Two habits of that site are worth knowing, because both are in the adapter.
+Its editors shout, typing a credit label and sometimes the name under it in
+capitals, so both are recased — a name stored as "BAUMGARTNER SÁNDOR" is a
+second person as far as `person_slug()` is concerned. And it uses two
+different layouts for the creative team, one credit per row on some
+productions and the whole team in a single paragraph on others; reading only
+the first left twenty-one of twenty-three productions with no director.
+
 Still not built, with what was found when each was checked live:
 
-- **Radnóti** and **Trafó** — not reachable by plain HTTP at all. Both render
-  their listings client-side: a plain fetch of Radnóti's `/repertoar/`,
-  `/bemutatok-20262027/` and `/archivum/` returns three byte-identical
-  navigation shells, and `trafo.hu/programok` yields a single link in 168KB
-  of markup. These would need a headless browser in the sync job, a much
-  heavier dependency for a scheduled GitHub Action than cheerio.
+- **Trafó** — readable now (its `/programok` and the detail pages behind it
+  render server-side), and deliberately left for later. It is a receiving
+  house: dance, performance, concerts, workshops and exhibitions, mostly
+  one-off guest events with a crew list rather than a repertoire with a cast,
+  so it needs decisions about what counts as a production here before it needs
+  an adapter.
 - **Pesti Magyar Színház** — returns "Access Forbidden" to a plain request.
 
 Also not yet built: followers/following. Watchlist add/remove is done —

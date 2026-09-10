@@ -21,6 +21,7 @@
  */
 import * as cheerio from "cheerio";
 import { fetchText } from "../lib/http";
+import { stripGuestMarker } from "../lib/performers";
 import { VENUE_IDS } from "../venueMap";
 import type { CompanyAdapter, SyncedPerson } from "../lib/types";
 
@@ -45,17 +46,6 @@ const GROUPS = [
 ];
 
 /**
- * The guest marker the guest-artists page prints after every name.
- *
- * Stripped here rather than left to `personCanonicalName()`, because the page
- * prints it both as `m.v.` and as `m.v` — and the canonicaliser only knows
- * the dotted form, so the undotted one would slug to `…-m-v` and miss the
- * person's page. Four cast rows in the catalogue have the same problem and
- * are a separate matter (see T-033).
- */
-const GUEST_MARKER = /\s*\bm\.\s*v\.?\s*$/i;
-
-/**
  * The people on one group page.
  *
  * Anchored on the link into `/tarsulat/`, since that is what makes a card a
@@ -71,7 +61,9 @@ export function parseCompanyPage(html: string): SyncedPerson[] {
     const $a = $(el);
     const href = $a.attr("href");
     const printed = $a.find("p.uk-text-secondary").first().text().replace(/\s+/g, " ").trim();
-    const name = printed.replace(GUEST_MARKER, "").trim();
+    // The guest-artists page prints `m.v.` after every name, and both with
+    // and without the final dot. See `stripGuestMarker`.
+    const name = stripGuestMarker(printed);
     const role = $a.find("h4").first().text().replace(/\s+/g, " ").trim();
     const imageUrl = $a.find("img").first().attr("src");
     if (!href || !name || !imageUrl) return;

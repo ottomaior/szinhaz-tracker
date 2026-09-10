@@ -1,0 +1,586 @@
+[
+ {
+  "name": {
+   "en": "Bíró Kriszta",
+   "hu": "Bíró Kriszta"
+  },
+  "slug": {
+   "en": "biro-kriszta",
+   "hu": "biro-kriszta"
+  },
+  "role": {
+   "en": null,
+   "hu": null
+  },
+  "category": "Színész",
+  "image": "uploads/contributors/b57e3788f8c06cf2d26eb5ccdf97a2ef.webp"
+ },
+ {
+  "name": {
+   "en": "Borsi-Balogh Máté",
+   "hu": "Borsi-Balogh Máté"
+  },
+  "slug": {
+   "en": "borsi-balogh-mate",
+   "hu": "borsi-balogh-mate"
+  },
+  "role": {
+   "en": null,
+   "hu": null
+  },
+  "category": "Színész",
+  "image": "uploads/contributors/91512db19239a88d2937095d13c7d58a.webp"
+ },
+ {
+  "name": {
+   "en": "Csákányi Eszter",
+   "hu": "Csákányi Eszter"
+  },
+  "slug": {
+   "en": "csakanyi-eszter",
+   "hu": "csakanyi-eszter"
+  },
+  "role": {
+   "en": null,
+   "hu": null
+  },
+  "category": "Színész",
+  "image": "uploads/contributors/ac3b55e787ee6429af68526c82299998.webp"
+ },
+ {
+  "name": {
+   "en": "Csuja Imre",
+   "hu": "Csuja Imre"
+  },
+  "slug": {
+   "en": "csuja-imre",
+   "hu": "csuja-imre"
+  },
+  "role": {
+   "en": null,
+   "hu": null
+  },
+  "category": "Vendégművész",
+  "image": "uploads/contributors/025a828dadd591cd446ce01d373158d1.webp"
+ },
+ {
+  "name": {
+   "en": "Ficza István",
+   "hu": "Ficza István"
+  },
+  "slug": {
+   "en": "ficza-istvan",
+   "hu": "ficza-istvan"
+  },
+  "role": {
+   "en": null,
+   "hu": null
+  },
+  "category": "Színész",
+  "image": "uploads/contributors/cfd68e8667ad3359bdbfe5d66bc83360.webp"
+ },
+ {
+  "name": {
+   "en": "Friedenthal Zoltán",
+   "hu": "Friedenthal Zoltán"
+  },
+  "slug": {
+   "en": "friedenthal-zoltan",
+   "hu": "friedenthal-zoltan"
+  },
+  "role": {
+   "hu": null
+  },
+  "category": "Színész",
+  "image": "uploads/contributors/022849393adf53fd3a2ca46ef1f53ccf.webp"
+ },
+ {
+  "name": {
+   "en": "Für Anikó",
+   "hu": "Für Anikó"
+  },
+  "slug": {
+   "en": "fur-aniko",
+   "hu": "fur-aniko"
+  },
+  "role": {
+   "en": null,
+   "hu": null
+  },
+  "category": "Színész",
+  "image": "uploads/contributors/143a7223b43fdb40e983699d5beb9429.webp"
+ },
+ {
+  "name": {
+   "en": "Gálffi László",
+   "hu": "Gálffi László"
+  },
+  "slug": {
+   "en": "galffi-laszlo",
+   "hu": "galffi-laszlo"
+  },
+  "role": {
+   "en": null,
+   "hu": null
+  },
+  "category": "Színész",
+  "image": "uploads/contributors/9788efdc28edcaaf12af31106f030594.webp"
+ },
+ {
+  "name": {
+   "en": "Hajduk Károly",
+   "hu": "Hajduk Károly"
+  },
+  "slug": {
+   "en": "hajduk-karoly",
+   "hu": "hajduk-karoly"
+  },
+  "role": {
+   "en": null,
+   "hu": null
+  },
+  "category": "Színész",
+  "image": "uploads/contributors/26a8fa1cf45685e7cb866d31f9e61859.webp"
+ },
+ {
+  "name": {
+   "en": "Hámori Gabriella",
+   "hu": "Hámori Gabriella"
+  },
+  "slug": {
+   "en": "hamori-gabriella",
+   "hu": "hamori-gabriella"
+  },
+  "role": {
+   "hu": null
+  },
+  "category": "Vendégművész",
+  "image": "uploads/contributors/b04d4670ccc23a39f16a8c19afb31428.webp"
+ },
+ {
+  "name": {
+   "en": "Jéger Zsombor",
+   "hu": "Jéger Zsombor"
+  },
+  "slug": {
+   "en": "jeger-zsombor",
+   "hu": "jeger-zsombor"
+  },
+  "role": {
+   "en": null,
+   "hu": null
+  },
+  "category": "Vendégművész",
+  "image": "uploads/contributors/5eb9dd08d8cd48b747b11a605791d6c1.webp"
+ },
+ {
+  "name": {
+   "en": "Józsa Bettina",
+   "hu": "Józsa Bettina"
+  },
+  "slug": {
+   "en": "jozsa-bettina",
+   "hu": "jozsa-bettina"
+  },
+  "role": {
+   "en": null,
+   "hu": null
+  },
+  "category": "Színész",
+  "image": "uploads/contributors/b4f7db297efc13e92706d49785232144.webp"
+ },
+ {
+  "name": {
+   "en": "Kerekes Éva",
+   "hu": "Kerekes Éva"
+  },
+  "slug": {
+   "en": "kerekes-eva",
+   "hu": "kerekes-eva"
+  },
+  "role": {
+   "hu": null
+  },
+  "category": "Vendégművész",
+  "image": "uploads/contributors/e7efb7d500504ba5779fed28bca86ad1.webp"
+ },
+ {
+  "name": {
+   "en": "Kiss-Végh Emőke m.v.",
+   "hu": "Kiss-Végh Emőke"
+  },
+  "slug": {
+   "en": "kiss-vegh-emoke-mv",
+   "hu": "kiss-vegh-emoke-mv"
+  },
+  "role": {
+   "hu": "színész"
+  },
+  "category": "Színész",
+  "image": "uploads/contributors/71b8b6a1cb2a95b72ec29d2c800ff6a7.webp"
+ },
+ {
+  "name": {
+   "en": "Kövesi Zsombor",
+   "hu": "Kövesi Zsombor"
+  },
+  "slug": {
+   "en": "koevesi-zsombor",
+   "hu": "koevesi-zsombor"
+  },
+  "role": {
+   "en": "színész",
+   "hu": "színész"
+  },
+  "category": "Színész",
+  "image": "uploads/contributors/875f2483193014c6c748e4e703e4cd55.webp"
+ },
+ {
+  "name": {
+   "en": "Kókai Tünde",
+   "hu": "Kókai Tünde"
+  },
+  "slug": {
+   "en": "kokai-tunde",
+   "hu": "kokai-tunde"
+  },
+  "role": {
+   "en": null,
+   "hu": null
+  },
+  "category": "Színész",
+  "image": "uploads/contributors/32edfb31f35bc791446051cacfa894a0.webp"
+ },
+ {
+  "name": {
+   "en": "Mácsai Pál",
+   "hu": "Mácsai Pál"
+  },
+  "slug": {
+   "en": "macsai-pal",
+   "hu": "macsai-pal"
+  },
+  "role": {
+   "hu": null
+  },
+  "category": "Színész",
+  "image": "uploads/contributors/23c0b16980eb4ec8a688427377f53dac.webp"
+ },
+ {
+  "name": {
+   "en": "Máthé Zsolt",
+   "hu": "Máthé Zsolt"
+  },
+  "slug": {
+   "en": "mathe-zsolt",
+   "hu": "mathe-zsolt"
+  },
+  "role": {
+   "en": null,
+   "hu": null
+  },
+  "category": "Színész",
+  "image": "uploads/contributors/2705480c0ab14545565ae942b17f4977.webp"
+ },
+ {
+  "name": {
+   "en": "Nagy Zsolt",
+   "hu": "Nagy Zsolt"
+  },
+  "slug": {
+   "en": "nagy-zsolt",
+   "hu": "nagy-zsolt"
+  },
+  "role": {
+   "en": null,
+   "hu": null
+  },
+  "category": "Színész",
+  "image": "uploads/contributors/85264798da4d47c513f960ccc5dd55ab.webp"
+ },
+ {
+  "name": {
+   "en": "Novkov Máté",
+   "hu": "Novkov Máté"
+  },
+  "slug": {
+   "en": "novkov-mate",
+   "hu": "novkov-mate"
+  },
+  "role": {
+   "en": null,
+   "hu": null
+  },
+  "category": "Színész",
+  "image": "uploads/contributors/49e6eb77bc6aef08d8b5aeb883e8ad3f.webp"
+ },
+ {
+  "name": {
+   "en": "Patkós Márton",
+   "hu": "Patkós Márton"
+  },
+  "slug": {
+   "en": "patkos-marton",
+   "hu": "patkos-marton"
+  },
+  "role": {
+   "en": null,
+   "hu": null
+  },
+  "category": "Színész",
+  "image": "uploads/contributors/3de0952cd62bc1f7ad99905bba75b8f6.webp"
+ },
+ {
+  "name": {
+   "en": "Pogány Judit",
+   "hu": "Pogány Judit"
+  },
+  "slug": {
+   "en": "pogany-judit",
+   "hu": "pogany-judit"
+  },
+  "role": {
+   "en": null,
+   "hu": null
+  },
+  "category": "Színész",
+  "image": "uploads/contributors/68646876dbe422a75d4d3ad6c9d52471.webp"
+ },
+ {
+  "name": {
+   "en": "Polgár Csaba",
+   "hu": "Polgár Csaba"
+  },
+  "slug": {
+   "en": "polgar-csaba",
+   "hu": "polgar-csaba"
+  },
+  "role": {
+   "hu": null
+  },
+  "category": "Színész",
+  "image": "uploads/contributors/823e90bb55bee412e055e8f83f41e7b4.webp"
+ },
+ {
+  "name": {
+   "en": "Rába Roland m.v.",
+   "hu": "Rába Roland"
+  },
+  "slug": {
+   "en": "raba-roland",
+   "hu": "raba-roland"
+  },
+  "role": {
+   "en": "színész",
+   "hu": "színész"
+  },
+  "category": "Színész",
+  "image": "uploads/contributors/007d833802b8d4fb7e02ed24f53eecb2.webp"
+ },
+ {
+  "name": {
+   "en": "Szandtner Anna",
+   "hu": "Szandtner Anna"
+  },
+  "slug": {
+   "en": "szandtner-anna",
+   "hu": "szandtner-anna"
+  },
+  "role": {
+   "en": null,
+   "hu": null
+  },
+  "category": "Színész",
+  "image": "uploads/contributors/2d10339209daff67c632f63b2f8680bb.webp"
+ },
+ {
+  "name": {
+   "en": "Szaplonczay Mária",
+   "hu": "Szaplonczay Mária"
+  },
+  "slug": {
+   "en": "szaplonczay-maria",
+   "hu": "szaplonczay-maria"
+  },
+  "role": {
+   "en": null,
+   "hu": null
+  },
+  "category": "Színész",
+  "image": "uploads/contributors/ce443bf00f40e2427afc55634382c902.webp"
+ },
+ {
+  "name": {
+   "en": "Takács Nóra Diána",
+   "hu": "Takács Nóra Diána"
+  },
+  "slug": {
+   "en": "takacs-nora-diana",
+   "hu": "takacs-nora-diana"
+  },
+  "role": {
+   "hu": null
+  },
+  "category": "Színész",
+  "image": "uploads/contributors/0facd3c633e327fdffe07cbca2ebcd30.webp"
+ },
+ {
+  "name": {
+   "en": "Tenki Réka",
+   "hu": "Tenki Réka m.v."
+  },
+  "slug": {
+   "en": "tenki-reka",
+   "hu": "tenki-reka"
+  },
+  "role": {
+   "hu": null
+  },
+  "category": "Vendégművész",
+  "image": "uploads/contributors/bba9ab1cd7000d1550504dd5bcaef7dd.webp"
+ },
+ {
+  "name": {
+   "en": "Terhes Sándor",
+   "hu": "Terhes Sándor"
+  },
+  "slug": {
+   "en": "terhes-sandor",
+   "hu": "terhes-sandor"
+  },
+  "role": {
+   "en": null,
+   "hu": null
+  },
+  "category": "Színész",
+  "image": "uploads/contributors/d9935ab8e5227e7513d88c2efb0fe360.webp"
+ },
+ {
+  "name": {
+   "en": "Vajda Milán",
+   "hu": "Vajda Milán"
+  },
+  "slug": {
+   "en": "vajda-milan",
+   "hu": "vajda-milan"
+  },
+  "role": {
+   "en": null,
+   "hu": null
+  },
+  "category": "Színész",
+  "image": "uploads/contributors/e732abb7b6dfcda03d781f6d5ed2164e.webp"
+ },
+ {
+  "name": {
+   "en": "Znamenák István",
+   "hu": "Znamenák István"
+  },
+  "slug": {
+   "en": "znamenak-istvan",
+   "hu": "znamenak-istvan"
+  },
+  "role": {
+   "en": null,
+   "hu": null
+  },
+  "category": "Színész",
+  "image": "uploads/contributors/dc2146ea035d0d40a8b376bd6fdddfe7.webp"
+ },
+ {
+  "name": {
+   "en": "Zsigmond Emőke",
+   "hu": "Zsigmond Emőke"
+  },
+  "slug": {
+   "en": "zsigmond-emoke",
+   "hu": "zsigmond-emoke"
+  },
+  "role": {
+   "en": null,
+   "hu": null
+  },
+  "category": "Színész",
+  "image": "uploads/contributors/1549bd5dc099c3c34b10824bc2327ec5.webp"
+ },
+ {
+  "name": {
+   "en": "a Freeszfe és a Lumiere Filmiskola hallgatói",
+   "hu": "a Freeszfe és a Lumiere Filmiskola hallgatói"
+  },
+  "slug": {
+   "en": "a-freeszfe-es-a-lumiere-filmiskola-hallgatoi",
+   "hu": "a-freeszfe-es-a-lumiere-filmiskola-hallgatoi"
+  },
+  "role": {
+   "en": null,
+   "hu": null
+  },
+  "category": null,
+  "image": null
+ },
+ {
+  "name": {
+   "en": "Abed-Hadi Lili",
+   "hu": "Abed-Hadi Lili"
+  },
+  "slug": {
+   "en": "abed-hadi-lili",
+   "hu": "abed-hadi-lili"
+  },
+  "role": {
+   "en": null,
+   "hu": null
+  },
+  "category": null,
+  "image": null
+ },
+ {
+  "name": {
+   "en": "Accord Quartet",
+   "hu": "Accord Quartet"
+  },
+  "slug": {
+   "en": "accord-quartet",
+   "hu": "accord-quartet"
+  },
+  "role": {
+   "en": "zenész",
+   "hu": "zenész"
+  },
+  "category": "Vendégművész",
+  "image": null
+ },
+ {
+  "name": {
+   "en": "Ács Krisztina",
+   "hu": "Ács Krisztina"
+  },
+  "slug": {
+   "en": "acs-krisztina",
+   "hu": "acs-krisztina"
+  },
+  "role": {
+   "en": null,
+   "hu": null
+  },
+  "category": null,
+  "image": null
+ },
+ {
+  "name": {
+   "en": "Ádám Dorottya",
+   "hu": "Ádám Dorottya"
+  },
+  "slug": {
+   "en": "adam-dorottya",
+   "hu": "adam-dorottya"
+  },
+  "role": {
+   "en": null,
+   "hu": null
+  },
+  "category": null,
+  "image": null
+ }
+]

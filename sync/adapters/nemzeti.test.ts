@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { parseProductionDetail, parseProgram, productionLinksIn, slugOf } from "./nemzeti";
+import { parseProductionDetail, parseProgram, productionLinksIn, slugOf, producedByIn } from "./nemzeti";
 
 const fixture = (name: string) => readFileSync(join(__dirname, "..", "__fixtures__", name), "utf8");
 
@@ -83,6 +83,39 @@ describe("title casing", () => {
   });
 });
 
+describe("producedByIn", () => {
+  it("reads a visiting company out of the line", () => {
+    expect(producedByIn("a zágrábi Horvát Nemzeti Színház előadása")).toBe("zágrábi Horvát Nemzeti Színház");
+  });
+
+  it("takes the provenance out of a line that also describes the evening", () => {
+    // Matched whole, the company would come back as the whole sentence.
+    expect(producedByIn("Misztériumjáték boldog Romzsa Tódor püspök tiszteletére - A Kárpátaljai Megyei Magyar Drámai Színház előadása")).toBe(
+      "Kárpátaljai Megyei Magyar Drámai Színház"
+    );
+  });
+
+  it("leaves a co-production this house is part of alone", () => {
+    // Half ours. Crediting it away is as wrong as crediting it here.
+    expect(producedByIn("A Nemzeti Színház és a Kárpátaljai Megyei Magyar Drámai Színház közös előadása")).toBeUndefined();
+  });
+
+  it("does not mistake another country's national theatre for this one", () => {
+    /*
+     * The obvious guard — does the name contain "Nemzeti Színház" — silently
+     * discards the visiting company in the one case this exists for. Zagreb
+     * has a national theatre too, and so does Kolozsvár, Miskolc and Pécs.
+     */
+    expect(producedByIn("a miskolci Nemzeti Színház előadása")).toBe("miskolci Nemzeti Színház");
+  });
+
+  it("does not read a description of the evening as a company", () => {
+    expect(producedByIn("Drámai példázat a jóságról")).toBeUndefined();
+    expect(producedByIn("SZFE vizsgaelőadás")).toBeUndefined();
+    expect(producedByIn(undefined)).toBeUndefined();
+  });
+});
+
 describe("parseProgram", () => {
   const occurrences = parseProgram(fixture("nemzeti-musor.html"));
 
@@ -94,6 +127,23 @@ describe("parseProgram", () => {
     for (const o of occurrences) {
       expect(o.startsAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     }
+  });
+
+  it("reads the line the house prints under the title", () => {
+    /*
+     * "Drámai példázat a jóságról" under *A kaukázusi krétakör*. The
+     * production's own page does not print it — this listing is the only
+     * place it appears, which is why a showtime carries it.
+     */
+    const kretakor = occurrences.find((o) => o.slug === "a-kaukazusi-kretakoer");
+    expect(kretakor?.subtitle).toBe("Drámai példázat a jóságról");
+  });
+
+  it("reads a guest company's line the same way", () => {
+    // "a zágrábi Horvát Nemzeti Színház előadása" is somebody else's
+    // production, hosted here — the T-025 case, on a second source.
+    const zaszlok = occurrences.find((o) => o.slug === "zaszlok");
+    expect(zaszlok?.subtitle).toBe("a zágrábi Horvát Nemzeti Színház előadása");
   });
 
   it("reads the stage from the badge's title, not its two-letter code", () => {

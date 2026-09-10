@@ -138,3 +138,23 @@ export function splitPerformers(field: string): string[] {
 
   return [...new Set(peopleIn(whole) ?? [whole])];
 }
+
+/**
+ * A name with the guest marker taken off the end.
+ *
+ * Hungarian theatres print *m.v.* — `mint vendég`, "as a guest" — after the
+ * name of anyone not in the company. On a company page that marker is about
+ * the engagement, not the person, and it has to come off before the name is
+ * slugged: `personCanonicalName()` knows the dotted form but not the bare
+ * `m.v` that two of these sites print, so leaving it on files the same
+ * performer under a second slug nothing links to.
+ *
+ * Lives here rather than in one adapter because six company pages now need
+ * it, and a copy of this regex per house is a copy that can be forgotten when
+ * a seventh is added.
+ */
+const GUEST_MARKER = /\s*\bm\.\s*v\.?\s*$/i;
+
+export function stripGuestMarker(name: string): string {
+  return name.replace(GUEST_MARKER, "").trim();
+}

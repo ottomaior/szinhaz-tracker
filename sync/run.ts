@@ -9,6 +9,7 @@
  *   npm run sync -- --source=orkeny   # run just one, by SyncAdapter.name
  *   npm run sync -- --dry-run         # fetch and report, touch no database
  *   npm run sync -- --no-posters      # skip mirroring cover art (much faster)
+ *   npm run sync -- --deep            # read every production, archive included
  */
 import "dotenv/config";
 import { getSupabaseAdmin } from "./lib/supabaseAdmin";
@@ -22,15 +23,33 @@ import { vojtinaAdapter } from "./adapters/vojtina";
 import { nemzetiAdapter } from "./adapters/nemzeti";
 import { centralAdapter } from "./adapters/central";
 import { madachAdapter } from "./adapters/madach";
+import { radnotiAdapter } from "./adapters/radnoti";
 import { vigszinhazAdapter } from "./adapters/vigszinhaz";
 import { csokonaiCompanyAdapter } from "./adapters/csokonai-company";
 import { vojtinaCompanyAdapter } from "./adapters/vojtina-company";
+import { vigszinhazCompanyAdapter } from "./adapters/vigszinhaz-company";
+import { katonaCompanyAdapter } from "./adapters/katona-company";
+import { nemzetiCompanyAdapter } from "./adapters/nemzeti-company";
+import { centralCompanyAdapter } from "./adapters/central-company";
+import { madachCompanyAdapter } from "./adapters/madach-company";
+import { orkenyCompanyAdapter } from "./adapters/orkeny-company";
+import { radnotiCompanyAdapter } from "./adapters/radnoti-company";
 import { splitPerformers } from "./lib/performers";
 import { mirrorImage, mirrorPoster } from "./lib/posters";
 import { personSlug } from "../utils/people";
 import type { CompanyAdapter, SyncAdapter, SyncedPlay } from "./lib/types";
 
 const DRY_RUN = process.argv.includes("--dry-run");
+
+/**
+ * A cast that exists, as opposed to one an adapter did not read.
+ *
+ * `SyncedPlay["cast"]` is optional — undefined means "not looked at this
+ * run", which is what keeps a shallow Vígszínház run from emptying its
+ * archive. The two helpers below only ever see a cast that is present, and
+ * saying so here is cheaper than a non-null assertion at each call.
+ */
+type CastMembers = NonNullable<SyncedPlay["cast"]>;
 
 /**
  * Above this share of failed rows, the run is treated as an unreliable
@@ -55,11 +74,28 @@ const MIRROR_POSTERS = !DRY_RUN && !process.argv.includes("--no-posters");
 const MIRROR_PORTRAITS = MIRROR_POSTERS;
 
 /**
- * The theatres whose company pages are read for portraits. Debrecen first —
- * see T-032 in ISSUES.md. Reachable one at a time via `--source=<name>` like
- * the listings adapters, and run after them by default.
+ * The theatres whose company pages are read for portraits.
+ *
+ * Debrecen first — see T-032 in ISSUES.md — and then every Budapest house,
+ * which is what put the two cities on the same footing. Each one is a
+ * different shape of page and a different idea of how a company is arranged;
+ * what they have in common is that the theatre publishes its own people, so
+ * nothing here is assembled from anywhere else.
+ *
+ * Reachable one at a time via `--source=<name>` like the listings adapters,
+ * and run after them by default.
  */
-const COMPANY_ADAPTERS: CompanyAdapter[] = [csokonaiCompanyAdapter, vojtinaCompanyAdapter];
+const COMPANY_ADAPTERS: CompanyAdapter[] = [
+  csokonaiCompanyAdapter,
+  vojtinaCompanyAdapter,
+  vigszinhazCompanyAdapter,
+  katonaCompanyAdapter,
+  nemzetiCompanyAdapter,
+  centralCompanyAdapter,
+  madachCompanyAdapter,
+  orkenyCompanyAdapter,
+  radnotiCompanyAdapter,
+];
 
 function errorMessageOf(e: unknown): string {
   if (e instanceof Error) return e.message;
@@ -70,6 +106,7 @@ function errorMessageOf(e: unknown): string {
 // Every adapter that exists, reachable via `--source=<name>` for manual runs.
 const ALL_ADAPTERS: SyncAdapter[] = [
   orkenyAdapter,
+  radnotiAdapter,
   csokonaiAdapter,
   csokonaiArchiveAdapter,
   vojtinaAdapter,
@@ -89,7 +126,8 @@ const ALL_ADAPTERS: SyncAdapter[] = [
 //   Budapest  Örkény (own JSON API), Katona (WordPress, plus its frozen Joomla
 //             install for the back catalogue — the theatre relaunched and the
 //             old domain now serves only the archive), Nemzeti, Centrál,
-//             Madách, Vígszínház (own JSON API).
+//             Madách, Radnóti, Vígszínház (own JSON API for the catalogue and
+//             its own pages for the cast).
 //   Debrecen  Csokonai (repertoire and archive, two adapters for the reason
 //             given in sync/adapters/csokonai-archive.ts), and Vojtina.
 //
@@ -99,6 +137,7 @@ const ALL_ADAPTERS: SyncAdapter[] = [
 // every scheduled run.
 const DEFAULT_ADAPTERS: SyncAdapter[] = [
   orkenyAdapter,
+  radnotiAdapter,
   csokonaiAdapter,
   csokonaiArchiveAdapter,
   vojtinaAdapter,
@@ -124,7 +163,7 @@ const DEFAULT_ADAPTERS: SyncAdapter[] = [
  * sync's job and not something eleven sources each have to remember.
  * `sync/lib/performers.ts` holds what does and does not count as a list.
  */
-function expandCast(cast: SyncedPlay["cast"]): SyncedPlay["cast"] {
+function expandCast(cast: CastMembers): CastMembers {
   return cast.flatMap((member) => splitPerformers(member.name).map((name) => ({ name, role: member.role })));
 }
 
@@ -143,7 +182,7 @@ function expandCast(cast: SyncedPlay["cast"]): SyncedPlay["cast"] {
  * generic field scraper like Katona's can collide the same way. First
  * occurrence wins, so `sort_order` still follows the source's own ordering.
  */
-function dedupeCast(cast: SyncedPlay["cast"]): SyncedPlay["cast"] {
+function dedupeCast(cast: CastMembers): CastMembers {
   const seen = new Set<string>();
   return cast.filter((member) => {
     // NUL separator so a name/role pair can never be confused with a
@@ -264,11 +303,18 @@ async function upsertPlay(sourceName: string, synced: SyncedPlay) {
   // separate requests, so anything failing between them left the production
   // with no cast at all until a later run repaired it. See
   // supabase/migrations/0012_replace_play_cast.sql.
-  const { error: castError } = await supabaseAdmin.rpc("replace_play_cast", {
-    target_play_id: playId,
-    members: dedupeCast(expandCast(synced.cast)),
-  });
-  if (castError) throw castError;
+  //
+  // Skipped when the adapter did not read a cast this run — which is not the
+  // same as reading one and finding nobody. See `SyncedPlay.cast`: a shallow
+  // Vígszínház run says nothing about its archive, and a full refresh on the
+  // strength of that silence would empty 500 productions.
+  if (synced.cast) {
+    const { error: castError } = await supabaseAdmin.rpc("replace_play_cast", {
+      target_play_id: playId,
+      members: dedupeCast(expandCast(synced.cast)),
+    });
+    if (castError) throw castError;
+  }
 
   const performanceKeys: string[] = [];
   for (const perf of synced.performances) {
@@ -408,7 +454,11 @@ function reportDryRun(adapter: SyncAdapter, plays: SyncedPlay[]) {
   const withPoster = plays.filter((p) => p.posterUrl).length;
   const withPremiere = plays.filter((p) => p.premiereDate).length;
   const withSynopsis = plays.filter((p) => p.synopsis).length;
-  const withCast = plays.filter((p) => p.cast.length).length;
+  // Against the plays this run actually looked at, not against all of them:
+  // "cast: 55/55" on a shallow Vígszínház run is the honest number, where
+  // "55/579" would read as a parsing failure over the archive it never opened.
+  const readCast = plays.filter((p) => p.cast !== undefined);
+  const withCast = readCast.filter((p) => p.cast!.length).length;
   const withRuntime = plays.filter((p) => p.runtimeMinutes).length;
   const archived = plays.filter((p) => p.isArchived).length;
   const performances = plays.reduce((n, p) => n + p.performances.length, 0);
@@ -422,7 +472,10 @@ function reportDryRun(adapter: SyncAdapter, plays: SyncedPlay[]) {
   console.log(`  poster:     ${withPoster}/${plays.length}`);
   console.log(`  premiere:   ${withPremiere}/${plays.length}`);
   console.log(`  synopsis:   ${withSynopsis}/${plays.length}`);
-  console.log(`  cast:       ${withCast}/${plays.length}`);
+  console.log(
+    `  cast:       ${withCast}/${readCast.length}` +
+      (readCast.length === plays.length ? "" : ` (${plays.length - readCast.length} not read this run)`)
+  );
   console.log(`  runtime:    ${withRuntime}/${plays.length}`);
   console.log(`  genres:     ${genres.join(", ")}`);
 
@@ -450,7 +503,7 @@ function reportDryRun(adapter: SyncAdapter, plays: SyncedPlay[]) {
     console.log(
       `    ${p.isArchived ? "[archív] " : ""}${p.title} — ${p.author || "?"} / rend. ${p.director || "?"} — ${p.genre ?? "(nincs)"} — ${
         p.premiereDate ?? "no premiere"
-      } — ${p.cast.length} cast — ${p.performances.length} perf`
+      } — ${p.cast ? `${p.cast.length} cast` : "cast not read"} — ${p.performances.length} perf`
     );
   }
 }

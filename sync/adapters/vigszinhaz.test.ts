@@ -1,16 +1,24 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { eventStartsAt, isOwnHouse, isRecentEnough, isUpcomingPremiere, toSyncedPlay } from "./vigszinhaz";
+import { eventStartsAt, isOwnHouse, isRecentEnough, isUpcomingPremiere, parseProductionCast, toSyncedPlay } from "./vigszinhaz";
 
 /**
- * No recorded page here, unlike the other adapters.
+ * Two kinds of test here, because this source is two sources.
  *
- * Those fixtures exist to catch a theatre changing its markup, which is the
- * failure that has actually happened on this project. This source is a JSON
- * API with named fields, so there is no markup to drift; what can go wrong is
- * the reasoning applied to those fields — which house counts as ours, how far
- * back to read, whether a production is still playable, and whether a
- * timestamp is an instant or a wall clock. Those are what is tested.
+ * The catalogue comes from a JSON API with named fields, so there is no
+ * markup to drift and what can go wrong is the reasoning applied to those
+ * fields — which house counts as ours, how far back to read, whether a
+ * production is still playable, whether a timestamp is an instant or a wall
+ * clock. Those are tested against literals.
+ *
+ * The cast comes from the production page, which is markup and can drift, so
+ * it gets recorded fixtures like every other scraped source.
  */
+
+/** Production pages, recorded from the live site on 10 September 2026. */
+const allamtitkar = readFileSync(join(__dirname, "../__fixtures__/vigszinhaz-az-allamtitkar-ur.html"), "utf8");
+const palUtcaiFiuk = readFileSync(join(__dirname, "../__fixtures__/vigszinhaz-a-pal-utcai-fiuk.html"), "utf8");
 
 const CSERESZNYESKERT = {
   id: 812,
@@ -120,9 +128,18 @@ describe("toSyncedPlay", () => {
     expect(play?.synopsis).toContain("gyümölcsliget");
   });
 
-  it("reports no cast rather than inventing one", () => {
-    // The one field this source does not publish anywhere reachable.
-    expect(toSyncedPlay(CSERESZNYESKERT, GENRES, [])?.cast).toEqual([]);
+  it("carries the cast it was handed", () => {
+    const cast = [{ name: "Wunderlich József", role: "De la Mare" }];
+    expect(toSyncedPlay(CSERESZNYESKERT, GENRES, [], cast)?.cast).toEqual(cast);
+  });
+
+  it("says nothing about the cast when the page was not read", () => {
+    /*
+     * Not the same as an empty cast, and the difference is 500 productions'
+     * worth of credits: the runner clears the stored rows for `[]` and leaves
+     * them alone for `undefined`. A shallow run's archive is the latter.
+     */
+    expect(toSyncedPlay(CSERESZNYESKERT, GENRES, [])?.cast).toBeUndefined();
   });
 
   it("counts a production with a future date as current", () => {
@@ -154,6 +171,67 @@ describe("toSyncedPlay", () => {
 
   it("skips a row with no title or slug", () => {
     expect(toSyncedPlay({ id: 1 }, GENRES, [])).toBeUndefined();
+  });
+});
+
+describe("parseProductionCast", () => {
+  const allamtitkarCast = parseProductionCast(allamtitkar)!;
+  const palCast = parseProductionCast(palUtcaiFiuk)!;
+
+  it("reads a part and the performer playing it", () => {
+    // The `<dt>` carries the character and their description together, which
+    // is how the house prints it and what the app shows beside the name.
+    expect(allamtitkarCast).toContainEqual({ name: "Wunderlich József", role: "De la Mare, államtitkár" });
+  });
+
+  it("reads the creative team from the same list", () => {
+    // The markup makes no structural distinction between a part and a job, so
+    // neither does this — the same way katona-wp keeps its creators.
+    expect(allamtitkarCast).toContainEqual({ name: "Máté Gábor", role: "Rendező" });
+    expect(allamtitkarCast).toContainEqual({ name: "Khell Zsolt", role: "Díszlettervező" });
+  });
+
+  it("strips the guest marker from the name", () => {
+    /*
+     * `m.v.` sits in a span inside the heading, so reading the heading's text
+     * would produce "Kovács Olivérm.v." — a name nobody has, on a person page
+     * nothing else links to.
+     */
+    const gentil = allamtitkarCast.find((c) => c.role.startsWith("Gentil"));
+    expect(gentil?.name).toBe("Kovács Olivér");
+  });
+
+  it("gives each alternate their own row against the same part", () => {
+    // Three Bokas, and `play_cast` is keyed on (play_id, name, role) exactly
+    // so all three can hold the part. Dropping the second and third is how an
+    // alternate becomes uncreditable.
+    const bokas = palCast.filter((c) => c.role === "Boka").map((c) => c.name);
+    expect(bokas).toEqual(["Wunderlich József", "Medveczky Balázs", "Ertl Zsombor"]);
+  });
+
+  it("keeps a chorus line whole", () => {
+    // Seventeen dancers under one heading, none of them named in an `alt`.
+    expect(palCast.filter((c) => c.role === "Táncosok").length).toBe(17);
+  });
+
+  it("falls back to the image caption when a chip has no heading text", () => {
+    // A few chips render an empty `alt`; a few others render an empty name.
+    // Between the two there is always something, and neither is reliable
+    // enough on its own.
+    expect(palCast).toContainEqual({ name: "Nádas Gábor Dávid", role: "A fiatalabb Pásztor" });
+  });
+
+  it("says it does not know when the page has no cast section", () => {
+    /*
+     * A shell page — this site answers one occasionally under a long run —
+     * must not read as "nobody is in it". That would be believed, and
+     * *Toldi*'s twenty-two credits would be deleted by the next sync.
+     */
+    expect(parseProductionCast("<html><body><h1>Semmi</h1></body></html>")).toBeUndefined();
+  });
+
+  it("reports an empty cast only when the section itself is empty", () => {
+    expect(parseProductionCast('<html><body><section class="ProductionCast_block__x"></section></body></html>')).toEqual([]);
   });
 });
 

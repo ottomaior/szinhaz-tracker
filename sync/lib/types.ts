@@ -63,7 +63,22 @@ export type SyncedPlay = {
    * whose `venueId` this carries made it.
    */
   producedBy?: string;
-  cast: { name: string; role: string }[];
+  /**
+   * Who is in it, as the source lists them.
+   *
+   * Three states, and the difference between the last two matters. A list is
+   * the cast; an empty list is the source saying nobody is credited, and
+   * replaces whatever was stored; `undefined` is the adapter saying *it did
+   * not look this time*, and leaves the stored rows untouched.
+   *
+   * The third state exists because Vígszínház's cast lives on a page per
+   * production rather than in its API, and its back catalogue is 500-odd
+   * productions that change once a decade. A nightly run reads the current
+   * repertoire and says nothing about the rest; `--deep` reads everything.
+   * Without this an ordinary run would delete every archived production's
+   * cast the moment it stopped fetching those pages.
+   */
+  cast?: { name: string; role: string }[];
   performances: { sourceKey: string; startsAt: string; room?: string }[]; // ISO datetime
 };
 

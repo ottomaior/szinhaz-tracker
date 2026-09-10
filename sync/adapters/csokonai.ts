@@ -470,7 +470,7 @@ export function mergeDuplicateTitles(plays: SyncedPlay[]): SyncedPlay[] {
       continue;
     }
 
-    const score = (p: SyncedPlay) => (p.director ? 2 : 0) + (p.premiereDate ? 1 : 0) + (p.cast.length ? 1 : 0);
+    const score = (p: SyncedPlay) => (p.director ? 2 : 0) + (p.premiereDate ? 1 : 0) + (p.cast?.length ? 1 : 0);
     const keepNew = score(play) > score(existing);
     const primary = keepNew ? play : existing;
     const secondary = keepNew ? existing : play;

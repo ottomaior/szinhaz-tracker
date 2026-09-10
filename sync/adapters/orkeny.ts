@@ -77,6 +77,8 @@ type RawContributor = { id: number; name: Localized };
 type RawPerformance = {
   id: number;
   category_id?: number | null;
+  /** What `/eloadas/{…}` wants in the path. The id there finds nothing. */
+  slug?: Localized;
   title: Localized;
   author: Localized;
   director: Localized;
@@ -178,15 +180,20 @@ async function run(): Promise<SyncedPlay[]> {
     byId.set(String(p.id), {
       sourceKey: String(p.id),
       /*
-       * No sourceUrl.
+       * The production's page on the theatre's own site.
        *
-       * `/api/performances` returns an id and no slug, and the site is a SPA
-       * whose production links are assembled client-side, so there is no route
-       * here that can be derived from what the API gives us. A guessed URL
-       * pattern behind a "Jegyek" button is worse than no button: it sends
-       * somebody who has decided to go to a 404. If the API ever grows a slug,
-       * this is a one-line change.
+       * This was blank for a long time, on the grounds that `/api/performances`
+       * returns an id and no slug and that guessing a route behind a "Jegyek"
+       * button sends somebody who has decided to go to a 404. The premise was
+       * wrong rather than the reasoning: the payload does carry a `slug`, and
+       * the site's own programme links to `/eloadas/{slug}` — checked in a
+       * browser against `/eloadas/84`, which renders '84 rather than a 404.
+       *
+       * The slug is what the route wants, not the id, even though the SPA
+       * answers 200 to both: an id in the path shows the shell and finds no
+       * production behind it.
        */
+      sourceUrl: p.slug?.hu ? `${SITE_URL}/eloadas/${p.slug.hu}` : undefined,
       // Normalized like every other text field. This was the one field
       // that skipped it, so entity-encoded titles reached the database.
       title: normalizeText(p.title.hu ?? p.title.en) ?? "Ismeretlen cím",
