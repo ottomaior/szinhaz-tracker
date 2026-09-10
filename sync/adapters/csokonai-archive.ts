@@ -32,7 +32,7 @@
 import { fetchText } from "../lib/http";
 import { VENUE_IDS } from "../venueMap";
 import type { SyncAdapter, SyncedPlay } from "../lib/types";
-import { fetchProductionIndex, parseProductionDetails, productionLinksIn, slugOf } from "./csokonai";
+import { fetchProductionIndex, parseProductionDetails, productionLinksIn, slugOf, visitingCompany } from "./csokonai";
 
 const BASE_URL = "https://csokonaiszinhaz.hu";
 const CRAWL_DELAY_MS = 800; // matches the live adapter; robots.txt sets none
@@ -135,6 +135,12 @@ async function run(): Promise<SyncedPlay[]> {
       intermissions: details.intermissions,
       premiereDate: details.premiereDate,
       synopsis: details.synopsis,
+      subtitle: details.subtitle,
+      // The archive carries guests too: the Pécsi Balett run recorded in
+      // sync/__fixtures__/csokonai-archive-detail.html is one, and on that
+      // page the company name had landed in the author column as well, since
+      // the page title reads "Pécsi Balett: A három testőr".
+      producedBy: visitingCompany(details.subtitle),
       posterUrl: details.posterUrl,
       isArchived: true,
       cast: details.cast,

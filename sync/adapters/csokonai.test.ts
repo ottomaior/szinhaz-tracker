@@ -1,11 +1,17 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { mergeDuplicateTitles, parseProductionDetails } from "./csokonai";
+import { guestCompany, mergeDuplicateTitles, parseProductionDetails, visitingCompany } from "./csokonai";
 import type { SyncedPlay } from "../lib/types";
 
 /** A real production page from the live WordPress site. */
 const janosVitez = readFileSync(join(__dirname, "../__fixtures__/csokonai-janos-vitez.html"), "utf8");
+
+/** A guest run: another company’s production, hosted by Csokonai. */
+const abigel = readFileSync(join(__dirname, "../__fixtures__/csokonai-abigel-guest.html"), "utf8");
+
+/** An archived guest run — same shape, reached through the archive adapter. */
+const pecsiBalett = readFileSync(join(__dirname, "../__fixtures__/csokonai-archive-detail.html"), "utf8");
 
 describe("csokonai parseProductionDetails", () => {
   const details = parseProductionDetails(janosVitez);
@@ -186,5 +192,48 @@ describe("mergeDuplicateTitles", () => {
     ]);
 
     expect(merged[0].performances).toHaveLength(2);
+  });
+});
+
+
+/*
+ * T-025. The house prints one line under the title and uses it for several
+ * different things; the only one that changes what the catalogue means is the
+ * provenance case, and it was being dropped along with the rest.
+ */
+describe("the line under the title", () => {
+  it("reads a genre subtitle without mistaking it for a company", () => {
+    const details = parseProductionDetails(janosVitez);
+    expect(details.subtitle).toBe("daljáték");
+    expect(visitingCompany(details.subtitle)).toBeUndefined();
+  });
+
+  it("names the visiting company on a hosted production", () => {
+    const details = parseProductionDetails(abigel);
+    expect(details.title).toBe("Abigél");
+    expect(details.subtitle).toBe("a Kolozsvári Állami Magyar Színház előadása");
+    expect(visitingCompany(details.subtitle)).toBe("Kolozsvári Állami Magyar Színház");
+  });
+
+  it("finds guests in the archive too", () => {
+    const details = parseProductionDetails(pecsiBalett);
+    expect(visitingCompany(details.subtitle)).toBe("Pécsi Balett");
+  });
+
+  /*
+   * The possessive is the whole tell. “előadása” is X’s performance;
+   * “előadás” is a kind of evening, and matching it would turn every
+   * community-theatre listing into a company nobody has heard of.
+   */
+  it("does not read a bare noun as a company", () => {
+    expect(guestCompany("közösségi színházi előadás")).toBeUndefined();
+    expect(guestCompany("tragőkomedia")).toBeUndefined();
+    expect(guestCompany("énekkari próba")).toBeUndefined();
+    expect(guestCompany(undefined)).toBeUndefined();
+  });
+
+  it("does not call the host a guest in its own house", () => {
+    expect(guestCompany("a Csokonai Nemzeti Színház előadása")).toBe("Csokonai Nemzeti Színház");
+    expect(visitingCompany("a Csokonai Nemzeti Színház előadása")).toBeUndefined();
   });
 });

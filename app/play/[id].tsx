@@ -368,6 +368,17 @@ export default function PlayDetailScreen() {
               </Text>
             )}
 
+            {/* Above the festival line and a step louder than it, because the
+                two say different-sized things. Which festival an evening
+                belongs to is context; who made it is the production's
+                authorship, and this page otherwise reads as though the venue
+                did. See T-025. */}
+            {!!play.producedBy && !!play.subtitle && (
+              <Text variant="bodySmall" tone="dim">
+                {strings.playDetail.guestRun(play.subtitle)}
+              </Text>
+            )}
+
             {play.isFestival && !!play.festivalName && (
               <Text variant="caption" tone="faint">
                 {play.festivalName}

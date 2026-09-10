@@ -198,8 +198,22 @@ export default function PersonScreen() {
                               {label}
                             </Text>
                           )}
+                          {/* The venue stays, and a marker goes beside it. This
+                              row used to read as a credit at the house named,
+                              which for a hosted production it is not — twelve
+                              performers held a Csokonai credit for an evening
+                              the Kolozsvári company brought (T-025). Naming the
+                              company here instead would fight the coverage note
+                              below, which counts theatres this catalogue holds
+                              and would not list a visitor among them. */}
                           <Text variant="caption" tone="faint" numberOfLines={1}>
-                            {[venue, yearOf(credit.play.premiereDate)].filter(Boolean).join(" · ")}
+                            {[
+                              venue,
+                              credit.play.producedBy ? strings.person.guestRun : undefined,
+                              yearOf(credit.play.premiereDate),
+                            ]
+                              .filter(Boolean)
+                              .join(" · ")}
                           </Text>
                         </>
                       }

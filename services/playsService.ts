@@ -38,6 +38,8 @@ type PlayRow = {
   genre_source: string | null;
   is_festival: boolean;
   festival_name: string | null;
+  subtitle: string | null;
+  produced_by: string | null;
   primary_room: string | null;
   runtime_minutes: number | null;
   intermissions: number;
@@ -168,6 +170,8 @@ function toPlay(row: PlayRow): Play {
     genreSource: (row.genre_source ?? undefined) as Play["genreSource"],
     isFestival: row.is_festival ?? false,
     festivalName: row.festival_name ?? undefined,
+    subtitle: row.subtitle ?? undefined,
+    producedBy: row.produced_by ?? undefined,
     primaryRoom: row.primary_room ?? undefined,
     runtimeMinutes: row.runtime_minutes ?? undefined,
     intermissions: row.intermissions,

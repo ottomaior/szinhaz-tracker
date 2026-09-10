@@ -375,6 +375,16 @@ export const strings = {
     watchlistError: "Nem sikerült frissíteni a kívánságlistát.",
     archivedBadge: "Archív",
     archivedNote: "Ez a produkció már nincs műsoron, de naplózhatod, ha láttad.",
+    /**
+     * A production the house is hosting rather than staging.
+     *
+     * Takes the theatre’s own line verbatim rather than composing one from the
+     * company name, because Hungarian picks the definite article by the sound
+     * that follows it — *a* Kolozsvári, *az* Örkény — and the source has
+     * already made that choice correctly. `plays.produced_by` is the field to
+     * read when a machine needs the company; this is the field to print.
+     */
+    guestRun: (line: string) => `Vendégjáték — ${line}`,
     /* Shown only where nothing else on the screen answers the question — see
        `statusNote` in app/play/[id].tsx for why the raw `status_reason` is not
        rendered. */
@@ -745,6 +755,13 @@ export const strings = {
     directed: "Rendezés",
     seenByYou: "Ebből láttad",
     seenBadge: "Láttad",
+    /**
+     * Marks a credit earned with a visiting company rather than with the house
+     * the row names. The venue stays on the row because it is why the evening
+     * is in this catalogue at all — and because the coverage note below the
+     * list counts theatres, not companies.
+     */
+    guestRun: "vendégjáték",
     director: "Rendező",
     venueCount: (n: number) => `${n} színház`,
     // What the page is counting, said out loud. Without it a career this

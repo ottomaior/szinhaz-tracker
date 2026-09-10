@@ -105,6 +105,19 @@ export interface Play {
   isFestival: boolean;
   festivalName?: string;
   /**
+   * The line the theatre prints under the title — the Hungarian genre subtitle
+   * (`daljáték`, `tragikomédia`) or whatever else it uses that slot for.
+   */
+  subtitle?: string;
+  /**
+   * The company that made this, when it is not the house it plays in.
+   *
+   * A theatre hosts other companies and files their evenings among its own, so
+   * the venue alone cannot answer "whose production is this". Undefined is the
+   * ordinary case and means the venue made it.
+   */
+  producedBy?: string;
+  /**
    * The stage this production usually plays on — Kamra, Sufni, Csokonai
    * Teátrum. Held on the play as well as on each performance, so it can still
    * be filtered on between runs, when there are no dates to read it from.

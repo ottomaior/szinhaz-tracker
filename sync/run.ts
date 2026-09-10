@@ -208,6 +208,13 @@ async function upsertPlay(sourceName: string, synced: SyncedPlay) {
         intermissions: synced.intermissions ?? 0,
         premiere_date: synced.premiereDate ?? null,
         synopsis: synced.synopsis ?? null,
+        subtitle: synced.subtitle ?? null,
+        // Null for every adapter that does not read a provenance line, which is
+        // all of them but Csokonai's two today. Written on every upsert rather
+        // than only when set, so a production that stops being a guest run — or
+        // whose subtitle the house rewrites — loses the claim instead of
+        // keeping a stale one forever. See T-025.
+        produced_by: synced.producedBy ?? null,
         poster_url: synced.posterUrl ?? null,
         is_archived: synced.isArchived ?? false,
         // Distinguishes "the theatre files this under its own archive" from
@@ -404,6 +411,22 @@ function reportDryRun(adapter: SyncAdapter, plays: SyncedPlay[]) {
 
   const missingPoster = plays.filter((p) => !p.posterUrl).map((p) => p.title);
   if (missingPoster.length) console.log(`  no poster:  ${missingPoster.join(" | ")}`);
+
+  /*
+   * Every production this run says somebody else made, named rather than
+   * counted.
+   *
+   * A count would be the wrong report here. `producedBy` comes from a heuristic
+   * over one line of Hungarian (see `guestCompany` in the Csokonai adapter), so
+   * the useful question before a real run is not "how many" but "are these the
+   * right ones" — a house name in this list that is obviously not a company is
+   * the failure mode, and it is only visible if the list is printed.
+   */
+  const guests = plays.filter((p) => p.producedBy);
+  if (guests.length) {
+    console.log(`  guests:     ${guests.length}`);
+    for (const p of guests) console.log(`    ${p.title} — ${p.producedBy}`);
+  }
 
   console.log("  sample:");
   for (const p of plays.slice(0, 5)) {

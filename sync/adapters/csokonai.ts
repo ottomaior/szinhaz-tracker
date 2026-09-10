@@ -96,8 +96,66 @@ type ProductionDetails = {
   intermissions?: number;
   posterUrl?: string;
   premiereDate?: string;
+  /**
+   * The line the house prints under the title, verbatim.
+   *
+   * One slot carrying several kinds of thing: the classic Hungarian genre
+   * subtitle (`daljáték`, `operett`, `tragikomédia`), a descriptive one
+   * (`énekkari próba`), or — the case this was captured for — whose production
+   * it is (`a Kolozsvári Állami Magyar Színház előadása`).
+   *
+   * Stored raw as well as interpreted, deliberately. `guestCompany()` below is
+   * a heuristic over Hungarian phrasing, and T-008 in ISSUES.md is the standing
+   * lesson that a heuristic does not know when it has stopped being right.
+   * Keeping the line itself means a better reading of it can be applied later
+   * without re-scraping 1,200 pages.
+   */
+  subtitle?: string;
   cast: { name: string; role: string }[];
 };
+
+/**
+ * The company that made this production, when the subtitle says it is not the
+ * house whose page this is.
+ *
+ * Csokonai hosts other companies — the MagdaFeszt programme, touring shows on
+ * the Nagyerdei open-air stage — and files them among its own productions.
+ * Until this existed the catalogue did too: `Abigél` is the Kolozsvári Állami
+ * Magyar Színház's staging directed by Eszenyi Enikő, and the app credited it
+ * to Csokonai, which also handed twelve of `Az a szép, fényes nap`'s performers
+ * a Csokonai credit on their person pages.
+ *
+ * The tell is the possessive: *"a X előadása"* — X's performance — as against
+ * *"közösségi színházi előadás"*, a description of a kind of evening, which
+ * ends in the bare noun and is deliberately not matched. Checked against the
+ * September and October calendars (32 productions, 2 matches: the Kolozsvári
+ * and Szigligeti guests) and against the four recorded fixtures, where the
+ * Pécsi Balett's archived guest run matches and `daljáték` and `operett` do
+ * not. That is the whole evidence base; a Hungarian theatre will eventually
+ * phrase this some other way, and nothing here will notice.
+ */
+export function guestCompany(subtitle?: string): string | undefined {
+  if (!subtitle) return undefined;
+  const match = subtitle.trim().match(/^(?:(?:a|az)\s+)?(.+?)\s+előadása$/i);
+  if (!match) return undefined;
+  const company = match[1].trim();
+  // A one- or two-letter capture is a parse accident rather than a company.
+  return company.length >= 3 ? company : undefined;
+}
+
+/**
+ * `guestCompany()`, minus the house itself.
+ *
+ * A page may say *"a Csokonai Nemzeti Színház előadása"* about its own
+ * production — a statement of authorship, not of visiting. The parser cannot
+ * make that distinction because it does not know whose site it is reading;
+ * both adapters here do, because both are Csokonai's.
+ */
+export function visitingCompany(subtitle?: string): string | undefined {
+  const company = guestCompany(subtitle);
+  if (!company) return undefined;
+  return /csokonai/i.test(company) ? undefined : company;
+}
 
 function monthsAhead(count: number): { yyyymm: string; year: number; month: number }[] {
   const out: { yyyymm: string; year: number; month: number }[] = [];
@@ -232,6 +290,21 @@ export function parseProductionDetails(html: string): ProductionDetails {
   const author = colonIndex > -1 ? rawTitle.slice(0, colonIndex).trim() : "";
   const title = colonIndex > -1 ? rawTitle.slice(colonIndex + 2).trim() : rawTitle;
 
+  /*
+   * The line under the title.
+   *
+   * Anchored on being the first `<p>` after the `<h1>` rather than on a class,
+   * because the class is not stable: the same line is `uk-margin-remove` in the
+   * calendar and `uk-margin-remove uk-light` on a production page. It sits
+   * outside `<article>`, so it has never been part of the synopsis and reading
+   * it does not change that field.
+   *
+   * The length guard is for pages that do not carry a subtitle at all, where
+   * the first paragraph after the heading is the opening of the prose.
+   */
+  const subtitleText = $("h1").first().nextAll("p").first().text().trim().replace(/\s+/g, " ");
+  const subtitle = subtitleText && subtitleText.length <= 120 ? subtitleText : undefined;
+
   // Matches "Rendező:" and variants like "Rendező-koreográfus:" (seen on
   // dance-program pages) — anything starting with "Rendező" up to the colon.
   let director = "";
@@ -316,6 +389,7 @@ export function parseProductionDetails(html: string): ProductionDetails {
     intermissions,
     posterUrl,
     premiereDate: parseHungarianDate(premiereText),
+    subtitle,
     cast,
   };
 }
@@ -455,6 +529,8 @@ async function run(): Promise<SyncedPlay[]> {
       intermissions: details.intermissions,
       premiereDate: details.premiereDate,
       synopsis: details.synopsis,
+      subtitle: details.subtitle,
+      producedBy: visitingCompany(details.subtitle),
       posterUrl: details.posterUrl,
       // Everything this adapter returns is current repertoire. The claim that
       // used to stand here — that Csokonai has no archive to mirror — was

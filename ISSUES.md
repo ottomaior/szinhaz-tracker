@@ -270,49 +270,6 @@ using. The honest read is that this is a note to re-run the advisor once
 there is traffic, and to add the six indexes, which cost nothing to be wrong
 about at this size.
 
-### T-025 · A visiting company's production is filed as the host theatre's own
-type: bug · area: data · priority: high · status: open · added: 2026-09-10
-
-Found while disproving T-002. Csokonai hosts other companies — the IX.
-MagdaFeszt programme, and touring shows on the Nagyerdei open-air stage — and
-every one of those productions is in the catalogue as a Csokonai production.
-`Abigél` is the Kolozsvári Állami Magyar Színház's staging, directed by
-Eszenyi Enikő; the app credits it to Csokonai. `Csárdáskirálynő` in September
-is the Szigligeti Színház Nagyvárad's.
-
-**The signal is right there and is being thrown away.** The line under the
-title says so in as many words — *"a Kolozsvári Állami Magyar Színház
-előadása"* — on the calendar and again as the first `<p>` under the `<h1>` of
-the production's own page. `fetchPlayDetail()` in `sync/adapters/csokonai.ts`
-reads the title, author, synopsis, director, runtime, poster, premiere and
-cast out of that page and steps straight over this line.
-
-**What it costs, concretely.** `Az a szép, fényes nap` is a MagdaFeszt guest
-production carrying **12 `play_cast` rows**, so twelve performers now have a
-Csokonai credit on their person page for an evening Csokonai did not stage.
-That is T-020's problem pointing the other way: the page is not only missing
-work, it is attributing work to the wrong house — and the coverage note added
-for T-020 does not catch it, because the theatre named there is real.
-
-**Not the same thing as `is_festival`.** That flag already works: all 13
-MagdaFeszt rows carry `is_festival` and `festival_name`, and
-`genre_normalized` is correctly null rather than "IX. MagdaFeszt". Knowing an
-evening is part of a festival is not knowing whose production it is, and the
-touring `Csárdáskirálynő` is a guest performance with no festival at all.
-
-**Roughly.** Capture the line in `fetchPlayDetail()`. It is one field on the
-production, not on the showtime — verified across two months, 32 productions,
-no occurrence disagreeing with another. Then decide what it means: a
-`produced_by` on `plays` is the honest shape, since the venue stays right
-(the evening really is at Csokonai) while the company is somebody else.
-
-**Two things to settle before building it.** The line is one slot carrying
-several kinds of thing — `dráma` and `daljáték` are genre subtitles, not
-companies — so something has to tell provenance from subtitle; *"… előadása"*
-is the obvious tell and, like every heuristic in this catalogue, will not know
-when it stops being right (see T-008). And whether the other sources print a
-subtitle of their own is unchecked — that was T-002's open question, reframed
-and still worth an answer.
 
 ### T-003 · A superseded draft of the follow-gate migrations is applied to the live database
 type: bug · area: data · priority: med · status: open · added: 2026-09-09
@@ -586,6 +543,116 @@ _Nothing yet._
 ---
 
 ## Done
+
+### T-025 · A visiting company's production is filed as the host theatre's own
+type: bug · area: data · priority: high · status: done · added: 2026-09-10 · done: 2026-09-10
+
+Found while disproving T-002. Csokonai hosts other companies — the IX.
+MagdaFeszt programme, and touring shows on the Nagyerdei open-air stage — and
+every one of those productions is in the catalogue as a Csokonai production.
+`Abigél` is the Kolozsvári Állami Magyar Színház's staging, directed by
+Eszenyi Enikő; the app credits it to Csokonai. `Csárdáskirálynő` in September
+is the Szigligeti Színház Nagyvárad's.
+
+**The signal is right there and is being thrown away.** The line under the
+title says so in as many words — *"a Kolozsvári Állami Magyar Színház
+előadása"* — on the calendar and again as the first `<p>` under the `<h1>` of
+the production's own page. `fetchPlayDetail()` in `sync/adapters/csokonai.ts`
+reads the title, author, synopsis, director, runtime, poster, premiere and
+cast out of that page and steps straight over this line.
+
+**What it costs, concretely — measured once the capture existed, and it is
+far larger than this entry first guessed.** **353 distinct people** hold a
+Csokonai credit for an evening Csokonai did not stage: 410 `play_cast` rows
+across 19 guest productions. That is roughly one in seven of every person in
+the catalogue. It is T-020's problem pointing the other way — the person page
+is not only missing work, it is attributing work to the wrong house — and the
+coverage note added for T-020 does not catch it, because the theatre named
+there is real.
+
+~~`Az a szép, fényes nap` is a MagdaFeszt guest production carrying 12
+`play_cast` rows.~~ **Wrong, and worth keeping as the reason the report prints
+names.** Its subtitle is `történelmi dráma` and its director is Kukovecz Ákos:
+it is Csokonai's own production, presented at MagdaFeszt. The claim came from
+inferring guest-ness from `is_festival` plus a cast, which is exactly the
+inference the provenance line exists to replace — a festival is where an
+evening is programmed, not who made it.
+
+**Not the same thing as `is_festival`.** That flag already works: all 13
+MagdaFeszt rows carry `is_festival` and `festival_name`, and
+`genre_normalized` is correctly null rather than "IX. MagdaFeszt". Knowing an
+evening is part of a festival is not knowing whose production it is, and the
+touring `Csárdáskirálynő` is a guest performance with no festival at all.
+
+**Roughly.** Capture the line in `fetchPlayDetail()`. It is one field on the
+production, not on the showtime — verified across two months, 32 productions,
+no occurrence disagreeing with another. Then decide what it means: a
+`produced_by` on `plays` is the honest shape, since the venue stays right
+(the evening really is at Csokonai) while the company is somebody else.
+
+**Two things to settle before building it.** The line is one slot carrying
+several kinds of thing — `dráma` and `daljáték` are genre subtitles, not
+companies — so something has to tell provenance from subtitle; *"… előadása"*
+is the obvious tell and, like every heuristic in this catalogue, will not know
+when it stops being right (see T-008). And whether the other sources print a
+subtitle of their own is unchecked — that was T-002's open question, reframed
+and still worth an answer.
+
+> **Done, 10 September.** `plays` gains two columns (`0043`): `subtitle`,
+> the line the house prints under the title, verbatim; and `produced_by`,
+> the company read out of it when that line names one. The venue is
+> untouched, because the venue was never wrong — the evening really is at
+> Csokonai. What was missing was any way to say somebody else made it.
+
+> **Two columns rather than one, and that is the durable part.** Reading a
+> company out of *"a X előadása"* is a heuristic over Hungarian phrasing, and
+> T-008 is the standing lesson that a heuristic does not know when it has
+> stopped being right. Keeping the raw line means a better reading is an
+> `UPDATE` later rather than a re-scrape of 1,200 pages.
+
+> **It is bigger than the entry guessed: 29 productions, not two.** Four in
+> the current repertoire and **25 in the archive** — 15% of everything
+> Csokonai files under its own past work was made by somebody else. Orlai,
+> Thália, Játékszín, József Attila, Miskolci Nemzeti, Pécsi Balett, Erkel,
+> Szigligeti. Two of them are houses this catalogue already holds separately:
+> `Sommerreise` is a **Vígszínház** production and `Ma este megbukunk` a
+> **Centrál** one, both of which the app was filing as Csokonai's.
+
+> **Measured after the sync: 410 cast rows, 353 people.** 19 of the 29 guest
+> productions carry a cast, and those rows name 353 distinct people — about
+> one in seven of everybody in the catalogue — each of whom held a Csokonai
+> credit for an evening Csokonai did not stage. The entry's original estimate
+> of twelve was both far too small and attached to the wrong production; see
+> the correction in its body.
+
+> **The dry-run prints the guests by name, which is why the list above could
+> be trusted.** A count would have been the wrong report: the question before
+> a real run is not how many but whether they are companies at all, and a
+> venue name or a fragment of prose in that list is the failure mode. It is
+> only visible if the names are printed, so `run.ts` prints them.
+
+> **Known imperfection, recorded rather than fixed.** The source writes *"a
+> budapesti Játékszín előadása"*, so `produced_by` holds `budapesti
+> Játékszín` — the city adjective included. It reads correctly and it is what
+> the source says; it would only bite if something later tried to match
+> `produced_by` against a `venues.name`, which nothing does yet. Stripping it
+> would be a second heuristic on top of the first, which is how the entry
+> this one came from went wrong.
+
+> **On the screens.** Play Detail prints the theatre's own line above the
+> festival note and a step louder than it, rather than composing a sentence
+> from the company name — Hungarian picks *a* or *az* by the sound that
+> follows, and the source has already made that choice correctly. The person
+> page keeps the venue on the credit row and adds `vendégjáték` beside it:
+> naming the company there instead would fight the coverage note below the
+> list, which counts theatres this catalogue holds and would not list a
+> visitor among them.
+
+> **What this does not fix.** The company name still lands in `author` for a
+> page titled *"Pécsi Balett: A három testőr"*, because the author split
+> takes everything before the colon. Left alone deliberately: it is the same
+> line of reasoning as the imperfection above, and worth doing only when
+> something actually reads `author` as a person.
 
 ### T-019 · Your own profile opens with an empty 118pt band
 type: bug · area: design · priority: med · status: done · added: 2026-09-09 · done: 2026-09-10

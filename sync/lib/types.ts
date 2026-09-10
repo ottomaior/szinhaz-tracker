@@ -46,6 +46,23 @@ export type SyncedPlay = {
    * supabase/migrations/0005_archive_and_reconcile.sql.
    */
   isArchived?: boolean;
+  /**
+   * The line the house prints under the title — the Hungarian genre subtitle
+   * (`daljáték`, `tragikomédia`), or whatever else it uses that slot for.
+   *
+   * Kept verbatim, including when `producedBy` has already been read out of it,
+   * so a better reading can be applied later without re-scraping every page.
+   */
+  subtitle?: string;
+  /**
+   * The company that made this production, when it is not the house hosting it.
+   *
+   * A theatre files a visiting company's evening among its own productions, and
+   * the catalogue used to as well — which credited another company's staging,
+   * and its performers, to the host. Undefined is the ordinary case: the house
+   * whose `venueId` this carries made it.
+   */
+  producedBy?: string;
   cast: { name: string; role: string }[];
   performances: { sourceKey: string; startsAt: string; room?: string }[]; // ISO datetime
 };
