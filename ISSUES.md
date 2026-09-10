@@ -206,26 +206,6 @@ show timestamps at all, which is a design change rather than a content one.
 
 Bugs and chores, confirmed and unclaimed.
 
-### T-026 · Twenty-five database functions run with a mutable search_path
-type: bug · area: data · priority: med · status: open · added: 2026-09-10
-
-Supabase's security advisor reports `function_search_path_mutable` against 25
-functions in `public`, including `person_slug`, `search_plays`,
-`search_people`, `person_profile`, `create_play_with_cast` and
-`recompute_play_status`. A function without a pinned `search_path` resolves
-unqualified names against whatever the caller's `search_path` happens to be,
-so anyone able to create an object in a schema earlier on that path can
-decide which `unaccent` or which `=` operator the function actually calls.
-
-**This is a half-finished job, not an unknown one.** Two migrations already
-did it for a handful of functions — `profile_identity_pin_search_path`
-(`0026`-era) and `research_responses_pin_search_path` — so the pattern, the
-wording and the reason are all already in this repository. The rest never
-followed.
-
-Worth doing as one migration that sets `search_path = public, pg_temp` (or
-`= ''` with everything schema-qualified) on all 25 at once, rather than a
-line at a time as each function is next edited, which is how it got to 25.
 
 ### T-027 · Thirty-four RLS policies re-evaluate auth.uid() for every row
 type: chore · area: data · priority: low · status: open · added: 2026-09-10
@@ -543,6 +523,70 @@ _Nothing yet._
 ---
 
 ## Done
+
+### T-026 · Twenty-five database functions run with a mutable search_path
+type: bug · area: data · priority: med · status: done · added: 2026-09-10 · done: 2026-09-10
+
+Supabase's security advisor reports `function_search_path_mutable` against 25
+functions in `public`, including `person_slug`, `search_plays`,
+`search_people`, `person_profile`, `create_play_with_cast` and
+`recompute_play_status`. A function without a pinned `search_path` resolves
+unqualified names against whatever the caller's `search_path` happens to be,
+so anyone able to create an object in a schema earlier on that path can
+decide which `unaccent` or which `=` operator the function actually calls.
+
+**This is a half-finished job, not an unknown one.** Two migrations already
+did it for a handful of functions — `profile_identity_pin_search_path`
+(`0026`-era) and `research_responses_pin_search_path` — so the pattern, the
+wording and the reason are all already in this repository. The rest never
+followed.
+
+Worth doing as one migration that sets `search_path = public, pg_temp` (or
+`= ''` with everything schema-qualified) on all 25 at once, rather than a
+line at a time as each function is next edited, which is how it got to 25.
+
+> **Done, 10 September.** `0044` pins all 25 in one pass. The advisor now
+> reports `function_search_path_mutable` zero times, and no function in
+> `public` that this schema owns is left without a path.
+
+> **`= public`, not `= ''`.** The entry offered both. It has to be `public`
+> here regardless of taste: `unaccent` and `pg_trgm` are installed in
+> `public` on this project, so an empty path would break
+> `immutable_unaccent`, `search_norm` and everything built on them. It also
+> matches every function already pinned in this schema, which is the more
+> important reason — a second convention would be worse than the warning.
+
+> **`ALTER`, not `CREATE OR REPLACE`, and the loop is over `pg_depend`.** Not
+> a line of any function body is touched, so the bodies stay in the dozen
+> migrations that own them rather than gaining a second copy here. And the
+> set is computed rather than hand-listed: `pg_trgm` and `unaccent` live in
+> `public` too, so their `gtrgm_*`, `similarity*` and `word_similarity*`
+> functions sit beside ours in `pg_proc` with no pinned path. They belong to
+> the extensions, an upgrade would replace them, and altering another owner's
+> objects is not this schema's business — so the migration excludes anything
+> with an extension dependency instead of trusting a typed list of 25.
+
+> **The risk worth checking was the four expression indexes.**
+> `plays_title_trgm_idx`, `plays_author_trgm_idx`, `play_cast_name_trgm_idx`
+> and `play_cast_person_slug_idx` are built on `search_norm()` and
+> `person_slug()`, both in the 25. If pinning had changed what those
+> functions return, every index would have been silently wrong and both
+> search and every person page with it. Checked before and after against the
+> same inputs — `Für Anikó m.v.` still slugs to `fur-aniko`, `Örkény István
+> Színház` still normalises to `orkeny istvan szinhaz` — all four indexes are
+> still valid, and `EXPLAIN` still shows a `Bitmap Index Scan on
+> plays_title_trgm_idx`, so the planner still matches the indexed expression
+> despite the `SET` clause blocking inlining.
+
+> **Verified through `anon` as well as through the admin role**, because the
+> two have different paths and it is the anon one the app actually uses:
+> `search_plays`, `search_people` and `person_profile` all answer correctly
+> over REST with the publishable key, including with an accented search term,
+> which is the exact call that would fail if `unaccent` had stopped
+> resolving.
+
+> **No deploy.** Nothing in the app changed; this is database-only and took
+> effect the moment the migration applied.
 
 ### T-025 · A visiting company's production is filed as the host theatre's own
 type: bug · area: data · priority: high · status: done · added: 2026-09-10 · done: 2026-09-10
