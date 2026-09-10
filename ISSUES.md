@@ -402,31 +402,6 @@ three. Left as an open follow-up when the design pass merged. The follow-gate
 shipping on 9 September makes it more pressing, not less: the Mindenki feed now
 carries every evening logged, with the opinion masked on the ones you do not
 follow.
-### T-019 · Your own profile opens with an empty 118pt band
-type: bug · area: design · priority: med · status: open · added: 2026-09-09
-
-`app/(tabs)/profile.tsx:117` renders `styles.cover` — a `View` 118pt tall,
-filled with `colors.surface2`, holding **nothing** — and adds `insets.top + 16`
-of padding on top of that. The avatar then pulls back up into it with
-`marginTop: -40`. It is a cover-photo slot with no cover photo, and it is the
-first thing you see on your own profile: on a phone it costs most of what is
-above the fold before a single word about you appears.
-
-The two profile screens already disagree about it. `app/user/[id].tsx` — someone
-else's profile — has no band at all; its avatar sits in an ordinary row with
-`marginTop: space.md` (`:341`). So one of the two layouts is already the
-answer; the question is which.
-
-Two directions. **Remove it**, and let your own profile match the public one —
-cheapest, and it takes the `-40` overlap with it, which is the only thing
-holding the avatar in place today. Or **give it something to hold**: a chosen
-production's poster, or the palette the account is reading in. That is the more
-interesting answer and the more expensive one, and it needs a decision about
-where such an image would come from, since nothing in the schema stores one.
-
-Worth settling alongside T-017, the venue page: both are questions about what a
-header is for in this app, and answering them separately is how two screens end
-up disagreeing again.
 ### T-020 · A person page shows a partial career and does not say so
 type: bug · area: data · priority: high · status: open · added: 2026-09-09
 
@@ -486,6 +461,60 @@ _Nothing yet._
 ---
 
 ## Done
+
+### T-019 · Your own profile opens with an empty 118pt band
+type: bug · area: design · priority: med · status: done · added: 2026-09-09 · done: 2026-09-10
+
+`app/(tabs)/profile.tsx:117` renders `styles.cover` — a `View` 118pt tall,
+filled with `colors.surface2`, holding **nothing** — and adds `insets.top + 16`
+of padding on top of that. The avatar then pulls back up into it with
+`marginTop: -40`. It is a cover-photo slot with no cover photo, and it is the
+first thing you see on your own profile: on a phone it costs most of what is
+above the fold before a single word about you appears.
+
+The two profile screens already disagree about it. `app/user/[id].tsx` — someone
+else's profile — has no band at all; its avatar sits in an ordinary row with
+`marginTop: space.md` (`:341`). So one of the two layouts is already the
+answer; the question is which.
+
+Two directions. **Remove it**, and let your own profile match the public one —
+cheapest, and it takes the `-40` overlap with it, which is the only thing
+holding the avatar in place today. Or **give it something to hold**: a chosen
+production's poster, or the palette the account is reading in. That is the more
+interesting answer and the more expensive one, and it needs a decision about
+where such an image would come from, since nothing in the schema stores one.
+
+Worth settling alongside T-017, the venue page: both are questions about what a
+header is for in this app, and answering them separately is how two screens end
+up disagreeing again.
+
+> **Done, 10 September — removed.** Ottó chose the cheaper of the two
+> directions, so the own-profile screen now opens the way the public one
+> always did: the avatar in an ordinary row, no band behind it and no `-40`
+> holding it in place.
+
+> **The band was load-bearing in one way the entry did not mention.** Its
+> `paddingTop: insets.top + 16` was the only thing keeping this screen out
+> from under the notch — it has no header bar of its own. So the inset moved
+> onto `profileRow`, which is the idiom the feed, Discover and the watchlist
+> already use. Those three add `space.md` to it; this one adds the gutter
+> instead, because they open with a line of text and this opens with a 78pt
+> circle hard against the top edge. Measured after the change: the avatar
+> sits 20pt from the top and 20pt from the left, which is the point.
+
+> **What it actually bought, measured rather than estimated.** Both layouts
+> at 375×812 on the web, the old one read off production before the deploy:
+> the avatar was at y=79 and the name at y=169; they are now at 21 and 111.
+> So 58pt, not the ~118 the entry implies — the `-40` overlap was already
+> clawing back a third of the band. On a phone with a status-bar inset the
+> gain is smaller still, because the old band was quietly absorbing that
+> inset while the new layout adds it explicitly. The real win is not the
+> pixels: it is that a slab of `surface2` holding nothing is no longer the
+> first thing you see on your own profile.
+
+> **T-017 inherits a settled question.** There is now one header idiom for a
+> profile in this app rather than two, so a venue page has something to
+> follow instead of a choice to make.
 
 ### T-021 · The public site has drifted from the app, privacy policy included
 type: bug · area: web · priority: high · status: done · added: 2026-09-09 · done: 2026-09-10

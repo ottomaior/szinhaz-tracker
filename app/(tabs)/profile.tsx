@@ -114,10 +114,20 @@ export default function ProfileScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Screen>
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
-        <View style={[styles.cover, { paddingTop: insets.top + 16 }]} />
-
         <View style={{ paddingHorizontal: gutter }}>
-          <View style={styles.profileRow}>
+          {/* No cover band. There was one for a while — 118pt of `surface2`
+              holding nothing, with the avatar pulled back up into it — which
+              is a cover-photo slot for a cover photo the schema has nowhere to
+              store. On a phone it cost most of what is above the fold before a
+              single word about you appeared. The public profile in
+              `app/user/[id].tsx` never had one, so this is the two screens
+              agreeing rather than a new idea. The top inset lands here now,
+              the way the feed, Discover and the watchlist all carry it on
+              their own header row. Those three add `space.md` to the inset,
+              but they open with a line of text; this screen opens with a 78pt
+              circle hard against the top edge, so it takes the gutter instead
+              and the avatar's top and left spacing agree. */}
+          <View style={[styles.profileRow, { paddingTop: insets.top + gutter }]}>
             <Avatar uri={user.avatarUrl} initials={user.initials} size={78} serif />
             {/* The edit pill used to be here with no press handler at all, next
                 to a settings gear that signed the user out on a single tap with
@@ -415,17 +425,13 @@ function SettingsButton({ onPress }: { onPress: () => void }) {
 }
 
 const useStyles = makeStyles((colors) => StyleSheet.create({
-  cover: {
-    height: 118,
-    backgroundColor: colors.surface2,
-    paddingHorizontal: 18,
-    alignItems: "flex-end",
-  },
+  // `alignItems: "flex-end"` rather than centred: the right-hand pills wrap to
+  // two lines on a narrow screen, and sitting them on the avatar's baseline
+  // keeps the row reading as one block whether they wrap or not.
   profileRow: {
     flexDirection: "row",
     alignItems: "flex-end",
     justifyContent: "space-between",
-    marginTop: -40,
   },
   // Wraps rather than overflows: two pills plus a 78pt avatar do not fit on a
   // 375pt screen, and the second one was being cut off by the right edge.
