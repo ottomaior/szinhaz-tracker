@@ -16,7 +16,8 @@ import {
 } from "@/services/playsService";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAtLeast } from "@/hooks/useBreakpoint";
-import type { Performance, Play, Poster, Review, User, Venue } from "@/data/types";
+import type { Performance, Play, Portrait, Poster, Review, User, Venue } from "@/data/types";
+import { getPortraits } from "@/services/peopleService";
 import { IconButton, Button } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
@@ -73,6 +74,9 @@ export default function PlayDetailScreen() {
   const wide = useAtLeast("expanded");
   const { session } = useAuth();
   const [play, setPlay] = useState<Play>();
+  // Faces for the cast list, by person slug; empty for everyone the theatres
+  // publish no portrait of, which is most of the catalogue (T-032).
+  const [portraits, setPortraits] = useState<Map<string, Portrait>>(new Map());
   const [venue, setVenue] = useState<Venue>();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [performances, setPerformances] = useState<Performance[]>([]);
@@ -97,6 +101,9 @@ export default function PlayDetailScreen() {
         }
         setPlay(p);
         getVenueById(p.venueId).then(setVenue).catch(() => setVenue(undefined));
+        getPortraits(p.cast.map((c) => personSlug(c.name)))
+          .then(setPortraits)
+          .catch(() => setPortraits(new Map()));
       })
       .catch(() => setLoadFailed(true));
     // An empty list on failure is the right fallback: ShowtimeList then says
@@ -618,7 +625,7 @@ export default function PlayDetailScreen() {
                   accessibilityRole="button"
                   accessibilityLabel={c.name}
                 >
-                  <Avatar initials={initialsOf(c.name)} size={34} serif />
+                  <Avatar uri={portraits.get(personSlug(c.name))?.thumbUrl} initials={initialsOf(c.name)} size={34} serif />
                   <View style={{ flex: 1, gap: 1 }}>
                     <Text variant="label" numberOfLines={1}>{c.name}</Text>
                     {!!c.role && (

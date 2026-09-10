@@ -124,7 +124,7 @@ export type PosterColumns = {
 };
 
 /** Public CDN URL for a path inside the `posters` bucket. */
-function posterUrl(path: string): string {
+export function posterUrl(path: string): string {
   return `${SUPABASE_URL.replace(/\/+$/, "")}/storage/v1/object/public/posters/${path}`;
 }
 

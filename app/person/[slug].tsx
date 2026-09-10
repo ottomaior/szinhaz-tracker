@@ -3,10 +3,10 @@ import { View, ScrollView, StyleSheet } from "react-native";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
 import { gutter, hairlineWidth, radius, space } from "@/theme/tokens";
-import { getPersonCredits, getPersonProfile, type PersonCredit, type PersonProfile } from "@/services/peopleService";
+import { getPersonCredits, getPersonProfile, getPortrait, type PersonCredit, type PersonProfile } from "@/services/peopleService";
 import { getDiaryPlaysForUser, getCurrentUser, getFilterVenues, getVenuesByIds } from "@/services/playsService";
 import { useAuth } from "@/contexts/AuthContext";
-import type { Venue } from "@/data/types";
+import type { Portrait, Venue } from "@/data/types";
 import { Avatar } from "@/components/ui/Avatar";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { PlayRow } from "@/components/ui/PlayRow";
@@ -42,6 +42,7 @@ export default function PersonScreen() {
   const [venues, setVenues] = useState<Map<string, Venue>>(new Map());
   const [seenPlayIds, setSeenPlayIds] = useState<Set<string>>(new Set());
   const [covered, setCovered] = useState<string[]>([]);
+  const [portrait, setPortrait] = useState<Portrait>();
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -56,6 +57,14 @@ export default function PersonScreen() {
         getPersonProfile(slug).then((p) => {
           if (active) setProfile(p);
         }),
+        // The face, where their theatre publishes one (T-032). Most people
+        // have none and keep their initials; a failure here is the same as
+        // having none, and must not take the page down with it.
+        getPortrait(slug)
+          .then((p) => {
+            if (active) setPortrait(p);
+          })
+          .catch(() => {}),
         getPersonCredits(slug).then(async (list) => {
           if (!active) return;
           setCredits(list);
@@ -138,7 +147,7 @@ export default function PersonScreen() {
           {loaded && !failed && !!profile && (
             <>
               <View style={styles.header}>
-                <Avatar initials={personInitials(profile.displayName)} size={64} serif />
+                <Avatar uri={portrait?.thumbUrl} initials={personInitials(profile.displayName)} size={64} serif />
                 <View style={{ flex: 1, gap: 4 }}>
                   <Text variant="display">{profile.displayName}</Text>
                   <Text variant="bodySmall" tone="faint">

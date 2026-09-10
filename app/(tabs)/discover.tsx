@@ -24,8 +24,8 @@ import {
 import { getLists, type ListSummary } from "@/services/listsService";
 import { getFriendsRecentPlays } from "@/services/friendsService";
 import { searchPlays, type SortKey } from "@/services/searchService";
-import { searchPeople, type PersonSearchResult } from "@/services/peopleService";
-import type { Play, ProgramEntry, Venue, VenueType } from "@/data/types";
+import { getPortraits, searchPeople, type PersonSearchResult } from "@/services/peopleService";
+import type { Play, Portrait, ProgramEntry, Venue, VenueType } from "@/data/types";
 import { SearchIcon, CloseIcon } from "@/components/icons/Icons";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button, IconButton } from "@/components/ui/Button";
@@ -167,6 +167,7 @@ export default function DiscoverScreen() {
   const [trending, setTrending] = useState<Play[]>([]);
   const [searchResults, setSearchResults] = useState<Play[]>([]);
   const [searchPeopleResults, setSearchPeopleResults] = useState<PersonSearchResult[]>([]);
+  const [peoplePortraits, setPeoplePortraits] = useState<Map<string, Portrait>>(new Map());
   const [searching, setSearching] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const { recent, remember, clear: clearRecent } = useRecentSearches();
@@ -493,7 +494,14 @@ export default function DiscoverScreen() {
     }
     const handle = setTimeout(() => {
       searchPeople(query)
-        .then(setSearchPeopleResults)
+        .then((results) => {
+          setSearchPeopleResults(results);
+          // The faces arrive a beat after the names; a row without one is
+          // the ordinary case, so nothing waits for this.
+          getPortraits(results.map((r) => r.slug))
+            .then(setPeoplePortraits)
+            .catch(() => setPeoplePortraits(new Map()));
+        })
         // A failed people query leaves the productions to answer alone, which
         // is what this screen did before there was a people query at all.
         .catch(() => setSearchPeopleResults([]));
@@ -737,6 +745,7 @@ export default function DiscoverScreen() {
                     <PersonResultRow
                       key={person.slug}
                       person={person}
+                      portrait={peoplePortraits.get(person.slug)}
                       onPress={() => {
                         remember(query);
                         router.push(`/person/${person.slug}`);
@@ -1095,7 +1104,15 @@ function TrendingCard({ play, onPress }: { play: Play; onPress: () => void }) {
  * before either page is open — how much work the catalogue holds for them,
  * where, and over what span.
  */
-function PersonResultRow({ person, onPress }: { person: PersonSearchResult; onPress: () => void }) {
+function PersonResultRow({
+  person,
+  portrait,
+  onPress,
+}: {
+  person: PersonSearchResult;
+  portrait?: Portrait;
+  onPress: () => void;
+}) {
   const styles = useStyles();
 
   const parts = [strings.discover.personCredits(person.creditCount)];
@@ -1116,7 +1133,7 @@ function PersonResultRow({ person, onPress }: { person: PersonSearchResult; onPr
       accessibilityRole="button"
       accessibilityLabel={person.displayName}
     >
-      <Avatar initials={personInitials(person.displayName)} size={44} serif />
+      <Avatar uri={portrait?.thumbUrl} initials={personInitials(person.displayName)} size={44} serif />
       <View style={{ flex: 1, gap: 2 }}>
         <Text variant="body">{person.displayName}</Text>
         <Text variant="caption" tone="faint" numberOfLines={1}>

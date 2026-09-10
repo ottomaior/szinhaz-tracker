@@ -1,6 +1,6 @@
 import { supabase } from "@/services/supabase";
-import { getPlaysByIds } from "@/services/playsService";
-import type { Play } from "@/data/types";
+import { getPlaysByIds, posterUrl } from "@/services/playsService";
+import type { Play, Portrait } from "@/data/types";
 
 /**
  * Reading the catalogue by person rather than by production.
@@ -49,6 +49,51 @@ export type PersonCredit = {
   /** Named as director of this production, from `plays.director` or a cast row. */
   directed: boolean;
 };
+
+type PortraitRow = {
+  slug: string;
+  image_path: string;
+  image_thumb_path: string;
+  image_blurhash: string | null;
+  credit: string | null;
+  venue_id: string;
+  source_url: string;
+};
+
+const PORTRAIT_COLUMNS = "slug, image_path, image_thumb_path, image_blurhash, credit, venue_id, source_url";
+
+function toPortrait(row: PortraitRow): Portrait {
+  return {
+    slug: row.slug,
+    url: posterUrl(row.image_path),
+    thumbUrl: posterUrl(row.image_thumb_path),
+    blurhash: row.image_blurhash ?? undefined,
+    credit: row.credit ?? undefined,
+    venueId: row.venue_id,
+    sourceUrl: row.source_url,
+  };
+}
+
+/**
+ * The portraits on file for a set of people, by slug.
+ *
+ * One request for a whole cast list or a page of search results, and a map
+ * that is simply missing the people who have none — which is most of them.
+ * Blank input short-circuits so a screen with nobody on it makes no request.
+ */
+export async function getPortraits(slugs: string[]): Promise<Map<string, Portrait>> {
+  const unique = [...new Set(slugs.filter(Boolean))];
+  if (unique.length === 0) return new Map();
+
+  const { data, error } = await supabase.from("person_portraits").select(PORTRAIT_COLUMNS).in("slug", unique);
+  if (error) throw error;
+
+  return new Map(((data ?? []) as PortraitRow[]).map((row) => [row.slug, toPortrait(row)]));
+}
+
+export async function getPortrait(slug: string): Promise<Portrait | undefined> {
+  return (await getPortraits([slug])).get(slug);
+}
 
 export async function getPersonProfile(slug: string): Promise<PersonProfile | undefined> {
   const { data, error } = await supabase.rpc("person_profile", { slug });
