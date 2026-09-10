@@ -207,6 +207,16 @@ user has is the one that does not work in production. Carried over from the
 backlog's Phase 1 outstanding list, where it has sat since that phase merged.
 A console setting, not code.
 
+**The exact entries, derived 10 September so nobody has to work them out at
+the console.** `Linking.createURL` on web is `new URL(path,
+window.location.origin)` (`expo-linking/build/createURL.web.js`), so the
+deployed site asks for
+`https://szinhaz-tracker-production.up.railway.app/reset-password`; a
+standalone native build asks for `szinhaztracker://reset-password`, from the
+`scheme` in `app.config.ts`. Both belong on the list, alongside the `localhost`
+entry already there. The confirmation link in `signUp` takes the same two
+origins at `/`, so a wildcard on each host covers both routes at once.
+
 ### T-005 · Anyone can sign up with somebody else's email address
 type: bug · area: auth · priority: high · status: open · added: 2026-09-09
 
@@ -216,6 +226,22 @@ has turned it back on. While it is off an address can be claimed by whoever
 types it, which also means a real person can arrive to find their own address
 already taken by a stranger. The backlog files this as an open question; it is
 also a defect, and the two readings deserve different urgency.
+
+**Confirmed against the live project, 10 September**, from two directions:
+`GET /auth/v1/settings` answers `"mailer_autoconfirm": true`, and every
+account created since 7 September carries an `email_confirmed_at` with no
+`confirmation_sent_at`. All six existing accounts are confirmed, so turning it
+on strands nobody.
+
+**It is not purely a switch, though, and that is what decides when it can be
+done.** Supabase built-in SMTP delivers only to addresses on the project team
+and is rate-limited to a few messages an hour. Enabling confirmation while that
+is the mail path does not close the hole so much as move it: a stranger still
+cannot claim somebody else’s address, but a real person cannot sign up either,
+because the mail never arrives. So this is two pieces — a custom SMTP provider
+first, then the setting — and doing the second alone would be worse than
+leaving it. Whether custom SMTP is already configured has not been checked;
+that needs dashboard or management-API access.
 
 ### T-006 · Every exported page ships two `<title>` elements
 type: bug · area: web · priority: med · status: open · added: 2026-09-09
