@@ -206,6 +206,70 @@ show timestamps at all, which is a design change rather than a content one.
 
 Bugs and chores, confirmed and unclaimed.
 
+### T-026 · Twenty-five database functions run with a mutable search_path
+type: bug · area: data · priority: med · status: open · added: 2026-09-10
+
+Supabase's security advisor reports `function_search_path_mutable` against 25
+functions in `public`, including `person_slug`, `search_plays`,
+`search_people`, `person_profile`, `create_play_with_cast` and
+`recompute_play_status`. A function without a pinned `search_path` resolves
+unqualified names against whatever the caller's `search_path` happens to be,
+so anyone able to create an object in a schema earlier on that path can
+decide which `unaccent` or which `=` operator the function actually calls.
+
+**This is a half-finished job, not an unknown one.** Two migrations already
+did it for a handful of functions — `profile_identity_pin_search_path`
+(`0026`-era) and `research_responses_pin_search_path` — so the pattern, the
+wording and the reason are all already in this repository. The rest never
+followed.
+
+Worth doing as one migration that sets `search_path = public, pg_temp` (or
+`= ''` with everything schema-qualified) on all 25 at once, rather than a
+line at a time as each function is next edited, which is how it got to 25.
+
+### T-027 · Thirty-four RLS policies re-evaluate auth.uid() for every row
+type: chore · area: data · priority: low · status: open · added: 2026-09-10
+
+The `auth_rls_initplan` advisor: 34 policies across `reviews`, `follows`,
+`notifications`, `review_likes`, `review_comments`, `watchlist_entries`,
+`subject_follows`, `user_blocks`, `reports`, `plays`, `performances`,
+`play_cast`, `profiles` and `venues` call `auth.uid()` per row rather than
+once per statement. The fix is mechanical — `(select auth.uid())` instead of
+`auth.uid()` — and Postgres then hoists it to an InitPlan.
+
+Low priority because it is invisible at this size: the largest user table has
+six rows in it. It stops being invisible on exactly the screen T-016 is about
+— a feed under real volume, where the follow-gate makes every row consult a
+policy. Worth doing before that gets measured, so the measurement is of the
+feed and not of this.
+
+The same advisor run flags 12 `multiple_permissive_policies` on
+`performances`, `play_cast`, `list_items` and `review_cast` — two permissive
+SELECT policies where one would do, each evaluated on every read. Same fix
+window, same reasoning.
+
+### T-028 · Six foreign keys with no index, eight indexes never used
+type: chore · area: data · priority: low · status: open · added: 2026-09-10
+
+Two halves of the same advisor pass, and they point in opposite directions.
+
+**Unindexed foreign keys**, which make the parent's deletes and the join's
+lookups scan: `notifications.play_id`, `notifications.review_id`,
+`plays.created_by`, `review_comments.user_id`, `reviews.performance_id`,
+`venues.created_by`.
+
+**Indexes never used since the counters were last reset**:
+`plays_poster_pending_idx`, `plays_author_trgm_idx`, `lists_featured_idx`,
+`review_cast_name_slug_idx`, `reviews_hidden_idx`,
+`review_comments_hidden_idx`, `reports_open_idx`, `reports_target_idx`.
+
+Neither list should be acted on literally. An unused index on a moderation
+table means nobody has been moderated yet, not that the index is wrong, and
+`plays_author_trgm_idx` exists for a search path that T-018 would start
+using. The honest read is that this is a note to re-run the advisor once
+there is traffic, and to add the six indexes, which cost nothing to be wrong
+about at this size.
+
 ### T-025 · A visiting company's production is filed as the host theatre's own
 type: bug · area: data · priority: high · status: open · added: 2026-09-10
 
@@ -280,6 +344,20 @@ commits behind `origin/main` and had never been fetched. `origin/main` already
 carried the code that reads the view (`3285f48`, pushed 9 September at 22:59).
 `git fetch` before concluding anything about what production is running; a local
 branch name is not a deployment.
+
+**Checked against the applied migration history, 10 September, and the entry
+overstates it by one.** Supabase's own list of applied migrations holds
+`a_diary_with_a_door_view`, `opinions_behind_a_follow` and
+`close_the_door_on_reviews` — there is no `close_the_direct_read` in it. So
+only *one* of the two untracked drafts was ever applied, not both: the one
+that created `public.entries`. The second file has never run anywhere.
+
+**And the leftover view is not merely untidy — it is the only ERROR-level
+finding the security advisor reports.** `public.entries` is flagged under
+`security_definer_view`, alongside `public.reviews_readable`, which is the one
+the app actually reads. Dropping the orphan halves that finding and removes a
+second, unreviewed path to the same data. It is still Ottó's call because it
+touches live state, but the case is stronger than "cruft with a sharp edge".
 
 ### T-005 · Anyone can sign up with somebody else's email address
 type: bug · area: auth · priority: high · status: open · added: 2026-09-09
@@ -781,4 +859,4 @@ dropping it too. Not checked.
 
 ---
 
-Next free id: **T-026**
+Next free id: **T-029**
