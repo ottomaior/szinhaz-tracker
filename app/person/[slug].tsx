@@ -2,9 +2,9 @@ import { useCallback, useState } from "react";
 import { View, ScrollView, StyleSheet } from "react-native";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
-import { gutter, radius, space } from "@/theme/tokens";
+import { gutter, hairlineWidth, radius, space } from "@/theme/tokens";
 import { getPersonCredits, getPersonProfile, type PersonCredit, type PersonProfile } from "@/services/peopleService";
-import { getDiaryPlaysForUser, getCurrentUser, getVenuesByIds } from "@/services/playsService";
+import { getDiaryPlaysForUser, getCurrentUser, getFilterVenues, getVenuesByIds } from "@/services/playsService";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Venue } from "@/data/types";
 import { Avatar } from "@/components/ui/Avatar";
@@ -41,6 +41,7 @@ export default function PersonScreen() {
   const [credits, setCredits] = useState<PersonCredit[]>([]);
   const [venues, setVenues] = useState<Map<string, Venue>>(new Map());
   const [seenPlayIds, setSeenPlayIds] = useState<Set<string>>(new Set());
+  const [covered, setCovered] = useState<string[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -71,6 +72,25 @@ export default function PersonScreen() {
                 if (active) setSeenPlayIds(new Set(plays.map((p) => p.id)));
               })
           : Promise.resolve(),
+        // The houses the coverage note names, read rather than hardcoded — a
+        // list typed into the source is a list that goes stale the first time
+        // a theatre is added, and quietly, because nothing compares the two.
+        // `includeArchived` because a credit list runs back through productions
+        // that came off long ago, so the covered set has to mean "everything we
+        // ever held" and not "what is on this week". Deliberately *not* every
+        // row in `venues`: two of the ten are there with no productions at all,
+        // and naming them would be claiming coverage this catalogue does not
+        // have — the exact failure the note exists to stop.
+        //
+        // Its own catch: the note is a caveat, and a caveat that cannot load is
+        // not worth failing a career page over. It simply does not render.
+        getFilterVenues(undefined, true)
+          .then((list) => {
+            if (active) setCovered(list.map((v) => v.name));
+          })
+          .catch(() => {
+            if (active) setCovered([]);
+          }),
       ])
         .catch(() => {
           if (active) setFailed(true);
@@ -193,6 +213,19 @@ export default function PersonScreen() {
                     />
                   );
                 })}
+
+                {/* Under the list rather than under the header, because this
+                    answers a question the reader only has once they have read
+                    to the bottom and are wondering whether that was all of it.
+                    Quiet on purpose: it is a footnote about the catalogue, not
+                    a warning about this person. */}
+                {covered.length > 0 && (
+                  <View style={styles.coverage}>
+                    <Text variant="caption" tone="faint">
+                      {strings.person.coverageNote(covered.length, covered.join(", "))}
+                    </Text>
+                  </View>
+                )}
               </View>
             </>
           )}
@@ -274,4 +307,12 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   },
   stat: { flex: 1, alignItems: "center", gap: 2 },
   statDivider: { width: 1, alignSelf: "stretch", backgroundColor: colors.hairlineSoft },
+  // A rule above it rather than a card around it: a boxed caveat at the end of
+  // a credit list reads as an error message, and nothing here has gone wrong.
+  coverage: {
+    marginTop: space.md,
+    paddingTop: space.md,
+    borderTopWidth: hairlineWidth,
+    borderTopColor: colors.hairlineSoft,
+  },
 }));

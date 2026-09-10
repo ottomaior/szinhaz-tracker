@@ -747,6 +747,15 @@ export const strings = {
     seenBadge: "Láttad",
     director: "Rendező",
     venueCount: (n: number) => `${n} színház`,
+    // What the page is counting, said out loud. Without it a career this
+    // catalogue only partly holds reads as a complete one — see T-020: a
+    // spot-check found three credits missing for three different structural
+    // reasons, and the page presented the result as the whole story either
+    // way. The second half names the other reason a name can be missing from
+    // a production the catalogue *does* hold.
+    coverageNote: (n: number, venues: string) =>
+      `Ez a lista ${n} színház műsorából készül: ${venues}. Ami máshol ment, ide nem kerül be — ` +
+      `és ahol a színház nem közöl szereposztást, ott az előadás szerepel a katalógusban, az alkotói nem.`,
     notFoundTitle: "Nem találjuk ezt az alkotót.",
     notFoundBody: "Lehet, hogy elgépelt a cím, vagy a katalógusban más néven szerepel.",
   },

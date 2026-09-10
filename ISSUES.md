@@ -452,6 +452,34 @@ what would have caught all three of these without a spot-check.
 
 
 
+
+> **Done in part, 10 September — the page says what it is counting now.**
+> A line under the credit list names the houses the catalogue actually
+> holds: *"Ez a lista 8 színház műsorából készül: …"*, followed by the second
+> reason a name can be missing from a production that *is* here — a theatre
+> that publishes no cast. So a career this catalogue only partly holds now
+> reads as partial rather than as complete, which was the piece that did not
+> wait on anything.
+
+> **The list is read, not typed.** `getFilterVenues(undefined, true)`, so a
+> theatre added tomorrow appears in the note without anyone remembering to
+> edit it — a hardcoded list would have been T-021's typed-in `1199` all over
+> again. `includeArchived` because a credit list runs back through
+> productions that came off years ago, so the covered set has to mean
+> everything ever held rather than what is on this week.
+
+> **It deliberately names 8 houses, not the 10 rows in `venues`.** Radnóti
+> and Trafó are in the table with zero productions between them. Listing
+> them would have claimed coverage the catalogue does not have, inside the
+> very sentence written to stop that — which is worth knowing for anything
+> else that ever counts theatres.
+
+> **Left open on purpose.** The three credits the spot-check found are still
+> missing, and the two causes behind them have homes elsewhere: wider
+> coverage is backlog 4.2, cast capture that fails loudly rather than
+> silently is 4.5. The page is honest now; it is not complete. This closes
+> when those land.
+
 ---
 
 ## Doing
