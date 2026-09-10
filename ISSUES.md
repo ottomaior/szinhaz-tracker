@@ -125,6 +125,32 @@ folds honours and `m.v.` against this catalogue, and a playwright's name arrives
 printed differently again — "Katona József" as an author and as a theatre name
 being the obvious trap.
 
+### T-022 · check:launch should read the auth settings, not just the files
+type: idea · area: infra · size: S · status: idea · added: 2026-09-10
+
+**The problem.** T-004 sat open from Phase 1 until 10 September, and nothing
+could have caught it: the one route a locked-out user has was pointed at
+`http://localhost:3000` and every check the project runs passed the whole
+time. `scripts/check-launch.ts` already knows `PRODUCTION_HOST` — it checks the
+`.well-known` files against it — but it only ever looks at what this repository
+serves, never at what the services this app depends on are configured to do.
+Auth config is exactly the kind of state that drifts silently: it lives in a
+console, no commit records a change to it, and it fails by quietly redirecting
+somewhere else rather than by erroring.
+
+**Roughly.** `GET /v1/projects/{ref}/config/auth` with the access token, then
+assert three things: `site_url` is `PRODUCTION_HOST`, `uri_allow_list` contains
+that host in both its bare and `/**` forms, and — once T-005 is settled —
+`mailer_autoconfirm` is off with an SMTP host set. The Management API answers
+in one request, so this is a check, not a job.
+
+**Depends on.** A token being available wherever `check:launch` runs, which is
+the whole cost of it: `SUPABASE_ACCESS_TOKEN` is account-scoped rather than
+project-scoped, so putting it in CI is a bigger decision than putting the
+service role key there was. Skipping the section when the variable is absent —
+the way a local run without Cloudflare credentials already behaves — keeps that
+decision separate from shipping the check.
+
 ---
 
 ## Open
@@ -196,26 +222,6 @@ commits behind `origin/main` and had never been fetched. `origin/main` already
 carried the code that reads the view (`3285f48`, pushed 9 September at 22:59).
 `git fetch` before concluding anything about what production is running; a local
 branch name is not a deployment.
-
-### T-004 · Password-reset links from the live site go to the wrong origin
-type: bug · area: auth · priority: high · status: open · added: 2026-09-09
-
-The Railway origin is not on Supabase's redirect allow list; `localhost` is,
-confirmed. A reset link generated from the deployed site therefore lands on the
-Site URL rather than on `app/reset-password.tsx`, so the one route a locked-out
-user has is the one that does not work in production. Carried over from the
-backlog's Phase 1 outstanding list, where it has sat since that phase merged.
-A console setting, not code.
-
-**The exact entries, derived 10 September so nobody has to work them out at
-the console.** `Linking.createURL` on web is `new URL(path,
-window.location.origin)` (`expo-linking/build/createURL.web.js`), so the
-deployed site asks for
-`https://szinhaz-tracker-production.up.railway.app/reset-password`; a
-standalone native build asks for `szinhaztracker://reset-password`, from the
-`scheme` in `app.config.ts`. Both belong on the list, alongside the `localhost`
-entry already there. The confirmation link in `signUp` takes the same two
-origins at `/`, so a wildcard on each host covers both routes at once.
 
 ### T-005 · Anyone can sign up with somebody else's email address
 type: bug · area: auth · priority: high · status: open · added: 2026-09-09
@@ -483,7 +489,50 @@ _Nothing yet._
 
 ## Done
 
-_Nothing yet._
+### T-004 · Password-reset links from the live site go to the wrong origin
+type: bug · area: auth · priority: high · status: done · added: 2026-09-09 · done: 2026-09-10
+
+The Railway origin is not on Supabase's redirect allow list; `localhost` is,
+confirmed. A reset link generated from the deployed site therefore lands on the
+Site URL rather than on `app/reset-password.tsx`, so the one route a locked-out
+user has is the one that does not work in production. Carried over from the
+backlog's Phase 1 outstanding list, where it has sat since that phase merged.
+A console setting, not code.
+
+**The exact entries, derived 10 September so nobody has to work them out at
+the console.** `Linking.createURL` on web is `new URL(path,
+window.location.origin)` (`expo-linking/build/createURL.web.js`), so the
+deployed site asks for
+`https://szinhaz-tracker-production.up.railway.app/reset-password`; a
+standalone native build asks for `szinhaztracker://reset-password`, from the
+`scheme` in `app.config.ts`. Both belong on the list, alongside the `localhost`
+entry already there. The confirmation link in `signUp` takes the same two
+origins at `/`, so a wildcard on each host covers both routes at once.
+
+> **Done, 10 September.** Fixed through the Management API, which is where
+> these settings live — `PATCH /v1/projects/{ref}/config/auth`, with a personal
+> access token, since neither the service role key nor a migration can reach
+> project config. `uri_allow_list` now holds the production origin, the
+> `szinhaztracker://` scheme and `localhost:8081`, each as both a bare origin
+> and a `/**` wildcard. Verified by minting real recovery links through
+> `/auth/v1/admin/generate_link`, which returns the link instead of mailing it:
+> all six forms come back with their `redirect_to` intact, and an origin not on
+> the list still falls back, so the list is being enforced rather than ignored.
+
+> **The entry had two things wrong, and both are worth keeping.** The allow
+> list was not "missing the Railway origin while localhost is on it" — it was
+> **empty**, and localhost worked only because it is permitted implicitly. And
+> the Site URL it fell back to was `http://localhost:3000`, a port nothing in
+> this project has ever served: Expo web runs on 8081. So the fallback was not
+> merely wrong for production, it was dead everywhere. Site URL is now the
+> production origin.
+
+> **A wildcard does not cover its own bare origin.** `http://localhost:8081/**`
+> rejects `http://localhost:8081`, which is exactly what
+> `Linking.createURL("/")` produces — the confirmation link in `signUp`. The
+> production origin hid this, because it matched as the Site URL rather than
+> through the pattern. Hence both forms of each entry on the list; anyone
+> adding a custom domain later has to add both too.
 
 ---
 
@@ -496,4 +545,4 @@ _Nothing yet._
 
 ---
 
-Next free id: **T-022**
+Next free id: **T-023**
