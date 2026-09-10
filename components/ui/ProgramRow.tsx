@@ -35,11 +35,11 @@ export function ProgramRow({
   const styles = useStyles();
 
   const isToday = budapestDayKey(entry.startsAt) === todayInBudapest();
-  const genre = entry.genreNormalized ? strings.genres[entry.genreNormalized] ?? entry.genreNormalized : undefined;
+  const kind = programKind(entry);
   const meta =
     lead === "date"
-      ? [entry.venueName, genre]
-      : [entry.room, entry.runtimeMinutes != null ? formatRuntimeMinutes(entry.runtimeMinutes) : undefined, genre];
+      ? [entry.venueName, kind]
+      : [entry.room, entry.runtimeMinutes != null ? formatRuntimeMinutes(entry.runtimeMinutes) : undefined, kind];
 
   return (
     <Pressable onPress={onPress} style={styles.row} accessibilityRole="button" accessibilityLabel={entry.title}>
@@ -84,6 +84,29 @@ export function ProgramRow({
       </View>
     </Pressable>
   );
+}
+
+/**
+ * What kind of evening this is, in one or two words.
+ *
+ * The house's own line under the title where there is one — `vígjáték`,
+ * `opera két felvonásban`, `énekkari próba`, `a Vígszínház előadása` — and
+ * the genre bucket otherwise. The line wins because it is what the theatre
+ * prints on its own calendar rows and it is strictly more specific: `Próza` is
+ * a filter category, and it is what let two public choir rehearsals read as
+ * two performances of a play (T-002, T-031). Not a rule about which lines are
+ * interesting enough to show: a heuristic over Hungarian phrasing would stop
+ * being right without telling anyone (T-008). Provenance lines are printed as
+ * they are — "whose show is this" is the right answer to give on a row.
+ *
+ * The first letter is raised because the line sits in a run of labels that
+ * are all capitalised — `Musical`, `Próza`, `4 óra` — and a lower-case
+ * `vígjáték` between them reads as a slip rather than as the house's
+ * typography. The production page prints the line as the house sets it.
+ */
+export function programKind(entry: ProgramEntry): string | undefined {
+  if (entry.subtitle) return entry.subtitle.charAt(0).toLocaleUpperCase("hu-HU") + entry.subtitle.slice(1);
+  return entry.genreNormalized ? strings.genres[entry.genreNormalized] ?? entry.genreNormalized : undefined;
 }
 
 /** A row-shaped placeholder, so a programme holds its height while it loads. */

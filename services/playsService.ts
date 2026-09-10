@@ -625,6 +625,8 @@ type ProgramRow = {
   author: string;
   director: string;
   genre_normalized: string | null;
+  subtitle: string | null;
+  produced_by: string | null;
   runtime_minutes: number | null;
   status: PlayStatus;
   is_archived: boolean;
@@ -643,6 +645,8 @@ function toProgramEntry(row: ProgramRow): ProgramEntry {
     author: row.author,
     director: row.director,
     genreNormalized: (row.genre_normalized ?? undefined) as ProgramEntry["genreNormalized"],
+    subtitle: row.subtitle ?? undefined,
+    producedBy: row.produced_by ?? undefined,
     runtimeMinutes: row.runtime_minutes ?? undefined,
     status: row.status ?? "unknown",
     poster: toPoster(row),

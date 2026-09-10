@@ -37,7 +37,7 @@ import { ListCard } from "@/components/ui/ListCard";
 import { ListsBody } from "@/components/ui/ListsBody";
 import { PosterCardSkeleton, Skeleton, SkeletonRail } from "@/components/ui/Skeleton";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
-import { ProgramRow, ProgramRowSkeleton } from "@/components/ui/ProgramRow";
+import { ProgramRow, ProgramRowSkeleton, programKind } from "@/components/ui/ProgramRow";
 import { Screen, ContentColumn } from "@/components/ui/Screen";
 import { ProgramView } from "@/components/ui/ProgramView";
 import { SectionHeader } from "@/components/ui/SectionHeader";
@@ -980,10 +980,12 @@ function TonightHero({ entry, onPress, tall }: { entry: ProgramEntry; onPress: (
   const styles = useStyles();
 
   const isToday = budapestDayKey(entry.startsAt) === todayInBudapest();
-  const genre = entry.genreNormalized ? strings.genres[entry.genreNormalized] ?? entry.genreNormalized : undefined;
+  // The house's own line where there is one, the genre bucket otherwise — the
+  // same rule as the rows below, so the hero cannot call an evening `Próza`
+  // that the row under it calls `énekkari próba`.
   const credits = [
     entry.director ? strings.discover.heroDirected(entry.director) : undefined,
-    genre,
+    programKind(entry),
     entry.runtimeMinutes != null ? formatRuntimeMinutes(entry.runtimeMinutes) : undefined,
   ].filter(Boolean);
 

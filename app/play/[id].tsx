@@ -305,6 +305,23 @@ export default function PlayDetailScreen() {
             <Text variant="display" style={{ color: overlay.onImageHeading }}>
               {play.title}
             </Text>
+            {/* The line the house prints under the title, where the house
+                prints it. Csokonai sets it on its production page and on every
+                calendar row, and it is the only thing that says what kind of
+                evening this is when the eyebrow's coarse genre cannot: „Izzik
+                a galagonya” is filed under próza and is a public choir
+                rehearsal (`énekkari próba`); elsewhere the slot holds
+                `opera-beavató`, `workshop`, `díjátadó és gála`. Until this
+                line existed the app showed those as plain performances and
+                left the reader to find out in the synopsis, if at all — see
+                T-002. When the line names who made the production rather
+                than what it is, it is the vendégjáték note below instead
+                (T-025), so the same words are not printed twice. */}
+            {!!play.subtitle && !play.producedBy && (
+              <Text variant="bodySmall" style={{ color: overlay.onImageText }}>
+                {play.subtitle}
+              </Text>
+            )}
             {/* The director's name is a link; the author's is not. That is not
                 an oversight — `play_cast` and `plays.director` are what a
                 person page is built from, and nothing in the catalogue indexes
