@@ -13,6 +13,14 @@ import { parseProduction } from "./katona-wp";
  */
 const chicago = readFileSync(join(__dirname, "../__fixtures__/katona-wp-chicago.html"), "utf8");
 
+/**
+ * The other way this theatre credits a cast: seventeen actors and not one
+ * character name. Recorded on 10 September 2026, when requiring the
+ * character threw all seventeen away and left the production with its nine
+ * creators and nobody on stage.
+ */
+const peerGynt = readFileSync(join(__dirname, "../__fixtures__/katona-wp-peer-gynt.html"), "utf8");
+
 describe("katona-wp parseProduction", () => {
   const play = parseProduction(chicago, "chicago");
 
@@ -42,6 +50,20 @@ describe("katona-wp parseProduction", () => {
   it("captures the cast with roles", () => {
     expect(play?.cast).toContainEqual({ role: "Roxie Hart", name: "Mentes Júlia" });
     expect(play?.cast).toContainEqual({ role: "Velma Kelly", name: "Rezes Judit" });
+  });
+
+  it("keeps a performer the production credits without a part", () => {
+    const gynt = parseProduction(peerGynt, "peer-gynt");
+    const performers = gynt?.cast?.filter((c) => c.role === "Szereplő").map((c) => c.name) ?? [];
+
+    expect(performers.length).toBe(17);
+    expect(performers).toContain("Fekete Ernő");
+    // A guest and a student keep the markers the house prints.
+    expect(performers).toContain("Bangó Erneszt m.v.");
+
+    // The creative team on the same page keeps its own labels, so the
+    // fallback cannot be swallowing rows that do carry one.
+    expect(gynt?.cast).toContainEqual({ role: "Rendező", name: "Fehér Balázs Benő" });
   });
 
   it("includes the creative team alongside the performers", () => {

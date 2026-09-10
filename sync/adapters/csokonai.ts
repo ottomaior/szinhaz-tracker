@@ -334,6 +334,21 @@ export function parseProductionDetails(html: string): ProductionDetails {
   const posterUrl = $('meta[property="og:image"]').attr("content") || undefined;
 
   const cast: { name: string; role: string }[] = [];
+  /*
+   * What to call a performer the production credits without a part.
+   *
+   * Some productions here name a character for every performer and some name
+   * none — *A debreceni lunátikus* lists sixteen actors with the role cell
+   * left empty, which is an ensemble piece's own way of crediting, not a gap
+   * in the page. Until this existed those rows were skipped for having no
+   * role, so the production kept its eleven crew credits and lost all sixteen
+   * of its actors: a play with a dramaturg, a prompter and nobody on stage.
+   *
+   * "Szereplő" is what `vojtina.ts` calls the same thing for the same reason,
+   * and it is what the section this row sits in is headed.
+   */
+  const ENSEMBLE_ROLE = "Szereplő";
+
   $('[id^="actors-container-"] > div > div').each((_, row) => {
     const $row = $(row);
     const role = $row.find("p.uk-text-muted").first().text().trim();
@@ -371,11 +386,11 @@ export function parseProductionDetails(html: string): ProductionDetails {
       .map((_, el) => $(el).text().trim())
       .get()
       .filter(Boolean);
-    if (!role || nameFields.length === 0) return;
+    if (nameFields.length === 0) return;
     for (const nameField of nameFields) {
       for (const performer of splitPerformers(nameField)) {
         const name = performer.replace(/\bm\.\s*v\.\s*$/, "").trim();
-        if (name) cast.push({ role, name });
+        if (name) cast.push({ role: role || ENSEMBLE_ROLE, name });
       }
     }
   });

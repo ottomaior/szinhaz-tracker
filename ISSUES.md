@@ -253,6 +253,44 @@ show timestamps at all, which is a design change rather than a content one.
 
 Bugs and chores, confirmed and unclaimed.
 
+### T-038 · A student's `e.h.` marker keeps them off their own portrait
+type: bug · area: data · priority: low · status: open · added: 2026-09-10
+
+`personCanonicalName()` strips prizes and the guest marker but deliberately
+keeps `e.h.` — *egyetemi hallgató*, a student performer — because unlike a
+prize it is part of how the theatre credits them. The consequence is that a
+cast row reading "Benyó Klára e.h." slugs to `benyo-klara-e-h`, while a
+company page listing her without the marker slugs to `benyo-klara`, and the
+two never meet.
+
+Sixty-six people in the catalogue carry the marker across 93 cast rows. Only
+**seven** of them have a portrait filed under the unmarked slug, so the fix is
+worth little on today's data — but it is the same shape as T-033 and the
+number grows every time a student joins a company page. Whatever is decided
+for T-033 should cover this too.
+
+### T-039 · Musicians credited with their instruments arrive as one person
+type: bug · area: data · priority: low · status: open · added: 2026-09-10
+
+A cast row on *A debreceni lunátikus* reads, as one name, "Jeremiás Ádám -
+hegedű, Török Péter / Bíró Attila - brácsa, Gyurkó Ádám - nagybőgő". It is
+four musicians and their instruments, and it renders as a single performer
+with a person page nothing else links to. Ottó saw it on the live site.
+
+`splitPerformers` is behaving as designed: a fragment carrying anything but a
+name fails its person test, and the field is then left whole rather than
+half-split — the header in `sync/lib/performers.ts` argues at length that
+inventing people is worse than failing to split, and that is still right.
+
+Sixty-one rows across the catalogue look like this, 20 of them in Debrecen
+and 41 in Budapest, out of 9,675. They divide into instrument annotations
+("Áchim Tibor-klarinét, …"), school and ensemble groups ("PR-Evolution Junior
+Debrecen: …"), and two Katona rows under the role "Sajtó" that are press
+links rather than people at all — the last of those is the only one that
+should clearly not be in `play_cast`. A rule that strips a trailing "- <lower
+case word>" before the person test would fix the musicians; it needs checking
+against "Molnár Levente - Liszt-díjas" first, which is the case the current
+strictness protects.
 ### T-034 · A guest company's evening at the Nemzeti is not in the catalogue at all
 type: bug · area: catalogue · priority: med · status: open · added: 2026-09-10
 
@@ -366,6 +404,38 @@ rows, and at least four of them are not productions: *IV. Szabó Magda-díj
 are in Discover as plays. None uses the vocabulary 0034 checked for, because a
 festival brings its own — which is exactly what this entry said would happen
 and why the count of matches was recorded rather than trusted.
+
+**Still true on 10 September, with the programme it has now.** The IX.
+MagdaFeszt rows are ten, `is_festival` is set correctly on all of them and
+`genre_normalized` is correctly null — that machinery works. Nine of the ten
+carry no cast, and they divide cleanly in two:
+
+- **Four are other companies' productions**, hosted here and already carrying
+  the right `produced_by`: *Sommerreise* (Vígszínház), *Mondj igent!* (Aurora
+  Film és Színház Egyesület), *Hosszú virágzás* (Orlai), *Átmenő forgalom és
+  Vaszilisza* (Medgyessy Ferenc Gimnázium). Their casts live on the visiting
+  company's own site, not on Csokonai's, so the gap is real and not a bug.
+- **Five are not productions**: a chamber concert with animated children's
+  drawings, a selection from the Malter film festival, a guided exhibition
+  tour, a KözTér workshop, and a literature class with Juhász Anna and Szabó
+  T. Anna. All five are in Discover as plays.
+
+**The obvious fix is a trap, and it was tried.** These rows now carry a
+`subtitle` — the theatre's own words for what kind of evening it is — and two
+of the five would be caught by matching the *existing* vocabulary against it
+rather than only against the title ("KözTér workshop", "páros tárlatvezetés
+…"). But so would *A kaméliás hölgy, avagy a kegyvesztettek tündöklése*,
+whose subtitle is "kiállítás egy kurtizán életéről és haláláról három
+felvonásban" — a real production that calls itself an exhibition in three
+acts. Adding a cast test does not separate them either: that production has
+no cast in the catalogue either. So subtitle matching hides real work, which
+is precisely what 0034's own header says not to do, and it was left alone.
+
+**What is actually needed** is a decision rather than a regex: whether a
+concert, a film screening, an exhibition tour and a school literature class
+belong in a theatre diary at all. `is_event` keeps a row loggable while
+hiding it from browse, so the answer can differ per kind. Worth settling
+before the vocabulary grows again.
 
 ### T-009 · The share card draws nothing in a native build
 type: bug · area: native · priority: med · status: open · added: 2026-09-09
@@ -694,6 +764,35 @@ _Nothing yet._
 ---
 
 ## Done
+
+### T-040 · A production credited without character names lost its whole cast
+type: bug · area: data · priority: high · status: done · added: 2026-09-10 · done: 2026-09-10
+
+Ottó opened *A debreceni lunátikus* on the live site and found a play with a
+prompter, a stage manager, a dramaturg and nobody on stage — eleven credits,
+every one of them crew, and so not a single face on the page.
+
+The theatre's page lists sixteen actors. It simply does not name their
+characters: the role cell on those rows is empty, which is how an ensemble
+piece credits its company. `csokonai.ts` required a role and skipped the row
+without one, so the actors were parsed and thrown away while the crew, whose
+rows *are* labelled, survived.
+
+> **The same bug on a second theatre.** Katona credits *Peer Gynt* the same
+> way — seventeen actors, no characters — and `katona-wp.ts` dropped all
+> seventeen for the same reason, keeping the nine creators. Two adapters,
+> written months apart against different markup, made the same assumption:
+> that a performer always has a part.
+
+> **Fixed** by falling back to "Szereplő", which is what `vojtina.ts` already
+> called the same thing. Csokonai gained 100 credits and Katona 17, the
+> catalogue went from 9,433 to 9,675, and no production in it now has crew
+> and no performers. All sixteen of the lunátikus actors already had
+> portraits, so the page Ottó was looking at went from no faces to sixteen.
+
+> **What it says about the rest.** Both adapters were tested against a
+> production that names its characters, so both tests passed while the bug
+> was live. The fixtures now include one of each shape per theatre.
 
 ### T-007 · Vígszínház productions have no cast at all
 type: bug · area: data · priority: med · status: done · added: 2026-09-09 · done: 2026-09-10
@@ -1558,4 +1657,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-038**
+Next free id: **T-040**

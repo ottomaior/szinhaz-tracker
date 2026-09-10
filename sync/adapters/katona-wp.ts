@@ -88,14 +88,33 @@ function overlayFields($: cheerio.CheerioAPI): Map<string, string> {
   return fields;
 }
 
-/** Splits "Roxie Hart: Mentes Júlia" into a role/name pair. */
-function labelledPairs($: cheerio.CheerioAPI, selector: string): { role: string; name: string }[] {
+/**
+ * Splits "Roxie Hart: Mentes Júlia" into a role/name pair.
+ *
+ * `fallbackRole` decides what happens to an entry with no colon in it. For the
+ * creative team there is no such thing — every line is "Dramaturg: X" — and a
+ * line without one is markup this does not understand, so it is skipped. The
+ * cast list is different: some productions name a character for every
+ * performer and some name none. *Peer Gynt* lists seventeen actors and not one
+ * character, and requiring the colon threw all seventeen away and kept the
+ * nine creators, so the app showed a play with a dramaturg, a prompter and
+ * nobody on stage. It is the same shape of bug as the empty role cell in
+ * `csokonai.ts`, found the same day and on a different theatre's markup.
+ */
+function labelledPairs(
+  $: cheerio.CheerioAPI,
+  selector: string,
+  fallbackRole?: string
+): { role: string; name: string }[] {
   const pairs: { role: string; name: string }[] = [];
 
   $(selector).each((_, el) => {
     const text = clean($(el).text());
     const separator = text.indexOf(":");
-    if (separator < 1) return;
+    if (separator < 1) {
+      if (fallbackRole && text && text.length < 200) pairs.push({ role: fallbackRole, name: text });
+      return;
+    }
 
     const role = clean(text.slice(0, separator));
     const name = clean(text.slice(separator + 1));
@@ -233,7 +252,9 @@ export function parseProduction(html: string, slug: string): SyncedPlay | undefi
   // Performers first, then the creative team, so the cast list reads the way a
   // printed programme does.
   const cast = [
-    ...labelledPairs($, "div.performance-cast-member"),
+    // "Szereplő" for a performer this production credits without a part —
+    // the same word vojtina.ts and csokonai.ts use for the same thing.
+    ...labelledPairs($, "div.performance-cast-member", "Szereplő"),
     ...labelledPairs($, "div.performance-creators-item"),
   ];
 

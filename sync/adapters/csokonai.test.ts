@@ -91,6 +91,31 @@ describe("csokonai parseProductionDetails", () => {
     expect(cast.filter((c) => c.role === "Ügyelő").map((c) => c.name)).toEqual(["Nagy Fruzsina"]);
   });
 
+  /**
+   * A debreceni lunátikus, an ensemble piece that credits sixteen actors and
+   * gives none of them a character name — the role cell on those rows is
+   * simply empty, which is the production's own way of crediting rather than
+   * a gap in the page.
+   *
+   * Requiring a role dropped every one of them and kept the eleven crew rows,
+   * so the app showed a play with a dramaturg, a prompter and nobody on
+   * stage. Ottó found it on the live site.
+   */
+  it("keeps a performer the production credits without a part", () => {
+    const lunatikus = readFileSync(join(__dirname, "../__fixtures__/csokonai-debreceni-lunatikus.html"), "utf8");
+    const { cast } = parseProductionDetails(lunatikus);
+
+    const performers = cast.filter((c) => c.role === "Szereplő").map((c) => c.name);
+    expect(performers.length).toBe(16);
+    expect(performers).toContain("Ráckevei Anna");
+    expect(performers).toContain("Vranyecz Artúr");
+
+    // The crew on the same page keep the roles the page gives them, so the
+    // fallback cannot be swallowing labelled rows.
+    expect(cast).toContainEqual({ name: "Fábián Péter", role: "Rendező" });
+    expect(cast).toContainEqual({ name: "Kukk Zsófia", role: "Dramaturg" });
+  });
+
   it("carries a synopsis", () => {
     expect(details.synopsis).toBeTruthy();
     expect(details.synopsis?.length).toBeGreaterThan(50);
