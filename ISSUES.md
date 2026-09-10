@@ -210,50 +210,6 @@ Bugs and chores, confirmed and unclaimed.
 
 
 
-### T-003 · A superseded draft of the follow-gate migrations is applied to the live database
-type: bug · area: data · priority: med · status: open · added: 2026-09-09
-
-Two files sit untracked in the working tree — `0041_a_diary_with_a_door.sql` and
-`0042_close_the_direct_read.sql` — an earlier, differently-written draft of the
-follow-gate than the pair that shipped. Both were applied to production: the
-view `public.entries` exists there alongside `public.reviews_readable`, and only
-the latter is read by any code. The repository meanwhile holds
-`0041_opinions_behind_a_follow.sql` and `0042_close_the_door_on_reviews.sql`, so
-the migration directory has two files numbered 0041 that do the same job
-differently, one of them tracked and one not.
-
-Nothing is broken by it. `entries` masks a stranger's opinion the same way
-`reviews_readable` does — checked with the anon key, `text` and `tags` come back
-null — so it is not a leak, and `friends_ratings` and `friends_recent_plays`
-both read `reviews_readable`, which is the shipped design. It is cruft with a
-sharp edge: the next person to open `supabase/migrations/` finds two 0041s.
-
-To settle, and both are Ottó's call because both touch live state: drop
-`public.entries`, and delete or archive the two untracked files.
-
-**Recorded because the first version of this entry was wrong, and the reason is
-the durable part.** It was filed as a production outage — reviews invisible to
-every reader, because the deployed app read `reviews` directly while RLS had
-narrowed that table to own-rows-only. Every fact in it was checked except the
-one that mattered: it was diagnosed against the *local* `main`, which was five
-commits behind `origin/main` and had never been fetched. `origin/main` already
-carried the code that reads the view (`3285f48`, pushed 9 September at 22:59).
-`git fetch` before concluding anything about what production is running; a local
-branch name is not a deployment.
-
-**Checked against the applied migration history, 10 September, and the entry
-overstates it by one.** Supabase's own list of applied migrations holds
-`a_diary_with_a_door_view`, `opinions_behind_a_follow` and
-`close_the_door_on_reviews` — there is no `close_the_direct_read` in it. So
-only *one* of the two untracked drafts was ever applied, not both: the one
-that created `public.entries`. The second file has never run anywhere.
-
-**And the leftover view is not merely untidy — it is the only ERROR-level
-finding the security advisor reports.** `public.entries` is flagged under
-`security_definer_view`, alongside `public.reviews_readable`, which is the one
-the app actually reads. Dropping the orphan halves that finding and removes a
-second, unreviewed path to the same data. It is still Ottó's call because it
-touches live state, but the case is stronger than "cruft with a sharp edge".
 
 ### T-005 · Anyone can sign up with somebody else's email address
 type: bug · area: auth · priority: high · status: open · added: 2026-09-09
@@ -482,6 +438,95 @@ _Nothing yet._
 ---
 
 ## Done
+
+### T-003 · A superseded draft of the follow-gate migrations is applied to the live database
+type: bug · area: data · priority: med · status: done · added: 2026-09-09 · done: 2026-09-10
+
+Two files sit untracked in the working tree — `0041_a_diary_with_a_door.sql` and
+`0042_close_the_direct_read.sql` — an earlier, differently-written draft of the
+follow-gate than the pair that shipped. Both were applied to production: the
+view `public.entries` exists there alongside `public.reviews_readable`, and only
+the latter is read by any code. The repository meanwhile holds
+`0041_opinions_behind_a_follow.sql` and `0042_close_the_door_on_reviews.sql`, so
+the migration directory has two files numbered 0041 that do the same job
+differently, one of them tracked and one not.
+
+Nothing is broken by it. `entries` masks a stranger's opinion the same way
+`reviews_readable` does — checked with the anon key, `text` and `tags` come back
+null — so it is not a leak, and `friends_ratings` and `friends_recent_plays`
+both read `reviews_readable`, which is the shipped design. It is cruft with a
+sharp edge: the next person to open `supabase/migrations/` finds two 0041s.
+
+To settle, and both are Ottó's call because both touch live state: drop
+`public.entries`, and delete or archive the two untracked files.
+
+**Recorded because the first version of this entry was wrong, and the reason is
+the durable part.** It was filed as a production outage — reviews invisible to
+every reader, because the deployed app read `reviews` directly while RLS had
+narrowed that table to own-rows-only. Every fact in it was checked except the
+one that mattered: it was diagnosed against the *local* `main`, which was five
+commits behind `origin/main` and had never been fetched. `origin/main` already
+carried the code that reads the view (`3285f48`, pushed 9 September at 22:59).
+`git fetch` before concluding anything about what production is running; a local
+branch name is not a deployment.
+
+**Checked against the applied migration history, 10 September, and the entry
+overstates it by one.** Supabase's own list of applied migrations holds
+`a_diary_with_a_door_view`, `opinions_behind_a_follow` and
+`close_the_door_on_reviews` — there is no `close_the_direct_read` in it. So
+only *one* of the two untracked drafts was ever applied, not both: the one
+that created `public.entries`. The second file has never run anywhere.
+
+**And the leftover view is not merely untidy — it is the only ERROR-level
+finding the security advisor reports.** `public.entries` is flagged under
+`security_definer_view`, alongside `public.reviews_readable`, which is the one
+the app actually reads. Dropping the orphan halves that finding and removes a
+second, unreviewed path to the same data. It is still Ottó's call because it
+touches live state, but the case is stronger than "cruft with a sharp edge".
+
+> **Done, 10 September.** `0047` drops `public.entries`. The two draft files
+> are archived rather than deleted, in `supabase/archive/`, with a README
+> saying what they were. `supabase/migrations/` now holds one file per number.
+
+> **Asked to do this only if it broke nothing, so "nothing reads it" was
+> checked four ways rather than asserted.** No TypeScript source mentions the
+> view, worktrees included. No policy, function or view in the database
+> mentions it — `pg_policies`, `pg_proc` and `pg_views` all come back empty.
+> Nothing is registered against it in `pg_depend`. And the edge logs for the
+> last 24 hours hold 1,421 requests to `reviews_readable` against three to
+> `entries` — all three `curl/8.19.0`, which was this investigation and last
+> night's. Not one browser has ever asked for it.
+
+> **The drop is deliberately not `cascade`.** If any of the four checks was
+> wrong, the migration should fail rather than quietly take a dependent with
+> it. It did not fail.
+
+> **`private.can_read_entry()` went too, which the entry did not ask for.** It
+> is the draft's gate function, orphaned by the same abandoned migration, and
+> it is `security definer` with `execute` granted to `anon`. It is unreachable
+> over HTTP — PostgREST only exposes its configured schemas and `private` is
+> not one, verified by a POST to `/rest/v1/rpc/can_read_entry` answering 404 —
+> but any policy could still have called it, and leaving half of an abandoned
+> access mechanism in place is the same hazard as leaving all of it. The
+> shipped gate, `private.can_see_entry`, is untouched.
+
+> **Verified afterwards on both sides of the gate, the same figures as T-027
+> used.** Signed out: `/rest/v1/entries` now answers 404 and
+> `/rest/v1/reviews_readable` still answers 200 with all 52 rows, `text` and
+> `tags` still masked to empty for a stranger. Signed in as a demo account: 52
+> rows visible, 19 ratings, and exactly 4 entries readable in full — the
+> follow-gate's own number, unchanged. 52 reviews, 2 comments and 7 likes
+> still in the tables.
+
+> **The ERROR is halved, not cleared, and the remainder is by design.**
+> `security_definer_view` went from two findings to one. The one left is
+> `reviews_readable`, and it is `security definer` on purpose: reading as its
+> owner is the entire mechanism by which it hands the private columns to the
+> people entitled to them and withholds them from everyone else. It cannot be
+> cleared without abandoning the follow-gate, so it stays and this is the note
+> saying why, rather than a finding somebody re-opens later.
+
+> **No deploy.** Database-only; nothing in the app referred to the view.
 
 ### T-028 · Six foreign keys with no index, eight indexes never used
 type: chore · area: data · priority: low · status: done · added: 2026-09-10 · done: 2026-09-10
