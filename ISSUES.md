@@ -211,32 +211,6 @@ Bugs and chores, confirmed and unclaimed.
 
 
 
-### T-031 · Programme rows say `Próza` where the theatre says `énekkari próba`
-type: bug · area: catalogue · priority: med · status: open · added: 2026-09-10
-
-The half of T-002 that did not ship. The production page now prints the line
-the house sets under the title, but the rows on Discover and in Műsor still
-carry only the venue and the coarse genre — `Csokonai Nemzeti Színház ·
-Próza` — so a Saturday with two `énekkari próba` slots still reads as two
-performances of a play until one is opened. Csokonai's own calendar prints the
-line on every row.
-
-**Where it is stuck.** `program_in_range()` in
-`supabase/migrations/0017_program_by_day.sql` returns a fixed table with no
-`subtitle` and no `produced_by`, and Postgres will not `create or replace`
-a function whose return columns change: the migration has to drop and recreate
-it (`program_days()` is untouched). Then `ProgramRow` / `ProgramEntry` in
-`services/playsService.ts` and `data/types.ts`, and the meta line in
-`components/ui/ProgramRow.tsx`.
-
-**The design call, which is why it is filed rather than done.** On Csokonai
-every row has a subtitle, not only the odd ones — `dráma`, `vígjáték`,
-`háromfelvonásos opera olasz nyelven, magyar és angol felirattal` — so the
-line either replaces the genre on every Csokonai row and none of the others'
-(the other adapters do not capture one), or joins it and gets truncated on the
-one-line meta. Provenance subtitles need the T-025 treatment there too. Worth
-deciding with the rows in front of us.
-
 ### T-005 · Anyone can sign up with somebody else's email address
 type: bug · area: auth · priority: high · status: open · added: 2026-09-09
 
@@ -538,6 +512,55 @@ _Nothing yet._
 ---
 
 ## Done
+
+### T-031 · Programme rows say `Próza` where the theatre says `énekkari próba`
+type: bug · area: catalogue · priority: med · status: done · added: 2026-09-10 · done: 2026-09-10
+
+The half of T-002 that did not ship. The production page now prints the line
+the house sets under the title, but the rows on Discover and in Műsor still
+carry only the venue and the coarse genre — `Csokonai Nemzeti Színház ·
+Próza` — so a Saturday with two `énekkari próba` slots still reads as two
+performances of a play until one is opened. Csokonai's own calendar prints the
+line on every row.
+
+**Where it is stuck.** `program_in_range()` in
+`supabase/migrations/0017_program_by_day.sql` returns a fixed table with no
+`subtitle` and no `produced_by`, and Postgres will not `create or replace`
+a function whose return columns change: the migration has to drop and recreate
+it (`program_days()` is untouched). Then `ProgramRow` / `ProgramEntry` in
+`services/playsService.ts` and `data/types.ts`, and the meta line in
+`components/ui/ProgramRow.tsx`.
+
+**The design call, which is why it is filed rather than done.** On Csokonai
+every row has a subtitle, not only the odd ones — `dráma`, `vígjáték`,
+`háromfelvonásos opera olasz nyelven, magyar és angol felirattal` — so the
+line either replaces the genre on every Csokonai row and none of the others'
+(the other adapters do not capture one), or joins it and gets truncated on the
+one-line meta. Provenance subtitles need the T-025 treatment there too. Worth
+deciding with the rows in front of us.
+
+> **Done, 10 September.** The design call went the simple way: a row prints
+> the house's own line where there is one and the genre bucket otherwise,
+> nothing in between. `Próza` is a filter category; `vígjáték`,
+> `opera két felvonásban` and `énekkari próba` are what the theatre prints
+> on its own calendar rows and are strictly more specific, so the line wins.
+> Provenance lines are printed as they are — `Csokonai Nemzeti Színház · A
+> Vígszínház előadása` is the honest answer to "whose show is this" on a
+> row, and is what the source prints. No rule about which lines are
+> interesting enough to show, for the T-008 reason. Long ones take the
+> ellipsis; the page under the row prints them in full.
+
+> `0048_the_line_on_the_row.sql` drops and recreates `program_in_range()`
+> with `subtitle` and `produced_by`, with `set search_path = public` in
+> the definition so the drop does not undo `0044`. `programKind()` in
+> `components/ui/ProgramRow.tsx` holds the rule and the Discover hero uses
+> the same function, so the hero cannot call an evening `Próza` that the
+> row under it calls `Énekkari próba`. The first letter is raised on rows
+> and the hero only, because there the line sits in a run of capitalised
+> labels; the production page keeps the house's own lower case. Checked at
+> phone width on Discover (`19:00 · Csokonai Nemzeti Színház · Énekkari
+> próba`) and in Műsor (`Csokonai Teátrum · Énekkari próba`), next to
+> `Kamra · 4 óra · Próza` for the Katona.
 
 ### T-002 · A rehearsal reads as a performance in the calendar
 type: bug · area: catalogue · priority: high · status: done · added: 2026-09-09 · dropped: 2026-09-10 · reopened: 2026-09-10 · done: 2026-09-10

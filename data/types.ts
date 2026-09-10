@@ -167,6 +167,14 @@ export interface ProgramEntry {
   author: string;
   director: string;
   genreNormalized?: Genre;
+  /**
+   * The line the house prints under the title, as on `Play`. On a row it is
+   * what says an evening is `énekkari próba` rather than a play, and where
+   * it exists it is more specific than the genre bucket.
+   */
+  subtitle?: string;
+  /** Whose production it is, when not the venue's — as on `Play`. */
+  producedBy?: string;
   runtimeMinutes?: number;
   status: PlayStatus;
   poster?: Poster;
