@@ -207,26 +207,6 @@ show timestamps at all, which is a design change rather than a content one.
 Bugs and chores, confirmed and unclaimed.
 
 
-### T-027 · Thirty-four RLS policies re-evaluate auth.uid() for every row
-type: chore · area: data · priority: low · status: open · added: 2026-09-10
-
-The `auth_rls_initplan` advisor: 34 policies across `reviews`, `follows`,
-`notifications`, `review_likes`, `review_comments`, `watchlist_entries`,
-`subject_follows`, `user_blocks`, `reports`, `plays`, `performances`,
-`play_cast`, `profiles` and `venues` call `auth.uid()` per row rather than
-once per statement. The fix is mechanical — `(select auth.uid())` instead of
-`auth.uid()` — and Postgres then hoists it to an InitPlan.
-
-Low priority because it is invisible at this size: the largest user table has
-six rows in it. It stops being invisible on exactly the screen T-016 is about
-— a feed under real volume, where the follow-gate makes every row consult a
-policy. Worth doing before that gets measured, so the measurement is of the
-feed and not of this.
-
-The same advisor run flags 12 `multiple_permissive_policies` on
-`performances`, `play_cast`, `list_items` and `review_cast` — two permissive
-SELECT policies where one would do, each evaluated on every read. Same fix
-window, same reasoning.
 
 ### T-028 · Six foreign keys with no index, eight indexes never used
 type: chore · area: data · priority: low · status: open · added: 2026-09-10
@@ -523,6 +503,74 @@ _Nothing yet._
 ---
 
 ## Done
+
+### T-027 · Thirty-four RLS policies re-evaluate auth.uid() for every row
+type: chore · area: data · priority: low · status: done · added: 2026-09-10 · done: 2026-09-10
+
+The `auth_rls_initplan` advisor: 34 policies across `reviews`, `follows`,
+`notifications`, `review_likes`, `review_comments`, `watchlist_entries`,
+`subject_follows`, `user_blocks`, `reports`, `plays`, `performances`,
+`play_cast`, `profiles` and `venues` call `auth.uid()` per row rather than
+once per statement. The fix is mechanical — `(select auth.uid())` instead of
+`auth.uid()` — and Postgres then hoists it to an InitPlan.
+
+Low priority because it is invisible at this size: the largest user table has
+six rows in it. It stops being invisible on exactly the screen T-016 is about
+— a feed under real volume, where the follow-gate makes every row consult a
+policy. Worth doing before that gets measured, so the measurement is of the
+feed and not of this.
+
+The same advisor run flags 12 `multiple_permissive_policies` on
+`performances`, `play_cast`, `list_items` and `review_cast` — two permissive
+SELECT policies where one would do, each evaluated on every read. Same fix
+window, same reasoning.
+
+> **Done, 10 September.** `0045`. Both findings are gone: the advisor now
+> reports `auth_rls_initplan` zero times and `multiple_permissive_policies`
+> zero times. 57 policies remain, none of them `for all`.
+
+> **Written out policy by policy rather than looped over `pg_policies`.**
+> The loop would have been a tenth of the length and is how this job is
+> usually done — `0044` did exactly that the day before. It is the wrong
+> shape here: these expressions are the access rules of the whole
+> application, and the version in the repository should be one a reader can
+> check line by line against what they believe the rules are. `0044` could
+> loop because it changed no expression at all.
+
+> **`private.can_see_entry()` and `private.blocked_between()` are
+> deliberately not wrapped.** They take a per-row argument, so there is
+> nothing to hoist — a scalar subquery around them would still be evaluated
+> per row, and would read as though it were not.
+
+> **The second half is a reshape, not a rewrite.** `for all` covers SELECT
+> too, so four tables carried two permissive SELECT policies and Postgres
+> ran both on every read — an `exists (…)` subquery per row on
+> `performances` and `play_cast`, which every listing screen reads. Each is
+> now three policies, one per write command. It widens nothing, and the
+> reason differs per table: `performances` and `play_cast` have a SELECT
+> policy of `using (true)`; `list_items` has `is_public or owner_id = uid`,
+> of which the dropped branch was the right-hand half; and `review_cast` has
+> `can_see_entry(entry_author(review_id))`, which returns true when the
+> author is the caller — so a person could already see the cast rows on their
+> own entries. That last one was worth reading the function to confirm rather
+> than assuming.
+
+> **Verified by counting the same things before and after, on both sides of
+> the gate.** Signed out: 541 performances, 7 029 cast rows, 0 reviews, 52
+> readable entries with `text` and `tags` masked to empty. Signed in as a
+> demo account: 8 own reviews, 6 likes, 2 comments, 7 follows, and exactly 4
+> entries readable in full — the follow-gate's own number. Every figure
+> identical afterwards.
+
+> **And the write side, which the reshape actually touched.** `review_cast`
+> is part of check-in, so a bad split there would have broken logging an
+> evening silently. Inserting a cast row on the demo account's own entry
+> succeeded; the same insert against somebody else's entry was refused with
+> `42501`; the delete removed the test row and nothing was left behind.
+
+> **T-016 is the reason this was worth doing now rather than eventually.**
+> The feed under volume has never been measured, and until today that
+> measurement would partly have been of this.
 
 ### T-026 · Twenty-five database functions run with a mutable search_path
 type: bug · area: data · priority: med · status: done · added: 2026-09-10 · done: 2026-09-10
