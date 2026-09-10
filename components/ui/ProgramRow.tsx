@@ -72,7 +72,12 @@ export function ProgramRow({
         <Text variant="subheading" numberOfLines={2}>
           {entry.title}
         </Text>
-        <Text variant="caption" tone="faint" numberOfLines={1}>
+        {/* Two lines, not one. At phone width the venue name alone fills the
+            line — `19:00 · Csokonai Nemzeti Színház · Én…` — and what was cut
+            off was the one fact that says the evening is a rehearsal and not
+            a play. The line breaks at a separator, so the kind lands whole on
+            the second line. */}
+        <Text variant="caption" tone="faint" numberOfLines={2}>
           {lead === "date" && (
             <Text variant="caption" tone="accent">
               {formatTime(entry.startsAt)}

@@ -45,6 +45,15 @@ export function ShowtimeList({
 
   const months = useMemo(() => groupByMonth(performances), [performances]);
 
+  // What kind of evening each date is, on every row rather than once above
+  // the list. The header already prints the house's line under the title,
+  // and it was not enough: a column of five dated rows that each say only
+  // `Csokonai Teátrum` still reads as five performances of a play, which is
+  // what T-002 was about. Csokonai's own calendar repeats the line on every
+  // row, so this is the source's convention, not a new one. Provenance lines
+  // stay on the vendégjáték note above (T-025) instead of five times here.
+  const kind = play.subtitle && !play.producedBy ? play.subtitle : undefined;
+
   if (performances.length === 0) {
     return (
       <View style={{ gap: space.sm }}>
@@ -83,7 +92,7 @@ export function ShowtimeList({
               </Text>
             )}
             {month.items.map((p) => (
-              <ShowtimeRow key={p.id} performance={p} />
+              <ShowtimeRow key={p.id} performance={p} kind={kind} />
             ))}
           </View>
         ))}
@@ -100,7 +109,7 @@ export function ShowtimeList({
   );
 }
 
-function ShowtimeRow({ performance }: { performance: Performance }) {
+function ShowtimeRow({ performance, kind }: { performance: Performance; kind?: string }) {
   const styles = useStyles();
 
   return (
@@ -117,10 +126,22 @@ function ShowtimeRow({ performance }: { performance: Performance }) {
       {/* The stage, where the source names one. Which room a Katona production
           plays in — the main house, the Kamra, the Sufni — changes the evening
           enough to be worth a line, and the sync job has always collected it. */}
-      {!!performance.room && (
-        <Text variant="caption" tone="dim" numberOfLines={1} style={{ flexShrink: 1 }}>
-          {performance.room}
-        </Text>
+      {/* Stacked rather than joined with a separator: at phone width the two
+          share about 150pt, and "Csokonai Teátrum · énekkari próba" wrapped
+          mid-phrase. Two short lines read as two facts. */}
+      {(!!performance.room || !!kind) && (
+        <View style={{ flexShrink: 1, gap: 1 }}>
+          {!!performance.room && (
+            <Text variant="caption" tone="dim" numberOfLines={1}>
+              {performance.room}
+            </Text>
+          )}
+          {!!kind && (
+            <Text variant="caption" tone="dim" numberOfLines={2}>
+              {kind}
+            </Text>
+          )}
+        </View>
       )}
     </View>
   );

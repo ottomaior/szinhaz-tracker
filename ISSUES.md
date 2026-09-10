@@ -562,6 +562,17 @@ deciding with the rows in front of us.
 > próba`) and in Műsor (`Csokonai Teátrum · Énekkari próba`), next to
 > `Kamra · 4 óra · Próza` for the Katona.
 
+> **Two corrections the same afternoon, from Ottó's phone.** The row's fact
+> line was one line, and at phone width the venue name alone filled it —
+> `19:00 · Csokonai Nemzeti Színház · Én…` — so the one fact that mattered
+> was the one cut off; it now wraps to two, breaking at the separator. And
+> the Időpontok list on the production page still said only `Csokonai
+> Teátrum` five times, which the line under the title did not fix: a column
+> of dated rows reads as performances whatever the header says. Every
+> showtime row now carries the kind under the stage, stacked rather than
+> joined so it does not wrap mid-phrase. Csokonai's own calendar repeats the
+> line on every row, so this is the source's habit, not a new one.
+
 ### T-002 · A rehearsal reads as a performance in the calendar
 type: bug · area: catalogue · priority: high · status: done · added: 2026-09-09 · dropped: 2026-09-10 · reopened: 2026-09-10 · done: 2026-09-10
 
