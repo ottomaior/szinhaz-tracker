@@ -791,6 +791,16 @@ export const strings = {
         ? "A lista üres, a törlés nem érint egyetlen előadást sem."
         : `A listán ${n} előadás van. Maguk az előadások megmaradnak, csak ez a gyűjtemény szűnik meg.`,
     deleteError: "Nem sikerült törölni a listát.",
+    /* Editing, on the list's own page: the same four fields as creation. */
+    editList: "Szerkesztés",
+    save: "Mentés",
+    saving: "Mentés…",
+    updateError: "Nem sikerült menteni. Próbáld újra.",
+    /* Public is the default; this is the exception, phrased as one. */
+    privateLabel: "Privát lista",
+    privateHint: "Csak te látod. Nem jelenik meg a profilodon és a Listák között.",
+    /* Above the composer when a production's page sent the reader here. */
+    attachNotice: (title: string) => `„${title}” rákerül az új listára.`,
   },
 
   /** One performer or director, and everything the catalogue credits them on. */

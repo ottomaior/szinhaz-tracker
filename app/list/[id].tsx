@@ -3,12 +3,13 @@ import { View, ScrollView, StyleSheet, Pressable } from "react-native";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
 import { gutter, radius, space } from "@/theme/tokens";
-import { deleteList, getList, removeFromList, type ListDetail } from "@/services/listsService";
+import { deleteList, getList, removeFromList, updateList, type ListDetail } from "@/services/listsService";
 import { getCurrentUser, getVenuesByIds } from "@/services/playsService";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Venue } from "@/data/types";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { ListForm, type ListFormValues } from "@/components/ui/ListForm";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { PlayRow } from "@/components/ui/PlayRow";
 import { ContentColumn } from "@/components/ui/Screen";
@@ -37,6 +38,7 @@ export default function ListScreen() {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string>();
 
@@ -79,6 +81,21 @@ export default function ListScreen() {
     } finally {
       setBusy(false);
     }
+  }
+
+  /**
+   * The four things a list is, changed in place. No refetch: the row came
+   * back from the update, and the entries have not moved.
+   */
+  async function handleEdit(values: ListFormValues) {
+    if (!list) return;
+    try {
+      await updateList(list.id, values);
+    } catch {
+      throw new Error(strings.lists.updateError);
+    }
+    setList({ ...list, ...values });
+    setEditing(false);
   }
 
   async function handleDelete() {
@@ -213,7 +230,15 @@ export default function ListScreen() {
 
               {isOwner && (
                 <View style={styles.ownerZone}>
-                  {confirmingDelete ? (
+                  {editing ? (
+                    <ListForm
+                      initial={list}
+                      submitLabel={strings.lists.save}
+                      submittingLabel={strings.lists.saving}
+                      onSubmit={handleEdit}
+                      onCancel={() => setEditing(false)}
+                    />
+                  ) : confirmingDelete ? (
                     <>
                       <Text variant="subheading">{strings.lists.deleteConfirmTitle}</Text>
                       <Text variant="bodySmall" tone="dim">
@@ -230,11 +255,18 @@ export default function ListScreen() {
                       </View>
                     </>
                   ) : (
-                    <Pressable onPress={() => setConfirmingDelete(true)} accessibilityRole="button" hitSlop={8}>
-                      <Text variant="label" tone="faint">
-                        {strings.lists.deleteList}
-                      </Text>
-                    </Pressable>
+                    <View style={styles.ownerActions}>
+                      <Pressable onPress={() => setEditing(true)} accessibilityRole="button" hitSlop={8}>
+                        <Text variant="label" tone="accent">
+                          {strings.lists.editList}
+                        </Text>
+                      </Pressable>
+                      <Pressable onPress={() => setConfirmingDelete(true)} accessibilityRole="button" hitSlop={8}>
+                        <Text variant="label" tone="faint">
+                          {strings.lists.deleteList}
+                        </Text>
+                      </Pressable>
+                    </View>
                   )}
                 </View>
               )}
@@ -253,4 +285,5 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     borderTopColor: colors.hairlineSoft,
     paddingTop: space.lg,
   },
+  ownerActions: { flexDirection: "row", gap: space.xl },
 }));

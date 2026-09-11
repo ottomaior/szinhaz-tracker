@@ -284,6 +284,19 @@ show timestamps at all, which is a design change rather than a content one.
 
 ## Open
 
+### T-070 · A list entry's "Levesz" is a button inside a button
+type: bug · area: web · priority: low · status: open · added: 2026-09-11
+
+On `/list/[id]` as the owner, the dev console reports "In HTML, <button>
+cannot be a descendant of <button>. This will cause a hydration error." —
+`PlayRow` is a `Pressable` (rendered as `<button>`) and the owner's
+*Levesz* control in its `trailing` slot is another. Works today because the
+inner click stops propagation, but React warns on every render and the static
+export of a list page could hydrate wrongly. Fix is in `PlayRow`: render the
+row as a `View` with the tappable area and the trailing slot as siblings, or
+give `PlayRow` a `trailing` that is rendered outside the pressable. Noticed
+while fixing T-062; the search result rows do not have this, only lists.
+
 ### T-068 · Drop what 0056 made redundant: search_rank(), the 0019 expression indexes, play_cast_person_slug_idx
 type: chore · area: data · priority: low · status: open · added: 2026-09-11
 
@@ -347,17 +360,6 @@ Relatives of T-033 and T-039, collected from `play_cast` in one pass:
   összeállította és elmondja: ". Tabs and double spaces survive in Csokonai
   roles ("peronőr /\tDr. Pereszlényi").
 
-### T-062 · Lists: the sheet's "Új lista" loses the play, and nothing can be edited afterwards
-type: bug · area: catalogue · priority: low · status: open · added: 2026-09-11
-
-On a play page, *Felvétel egy listára* → *Új lista* navigates to `/lists`; the
-list gets created there and the play you came from is not on it — you have to
-find it again. The create form asks title, description and "Sorrendezett", and
-that is the last time any of them can be changed: the list screen offers only
-*Lista törlése*. `listsService.updateList` takes `title`, `description`,
-`isRanked` and `isPublic`, and `is_public` defaults to `true` with no control
-anywhere, although the not-found copy already promises "a készítője privátra
-állította".
 
 ### T-038 · A student's `e.h.` marker keeps them off their own portrait
 type: bug · area: data · priority: low · status: open · added: 2026-09-10
@@ -475,14 +477,20 @@ worth deciding separately is the provider — shared-hosting SMTP and a
 transactional service are not the same product, and a confirmation mail that
 lands in spam fails this entry exactly as completely as no mail at all.
 
-### T-006 · Every exported page ships two `<title>` elements
-type: bug · area: web · priority: med · status: open · added: 2026-09-09
+**Deferred again on 11 September, this time on the name.** The live config
+was read through the Management API: `smtp_host` null, `rate_limit_email_sent`
+2, `mailer_autoconfirm` true — and Supabase's own docs now say the built-in
+sender delivers only to project-team addresses. A single-sender transactional
+account (Brevo, no domain needed) would have carried the mails through the
+closed test, but Ottó stopped it: until the app's name is decided (T-029) any
+sender address, domain authentication and template branding would be set up
+under one name and redone under another. So this waits, explicitly, on T-029;
+nothing on the mail side is to be started before then. What is already in
+place and will not need redoing: `signUp` returns `needsEmailConfirmation`,
+the sign-up screen has the "Nézd meg a postaládád" panel, the redirect allow
+list is fixed. What is missing and can be prepared any time: a native handler
+for the confirmation link, a "resend" button, Hungarian mail templates.
 
-`app/+html.tsx` hardcodes a `<title>` and react-helmet emits its own first, so
-each static page carries both. Harmless only while they agree — and backlog 5.4
-is precisely about making them differ per route, at which point anything taking
-the last match reads the wrong one. Worth removing the shell's copy now, while
-it is a one-line change rather than a regression inside a feature.
 
 ### T-008 · The `is_event` vocabulary was checked against a catalogue that is about to change
 type: bug · area: catalogue · priority: med · status: open · added: 2026-09-09
@@ -852,6 +860,43 @@ _Nothing yet._
 ---
 
 ## Done
+
+### T-062 · Lists: the sheet's "Új lista" loses the play, and nothing can be edited afterwards
+type: bug · area: catalogue · priority: low · status: done · added: 2026-09-11 · done: 2026-09-11
+
+On a play page, *Felvétel egy listára* → *Új lista* navigates to `/lists`; the
+list gets created there and the play you came from is not on it — you have to
+find it again. The create form asks title, description and "Sorrendezett", and
+that is the last time any of them can be changed: the list screen offers only
+*Lista törlése*. `listsService.updateList` takes `title`, `description`,
+`isRanked` and `isPublic`, and `is_public` defaults to `true` with no control
+anywhere, although the not-found copy already promises "a készítője privátra
+állította".
+
+> **Fixed** (`lists-you-can-edit`). "Új lista" from a production's page now
+> carries the production: the composer opens at once, says "„Káli holtak”
+> rákerül az új listára.", and the play is on the list the moment it exists;
+> Back returns to the play. The list page has *Szerkesztés* beside *Lista
+> törlése*, opening the same form — title, description, sorrendezett, and a new
+> *Privát lista* switch — through `updateList`, which finally has a caller. The
+> form is one component, `components/ui/ListForm.tsx`, used by both.
+> Verified: a list flipped private disappears from the anon REST view and
+> shows the `privát` badge to its owner.
+
+### T-006 · Every exported page ships two `<title>` elements
+type: bug · area: web · priority: med · status: done · added: 2026-09-09 · done: 2026-09-11
+
+`app/+html.tsx` hardcodes a `<title>` and react-helmet emits its own first, so
+each static page carries both. Harmless only while they agree — and backlog 5.4
+is precisely about making them differ per route, at which point anything taking
+the last match reads the wrong one. Worth removing the shell's copy now, while
+it is a one-line change rather than a regression inside a feature.
+
+> **Fixed** (`lists-you-can-edit`): the shell's `<title>` is gone. A fresh
+> `expo export` gives exactly one `<title>` per page — helmet's, prerendered
+> with `data-rh` — and `legal/adatvedelem.html` now ends with its own title
+> rather than the generic one. The regression the entry predicted had already
+> arrived on the three legal pages.
 
 ### T-067 · Search takes one to two seconds per keystroke, and the screen makes it look wrong
 type: bug · area: search · priority: high · status: done · added: 2026-09-11 · done: 2026-09-11
@@ -2208,4 +2253,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-070**
+Next free id: **T-071**

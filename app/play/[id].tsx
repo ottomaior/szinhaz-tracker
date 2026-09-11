@@ -445,9 +445,11 @@ export default function PlayDetailScreen() {
             playId={play.id}
             visible={listSheetOpen}
             onClose={() => setListSheetOpen(false)}
+            // The production goes along, so the list is made with it on it
+            // rather than found again afterwards (T-062).
             onCreateList={() => {
               setListSheetOpen(false);
-              router.push("/lists");
+              router.push({ pathname: "/lists", params: { attach: play.id, attachTitle: play.title } });
             }}
           />
 

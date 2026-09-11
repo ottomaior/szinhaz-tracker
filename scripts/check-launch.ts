@@ -284,8 +284,6 @@ storeCheck(
 // They are reported as reminders rather than failures, so the exit code stays
 // meaningful for the parts that *can* be verified.
 const reminders = [
-  "Supabase → Authentication → URL Configuration: the Railway production origin is on the " +
-    "redirect allow list, or password-reset links from the deployed site land on the Site URL.",
   "Supabase → Authentication: 'Confirm email' is off, and stays off for the closed test — " +
     "decided 2026-09-08, not an oversight. Only the allowlisted testers can install the app, so " +
     "there is no stranger to impersonate anybody. It has to go back on before the public " +
