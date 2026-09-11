@@ -1,4 +1,5 @@
 import { View, ScrollView } from "react-native";
+import { useLocalSearchParams } from "expo-router";
 import { useColors } from "@/theme/styles";
 import { gutter, space } from "@/theme/tokens";
 import { ListsBody } from "@/components/ui/ListsBody";
@@ -16,13 +17,15 @@ import { strings } from "@/i18n/hu";
  */
 export default function ListsScreen() {
   const colors = useColors();
+  // Set when a production's page sent the reader here to make a list for it.
+  const { attach, attachTitle } = useLocalSearchParams<{ attach?: string; attachTitle?: string }>();
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ModalHeader title={strings.lists.headerTitle} />
 
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: space["4xl"] }}>
         <ContentColumn style={{ padding: gutter }}>
-          <ListsBody />
+          <ListsBody attachPlayId={attach} attachTitle={attachTitle} />
         </ContentColumn>
       </ScrollView>
     </View>
