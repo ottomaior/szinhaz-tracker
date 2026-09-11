@@ -31,6 +31,13 @@ export type SearchOptions = {
    * the note on searchPlays below.
    */
   includeArchived?: boolean;
+  /**
+   * Talks, workshops, concerts and the like — `is_event` rows — are kept out
+   * of search as they are kept out of browse (0034, 0057). The check-in
+   * picker is the one place that wants them: an evening somebody actually
+   * went to is loggable whatever kind of evening it was.
+   */
+  includeEvents?: boolean;
   /** Page size; the RPC defaults to 40, the same as the browse rails. */
   limit?: number;
   /** Rows to skip — the length of what is already on screen. */
@@ -143,6 +150,7 @@ export async function searchPlays(query: string, options: SearchOptions = {}): P
     venue_type_filter: options.venueType ?? null,
     city_filter: options.city ?? null,
     include_archived: options.includeArchived ?? true,
+    include_events: options.includeEvents ?? false,
     // Added in 0015. Without it the venue chip filtered the browse rails and
     // silently did nothing to the search results under the same chip.
     venue_id_filter: options.venueId ?? null,

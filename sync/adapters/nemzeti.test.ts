@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { parseProductionDetail, parseProgram, productionLinksIn, slugOf, producedByIn } from "./nemzeti";
+import { parseProductionDetail, parseProgram, productionLinksIn, programOnlySlugs, slugOf, producedByIn } from "./nemzeti";
 
 const fixture = (name: string) => readFileSync(join(__dirname, "..", "__fixtures__", name), "utf8");
 
@@ -139,6 +139,11 @@ describe("parseProgram", () => {
     expect(kretakor?.subtitle).toBe("Drámai példázat a jóságról");
   });
 
+  it("keeps the printed title, for a production whose own page cannot be read", () => {
+    const zaszlok = occurrences.find((o) => o.slug === "zaszlok");
+    expect(zaszlok?.title).toBe("Zászlók");
+  });
+
   it("reads a guest company's line the same way", () => {
     // "a zágrábi Horvát Nemzeti Színház előadása" is somebody else's
     // production, hosted here — the T-025 case, on a second source.
@@ -167,5 +172,33 @@ describe("parseProgram", () => {
       expect(hour).toBeGreaterThanOrEqual(8);
       expect(hour).toBeLessThanOrEqual(23);
     }
+  });
+});
+
+describe("programOnlySlugs", () => {
+  it("names exactly the programme rows the repertoire index does not list", () => {
+    /*
+     * The T-034 set: two guest companies, an SZFE exam performance, a
+     * storyteller's evening and a one-off. Every one of them has dates on
+     * sale and an /eloadas/ page; none is on /repertoar. Before this the
+     * adapter read their dates and dropped them.
+     */
+    const detailUrls = productionLinksIn(fixture("nemzeti-repertoar.html"));
+    const occurrences = parseProgram(fixture("nemzeti-musor.html"));
+    expect(programOnlySlugs(detailUrls, occurrences).sort()).toEqual([
+      "a-nagy-verekedes-berecz-andras-enek-es-mesemondo-estje",
+      "boldogok-akik-nem-latnak",
+      "liliomfi-szfe-vizsgaeloadas",
+      "szeretett-szeretetnyelvuenk",
+      "zaszlok",
+    ]);
+  });
+
+  it("lists a slug once however many dates it has", () => {
+    const slugs = programOnlySlugs([], [
+      { slug: "x", startsAt: "2026-10-01T18:00:00.000Z" },
+      { slug: "x", startsAt: "2026-10-02T18:00:00.000Z" },
+    ]);
+    expect(slugs).toEqual(["x"]);
   });
 });
