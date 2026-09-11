@@ -17,6 +17,18 @@
  *     date, poster and the full credits list.
  *  3. `/musor` — showtimes, with the stage.
  *
+ * And a fourth, for what the first one leaves out. The repertoire index is
+ * the house's own productions; a visiting company's evening — the zágrábi
+ * Horvát Nemzeti Színház's *Zászlók*, the beregszászi company's *Boldogok,
+ * akik nem látnak*, an SZFE exam performance — is on `/musor` with dates
+ * and has an `/eloadas/{slug}` page like any other, but no entry on
+ * `/repertoar`. Until T-034 those dates were read and then dropped, because
+ * there was no production to attach them to. Now every programme slug the
+ * index did not list is fetched too, and read with the same parser; if the
+ * page cannot be read, the programme row alone — title, dates, the line
+ * naming who brought it — still makes a production. An evening that is on
+ * sale is an evening somebody can go to, and that is the test.
+ *
  * `/musor` is a single request covering everything the theatre has published,
  * which at the time of writing is about five weeks. The `/musor/nyomtatas/
  * YYYYMM` print views for later months return 200 with nothing in them, so
@@ -219,6 +231,12 @@ export type ProgramOccurrence = {
   startsAt: string;
   room?: string;
   /**
+   * The title as the programme prints it. Only needed for a production the
+   * repertoire index does not list and whose own page cannot be read — the
+   * fallback of a fallback — but free to carry, since it is the link text.
+   */
+  title?: string;
+  /**
    * The line the programme prints under the title — "Drámai példázat a
    * jóságról" beneath *A kaukázusi krétakör*.
    *
@@ -265,6 +283,7 @@ export function parseProgram(html: string): ProgramOccurrence[] {
 
         out.push({
           slug: slugOf(clean),
+          title: normalizeText($(playEl).find(".play-data .title a").first().text()),
           startsAt: budapestLocalToUtcIso(
             `${date}T${hour.padStart(2, "0")}:${minute.padStart(2, "0")}:00`
           ),
@@ -277,13 +296,75 @@ export function parseProgram(html: string): ProgramOccurrence[] {
   return out;
 }
 
+/**
+ * The programme's slugs that the repertoire index does not list — guest
+ * companies, exam performances, one-off evenings. Pure, so the fixture pair
+ * can assert exactly which ones a run would go and fetch.
+ */
+export function programOnlySlugs(detailUrls: string[], occurrences: ProgramOccurrence[]): string[] {
+  const listed = new Set(detailUrls.map(slugOf));
+  const out: string[] = [];
+  for (const o of occurrences) {
+    if (!listed.has(o.slug) && !out.includes(o.slug)) out.push(o.slug);
+  }
+  return out;
+}
+
+/** One production, from its page when there is one and from the programme when there is not. */
+function assemble(
+  slug: string,
+  url: string,
+  details: ProductionDetails | undefined,
+  occurrences: ProgramOccurrence[]
+): SyncedPlay | undefined {
+  // Every date of one production prints the same line; the first will do.
+  const subtitle = occurrences.find((o) => o.subtitle)?.subtitle;
+  const title = details?.title ?? occurrences.find((o) => o.title)?.title;
+  if (!title) return undefined;
+
+  return {
+    sourceKey: slug,
+    sourceUrl: url,
+    title,
+    author: details?.author ?? "",
+    director: details?.director ?? "",
+    venueId: VENUE_IDS.nemzeti,
+    // The site publishes no genre field. Left undefined so the classifier
+    // can fall back to the venue's own profile and label it as the
+    // assumption it is — see supabase/migrations/0016_genre_taxonomy.sql.
+    genre: undefined,
+    runtimeMinutes: details?.runtimeMinutes,
+    intermissions: details?.intermissions,
+    premiereDate: details?.premiereDate,
+    synopsis: details?.synopsis,
+    posterUrl: details?.posterUrl,
+    /*
+     * The house's own line under the title, from the programme listing.
+     *
+     * Only that listing prints it, so a production with no date announced
+     * has none here — which is the honest answer rather than a gap worth
+     * filling from somewhere else. Every occurrence of one production
+     * carries the same line; the first is taken.
+     */
+    subtitle,
+    producedBy: producedByIn(subtitle),
+    cast: details?.cast ?? [],
+    performances: occurrences.map((o) => ({
+      sourceKey: `${slug}:${o.startsAt}`,
+      startsAt: o.startsAt,
+      room: o.room,
+    })),
+  };
+}
+
 async function run(): Promise<SyncedPlay[]> {
   const indexHtml = await fetchText(`${BASE_URL}/repertoar`, { crawlDelayMs: CRAWL_DELAY_MS });
   const detailUrls = productionLinksIn(indexHtml);
 
   const programHtml = await fetchText(`${BASE_URL}/musor`, { crawlDelayMs: CRAWL_DELAY_MS });
+  const occurrences = parseProgram(programHtml);
   const occurrencesBySlug = new Map<string, ProgramOccurrence[]>();
-  for (const occ of parseProgram(programHtml)) {
+  for (const occ of occurrences) {
     const list = occurrencesBySlug.get(occ.slug) ?? [];
     list.push(occ);
     occurrencesBySlug.set(occ.slug, list);
@@ -295,44 +376,26 @@ async function run(): Promise<SyncedPlay[]> {
     const html = await fetchText(url, { crawlDelayMs: CRAWL_DELAY_MS });
     const details = parseProductionDetail(html);
     if (!details) continue;
+    const play = assemble(slug, url, details, occurrencesBySlug.get(slug) ?? []);
+    if (play) plays.push(play);
+  }
 
-    const occurrences = occurrencesBySlug.get(slug) ?? [];
-    // Every date of one production prints the same line; the first will do.
-    const subtitle = occurrences.find((o) => o.subtitle)?.subtitle;
-
-    plays.push({
-      sourceKey: slug,
-      sourceUrl: url,
-      title: details.title,
-      author: details.author,
-      director: details.director,
-      venueId: VENUE_IDS.nemzeti,
-      // The site publishes no genre field. Left undefined so the classifier
-      // can fall back to the venue's own profile and label it as the
-      // assumption it is — see supabase/migrations/0016_genre_taxonomy.sql.
-      genre: undefined,
-      runtimeMinutes: details.runtimeMinutes,
-      intermissions: details.intermissions,
-      premiereDate: details.premiereDate,
-      synopsis: details.synopsis,
-      posterUrl: details.posterUrl,
-      /*
-       * The house's own line under the title, from the programme listing.
-       *
-       * Only that listing prints it, so a production with no date announced
-       * has none here — which is the honest answer rather than a gap worth
-       * filling from somewhere else. Every occurrence of one production
-       * carries the same line; the first is taken.
-       */
-      subtitle,
-      producedBy: producedByIn(subtitle),
-      cast: details.cast,
-      performances: occurrences.map((o) => ({
-        sourceKey: `${slug}:${o.startsAt}`,
-        startsAt: o.startsAt,
-        room: o.room,
-      })),
-    });
+  // The evenings the index forgot (T-034). Their pages read like any other;
+  // a page that cannot be read is logged and the programme row stands in.
+  const extra = programOnlySlugs(detailUrls, occurrences);
+  for (const slug of extra) {
+    const url = `${BASE_URL}/eloadas/${slug}`;
+    let details: ProductionDetails | undefined;
+    try {
+      details = parseProductionDetail(await fetchText(url, { crawlDelayMs: CRAWL_DELAY_MS }));
+    } catch (e) {
+      console.warn(`[nemzeti] ${url} could not be read; using the programme row alone (${e instanceof Error ? e.message : String(e)})`);
+    }
+    const play = assemble(slug, url, details, occurrencesBySlug.get(slug) ?? []);
+    if (play) plays.push(play);
+  }
+  if (extra.length) {
+    console.log(`[nemzeti] ${extra.length} production(s) on the programme but not the repertoire: ${extra.join(", ")}`);
   }
 
   return plays;

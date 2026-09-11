@@ -399,21 +399,6 @@ should clearly not be in `play_cast`. A rule that strips a trailing "- <lower
 case word>" before the person test would fix the musicians; it needs checking
 against "Molnár Levente - Liszt-díjas" first, which is the case the current
 strictness protects.
-### T-034 · A guest company's evening at the Nemzeti is not in the catalogue at all
-type: bug · area: catalogue · priority: med · status: open · added: 2026-09-10
-
-The Nemzeti's programme lists dates that its repertoire page does not: the
-zágrábi Horvát Nemzeti Színház's *Zászlók* on 26 September, the Kárpátaljai
-company's *Boldogok, akik nem látnak*. A visiting company's evening has no
-production page on the host's site, so the adapter — which builds its plays
-from `/repertoar` and attaches showtimes to them — has nothing to attach these
-to and drops them. Somebody looking at what is on that night sees a gap.
-
-Reading them means creating a production from a programme row alone, with a
-title, a date and a `produced_by` and nothing else. `sync/adapters/nemzeti.ts`
-already reads the provenance line (`producedByIn`) and finds nothing to use it
-on, so half of the work is done. The question is whether a row that thin
-belongs in the catalogue, and it is the same question Trafó raises.
 
 ### T-035 · The Vígszínház programme carries facts about a night with nowhere to go
 type: bug · area: catalogue · priority: low · status: open · added: 2026-09-10
@@ -492,58 +477,6 @@ list is fixed. What is missing and can be prepared any time: a native handler
 for the confirmation link, a "resend" button, Hungarian mail templates.
 
 
-### T-008 · The `is_event` vocabulary was checked against a catalogue that is about to change
-type: bug · area: catalogue · priority: med · status: open · added: 2026-09-09
-
-`0034_ancillary_events.sql` separates talks, tours and workshops from real
-productions by title, deliberately narrow: checked against all 1,205 titles at
-the time, it matches six rows. Every theatre added from here brings its own
-vocabulary for the same thing, and a heuristic does not know when it has stopped
-being right — a miss simply shows up in Discover as a play. Recheck the
-vocabulary whenever a source lands. This used to point at T-002 as the same
-problem one level down, at the individual showtime; T-002 turned out not to be
-a problem at all, so this is the only level it happens on.
-
-**Concrete misses, found 10 September while investigating T-002 — the
-prediction has already come true.** Csokonai's IX. MagdaFeszt programme is 13
-rows, and at least four of them are not productions: *IV. Szabó Magda-díj
-átadása* (an award ceremony), *Szabó Magda irodalmi séta* (a literary walk),
-*Öregembert játszani – irodalomterápiás workshop*, and *Ókút-maraton*. All four
-are in Discover as plays. None uses the vocabulary 0034 checked for, because a
-festival brings its own — which is exactly what this entry said would happen
-and why the count of matches was recorded rather than trusted.
-
-**Still true on 10 September, with the programme it has now.** The IX.
-MagdaFeszt rows are ten, `is_festival` is set correctly on all of them and
-`genre_normalized` is correctly null — that machinery works. Nine of the ten
-carry no cast, and they divide cleanly in two:
-
-- **Four are other companies' productions**, hosted here and already carrying
-  the right `produced_by`: *Sommerreise* (Vígszínház), *Mondj igent!* (Aurora
-  Film és Színház Egyesület), *Hosszú virágzás* (Orlai), *Átmenő forgalom és
-  Vaszilisza* (Medgyessy Ferenc Gimnázium). Their casts live on the visiting
-  company's own site, not on Csokonai's, so the gap is real and not a bug.
-- **Five are not productions**: a chamber concert with animated children's
-  drawings, a selection from the Malter film festival, a guided exhibition
-  tour, a KözTér workshop, and a literature class with Juhász Anna and Szabó
-  T. Anna. All five are in Discover as plays.
-
-**The obvious fix is a trap, and it was tried.** These rows now carry a
-`subtitle` — the theatre's own words for what kind of evening it is — and two
-of the five would be caught by matching the *existing* vocabulary against it
-rather than only against the title ("KözTér workshop", "páros tárlatvezetés
-…"). But so would *A kaméliás hölgy, avagy a kegyvesztettek tündöklése*,
-whose subtitle is "kiállítás egy kurtizán életéről és haláláról három
-felvonásban" — a real production that calls itself an exhibition in three
-acts. Adding a cast test does not separate them either: that production has
-no cast in the catalogue either. So subtitle matching hides real work, which
-is precisely what 0034's own header says not to do, and it was left alone.
-
-**What is actually needed** is a decision rather than a regex: whether a
-concert, a film screening, an exhibition tour and a school literature class
-belong in a theatre diary at all. `is_event` keeps a row loggable while
-hiding it from browse, so the answer can differ per kind. Worth settling
-before the vocabulary grows again.
 
 ### T-009 · The share card draws nothing in a native build
 type: bug · area: native · priority: med · status: open · added: 2026-09-09
@@ -860,6 +793,113 @@ _Nothing yet._
 ---
 
 ## Done
+
+### T-034 · A guest company's evening at the Nemzeti is not in the catalogue at all
+type: bug · area: catalogue · priority: med · status: done · added: 2026-09-10 · done: 2026-09-11
+
+The Nemzeti's programme lists dates that its repertoire page does not: the
+zágrábi Horvát Nemzeti Színház's *Zászlók* on 26 September, the Kárpátaljai
+company's *Boldogok, akik nem látnak*. A visiting company's evening has no
+production page on the host's site, so the adapter — which builds its plays
+from `/repertoar` and attaches showtimes to them — has nothing to attach these
+to and drops them. Somebody looking at what is on that night sees a gap.
+
+Reading them means creating a production from a programme row alone, with a
+title, a date and a `produced_by` and nothing else. `sync/adapters/nemzeti.ts`
+already reads the provenance line (`producedByIn`) and finds nothing to use it
+on, so half of the work is done. The question is whether a row that thin
+belongs in the catalogue, and it is the same question Trafó raises.
+
+> **Fixed** (`evenings-the-index-forgot`), and the row is not thin after
+> all. Rechecked live on 11 September: every programme slug the repertoire
+> index omits *does* have an `/eloadas/{slug}` page — `/repertoar` lists
+> the house's own productions, not what it hosts. `Zászlók` parses with
+> author, runtime, poster and synopsis; `Boldogok, akik nem látnak` with a
+> cast of 37. So `sync/adapters/nemzeti.ts` now fetches every programme
+> slug the index left out and reads it with the same parser; only if that
+> page cannot be read does the programme row alone — title, dates, the
+> "X előadása" line — make the production. Ottó chose to admit even that
+> thin row: an evening on sale is an evening somebody can go to. A dry run
+> found six such productions today (two guest companies, an SZFE exam
+> performance, Berecz András's evening, one more, and the open-day gala,
+> which the T-008 vocabulary files as an event). `programOnlySlugs()` is
+> pure and the fixture pair asserts the exact set.
+
+### T-008 · The `is_event` vocabulary was checked against a catalogue that is about to change
+type: bug · area: catalogue · priority: med · status: done · added: 2026-09-09 · done: 2026-09-11
+
+`0034_ancillary_events.sql` separates talks, tours and workshops from real
+productions by title, deliberately narrow: checked against all 1,205 titles at
+the time, it matches six rows. Every theatre added from here brings its own
+vocabulary for the same thing, and a heuristic does not know when it has stopped
+being right — a miss simply shows up in Discover as a play. Recheck the
+vocabulary whenever a source lands. This used to point at T-002 as the same
+problem one level down, at the individual showtime; T-002 turned out not to be
+a problem at all, so this is the only level it happens on.
+
+**Concrete misses, found 10 September while investigating T-002 — the
+prediction has already come true.** Csokonai's IX. MagdaFeszt programme is 13
+rows, and at least four of them are not productions: *IV. Szabó Magda-díj
+átadása* (an award ceremony), *Szabó Magda irodalmi séta* (a literary walk),
+*Öregembert játszani – irodalomterápiás workshop*, and *Ókút-maraton*. All four
+are in Discover as plays. None uses the vocabulary 0034 checked for, because a
+festival brings its own — which is exactly what this entry said would happen
+and why the count of matches was recorded rather than trusted.
+
+**Still true on 10 September, with the programme it has now.** The IX.
+MagdaFeszt rows are ten, `is_festival` is set correctly on all of them and
+`genre_normalized` is correctly null — that machinery works. Nine of the ten
+carry no cast, and they divide cleanly in two:
+
+- **Four are other companies' productions**, hosted here and already carrying
+  the right `produced_by`: *Sommerreise* (Vígszínház), *Mondj igent!* (Aurora
+  Film és Színház Egyesület), *Hosszú virágzás* (Orlai), *Átmenő forgalom és
+  Vaszilisza* (Medgyessy Ferenc Gimnázium). Their casts live on the visiting
+  company's own site, not on Csokonai's, so the gap is real and not a bug.
+- **Five are not productions**: a chamber concert with animated children's
+  drawings, a selection from the Malter film festival, a guided exhibition
+  tour, a KözTér workshop, and a literature class with Juhász Anna and Szabó
+  T. Anna. All five are in Discover as plays.
+
+**The obvious fix is a trap, and it was tried.** These rows now carry a
+`subtitle` — the theatre's own words for what kind of evening it is — and two
+of the five would be caught by matching the *existing* vocabulary against it
+rather than only against the title ("KözTér workshop", "páros tárlatvezetés
+…"). But so would *A kaméliás hölgy, avagy a kegyvesztettek tündöklése*,
+whose subtitle is "kiállítás egy kurtizán életéről és haláláról három
+felvonásban" — a real production that calls itself an exhibition in three
+acts. Adding a cast test does not separate them either: that production has
+no cast in the catalogue either. So subtitle matching hides real work, which
+is precisely what 0034's own header says not to do, and it was left alone.
+
+**What is actually needed** is a decision rather than a regex: whether a
+concert, a film screening, an exhibition tour and a school literature class
+belong in a theatre diary at all. `is_event` keeps a row loggable while
+hiding it from browse, so the answer can differ per kind. Worth settling
+before the vocabulary grows again.
+
+> **Decided and fixed** (`0057_evenings_that_are_not_plays.sql`). Ottó's
+> answer to the question above: workshops, walks, concerts, screenings,
+> tours and classes stay in the catalogue, hidden from browse and loggable —
+> `is_event`, as the six existing ones. The subtitle is now read, but
+> *anchored*: it marks an event when it *is* one ("workshop", "KözTér
+> workshop", "páros tárlatvezetés …", "kamarakoncert …", "… vezetésével"),
+> never when it merely mentions one, and anything counting its acts
+> ("felvonásban") is a production whatever else it says — which is how *A
+> kaméliás hölgy* stays. Titles gained workshop-anywhere, "irodalmi séta",
+> "irodalomóra", "díj átadása", "filmklub", "filmfesztivál", "beszélgetés"
+> and the concert words as whole words (so "koncertszínház" stays).
+> Dry-run against the whole catalogue: seventeen rows flip, listed in the
+> migration header so they can be argued with — the nine MagdaFeszt rows,
+> HOFI85, Szalon Filmklub, and six concerts.
+
+> **Two things 0034 claimed and had not done.** The programme never
+> filtered on `is_event` — `program_in_range()` and `program_days()`
+> carried no such clause, so a flagged workshop with a date still sat in the
+> Műsor tab; both are re-created with it. And "loggable" was not quite true
+> either, because search excludes events and the check-in picker is search:
+> `search_plays()` gained `include_events` (default false) and the picker
+> passes it. Discover's search is unchanged.
 
 ### T-062 · Lists: the sheet's "Új lista" loses the play, and nothing can be edited afterwards
 type: bug · area: catalogue · priority: low · status: done · added: 2026-09-11 · done: 2026-09-11

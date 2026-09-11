@@ -634,7 +634,7 @@ function PlayPicker({ insetTop, onCancel, onPick }: { insetTop: number; onCancel
   const trimmed = query.trim();
   // Twenty rows: a picker is answered by the first few, and the field stays
   // in reach above them. Debounced, deduplicated and kept in order by the hook.
-  const search = useSearchQuery(trimmed ? foldSearchTerm(trimmed) : null, () => searchPlays(trimmed, { limit: 20 }));
+  const search = useSearchQuery(trimmed ? foldSearchTerm(trimmed) : null, () => searchPlays(trimmed, { limit: 20, includeEvents: true }));
   const results = search.data?.plays ?? [];
   const searching = search.loading && !search.data;
 
