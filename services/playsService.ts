@@ -6,7 +6,9 @@ import { budapestDayKey } from "@/utils/datetime";
 import { currentSeasonStart, seasonRange } from "@/utils/season";
 import type {
   CastMember,
+  FeedAuthor,
   FeedItem,
+  FeedPage,
   Performance,
   Play,
   PlayStatus,
@@ -255,23 +257,118 @@ const PLAY_SELECT = "*, play_cast(name, role, sort_order)";
  */
 export type FeedScope = "everyone" | "following";
 
-export async function getFeed(scope: FeedScope = "everyone"): Promise<FeedItem[]> {
+/** Cards per page, and the size of each of the two source queries behind it. */
+export const FEED_PAGE_SIZE = 20;
+
+/**
+ * Two undated entries by the same person less than this far apart were one
+ * sitting at the onboarding grid, not two evenings.
+ */
+const BACKFILL_WINDOW_MS = 15 * 60 * 1000;
+
+/**
+ * Fold a run of one person's undated ticks into a single `backfill` item.
+ *
+ * Only undated entries qualify — a dated one is a real evening, however many
+ * were logged at once — and only three or more, since two in a row reads
+ * fine as two cards. Runs are consecutive in the sorted list by construction:
+ * the entries share a `created_at` to the second.
+ */
+export function foldBackfills(items: FeedItem[]): FeedItem[] {
+  const out: FeedItem[] = [];
+  let i = 0;
+  while (i < items.length) {
+    const head = items[i];
+    if (head.kind !== "checkin" || head.review.seenAt) {
+      out.push(head);
+      i += 1;
+      continue;
+    }
+    const run: Review[] = [head.review];
+    const headAt = +new Date(head.review.createdAt);
+    let j = i + 1;
+    while (j < items.length) {
+      const next = items[j];
+      if (next.kind !== "checkin" || next.review.seenAt || next.review.userId !== head.review.userId) break;
+      if (headAt - +new Date(next.review.createdAt) > BACKFILL_WINDOW_MS) break;
+      run.push(next.review);
+      j += 1;
+    }
+    if (run.length >= 3) {
+      out.push({ kind: "backfill", userId: head.review.userId, reviews: run, createdAt: head.review.createdAt });
+      i = j;
+    } else {
+      out.push(head);
+      i += 1;
+    }
+  }
+  return out;
+}
+
+async function getFeedAuthors(ids: string[]): Promise<Map<string, FeedAuthor>> {
+  const unique = [...new Set(ids)];
+  if (unique.length === 0) return new Map();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, name, handle, initials, avatar_path")
+    .in("id", unique);
+  if (error) throw error;
+  return new Map(
+    (data ?? []).map((r) => {
+      const row = r as Pick<ProfileRow, "id" | "name" | "handle" | "initials" | "avatar_path">;
+      return [
+        row.id,
+        {
+          id: row.id,
+          name: row.name,
+          handle: row.handle,
+          initials: row.initials,
+          avatarUrl: row.avatar_path ? avatarUrl(row.avatar_path) : undefined,
+        },
+      ];
+    })
+  );
+}
+
+/**
+ * One page of the feed, hydrated.
+ *
+ * `before` is the previous page's `nextBefore`. Each of the two sources is
+ * asked for its newest `FEED_PAGE_SIZE` rows older than that, the two are
+ * merged newest-first and cut to one page; whatever fell off the cut is
+ * older than the cut's last item and comes back on the next call. The page
+ * used to be the whole feed — twenty newest of each, and nothing behind them
+ * (T-048).
+ */
+export async function getFeed(scope: FeedScope = "everyone", options: { before?: string } = {}): Promise<FeedPage> {
   let authorIds: string[] | undefined;
   if (scope === "following") {
     const {
       data: { user: authUser },
     } = await supabase.auth.getUser();
-    if (!authUser) return [];
+    if (!authUser) return { items: [], plays: new Map(), venues: new Map(), authors: new Map() };
     // Your own activity belongs in your feed: a diary you cannot see yourself
     // in reads as though the check-in failed.
     authorIds = [...(await getFollowingIds(authUser.id)), authUser.id];
   }
 
-  let reviewQuery = supabase.from("reviews_readable").select("*").order("created_at", { ascending: false }).limit(20);
-  let watchlistQuery = supabase.from("watchlist_entries").select("*").order("added_at", { ascending: false }).limit(20);
+  let reviewQuery = supabase
+    .from("reviews_readable")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(FEED_PAGE_SIZE);
+  let watchlistQuery = supabase
+    .from("watchlist_entries")
+    .select("*")
+    .order("added_at", { ascending: false })
+    .limit(FEED_PAGE_SIZE);
   if (authorIds) {
     reviewQuery = reviewQuery.in("user_id", authorIds);
     watchlistQuery = watchlistQuery.in("user_id", authorIds);
+  }
+  if (options.before) {
+    reviewQuery = reviewQuery.lt("created_at", options.before);
+    watchlistQuery = watchlistQuery.lt("added_at", options.before);
   }
 
   const [{ data: reviewRows, error: reviewsError }, { data: watchlistRows, error: watchlistError }] = await Promise.all([
@@ -293,7 +390,7 @@ export async function getFeed(scope: FeedScope = "everyone"): Promise<FeedItem[]
     liked = new Set();
   }
 
-  const items: FeedItem[] = [
+  const merged: FeedItem[] = [
     ...reviews.map((review): FeedItem => ({ kind: "checkin", review, likedByMe: liked.has(review.id) })),
     ...(watchlistRows ?? []).map(
       (w): FeedItem => ({
@@ -301,13 +398,35 @@ export async function getFeed(scope: FeedScope = "everyone"): Promise<FeedItem[]
         entry: { playId: w.play_id, addedByUserId: w.user_id, addedAt: w.added_at } as WatchlistEntry,
       })
     ),
-  ];
+  ].sort((a, b) => +new Date(feedItemTime(b)) - +new Date(feedItemTime(a)));
 
-  return items.sort((a, b) => {
-    const ta = a.kind === "checkin" ? a.review.createdAt : a.entry.addedAt;
-    const tb = b.kind === "checkin" ? b.review.createdAt : b.entry.addedAt;
-    return +new Date(tb) - +new Date(ta);
-  });
+  // The cut, and what it means for the page after this one. A source that
+  // came back full may have more behind it; a page that had more than fits
+  // certainly does. Either way the next page starts at this one's oldest.
+  const page = merged.slice(0, FEED_PAGE_SIZE);
+  const sourceFull =
+    (reviewRows?.length ?? 0) === FEED_PAGE_SIZE || (watchlistRows?.length ?? 0) === FEED_PAGE_SIZE;
+  const nextBefore =
+    page.length > 0 && (merged.length > FEED_PAGE_SIZE || sourceFull) ? feedItemTime(page[page.length - 1]) : undefined;
+
+  const items = foldBackfills(page);
+
+  // Everything the cards will show, fetched once for the page.
+  const playIds = items.flatMap((it) =>
+    it.kind === "checkin" ? [it.review.playId] : it.kind === "watchlist" ? [it.entry.playId] : it.reviews.map((r) => r.playId)
+  );
+  const authorIdsOnPage = items.map((it) =>
+    it.kind === "checkin" ? it.review.userId : it.kind === "watchlist" ? it.entry.addedByUserId : it.userId
+  );
+  const [playList, authors] = await Promise.all([getPlaysByIds(playIds), getFeedAuthors(authorIdsOnPage)]);
+  const plays = new Map(playList.map((p) => [p.id, p]));
+  const venues = await getVenuesByIds(playList.map((p) => p.venueId));
+
+  return { items, plays, venues, authors, nextBefore };
+}
+
+function feedItemTime(item: FeedItem): string {
+  return item.kind === "checkin" ? item.review.createdAt : item.kind === "watchlist" ? item.entry.addedAt : item.createdAt;
 }
 
 const PLAY_SELECT_WITH_VENUE_FILTERS: string = `*, play_cast(name, role, sort_order), venues!inner(type, city)`;
@@ -583,10 +702,52 @@ export async function getPlaysByIds(ids: string[]): Promise<Play[]> {
   return (data ?? []).map((r) => toPlay(r as PlayRow));
 }
 
+/**
+ * The venues table, held for a while.
+ *
+ * Ten rows that change when a theatre is added, which is a sync-time event
+ * measured in weeks — and every tile on Discover, every watchlist row and
+ * every feed card asked for one of them by id, one request each: 101 of the
+ * 243 requests on a cold load were this lookup (T-046, T-012). So the table
+ * is read once, kept for a few minutes, and every by-id lookup is answered
+ * from it. A miss — an id the snapshot does not know, which is what a venue
+ * created a moment ago looks like — falls through to a real fetch and joins
+ * the snapshot.
+ */
+const VENUE_CACHE_TTL_MS = 5 * 60 * 1000;
+let venueSnapshot: { at: number; byId: Map<string, Venue> } | undefined;
+let venueSnapshotInFlight: Promise<Map<string, Venue>> | undefined;
+
+async function venueTable(): Promise<Map<string, Venue>> {
+  if (venueSnapshot && Date.now() - venueSnapshot.at < VENUE_CACHE_TTL_MS) return venueSnapshot.byId;
+  if (!venueSnapshotInFlight) {
+    venueSnapshotInFlight = (async () => {
+      const { data, error } = await supabase.from("venues").select("*");
+      if (error) throw error;
+      const byId = new Map((data ?? []).map((r) => [r.id as string, toVenue(r as VenueRow)]));
+      venueSnapshot = { at: Date.now(), byId };
+      return byId;
+    })().finally(() => {
+      venueSnapshotInFlight = undefined;
+    });
+  }
+  return venueSnapshotInFlight;
+}
+
+/** Puts a venue this client just learned about into the snapshot. */
+function rememberVenue(venue: Venue) {
+  if (venueSnapshot) venueSnapshot.byId.set(venue.id, venue);
+}
+
 export async function getVenueById(id: string): Promise<Venue | undefined> {
+  const known = (await venueTable()).get(id);
+  if (known) return known;
   const { data, error } = await supabase.from("venues").select("*").eq("id", id).maybeSingle();
   if (error) throw error;
-  return data ? toVenue(data as VenueRow) : undefined;
+  if (!data) return undefined;
+  const venue = toVenue(data as VenueRow);
+  rememberVenue(venue);
+  return venue;
 }
 
 export async function getReviewsForPlay(playId: string): Promise<Review[]> {
@@ -981,9 +1142,24 @@ export async function getDiaryPlaysForUser(userId: string): Promise<Play[]> {
 export async function getVenuesByIds(ids: string[]): Promise<Map<string, Venue>> {
   const unique = [...new Set(ids)];
   if (unique.length === 0) return new Map();
-  const { data, error } = await supabase.from("venues").select("*").in("id", unique);
-  if (error) throw error;
-  return new Map((data ?? []).map((r) => [r.id as string, toVenue(r as VenueRow)]));
+  const table = await venueTable();
+  const found = new Map<string, Venue>();
+  const missing: string[] = [];
+  for (const id of unique) {
+    const v = table.get(id);
+    if (v) found.set(id, v);
+    else missing.push(id);
+  }
+  if (missing.length > 0) {
+    const { data, error } = await supabase.from("venues").select("*").in("id", missing);
+    if (error) throw error;
+    for (const r of data ?? []) {
+      const venue = toVenue(r as VenueRow);
+      rememberVenue(venue);
+      found.set(venue.id, venue);
+    }
+  }
+  return found;
 }
 
 export async function submitReview(input: {
@@ -1522,7 +1698,9 @@ export async function createVenue(input: { name: string; type: Venue["type"]; ci
     throw error;
   }
 
-  return toVenue(data as VenueRow);
+  const venue = toVenue(data as VenueRow);
+  rememberVenue(venue);
+  return venue;
 }
 
 /** Case- and whitespace-insensitive lookup, matching the venues unique index. */

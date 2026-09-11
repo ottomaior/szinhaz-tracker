@@ -361,4 +361,47 @@ export type FeedItem =
        */
       likedByMe: boolean;
     }
-  | { kind: "watchlist"; entry: WatchlistEntry };
+  | { kind: "watchlist"; entry: WatchlistEntry }
+  /**
+   * One person ticking many productions at once — the "Mit láttál már?"
+   * grid, which writes an undated entry per tick in the same instant. Shown
+   * as a single card rather than one per tick: eighteen of them in a row
+   * were the whole Mindenki feed for three days (T-049). The entries are
+   * still the person's own, still on their profile one by one; only the
+   * feed folds them.
+   */
+  | {
+      kind: "backfill";
+      userId: string;
+      /** Newest first, like the feed itself. */
+      reviews: Review[];
+      /** The moment of the tick, for the byline. */
+      createdAt: string;
+    };
+
+/**
+ * The people on a page of feed cards — the byline's four facts and nothing
+ * more. `User` carries four counts that cost four queries each to compute,
+ * which the feed never displays.
+ */
+export type FeedAuthor = Pick<User, "id" | "name" | "handle" | "initials" | "avatarUrl">;
+
+/**
+ * One page of the feed, with everything the cards need already in hand.
+ *
+ * The feed used to hand each card a bare item and let it fetch its own play,
+ * venue and author — six requests a card, the same profile row ninety times
+ * over on a page dominated by one person (T-046). Now the page resolves them
+ * once, in three queries, and the cards only look things up in these maps.
+ */
+export type FeedPage = {
+  items: FeedItem[];
+  plays: Map<string, Play>;
+  venues: Map<string, Venue>;
+  authors: Map<string, FeedAuthor>;
+  /**
+   * Where the next page starts: the timestamp of this page's oldest item, to
+   * be passed back as `before`. Undefined when this page reached the end.
+   */
+  nextBefore?: string;
+};

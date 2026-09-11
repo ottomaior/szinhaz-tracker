@@ -75,6 +75,11 @@ export const strings = {
     followToSee: (name: string) => `Kövesd ${name} bejegyzéseit, hogy lásd, mit gondolt róla.`,
     /* The same, before the author's profile has loaded. */
     followToSeeGeneric: "Kövesd a szerzőt, hogy lásd, mit gondolt róla.",
+
+    /* One onboarding sitting folded into a card: "18 előadást jelölt meg
+       látottnak". The verb agrees with the byline's "X megnézte" pattern. */
+    backfilled: (n: number) => `${n} előadást jelölt meg látottnak`,
+    backfillMore: (n: number) => `+${n}`,
   },
 
   /**
