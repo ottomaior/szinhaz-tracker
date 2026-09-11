@@ -44,6 +44,9 @@ describe("katona-archive parseProductionPage", () => {
     // same structure; a review is not a person.
     const roles = (play?.cast ?? []).map((c) => c.role.toLowerCase());
     for (const field of ["kritikák", "sajtó", "műsorfüzet"]) expect(roles).not.toContain(field);
+    // And not because the block happened to be long: a short one, a single
+    // review, used to slip under the length guard as a person.
+    for (const c of play?.cast ?? []) expect(c.name).not.toMatch(/.(hu|com|net|pl)/i);
   });
 
   it("files everything here as archived", () => {

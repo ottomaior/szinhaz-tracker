@@ -46,6 +46,7 @@ import * as cheerio from "cheerio";
 import { fetchText } from "../lib/http";
 import { budapestLocalToUtcIso, parseHungarianMonthDay, resolveUpcomingYear } from "../lib/huDate";
 import { parseDurationHu } from "../lib/huDuration";
+import { titleKey } from "../lib/normalize";
 import { VENUE_IDS } from "../venueMap";
 import type { SyncAdapter, SyncedPlay } from "../lib/types";
 
@@ -208,16 +209,37 @@ function heroPoster($: cheerio.CheerioAPI): string | undefined {
  * sync/adapters/katona.ts.
  */
 export async function fetchCurrentSlugs(): Promise<Set<string>> {
+  return (await fetchCurrent()).slugs;
+}
+
+/**
+ * What the live site lists, by slug and by title.
+ *
+ * Both, because the archive keys its productions by their *working* title —
+ * `43970-hamlet` is the page for *némacsend*, `43699-psyche` for *Megrág,
+ * kiköp* — so a slug comparison alone let four productions in twice, once
+ * running from here and once "levették a műsorról" from the archive (T-053).
+ * The index anchors carry the titles, so the second set costs nothing.
+ */
+export async function fetchCurrent(): Promise<{ slugs: Set<string>; titles: Set<string> }> {
   const html = await fetchText(`${BASE_URL}${INDEX_PATH}`, { crawlDelayMs: CRAWL_DELAY_MS });
+  return parseIndex(html);
+}
+
+export function parseIndex(html: string): { slugs: Set<string>; titles: Set<string> } {
   const $ = cheerio.load(html);
 
   const slugs = new Set<string>();
+  const titles = new Set<string>();
   $("a[href]").each((_, el) => {
     const match = ($(el).attr("href") ?? "").split("?")[0].match(PRODUCTION_HREF);
-    if (match && !NOT_PRODUCTIONS.has(match[1])) slugs.add(match[1]);
+    if (!match || NOT_PRODUCTIONS.has(match[1])) return;
+    slugs.add(match[1]);
+    const title = titleKey($(el).text());
+    if (title) titles.add(title);
   });
 
-  return slugs;
+  return { slugs, titles };
 }
 
 /**

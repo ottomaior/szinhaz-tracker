@@ -33,9 +33,9 @@ import * as cheerio from "cheerio";
 import { fetchText } from "../lib/http";
 import { parseHungarianDate } from "../lib/huDate";
 import { parseDurationHu } from "../lib/huDuration";
-import { normalizeText } from "../lib/normalize";
+import { normalizeText, titleKey } from "../lib/normalize";
 import { VENUE_IDS } from "../venueMap";
-import { fetchCurrentSlugs } from "./katona-wp";
+import { fetchCurrent } from "./katona-wp";
 import type { SyncAdapter, SyncedPlay } from "../lib/types";
 
 const BASE_URL = "https://archive.katonajozsefszinhaz.hu";
@@ -165,6 +165,12 @@ export function parseProductionPage(html: string, path: string): SyncedPlay | un
   // both a label and a value are role/performer pairs. Anything already
   // consumed above is skipped so the metadata fields don't turn into cast
   // members, and so do the two tables just read.
+  //
+  // The press blocks are named too, not left to the length guard below.
+  // "Sajtó", "Kritikák" and "Műsorfüzet" are lists of links in the same
+  // structure, and the guard only stopped the long ones: fifteen productions
+  // arrived with a contributor called "Revizoronline.hu - Gabnai Katalin"
+  // whose role was Kritikák (T-050).
   const consumed = new Set([
     "rendezo",
     "irta",
@@ -175,6 +181,12 @@ export function parseProductionPage(html: string, path: string): SyncedPlay | un
     "szinlap-hely",
     "szereplok",
     "alkotok",
+    "sajto",
+    "kritikak",
+    "musorfuzet",
+    "galeria",
+    "videok",
+    "sajat-link",
   ]);
   $("li.field-entry").each((_, el) => {
     const classes = ($(el).attr("class") ?? "").split(/\s+/);
@@ -232,14 +244,18 @@ async function run(): Promise<SyncedPlay[]> {
   // are productions still playing on the new WordPress site, Chicago among
   // them. Syncing those here would duplicate every one of them — a second row
   // for the same production, wrongly flagged as archived — so the live
-  // repertoire wins and this adapter yields it.
-  const current = await fetchCurrentSlugs();
+  // repertoire wins and this adapter yields it. Matched by slug where the two
+  // sites agree, and by title where the archive still carries the working
+  // title in its URL (`43970-hamlet` for *némacsend*), which is only known
+  // once the page has been read.
+  const current = await fetchCurrent();
 
   for (const productionPath of await fetchSection(ARCHIVE_PATH)) {
     const key = productionPath.split("/").pop() ?? productionPath;
-    if (byKey.has(key) || current.has(slugOf(key))) continue;
+    if (byKey.has(key) || current.slugs.has(slugOf(key))) continue;
     const play = await fetchProduction(productionPath);
-    if (play) byKey.set(key, play);
+    if (!play || current.titles.has(titleKey(play.title))) continue;
+    byKey.set(key, play);
   }
 
   return [...byKey.values()];
