@@ -881,7 +881,7 @@ before the vocabulary grows again.
 > **Decided and fixed** (`0057_evenings_that_are_not_plays.sql`). Ottó's
 > answer to the question above: workshops, walks, concerts, screenings,
 > tours and classes stay in the catalogue, hidden from browse and loggable —
-> `is_event`, as the six existing ones. The subtitle is now read, but
+> `is_event`, as the eight existing ones. The subtitle is now read, but
 > *anchored*: it marks an event when it *is* one ("workshop", "KözTér
 > workshop", "páros tárlatvezetés …", "kamarakoncert …", "… vezetésével"),
 > never when it merely mentions one, and anything counting its acts
