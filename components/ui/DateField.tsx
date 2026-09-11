@@ -34,6 +34,13 @@ import { makeStyles } from "@/theme/styles";
  * Future dates are never offered. This records an evening somebody attended,
  * and a diary that can hold next month is a diary you cannot trust the totals
  * of.
+ *
+ * "No date" is a value too, not the absence of one. Onboarding writes entries
+ * without a date, and the form used to open one of those with today's date
+ * already in the chip — so saving a rating quietly turned "I don't remember"
+ * into "tonight" (T-044). The chip now shows "Dátum nélkül" for such an entry,
+ * and the sheet offers it beside Ma and Tegnap, so a date can be taken away as
+ * well as given (T-061).
  */
 
 export function DateField({
@@ -41,9 +48,9 @@ export function DateField({
   onChange,
   label = strings.checkin.dateLabel,
 }: {
-  /** `YYYY-MM-DD` in Budapest. */
-  value: string;
-  onChange: (dayKey: string) => void;
+  /** `YYYY-MM-DD` in Budapest, or undefined for an entry with no date. */
+  value: string | undefined;
+  onChange: (dayKey: string | undefined) => void;
   label?: string;
 }) {
   const styles = useStyles();
@@ -58,7 +65,7 @@ export function DateField({
   // The month on screen, which starts at the chosen date's month and then
   // follows the arrows independently of the selection.
   const [cursor, setCursor] = useState(() => {
-    const { year, month } = parseDayKey(value);
+    const { year, month } = parseDayKey(value ?? today);
     return { year, month };
   });
 
@@ -70,20 +77,27 @@ export function DateField({
     setCursor((c) => shiftMonthBy(c.year, c.month, by));
   }
 
-  function choose(dayKey: string) {
+  function choose(dayKey: string | undefined) {
     onChange(dayKey);
     setOpen(false);
   }
 
   // "ma" and "tegnap" cover most check-ins on their own: the app is opened on
   // the tram home, or the next morning.
-  const chipLabel = value === today ? strings.checkin.today : value === yesterday ? strings.checkin.yesterday : formatLongDate(`${value}T12:00:00Z`);
+  const chipLabel =
+    value === undefined
+      ? strings.checkin.noDate
+      : value === today
+        ? strings.checkin.today
+        : value === yesterday
+          ? strings.checkin.yesterday
+          : formatLongDate(`${value}T12:00:00Z`);
 
   return (
     <>
       <Pressable
         onPress={() => {
-          const { year, month } = parseDayKey(value);
+          const { year, month } = parseDayKey(value ?? today);
           setCursor({ year, month });
           setOpen(true);
         }}
@@ -120,6 +134,7 @@ export function DateField({
             <View style={styles.quickRow}>
               <QuickPick label={strings.checkin.today} active={value === today} onPress={() => choose(today)} />
               <QuickPick label={strings.checkin.yesterday} active={value === yesterday} onPress={() => choose(yesterday)} />
+              <QuickPick label={strings.checkin.noDate} active={value === undefined} onPress={() => choose(undefined)} />
             </View>
 
             <View style={styles.monthBar}>

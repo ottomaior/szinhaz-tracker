@@ -443,6 +443,8 @@ export const strings = {
     dateLabel: "Mikor láttad?",
     today: "Ma",
     yesterday: "Tegnap",
+    /* The third quick pick, and the chip's label for an entry that has no date. */
+    noDate: "Dátum nélkül",
     previousMonth: "Előző hónap",
     nextMonth: "Következő hónap",
 
