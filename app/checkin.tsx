@@ -64,10 +64,15 @@ export default function CheckInScreen() {
   const [adoptedBlank, setAdoptedBlank] = useState(false);
   const [prefilled, setPrefilled] = useState(false);
 
-  // The evening being logged. Defaults to today, which is what most check-ins
-  // are, and is now a real value the user can move rather than the wall clock
-  // this screen used to print into a field nobody could edit.
-  const [seenAt, setSeenAt] = useState(todayInBudapest);
+  // The evening being logged. A new check-in starts at today, which is what
+  // most of them are, and it is a real value the user can move rather than the
+  // wall clock this screen used to print into a field nobody could edit.
+  //
+  // Undefined is "no date" — the state onboarding writes, and one the field
+  // can now show and keep. It used to be unrepresentable here: an undated entry
+  // opened with today already in the chip, and saving a rating on it turned
+  // "I don't remember" into "tonight" without anyone choosing that (T-044).
+  const [seenAt, setSeenAt] = useState<string | undefined>(todayInBudapest);
   const [showtimes, setShowtimes] = useState<Performance[]>([]);
   const [performanceId, setPerformanceId] = useState<string>();
   const [priorCount, setPriorCount] = useState(0);
@@ -176,7 +181,10 @@ export default function CheckInScreen() {
    * the same review on screen the same way.
    */
   function applyEntry(review: Review, forPlay: Play) {
-    if (review.seenAt) setSeenAt(review.seenAt);
+    // Whatever the entry holds, including nothing. Not `if (review.seenAt)`:
+    // that guard left the fresh-form default of today standing for an undated
+    // entry, which is exactly the claim the person never made.
+    setSeenAt(review.seenAt);
     setPerformanceId(review.performanceId);
     // Checked for `undefined` and not for falsiness: a real rating is never 0.
     //
@@ -285,6 +293,11 @@ export default function CheckInScreen() {
         setEditingId(blank.id);
         setAdoptedBlank(true);
         applyEntry(blank, play);
+        // The blank has no date, but the person just pressed "log a
+        // performance": this is a fresh check-in filling an old placeholder,
+        // and it opens where a fresh check-in opens — today, movable. Editing
+        // that same entry from the diary keeps its "no date" instead.
+        setSeenAt(todayInBudapest());
       })
       .catch(() => undefined);
     return () => {
@@ -296,7 +309,7 @@ export default function CheckInScreen() {
   // holds more than one — a production usually plays once on a given evening,
   // and a question with a single possible answer is a question not worth asking.
   useEffect(() => {
-    if (!play) {
+    if (!play || !seenAt) {
       setShowtimes([]);
       setPerformanceId(undefined);
       return;
