@@ -1,6 +1,5 @@
 import { ScrollViewStyleReset } from "expo-router/html";
 import type { PropsWithChildren } from "react";
-import { strings } from "@/i18n/hu";
 import {
   cssVarName,
   DEFAULT_DARK,
@@ -95,7 +94,11 @@ export default function Root({ children }: PropsWithChildren) {
         <meta charSet="utf-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-        <title>{strings.appName}</title>
+        {/* No <title> here. app/_layout.tsx sets the app-wide one through
+            expo-router/head, and the legal screens set their own; helmet
+            prerenders those into the static HTML, so a second copy from the
+            shell only ever added a duplicate — and, on the legal pages, a
+            wrong last-match for anything reading document.title (T-006). */}
         <meta name="theme-color" content={themes[DEFAULT_DARK].bg} />
 
         {/* Disables body scrolling on web, so ScrollView works as it does on native. */}
