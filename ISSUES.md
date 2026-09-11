@@ -287,7 +287,7 @@ show timestamps at all, which is a design change rather than a content one.
 Bugs and chores, confirmed and unclaimed.
 
 ### T-043 · The Évad page never loads for anyone who has dated an evening
-type: bug · area: diary · priority: high · status: open · added: 2026-09-11
+type: bug · area: diary · priority: high · status: doing · added: 2026-09-11
 
 Sign in, log two evenings with a date in the current season, open
 `/season/2026`: the heading renders, then "Nem sikerült betölteni. Ellenőrizd a
