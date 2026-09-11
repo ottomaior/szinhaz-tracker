@@ -13,6 +13,22 @@ export function avatarUrl(path: string): string {
 /** The longest bio the database will accept — `profiles_bio_length` in 0027. */
 export const BIO_MAX_LENGTH = 280;
 
+/**
+ * The shape a handle may have — `profiles_handle_shape` in 0052, verbatim.
+ *
+ * Checked here as well as in the database so the form can say what is wrong
+ * before the round trip, and so the same rule is stated once on each side.
+ */
+export const HANDLE_PATTERN = /^[a-z0-9_]{3,30}$/;
+
+/** The one other way a handle can fail: somebody already has it. */
+export class HandleTakenError extends Error {
+  constructor() {
+    super("handle taken");
+    this.name = "HandleTakenError";
+  }
+}
+
 async function currentUserId(): Promise<string> {
   const {
     data: { user },
@@ -50,6 +66,11 @@ export async function uploadAvatar(uri: string): Promise<string> {
 /** The editable half of a profile, as the edit form holds it. */
 export type ProfileDraft = {
   name: string;
+  /**
+   * The public @name. Editable since 0052: until then it was minted from the
+   * e-mail address and there was no way to be rid of it (T-045).
+   */
+  handle: string;
   city: string;
   bio: string;
   /** The stored path, not the CDN URL — that is what a save has to write back. */
@@ -67,12 +88,13 @@ export async function getMyProfileDraft(): Promise<ProfileDraft> {
   const uid = await currentUserId();
   const { data, error } = await supabase
     .from("profiles")
-    .select("name, city, bio, avatar_path")
+    .select("name, handle, city, bio, avatar_path")
     .eq("id", uid)
     .maybeSingle();
   if (error) throw error;
   return {
     name: (data?.name as string) ?? "",
+    handle: (data?.handle as string) ?? "",
     city: (data?.city as string | null) ?? "",
     bio: (data?.bio as string | null) ?? "",
     avatarPath: (data?.avatar_path as string | null) ?? null,
@@ -93,6 +115,8 @@ export async function getMyProfileDraft(): Promise<ProfileDraft> {
  */
 export async function updateProfile(input: {
   name: string;
+  /** Already lower-case and matching `HANDLE_PATTERN`; the form sees to that. */
+  handle: string;
   city: string | null;
   bio: string | null;
   /** `null` clears the picture and puts the monogram back. */
@@ -113,11 +137,15 @@ export async function updateProfile(input: {
     .from("profiles")
     .update({
       name: input.name.trim(),
+      handle: input.handle,
       city: input.city?.trim() || null,
       bio: input.bio?.trim() || null,
       avatar_path: input.avatarPath,
     })
     .eq("id", uid);
+  // 23505 is unique_violation, and `handle` is the only unique column an
+  // update can touch: the id is the row's own.
+  if (error?.code === "23505") throw new HandleTakenError();
   if (error) throw error;
 
   if (previousPath && previousPath !== input.avatarPath) {

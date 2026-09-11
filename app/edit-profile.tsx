@@ -10,6 +10,8 @@ import { useAppFonts } from "@/hooks/useAppFonts";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   BIO_MAX_LENGTH,
+  HANDLE_PATTERN,
+  HandleTakenError,
   avatarUrl,
   getMyProfileDraft,
   updateProfile,
@@ -41,6 +43,7 @@ export default function EditProfileScreen() {
   const { session, loading } = useAuth();
 
   const [name, setName] = useState("");
+  const [handle, setHandle] = useState("");
   const [city, setCity] = useState("");
   const [bio, setBio] = useState("");
 
@@ -62,6 +65,7 @@ export default function EditProfileScreen() {
       .then((draft) => {
         if (!active) return;
         setName(draft.name);
+        setHandle(draft.handle);
         setCity(draft.city);
         setBio(draft.bio);
         setAvatarPath(draft.avatarPath);
@@ -118,6 +122,13 @@ export default function EditProfileScreen() {
       setError(strings.editProfile.errorNameRequired);
       return;
     }
+    // Lower-cased for them rather than refused: "KovacsBence" is a slip of
+    // the shift key, not a different intention.
+    const cleanHandle = handle.trim().toLowerCase();
+    if (!HANDLE_PATTERN.test(cleanHandle)) {
+      setError(strings.editProfile.errorHandleShape);
+      return;
+    }
     if (bio.trim().length > BIO_MAX_LENGTH) {
       setError(strings.editProfile.errorBioTooLong);
       return;
@@ -125,10 +136,10 @@ export default function EditProfileScreen() {
     setError(undefined);
     setSaving(true);
     try {
-      await updateProfile({ name, city, bio, avatarPath });
+      await updateProfile({ name, handle: cleanHandle, city, bio, avatarPath });
       closeModal(router, "/(tabs)/profile");
     } catch (e) {
-      setError(e instanceof Error ? e.message : strings.auth.genericError);
+      setError(e instanceof HandleTakenError ? strings.editProfile.errorHandleTaken : strings.auth.genericError);
     } finally {
       setSaving(false);
     }
@@ -202,6 +213,19 @@ export default function EditProfileScreen() {
             fontsLoaded={fontsLoaded}
           />
 
+          <View style={{ gap: space.sm }}>
+            <Field
+              label={strings.editProfile.handleLabel}
+              value={handle}
+              onChangeText={setHandle}
+              placeholder={strings.editProfile.handlePlaceholder}
+              fontsLoaded={fontsLoaded}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <Text variant="caption" tone="dim">{strings.editProfile.handleHint}</Text>
+          </View>
+
           <Field
             label={strings.editProfile.cityLabel}
             value={city}
@@ -261,12 +285,16 @@ function Field({
   onChangeText,
   placeholder,
   fontsLoaded,
+  autoCapitalize,
+  autoCorrect,
 }: {
   label: string;
   value: string;
   onChangeText: (v: string) => void;
   placeholder?: string;
   fontsLoaded: boolean;
+  autoCapitalize?: "none" | "sentences" | "words" | "characters";
+  autoCorrect?: boolean;
 }) {
   const styles = useStyles();
 
@@ -279,6 +307,8 @@ function Field({
         placeholder={placeholder}
         placeholderTextColor={colors.textFaint}
         accessibilityLabel={label}
+        autoCapitalize={autoCapitalize}
+        autoCorrect={autoCorrect}
         style={[styles.input, { fontFamily: bodyFont(fontsLoaded) }]}
       />
     </View>
