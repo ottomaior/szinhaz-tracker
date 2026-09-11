@@ -4,10 +4,11 @@ import { Image } from "expo-image";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
 import { gutter, radius, space } from "@/theme/tokens";
-import { deleteReview, getDiaryEntry } from "@/services/playsService";
+import { deleteReview, getDiaryEntry, getUserById } from "@/services/playsService";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/Button";
-import type { Performance, Play, Review, Venue } from "@/data/types";
+import type { Performance, Play, Review, User, Venue } from "@/data/types";
+import { Avatar } from "@/components/ui/Avatar";
 import { ChevronRightIcon } from "@/components/icons/Icons";
 import { MaskRatingRow } from "@/components/icons/MaskIcon";
 import { Chip } from "@/components/ui/Chip";
@@ -50,6 +51,11 @@ export default function DiaryEntryScreen() {
     venue?: Venue;
     performance?: Performance;
   }>();
+  // Whose evening this is. The screen used to show none of this — not a
+  // name, not a face — so somebody arriving from a link or the feed was
+  // reading an entry with no author on it (T-057). Loaded after the entry,
+  // separately, so a slow profile never holds the evening back.
+  const [author, setAuthor] = useState<User>();
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   const [sharing, setSharing] = useState(false);
@@ -71,6 +77,13 @@ export default function DiaryEntryScreen() {
           if (!active) return;
           setEntry(found);
           setFailed(!found);
+          if (found) {
+            getUserById(found.review.userId)
+              .then((u) => {
+                if (active) setAuthor(u);
+              })
+              .catch(() => undefined);
+          }
         })
         .catch(() => {
           if (active) setFailed(true);
@@ -139,7 +152,6 @@ export default function DiaryEntryScreen() {
   const { review, play, venue, performance } = entry;
   const isMine = !!session && session.user?.id === review.userId;
   const cast = review.castSeen ?? [];
-  const hasEvening = cast.length > 0 || !!review.seat || review.priceHuf !== undefined || !!review.stubUrl;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -176,6 +188,23 @@ export default function DiaryEntryScreen() {
           </ContentColumn>
         )}
         <ContentColumn style={{ padding: gutter, gap: space.xl }}>
+          {/* Whose evening, and the way to them. Your own opens your profile
+              tab rather than a second copy of it. */}
+          {!!author && (
+            <Pressable
+              onPress={() => (isMine ? router.push("/(tabs)/profile") : router.push(`/user/${author.id}`))}
+              accessibilityRole="button"
+              accessibilityLabel={author.name}
+              style={styles.byline}
+            >
+              <Avatar uri={author.avatarUrl} initials={author.initials} size={36} />
+              <View style={{ flexShrink: 1 }}>
+                <Text variant="bodySmall" numberOfLines={1}>{author.name}</Text>
+                <Text variant="caption" tone="faint" numberOfLines={1}>@{author.handle}</Text>
+              </View>
+            </Pressable>
+          )}
+
           {/* What was seen, and the way back to it. */}
           <Pressable
             onPress={() => router.push(`/play/${play.id}`)}
@@ -230,12 +259,13 @@ export default function DiaryEntryScreen() {
               below simply do not render. Which would leave a screen that
               trails off looking like an entry nobody finished.
 
-              This is the sentence that says otherwise. The page does not know
-              the author's name — it never needed it — so the generic wording
-              is the honest one here, and the way to their profile is the
-              avatar and name in the header above. */}
+              This is the sentence that says otherwise, named once the author
+              has loaded; the byline above is the way to their profile and the
+              follow button on it. */}
           {!review.canSeeOpinion && (
-            <Text variant="bodySmall" tone="faint">{strings.feed.followToSeeGeneric}</Text>
+            <Text variant="bodySmall" tone="faint">
+              {author ? strings.feed.followToSee(author.name) : strings.feed.followToSeeGeneric}
+            </Text>
           )}
 
           {cast.length > 0 && (
@@ -311,13 +341,6 @@ export default function DiaryEntryScreen() {
                 <Chip key={tag} label={tag} active />
               ))}
             </View>
-          )}
-
-          {/* Said plainly rather than left as a screen that trails off. Every
-              one of these fields arrived in 0028, so every entry written before
-              it answers none of them. */}
-          {!hasEvening && (
-            <Text variant="bodySmall" tone="faint">{strings.entry.nothingRecorded}</Text>
           )}
 
           {/* Yours to change. The app could write a diary entry from three
@@ -463,6 +486,7 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     borderRadius: radius.lg,
     padding: space.md,
   },
+  byline: { flexDirection: "row", alignItems: "center", gap: space.md },
   ownerActions: { flexDirection: "row", gap: space.sm, flexWrap: "wrap" },
   ownerButton: {
     borderWidth: 1,

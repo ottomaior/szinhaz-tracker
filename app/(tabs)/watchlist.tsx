@@ -16,6 +16,7 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { SignedOutState } from "@/components/ui/SignedOutState";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
+import { formatLongDate, formatShowtime } from "@/utils/datetime";
 import { makeStyles } from "@/theme/styles";
 
 export default function WatchlistScreen() {
@@ -162,6 +163,17 @@ export default function WatchlistScreen() {
 function WatchlistRow({ play, onPress }: { play: Play; onPress: () => void }) {
   const styles = useStyles();
 
+  // The next date, which is what the signed-out pitch for this screen
+  // promises ("a következő időponttal"). The premiere only when nothing is
+  // scheduled — and then with its year, because the row used to print a 2021
+  // premiere as "Bemutató: szept. 17." and read as news (T-056). Same rule as
+  // the feed's watchlist card.
+  const when = play.nextPerformanceAt
+    ? `${strings.status.nextPerformance}: ${formatShowtime(play.nextPerformanceAt)}`
+    : play.premiereDate
+      ? `${strings.watchlist.premiereLabel}: ${formatLongDate(`${play.premiereDate}T12:00:00Z`)}`
+      : undefined;
+
   const [venue, setVenue] = useState<Venue>();
   useEffect(() => {
     getVenueById(play.venueId)
@@ -182,11 +194,11 @@ function WatchlistRow({ play, onPress }: { play: Play; onPress: () => void }) {
             {venue?.name}
           </Text>
         </View>
-        {play.premiereDate && (
+        {when && (
           <View style={styles.metaRow}>
             <CalendarIcon size={13} />
-            <Text variant="caption" tone="faint">
-              {strings.watchlist.premiereLabel}: {formatDate(play.premiereDate)}
+            <Text variant="caption" tone="faint" numberOfLines={1} style={{ flex: 1 }}>
+              {when}
             </Text>
           </View>
         )}
@@ -212,10 +224,6 @@ function SubjectRow({ label, detail, onPress }: { label: string; detail: string;
       <ChevronRightIcon size={15} color={colors.textFaint} />
     </Pressable>
   );
-}
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("hu-HU", { month: "short", day: "numeric" });
 }
 
 const useStyles = makeStyles((colors) => StyleSheet.create({

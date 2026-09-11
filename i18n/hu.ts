@@ -33,6 +33,11 @@ export const strings = {
        that clears it. There is no visual affordance for that on the mask
        itself, so the hint is the only place a screen reader hears about it. */
     clearRating: "Koppints rá újra az értékelés törléséhez.",
+
+    /* app/+not-found.tsx — an address the router has no screen for. */
+    notFoundTitle: "Ez az oldal nincs meg.",
+    notFoundBody: "Lehet, hogy elgépelt a cím, vagy a link már nem él.",
+    notFoundAction: "Felfedezés",
   },
 
   tabs: {
@@ -210,6 +215,16 @@ export const strings = {
     switchToSignUp: "Regisztrálok",
     switchToSignIn: "Bejelentkezem",
     signInPrompt: "Jelentkezz be, hogy folytathasd",
+
+    /* Under the sign-up button, in pieces so the two links can be pressed
+       separately inside one sentence: "A fiók létrehozásával elfogadod a
+       Felhasználási feltételeket, és tudomásul veszed az Adatkezelési
+       tájékoztatót." */
+    legalNoticeBefore: "A fiók létrehozásával elfogadod a ",
+    legalNoticeTerms: "Felhasználási feltételeket",
+    legalNoticeBetween: ", és tudomásul veszed az ",
+    legalNoticePrivacy: "Adatkezelési tájékoztatót",
+    legalNoticeAfter: ".",
     signOut: "Kijelentkezés",
     signOutConfirmTitle: "Kijelentkezel?",
     signOutConfirmBody: "Újra be kell majd jelentkezned a naplózáshoz.",
@@ -217,6 +232,27 @@ export const strings = {
     emailRequired: "Add meg az e-mail címed.",
     passwordRequired: "Add meg a jelszavad.",
     nameRequired: "Add meg a neved.",
+
+    /**
+     * The auth API's error codes a person can cause, in Hungarian. Keyed by
+     * the `code` on AuthApiError; anything not here falls back to
+     * `genericError`. See authErrorMessage in services/authService.ts.
+     */
+    errors: {
+      invalid_credentials: "Hibás e-mail cím vagy jelszó.",
+      email_not_confirmed: "Ezt a címet még nem erősítetted meg. Nézd meg a postaládád.",
+      email_address_invalid: "Ez nem tűnik érvényes e-mail címnek.",
+      validation_failed: "Ez nem tűnik érvényes e-mail címnek.",
+      user_already_exists: "Ezzel a címmel már van fiók. Jelentkezz be.",
+      email_exists: "Ezzel a címmel már van fiók. Jelentkezz be.",
+      weak_password: "A jelszó legyen legalább 8 karakter.",
+      same_password: "Az új jelszó nem egyezhet a régivel.",
+      over_email_send_rate_limit: "Túl sok e-mailt kértél rövid időn belül. Próbáld később.",
+      over_request_rate_limit: "Túl sok próbálkozás. Várj egy kicsit, és próbáld újra.",
+      session_expired: "A link lejárt. Kérj újat.",
+      otp_expired: "A link lejárt. Kérj újat.",
+      signup_disabled: "A regisztráció most szünetel.",
+    } as Record<string, string>,
 
     /* Sign-up used to close its modal the moment the request resolved, which
        looks exactly like being signed in. With e-mail megerősítés on, it is
@@ -662,10 +698,12 @@ export const strings = {
     delete: "Törlés",
     deleting: "Törlés…",
     deleteConfirmTitle: "Törlöd ezt a bejegyzést?",
-    /* Named, because a diary entry is not one row: the date, a szereposztás, a
-       hely, a jegyár, egy fotó és a hozzászólások mind vele mennek. */
+    /* Named, because a diary entry is not one row: the date, the ratings, the
+       note, the tags and everybody's comments under it all go with it. Seat,
+       price and cast are not listed since the form stopped asking for them;
+       an old entry that holds them loses them too, which "minden" covers. */
     deleteConfirmBody:
-      "A dátum, a szereposztás, a hely, a jegyár, a fotó és a hozzászólások is törlődnek. Ezt nem lehet visszavonni.",
+      "A dátum, az értékelés, a vélemény, a címkék és a hozzászólások is törlődnek — minden, ami ehhez az estéhez tartozik. Ezt nem lehet visszavonni.",
     deleteFailed: "Nem sikerült törölni a bejegyzést. Próbáld újra.",
     rewatch: "Újranézés",
     castHeading: "Akiket aznap este láttál",
@@ -676,8 +714,6 @@ export const strings = {
     stubHeading: "Jegy",
     reviewHeading: "Vélemény",
     openPlay: "Az előadás adatlapja",
-    nothingRecorded:
-      "Ehhez az estéhez még nem rögzítettél helyet, jegyárat vagy szereplőket.",
   },
 
   /**
