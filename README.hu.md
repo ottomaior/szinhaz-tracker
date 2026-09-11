@@ -28,7 +28,7 @@ npx expo install --fix
 
 Ezután hozz létre egy [Supabase](https://supabase.com) projektet (az ingyenes
 csomag bőven elég), futtasd le a `supabase/migrations/` **összes** fájlját
-**sorrendben** (`0001_init.sql`-től a `0036_ratings_that_move_and_accounts_that_close.sql`-ig) a projekt
+**sorrendben** (a `0001_init.sql`-től a legmagasabb sorszámú fájlig) a projekt
 SQL-szerkesztőjében, majd másold a `.env.example`-t `.env`-re, és töltsd ki a
 projekt Settings → API oldaláról az URL-t és az anon kulcsot:
 
