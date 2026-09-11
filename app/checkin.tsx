@@ -7,6 +7,7 @@ import { inputFontSize } from "@/theme/type";
 import { gutter, radius, space } from "@/theme/tokens";
 import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
+import { useSearchQuery } from "@/hooks/useSearchQuery";
 import {
   countUserEntriesForPlay,
   findBlankEntryForPlay,
@@ -22,11 +23,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import type { Performance, Play, Review, SeenCastMember, Venue } from "@/data/types";
 import { parseTicketPrice } from "@/utils/money";
 import { personSlug } from "@/utils/people";
-import { PinIcon, SearchIcon } from "@/components/icons/Icons";
+import { foldSearchTerm } from "@/utils/search";
+import { PinIcon } from "@/components/icons/Icons";
 import { MaskRatingRow } from "@/components/icons/MaskIcon";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { DateField } from "@/components/ui/DateField";
 import { ModalHeader } from "@/components/ui/ModalHeader";
+import { SearchField } from "@/components/ui/SearchField";
 import { ContentColumn } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { Chip } from "@/components/ui/Chip";
@@ -627,27 +630,13 @@ export default function CheckInScreen() {
 function PlayPicker({ insetTop, onCancel, onPick }: { insetTop: number; onCancel: () => void; onPick: (play: Play) => void }) {
   const styles = useStyles();
 
-  const fontsLoaded = useAppFonts();
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<Play[]>([]);
-  const [searching, setSearching] = useState(false);
   const trimmed = query.trim();
-
-  useEffect(() => {
-    if (!trimmed) {
-      setResults([]);
-      setSearching(false);
-      return;
-    }
-    setSearching(true);
-    const handle = setTimeout(() => {
-      searchPlays(trimmed)
-        .then(setResults)
-        .catch(() => setResults([]))
-        .finally(() => setSearching(false));
-    }, 300);
-    return () => clearTimeout(handle);
-  }, [trimmed]);
+  // Twenty rows: a picker is answered by the first few, and the field stays
+  // in reach above them. Debounced, deduplicated and kept in order by the hook.
+  const search = useSearchQuery(trimmed ? foldSearchTerm(trimmed) : null, () => searchPlays(trimmed, { limit: 20 }));
+  const results = search.data?.plays ?? [];
+  const searching = search.loading && !search.data;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -659,17 +648,14 @@ function PlayPicker({ insetTop, onCancel, onPick }: { insetTop: number; onCancel
           {strings.checkin.pickPlayTitle}
         </Text>
 
-        <View style={styles.searchBar}>
-          <SearchIcon />
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder={strings.checkin.pickPlayPlaceholder}
-            placeholderTextColor={colors.textFaint}
-            autoFocus
-            style={{ flex: 1, fontFamily: bodyFont(fontsLoaded), fontSize: inputFontSize, color: colors.text }}
-          />
-        </View>
+        <SearchField
+          value={query}
+          onChangeText={setQuery}
+          placeholder={strings.checkin.pickPlayPlaceholder}
+          accessibilityLabel={strings.checkin.pickPlayPlaceholder}
+          loading={!!trimmed && search.loading}
+          autoFocus
+        />
 
         {!trimmed && (
           <Text variant="bodySmall" tone="faint">
@@ -739,17 +725,6 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     justifyContent: "center",
     gap: space.lg,
     padding: gutter,
-  },
-  searchBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.md,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    borderRadius: radius.md,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
   },
   pickerRow: {
     flexDirection: "row",

@@ -3,6 +3,7 @@ import { getFollowingIds } from "@/services/followService";
 import { getLikedReviewIds } from "@/services/socialService";
 import { avatarUrl } from "@/services/profileService";
 import { budapestDayKey } from "@/utils/datetime";
+import { foldSearchTerm } from "@/utils/search";
 import { currentSeasonStart, seasonRange } from "@/utils/season";
 import type {
   CastMember,
@@ -1659,8 +1660,11 @@ async function solePerformanceOn(playId: string, dayKey: string): Promise<string
  */
 
 export async function searchVenues(query: string): Promise<Venue[]> {
-  if (!query.trim()) return [];
-  const { data, error } = await supabase.from("venues").select("*").ilike("name", `%${query.trim()}%`).order("name").limit(20);
+  const term = foldSearchTerm(query.trim());
+  if (!term) return [];
+  // Against the folded column 0056 added, so "szinhaz" finds "Színház" here
+  // the way it does everywhere else.
+  const { data, error } = await supabase.from("venues").select("*").ilike("name_norm", `%${term}%`).order("name").limit(20);
   if (error) throw error;
   return (data ?? []).map((r) => toVenue(r as VenueRow));
 }

@@ -758,7 +758,11 @@ async function main() {
     await recomputeStatuses();
     await recomputeGenres();
     await recomputeEvents();
-    // Last, because it reads what the two passes above have just settled: a
+    // After the recomputes and before the alerts: the people index reads the
+    // cast and director columns this run just wrote, and nothing later
+    // depends on it.
+    await refreshPeopleIndex();
+    // Last, because it reads what the passes above have just settled: a
     // production's dates and whether it is archived both decide whether it is
     // worth telling anybody about.
     await generateNotifications();
@@ -829,6 +833,28 @@ async function recomputeEvents() {
     console.log(`[events] flagged ${data ?? 0} row(s) as non-productions`);
   } catch (e) {
     console.error("[events] recompute failed (catalog rows are still up to date):", errorMessageOf(e));
+  }
+}
+
+/**
+ * Rebuilds what search knows about people — see
+ * supabase/migrations/0056_search_that_keeps_up.sql.
+ *
+ * `search_people()` reads a table rather than recomputing every performer's
+ * slug and credit count per keystroke, and this is what fills that table: one
+ * pass over `play_cast` and `plays.director` after the catalogue has been
+ * written. A production a member adds by hand is indexed on the spot by
+ * `create_play_with_cast`; everything the adapters bring arrives here.
+ */
+async function refreshPeopleIndex() {
+  try {
+    const { data, error } = await getSupabaseAdmin().rpc("refresh_people_index");
+    if (error) throw error;
+    console.log(`[people] indexed ${data ?? 0} people`);
+  } catch (e) {
+    // Same rule as the recomputes: the catalogue is written and correct, and
+    // yesterday's index answers search until tomorrow's run.
+    console.error("[people] index refresh failed (catalog rows are still up to date):", errorMessageOf(e));
   }
 }
 

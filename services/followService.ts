@@ -114,9 +114,13 @@ export async function unfollowUser(followeeId: string): Promise<void> {
  */
 export async function searchPeople(term: string): Promise<PersonSummary[]> {
   if (!term.trim()) return [];
-  const { data, error } = await supabase.rpc("search_profiles", { search_term: term });
+  // Both at once: the searcher's own id used to be a second round trip *after*
+  // the results arrived, on every debounce.
+  const [{ data, error }, me] = await Promise.all([
+    supabase.rpc("search_profiles", { search_term: term }),
+    currentUserId(),
+  ]);
   if (error) throw error;
-  const me = await currentUserId();
   return (data ?? []).map((r: ProfileRow) => toPerson(r)).filter((p: PersonSummary) => p.id !== me);
 }
 

@@ -31,9 +31,29 @@ export type SearchOptions = {
    * the note on searchPlays below.
    */
   includeArchived?: boolean;
+  /** Page size; the RPC defaults to 40, the same as the browse rails. */
+  limit?: number;
+  /** Rows to skip — the length of what is already on screen. */
+  offset?: number;
 };
 
+/**
+ * One page of results, and the two numbers the header prints about the whole
+ * match. `total` and `archived` describe every row the term found, not just
+ * the rows in `plays`, so "296 találat" stays true over a page of forty.
+ */
+export type SearchPage = {
+  plays: Play[];
+  total: number;
+  archived: number;
+};
+
+export const EMPTY_SEARCH_PAGE: SearchPage = { plays: [], total: 0, archived: 0 };
+
 type PlayRow = Parameters<typeof mapRow>[0];
+
+/** What 0056's search_plays returns: the row nested under `play`, with counts. */
+type SearchRow = { play: PlayRow; total_count: number; archived_count: number };
 
 function mapRow(row: {
   id: string;
@@ -111,10 +131,13 @@ function mapRow(row: {
  * the check-in play picker uses, and logging a play you saw years ago is the
  * whole point of keeping the theaters' archives in the catalog. Discover's
  * browse rails are the place that hides them (see getTrending/getPremieres).
+ *
+ * Paged since 0056. Before that the RPC had no LIMIT and "a" came back as
+ * 1,227 full rows — about a megabyte — for a grid showing six posters.
  */
-export async function searchPlays(query: string, options: SearchOptions = {}): Promise<Play[]> {
+export async function searchPlays(query: string, options: SearchOptions = {}): Promise<SearchPage> {
   const trimmed = query.trim();
-  if (!trimmed) return [];
+  if (!trimmed) return EMPTY_SEARCH_PAGE;
   const { data, error } = await supabase.rpc("search_plays", {
     search_term: trimmed,
     venue_type_filter: options.venueType ?? null,
@@ -129,7 +152,14 @@ export async function searchPlays(query: string, options: SearchOptions = {}): P
     genre_filter: options.genre ?? null,
     room_filter: options.room ?? null,
     sort_by: options.sort ?? "relevance",
+    limit_count: options.limit ?? 40,
+    offset_count: options.offset ?? 0,
   });
   if (error) throw error;
-  return (data ?? []).map((r: PlayRow) => mapRow(r));
+  const rows = (data ?? []) as SearchRow[];
+  return {
+    plays: rows.map((r) => mapRow(r.play)),
+    total: rows[0]?.total_count ?? 0,
+    archived: rows[0]?.archived_count ?? 0,
+  };
 }

@@ -1,21 +1,20 @@
 import { useEffect, useState } from "react";
-import { View, ScrollView, StyleSheet, Pressable, TextInput } from "react-native";
+import { View, ScrollView, StyleSheet, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
-import { inputFontSize } from "@/theme/type";
-import { gutter, radius, space } from "@/theme/tokens";
-import { bodyFont } from "@/theme/typography";
-import { useAppFonts } from "@/hooks/useAppFonts";
+import { gutter, space } from "@/theme/tokens";
+import { useSearchQuery } from "@/hooks/useSearchQuery";
 import { getFollowing, searchPeople, type PersonSummary } from "@/services/followService";
 import { useAuth } from "@/contexts/AuthContext";
-import { SearchIcon, CloseIcon } from "@/components/icons/Icons";
 import { Avatar } from "@/components/ui/Avatar";
 import { ModalHeader } from "@/components/ui/ModalHeader";
+import { SearchField } from "@/components/ui/SearchField";
 import { ContentColumn } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { Button } from "@/components/ui/Button";
 import { strings } from "@/i18n/hu";
 import { makeStyles } from "@/theme/styles";
+import { foldSearchTerm } from "@/utils/search";
 
 /**
  * Finding people to follow.
@@ -27,15 +26,18 @@ export default function PeopleScreen() {
   const styles = useStyles();
 
   const router = useRouter();
-  const fontsLoaded = useAppFonts();
   const { session } = useAuth();
 
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<PersonSummary[]>([]);
   const [following, setFollowing] = useState<PersonSummary[]>([]);
-  const [searching, setSearching] = useState(false);
 
-  const isSearching = query.trim().length > 0;
+  const trimmed = query.trim();
+  const isSearching = trimmed.length > 0;
+  // Debounced, deduplicated and kept in order by the hook; a handle typed
+  // with a stray accent folds to the same key as one typed without.
+  const search = useSearchQuery(isSearching ? foldSearchTerm(trimmed) : null, () => searchPeople(trimmed));
+  const results = search.data ?? [];
+  const searching = search.loading && !search.data;
 
   useEffect(() => {
     if (!session) return;
@@ -44,24 +46,6 @@ export default function PeopleScreen() {
       .catch(() => setFollowing([]));
   }, [session]);
 
-  useEffect(() => {
-    if (!isSearching) {
-      setResults([]);
-      setSearching(false);
-      return;
-    }
-    setSearching(true);
-    // Same 300ms debounce as the play search, for the same reason: a query per
-    // keystroke is a query per keystroke.
-    const handle = setTimeout(() => {
-      searchPeople(query)
-        .then(setResults)
-        .catch(() => setResults([]))
-        .finally(() => setSearching(false));
-    }, 300);
-    return () => clearTimeout(handle);
-  }, [query, isSearching]);
-
   const shown = isSearching ? results : following;
 
   return (
@@ -69,23 +53,14 @@ export default function PeopleScreen() {
       <ModalHeader title={strings.people.searchTitle} fallbackRoute="/(tabs)" />
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: space["5xl"] }}>
         <ContentColumn style={{ paddingHorizontal: gutter, gap: space.lg }}>
-          <View style={styles.searchBar}>
-            <SearchIcon />
-            <TextInput
+          <View style={styles.searchRow}>
+            <SearchField
               value={query}
               onChangeText={setQuery}
               placeholder={strings.people.searchPlaceholder}
-              placeholderTextColor={colors.textFaint}
-              accessibilityLabel={strings.people.searchPlaceholder}
-              autoCapitalize="none"
-              autoCorrect={false}
-              style={{ flex: 1, fontFamily: bodyFont(fontsLoaded), fontSize: inputFontSize, color: colors.text }}
+              loading={isSearching && search.loading}
+              handleMode
             />
-            {isSearching && (
-              <Pressable onPress={() => setQuery("")} hitSlop={10} accessibilityRole="button" accessibilityLabel={strings.common.close}>
-                <CloseIcon size={15} color={colors.textDim} />
-              </Pressable>
-            )}
           </View>
 
           {!isSearching && !!session && (
@@ -135,16 +110,7 @@ export default function PeopleScreen() {
 }
 
 const useStyles = makeStyles((colors) => StyleSheet.create({
-  searchBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.sm,
-    backgroundColor: colors.surface,
-    borderRadius: radius.pill,
-    paddingHorizontal: space.md,
-    paddingVertical: space.sm,
-    marginTop: space.md,
-  },
+  searchRow: { marginTop: space.md },
   row: {
     flexDirection: "row",
     alignItems: "center",

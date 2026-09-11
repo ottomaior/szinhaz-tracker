@@ -38,6 +38,8 @@
  * writes for two prizes sharing one suffix ("Ferenczy Noémi- és Jászai
  * Mari-díjas").
  */
+import { foldSearchTerm } from "./search";
+
 const PRIZES = "Kossuth|Liszt Ferenc|Liszt|Jászai Mari|Jászai|Ferenczy Noémi|Blattner Géza|Erkel Ferenc|Balázs Béla|Munkácsy Mihály|Széchenyi";
 
 const HONORIFIC_TAIL = new RegExp(
@@ -60,38 +62,14 @@ export function personCanonicalName(rawName: string): string {
 }
 
 /**
- * The accent folding `unaccent` performs, for the characters this catalogue has.
+ * Accent-folded, lowercased, everything else collapsed to single hyphens.
  *
- * `normalize("NFD")` plus a combining-mark strip covers á é í ó ö ú ü and their
- * capitals, and — the part worth checking rather than assuming — **ő and ű**,
- * the two letters Hungarian has that most folding tables miss. Both decompose
- * to a base vowel plus a combining double acute, which the mark strip removes.
- *
- * The map below is only for characters NFD leaves alone, which turn up in
- * visiting performers' names.
+ * The folding is `foldSearchTerm()` from `utils/search.ts` — the same table
+ * a search term goes through — so that what a person is called in a URL and
+ * what a search box compares against can never fold differently.
  */
-const EXTRA_FOLDINGS: Record<string, string> = {
-  ß: "ss",
-  ł: "l",
-  Ł: "L",
-  đ: "d",
-  Đ: "D",
-  ø: "o",
-  Ø: "O",
-  æ: "ae",
-  Æ: "AE",
-  œ: "oe",
-  Œ: "OE",
-};
-
-/** Accent-folded, lowercased, everything else collapsed to single hyphens. */
 export function personSlug(rawName: string): string {
-  return personCanonicalName(rawName)
-    .replace(/[ßłŁđĐøØæÆœŒ]/g, (c) => EXTRA_FOLDINGS[c] ?? c)
-    .normalize("NFD")
-    // Combining diacritical marks. This is the step that turns Ő into O.
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
+  return foldSearchTerm(personCanonicalName(rawName))
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 }
