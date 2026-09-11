@@ -7,14 +7,12 @@ import { gutter, overlay, radius, space } from "@/theme/tokens";
 import {
   getCurrentUser,
   getFeed,
-  getPlayById,
-  getUserById,
-  getVenueById,
   type FeedScope,
 } from "@/services/playsService";
 import { getUnreadCount } from "@/services/notificationService";
 import { likeReview, unlikeReview } from "@/services/socialService";
-import type { FeedItem, Play, User, Venue, Review, WatchlistEntry } from "@/data/types";
+import type { FeedAuthor, FeedItem, FeedPage, Play, User, Venue, Review, WatchlistEntry } from "@/data/types";
+import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/contexts/AuthContext";
 import { BellIcon, CommentIcon, HeartIcon } from "@/components/icons/Icons";
 import { MaskRatingRow } from "@/components/icons/MaskIcon";
@@ -47,7 +45,11 @@ export default function FeedScreen() {
 
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const [items, setItems] = useState<FeedItem[]>([]);
+  // The pages so far, flattened for rendering and kept as maps for lookup.
+  // Every card reads its play, venue and author out of `page` rather than
+  // fetching them: a page is three queries now, not six per card (T-046).
+  const [page, setPage] = useState<FeedPage>({ items: [], plays: new Map(), venues: new Map(), authors: new Map() });
+  const [loadingMore, setLoadingMore] = useState(false);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -59,7 +61,7 @@ export default function FeedScreen() {
   const load = useCallback(async () => {
     setFailed(false);
     try {
-      setItems(await getFeed(scope));
+      setPage(await getFeed(scope));
     } catch {
       // A network/RLS failure used to reject silently, leaving a blank screen
       // that was indistinguishable from an empty feed.
@@ -120,6 +122,31 @@ export default function FeedScreen() {
       };
     }, [session])
   );
+
+  /**
+   * The page after the last one, appended. The feed used to be the twenty
+   * newest entries and nothing behind them (T-048); now it ends where the
+   * data does, and says so with the absence of the button.
+   */
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !page.nextBefore) return;
+    setLoadingMore(true);
+    try {
+      const next = await getFeed(scope, { before: page.nextBefore });
+      setPage((cur) => ({
+        items: [...cur.items, ...next.items],
+        plays: new Map([...cur.plays, ...next.plays]),
+        venues: new Map([...cur.venues, ...next.venues]),
+        authors: new Map([...cur.authors, ...next.authors]),
+        nextBefore: next.nextBefore,
+      }));
+    } catch {
+      // Left as it was: the pages already on screen are fine, and the button
+      // stays to be pressed again.
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore, page.nextBefore, scope]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -227,10 +254,11 @@ export default function FeedScreen() {
           contentContainerStyle={styles.body}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.gold} />}
         >
-          {items.map((item) => (
+          {page.items.map((item) => (
             <FeedCardRouter
               key={feedItemKey(item)}
               item={item}
+              page={page}
               onOpenPlay={(id) => router.push(`/play/${id}`)}
               // `compose` opens the evening with the comment box already
               // focused, so tapping a bubble that reads 0 lands somewhere you
@@ -244,10 +272,20 @@ export default function FeedScreen() {
             />
           ))}
 
+          {!!page.nextBefore && (
+            <Button
+              variant="outline"
+              label={loadingMore ? strings.discover.loadingMore : strings.discover.loadMore}
+              disabled={loadingMore}
+              onPress={loadMore}
+              style={styles.loadMore}
+            />
+          )}
+
           {/* An empty "Követettek" feed means "follow someone", not "nobody has
               used the app yet", and pointing it at Discover would be advice for
               the wrong problem. */}
-          {!loading && items.length === 0 && !failed && scope === "following" && (
+          {!loading && page.items.length === 0 && !failed && scope === "following" && (
             <EmptyState
               eyebrow={strings.feed.scopeFollowing}
               title={strings.feed.followingEmptyTitle}
@@ -257,7 +295,7 @@ export default function FeedScreen() {
             />
           )}
 
-          {!loading && items.length === 0 && (failed || scope === "everyone") && (
+          {!loading && page.items.length === 0 && (failed || scope === "everyone") && (
             <EmptyState
               eyebrow={strings.tabs.feed}
               title={failed ? strings.common.loadError : strings.feed.emptyTitle}
@@ -297,30 +335,106 @@ function seenNote(review: Review): string | undefined {
  * threw away its already-loaded play/user data.
  */
 function feedItemKey(item: FeedItem) {
-  return item.kind === "checkin" ? `review:${item.review.id}` : `watchlist:${item.entry.playId}:${item.entry.addedByUserId}`;
+  if (item.kind === "checkin") return `review:${item.review.id}`;
+  if (item.kind === "watchlist") return `watchlist:${item.entry.playId}:${item.entry.addedByUserId}`;
+  return `backfill:${item.reviews[0].id}`;
 }
 
 function FeedCardRouter({
   item,
+  page,
   onOpenPlay,
   onOpenEntry,
 }: {
   item: FeedItem;
+  page: FeedPage;
   onOpenPlay: (id: string) => void;
   /** The evening itself, where the conversation lives. */
   onOpenEntry: (reviewId: string, options?: { compose?: boolean }) => void;
 }) {
-  if (item.kind === "checkin")
+  if (item.kind === "checkin") {
+    const play = page.plays.get(item.review.playId);
+    const user = page.authors.get(item.review.userId);
+    if (!play || !user) return null;
     return (
       <CheckinCard
         review={item.review}
         likedByMe={item.likedByMe}
+        play={play}
+        venue={page.venues.get(play.venueId)}
+        user={user}
         onOpenPlay={onOpenPlay}
         onOpenEntry={onOpenEntry}
       />
     );
-  return <WatchlistCard entry={item.entry} onOpenPlay={onOpenPlay} />;
+  }
+  if (item.kind === "watchlist") {
+    const play = page.plays.get(item.entry.playId);
+    const user = page.authors.get(item.entry.addedByUserId);
+    if (!play || !user) return null;
+    return <WatchlistCard entry={item.entry} play={play} venue={page.venues.get(play.venueId)} user={user} onOpenPlay={onOpenPlay} />;
+  }
+  const user = page.authors.get(item.userId);
+  if (!user) return null;
+  return <BackfillCard item={item} user={user} plays={page.plays} onOpenPlay={onOpenPlay} />;
 }
+
+/**
+ * One person's onboarding sitting, as one card.
+ *
+ * The posters in a row rather than a poster card each: the point of the fold
+ * is that this was one act, not eighteen evenings. Every tile still opens
+ * its production, and the byline still opens the person.
+ */
+function BackfillCard({
+  item,
+  user,
+  plays,
+  onOpenPlay,
+}: {
+  item: Extract<FeedItem, { kind: "backfill" }>;
+  user: FeedAuthor;
+  plays: Map<string, Play>;
+  onOpenPlay: (id: string) => void;
+}) {
+  const styles = useStyles();
+
+  const shown = item.reviews.slice(0, BACKFILL_TILES);
+  const rest = item.reviews.length - shown.length;
+
+  return (
+    <View style={{ gap: space.md }}>
+      <CardByline user={user} action={strings.feed.backfilled(item.reviews.length)} meta={formatTimeAgo(item.createdAt)} />
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.backfillRow}>
+        {shown.map((review) => {
+          const play = plays.get(review.playId);
+          if (!play) return null;
+          return (
+            <Pressable
+              key={review.id}
+              onPress={() => onOpenPlay(play.id)}
+              accessibilityRole="button"
+              accessibilityLabel={play.title}
+              style={styles.backfillTile}
+            >
+              <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} width={72} height={104} radius={radius.sm} preferThumb />
+              <Text variant="caption" numberOfLines={2}>{play.title}</Text>
+            </Pressable>
+          );
+        })}
+        {rest > 0 && (
+          <View style={[styles.backfillTile, styles.backfillMore]}>
+            <Text variant="label" tone="dim">{strings.feed.backfillMore(rest)}</Text>
+          </View>
+        )}
+      </ScrollView>
+      <View style={styles.divider} />
+    </View>
+  );
+}
+
+/** Posters shown on a backfill card before the "+N" tile. */
+const BACKFILL_TILES = 8;
 
 /**
  * The "who did what, when" line every feed card opens with.
@@ -329,7 +443,7 @@ function FeedCardRouter({
  * like" to following them, so the whole avatar-and-name block opens their
  * profile.
  */
-function CardByline({ user, action, meta }: { user: User; action: string; meta: string }) {
+function CardByline({ user, action, meta }: { user: FeedAuthor; action: string; meta: string }) {
   const styles = useStyles();
 
   const router = useRouter();
@@ -361,11 +475,17 @@ function CardByline({ user, action, meta }: { user: User; action: string; meta: 
 function CheckinCard({
   review,
   likedByMe,
+  play,
+  venue,
+  user,
   onOpenPlay,
   onOpenEntry,
 }: {
   review: Review;
   likedByMe: boolean;
+  play: Play;
+  venue?: Venue;
+  user: FeedAuthor;
   onOpenPlay: (id: string) => void;
   onOpenEntry: (reviewId: string, options?: { compose?: boolean }) => void;
 }) {
@@ -386,22 +506,6 @@ function CheckinCard({
     setLiked(likedByMe);
     setLikes(review.likeCount);
   }, [likedByMe, review.likeCount]);
-
-  const [play, setPlay] = useState<Play>();
-  const [user, setUser] = useState<User>();
-  const [venue, setVenue] = useState<Venue>();
-
-  useEffect(() => {
-    getPlayById(review.playId)
-      .then((p) => {
-        setPlay(p);
-        if (p) getVenueById(p.venueId).then(setVenue).catch(() => setVenue(undefined));
-      })
-      .catch(() => setPlay(undefined));
-    getUserById(review.userId)
-      .then(setUser)
-      .catch(() => setUser(undefined));
-  }, [review]);
 
   /**
    * Flipped straight away and rolled back if the write fails — the same
@@ -432,8 +536,6 @@ function CheckinCard({
       setLikeBusy(false);
     }
   }
-
-  if (!play || !user) return null;
 
   return (
     <View style={{ gap: space.md }}>
@@ -488,7 +590,7 @@ function CheckinCard({
           the explanation. */}
       {!review.canSeeOpinion ? (
         <Text variant="caption" tone="faint">
-          {user ? strings.feed.followToSee(user.name) : strings.feed.followToSeeGeneric}
+          {strings.feed.followToSee(user.name)}
         </Text>
       ) : (
       <>
@@ -551,26 +653,20 @@ function CheckinCard({
  * thing than a night out. The line under the title is the next date, which
  * is what turns "wants to see" into "could go on Friday".
  */
-function WatchlistCard({ entry, onOpenPlay }: { entry: WatchlistEntry; onOpenPlay: (id: string) => void }) {
+function WatchlistCard({
+  entry,
+  play,
+  venue,
+  user,
+  onOpenPlay,
+}: {
+  entry: WatchlistEntry;
+  play: Play;
+  venue?: Venue;
+  user: FeedAuthor;
+  onOpenPlay: (id: string) => void;
+}) {
   const styles = useStyles();
-
-  const [play, setPlay] = useState<Play>();
-  const [user, setUser] = useState<User>();
-  const [venue, setVenue] = useState<Venue>();
-
-  useEffect(() => {
-    getPlayById(entry.playId)
-      .then((p) => {
-        setPlay(p);
-        if (p) getVenueById(p.venueId).then(setVenue).catch(() => setVenue(undefined));
-      })
-      .catch(() => setPlay(undefined));
-    getUserById(entry.addedByUserId)
-      .then(setUser)
-      .catch(() => setUser(undefined));
-  }, [entry]);
-
-  if (!play || !user) return null;
 
   const when = play.nextPerformanceAt
     ? formatShowtime(play.nextPerformanceAt)
@@ -653,6 +749,10 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   tabActive: { borderBottomColor: colors.gold },
   body: { padding: gutter, paddingBottom: 100, gap: space["2xl"] },
   byline: { flexDirection: "row", alignItems: "center", gap: space.md },
+  backfillRow: { flexDirection: "row", gap: space.md },
+  backfillTile: { width: 72, gap: space.xs },
+  backfillMore: { height: 104, alignItems: "center", justifyContent: "center", borderRadius: radius.sm, borderWidth: 1, borderColor: colors.hairline },
+  loadMore: { alignSelf: "center", minWidth: 220, marginTop: space.md },
   name: { color: colors.text },
   watchlistRow: { flexDirection: "row", alignItems: "center", gap: space.md },
   posterEyebrow: {
