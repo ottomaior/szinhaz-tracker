@@ -13,6 +13,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { ContentColumn } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
+import { Button } from "@/components/ui/Button";
 import { strings } from "@/i18n/hu";
 import { makeStyles } from "@/theme/styles";
 
@@ -87,8 +88,19 @@ export default function PeopleScreen() {
             )}
           </View>
 
-          {!isSearching && (
+          {!isSearching && !!session && (
             <Text variant="label" tone="dim">{strings.people.followingTitle}</Text>
+          )}
+
+          {/* Search works without an account; the list of who you follow
+              does not exist without one. This used to show a signed-in
+              user's empty state — "Még senkit nem követ." — to a visitor who
+              had nobody to follow with (T-063). */}
+          {!isSearching && !session && (
+            <View style={{ gap: space.md, alignItems: "flex-start" }}>
+              <Text variant="body" tone="dim">{strings.people.signInPrompt}</Text>
+              <Button label={strings.auth.signInButton} onPress={() => router.push("/sign-in")} />
+            </View>
           )}
 
           <View style={{ gap: space.xs }}>
@@ -111,7 +123,7 @@ export default function PeopleScreen() {
             ))}
           </View>
 
-          {!searching && shown.length === 0 && (
+          {!searching && shown.length === 0 && (isSearching || !!session) && (
             <Text variant="bodySmall" tone="faint">
               {isSearching ? strings.people.searchEmpty : strings.people.followingEmpty}
             </Text>

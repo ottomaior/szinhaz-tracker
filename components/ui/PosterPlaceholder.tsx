@@ -35,6 +35,7 @@ export function PosterPlaceholder({
   preferThumb = false,
   contentFit = "cover",
   priority,
+  portraitFrame = false,
 }: {
   poster?: Poster;
   /** The production's title. Its first letter becomes the stand-in's monogram. */
@@ -50,6 +51,14 @@ export function PosterPlaceholder({
   /** "cover" fills and crops; "contain" shows the whole frame. */
   contentFit?: "cover" | "contain";
   priority?: "low" | "normal" | "high";
+  /**
+   * Set by callers whose frame is taller than wide — the Discover tiles, the
+   * onboarding grid. A landscape image cropped to such a frame keeps the
+   * middle of a banner whose title runs edge to edge, so Vígszínház's key
+   * visuals read "RDÁSKIRÁLY" and "MÉLET" (T-060). With this set, a wide
+   * image is shown whole, letterboxed over a blurred copy of itself.
+   */
+  portraitFrame?: boolean;
 }) {
   const styles = useStyles();
 
@@ -72,17 +81,33 @@ export function PosterPlaceholder({
     setFailedUri((current) => (current === uri ? current : undefined));
   }, [uri]);
 
+  // Wider than 5:4 is a banner, not a poster; anything nearer square still
+  // crops acceptably.
+  const isLandscape = !!poster?.width && !!poster?.height && poster.width / poster.height > 1.25;
+  const letterbox = portraitFrame && isLandscape && contentFit === "cover";
+  const fit = letterbox ? "contain" : contentFit;
+
   if (uri && failedUri !== uri) {
     return (
       <View style={[styles.wrap, { width, height, borderRadius: radius }]}>
+        {letterbox && (
+          <Image
+            source={{ uri }}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            blurRadius={18}
+            cachePolicy="memory-disk"
+            accessible={false}
+          />
+        )}
         <Image
           source={{ uri }}
           style={StyleSheet.absoluteFill}
-          contentFit={contentFit}
+          contentFit={fit}
           // Fades from the blurhash rather than snapping in.
           transition={220}
           placeholder={poster?.blurhash ? { blurhash: poster.blurhash } : undefined}
-          placeholderContentFit={contentFit}
+          placeholderContentFit={fit}
           cachePolicy="memory-disk"
           priority={priority}
           onError={() => setFailedUri(uri)}

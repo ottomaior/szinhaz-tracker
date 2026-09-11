@@ -207,6 +207,7 @@ export default function OnboardingScreen() {
                         height={150}
                         radius={radius.md}
                         preferThumb
+                        portraitFrame
                       />
                       {/* The tick sits on the artwork rather than beside the
                           title: the poster is what is being recognised, and at

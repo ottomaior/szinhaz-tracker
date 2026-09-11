@@ -1050,7 +1050,7 @@ function PremiereCard({ play, onPress }: { play: Play; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} style={styles.railCard} accessibilityRole="button" accessibilityLabel={play.title}>
       <View style={{ aspectRatio: TILE_ASPECT }}>
-        <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} height="100%" radius={radius.md} preferThumb />
+        <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} height="100%" radius={radius.md} preferThumb portraitFrame />
       </View>
       <Text variant="label" numberOfLines={2}>
         {play.title}
@@ -1078,7 +1078,7 @@ function TrendingCard({ play, onPress }: { play: Play; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} style={{ gap: space.sm }} accessibilityRole="button" accessibilityLabel={play.title}>
       <View style={{ aspectRatio: TILE_ASPECT }}>
-        <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} height="100%" radius={radius.md} preferThumb />
+        <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} height="100%" radius={radius.md} preferThumb portraitFrame />
       </View>
       <View style={{ gap: 3 }}>
         <Text variant="label" numberOfLines={2}>

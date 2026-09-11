@@ -373,6 +373,18 @@ export default function CheckInScreen() {
     }
     const priceHuf = parsedPrice.kind === "value" ? parsedPrice.huf : undefined;
 
+    // The calendar refuses tomorrow, but "today" includes tonight, and at
+    // half past ten in the morning tonight's 18:00 has not happened yet. An
+    // entry for it would be a claim about an evening nobody has had, and the
+    // feed would publish it at once (T-064). Refused only when the catalogue
+    // actually knows the curtain time — with no showtime on record there is
+    // nothing to measure against, and the person is trusted.
+    const chosen = showtimes.find((p) => p.id === performanceId);
+    if (chosen && new Date(chosen.startsAt).getTime() > Date.now()) {
+      setError(strings.checkin.notYetStarted(formatTime(chosen.startsAt)));
+      return;
+    }
+
     setError(undefined);
     setSaving(true);
     try {

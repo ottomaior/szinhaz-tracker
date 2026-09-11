@@ -524,6 +524,8 @@ export const strings = {
     pricePlaceholder: "Ft",
     priceHint: "A 0 is válasz — tiszteletjegy, iskolai előadás, valakinek a szabad helye.",
     priceInvalid: "A jegyár csak szám lehet, 0 és 1 000 000 Ft között.",
+    /* Tonight's show, logged this morning. */
+    notYetStarted: (time: string) => `Ez az előadás ${time}-kor kezdődik — naplózd, ha már láttad.`,
 
     stubLabel: "Jegy vagy fotó",
     stubAdd: "Fotó hozzáadása",
@@ -976,6 +978,8 @@ export const strings = {
     followersEmpty: "Még senki nem követi.",
     followingEmpty: "Még senkit nem követ.",
     signInToFollow: "Jelentkezz be a követéshez",
+    /* The signed-out /people screen: the search above still works. */
+    signInPrompt: "Jelentkezz be, hogy lásd, kiket követsz — és hogy követhess valakit.",
     diaryTitle: "Napló",
     diaryEmpty: "Még nincs naplózott előadása.",
   },
