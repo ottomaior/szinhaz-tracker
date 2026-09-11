@@ -148,6 +148,16 @@ describe("the archive's own cast layout", () => {
     expect(siraly?.cast.some((c) => c.name === "Ügyelő")).toBe(false);
   });
 
+  it("notices when the one-cell form was typed character first", () => {
+    // "Charlie Conlon, statiszta | Rudolf Péter" — the reverse of
+    // Illatszertár's "Kern András | Hammerschmidt". The comma and the
+    // lower-case word are on the left here, so the left is the character.
+    const kovek = parseProductionDetail(fixture("central-kovek-a-zsebben-archiv.html"));
+    expect(kovek?.cast).toContainEqual({ name: "Rudolf Péter", role: "Charlie Conlon, statiszta" });
+    expect(kovek?.cast).toContainEqual({ name: "Kálloy Molnár Péter", role: "Jake Quinn, statiszta" });
+    expect(kovek?.cast.some((c) => c.name.includes(","))).toBe(false);
+  });
+
   it("still prefers the cards when a production has them", () => {
     // A current production must not end up with everybody twice.
     const current = parseProductionDetail(fixture("central-a-kripli.html"));
