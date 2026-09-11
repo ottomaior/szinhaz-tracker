@@ -891,7 +891,7 @@ already collects) with a numeric suffix on collision, and let it be edited.
 Existing handles are stored user data — rewriting them is a migration to ask
 about, not to ship.
 
-> **Fixed** in `0052_a_handle_from_the_name.sql` and the edit form (PR #7): the handle is minted from the display name, numbered on collision, pinned by a check constraint, and editable with Hungarian messages for malformed and taken. Existing handles are untouched — rewriting `ottomaior_30ef9b` and `dtdangulytunde_d7d118` is a migration to decide on, not a side effect.
+> **Fixed** in `0052_a_handle_from_the_name.sql` and the edit form (PR #7): the handle is minted from the display name, numbered on collision, pinned by a check constraint, and editable with Hungarian messages for malformed and taken. Ottó then asked for the three auto-minted ones to be re-minted from the name, provided nothing else of those users' was touched: `0055_remint_the_old_handles.sql` does exactly that (`maiorotto`, `dangulytunde`, `playreview`; `profiles.handle` is the only column anywhere that holds a handle, so every review, follow, like, comment and list stayed as it was — verified by count before and after). Applied.
 
 ### T-046 · A cold load of the app is 243 requests to Supabase
 type: bug · area: feed · priority: med · status: done · added: 2026-09-11 · done: 2026-09-11
