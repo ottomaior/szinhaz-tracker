@@ -286,272 +286,6 @@ show timestamps at all, which is a design change rather than a content one.
 
 Bugs and chores, confirmed and unclaimed.
 
-### T-043 · The Évad page never loads for anyone who has dated an evening
-type: bug · area: diary · priority: high · status: doing · added: 2026-09-11
-
-Sign in, log two evenings with a date in the current season, open
-`/season/2026`: the heading renders, then "Nem sikerült betölteni. Ellenőrizd a
-kapcsolatot." The console shows `rpc/season_people` answering 500, and the
-Postgres log for the same second says `canceling statement due to statement
-timeout`. Seen on 11 September with a fresh account holding exactly two dated
-entries, so this is not a volume problem — it is the shape of the function.
-
-`public.season_people` builds `everyone` (every cast row of every play seen this
-season, ~40 names per production), groups by slug, and only *then* applies
-`limit top_n` — but the name lookup is a `cross join lateral
-public.person_profile(b.slug)` on the grouped set, before the limit, and
-`person_profile` costs ~280 ms a call (`explain analyze` on one slug: 281 ms;
-it walks all 17,924 `play_cast` rows through `person_slug`). Eighty people is
-twenty seconds against an eight-second timeout. Running the function as the
-service role takes 10.1 s and succeeds only because that role has no timeout.
-
-The fix is in the SQL, not the app: order and limit `by_slug` first, then look
-up the five names. The same per-row `person_profile` cost probably shows on the
-person page too, which is a separate thing to measure.
-
-### T-044 · Editing an entry that has no date quietly gives it today's
-type: bug · area: diary · priority: high · status: open · added: 2026-09-11
-
-Tick a play in onboarding — it lands in the diary as "dátum nélkül", which is
-the honest state. Open it, press *Szerkesztés*, tap one rating mask, press
-*Mentés*. The entry now reads "Megnézve: 2026. szeptember 11." Nobody chose
-that date; the form printed it and the save wrote it.
-
-`app/checkin.tsx` initialises `seenAt` with `todayInBudapest` for a new
-check-in, and `applyEntry` only overwrites it `if (review.seenAt)` — so an
-undated entry keeps the fresh-form default and the date chip says "Ma" as if
-it were the stored answer. Every edit of an onboarding entry that does not
-touch the date turns a "don't remember" into a claim about tonight. This is
-exactly the class of default the check-in form was cleared of on the ratings
-and the tags; the date needs the same treatment on an edit, with "no date" as
-a state the field can show and keep (see T-061 for the reverse direction).
-
-### T-045 · The public handle is the e-mail address, minus the `@`
-type: bug · area: auth · priority: high · status: open · added: 2026-09-11
-
-Create an account as `ottomaior94+e2e@gmail.com` and the profile shows
-`@ottomaior94e2e_a771c7` — the local part of the address with the punctuation
-stripped and six characters of the uuid appended. `handle_new_user()` in
-`supabase/migrations/0001_init.sql:186` does exactly that. The handle is
-rendered under the name on the profile, on other people's view of it, and in
-the Színházbarátok list, so every account publishes most of its e-mail address
-to every visitor, signed in or not. A real tester's row already reads
-`dtdangulytunde_d7d118`; Ottó's own is `ottomaior_30ef9b`.
-
-Nothing in the app lets the person change it: `edit-profile` offers picture,
-name, city and bio. The demo accounts only have clean handles because they
-were set by hand afterwards.
-
-Two halves: derive the handle from the display name (which the sign-up form
-already collects) with a numeric suffix on collision, and let it be edited.
-Existing handles are stored user data — rewriting them is a migration to ask
-about, not to ship.
-
-### T-046 · A cold load of the app is 243 requests to Supabase
-type: bug · area: feed · priority: med · status: open · added: 2026-09-11
-
-Open the production URL signed out, wait for Discover to settle, count
-`performance.getEntriesByType("resource")` against the Supabase host: 243.
-The breakdown, by URL shape:
-
-- `venues?id=eq.X` — **101** times. Every tile on Discover resolves its own
-  venue (T-012), and so does every feed card, every watchlist row and the play
-  screen. The venues table has ten rows.
-- Per feed card, six more: `plays?id=eq`, `profiles?id=eq`,
-  `follows?follower_id=eq`, `follows?followee_id=eq`,
-  `reviews_readable?select=id&user_id=eq` twice (all-time and this-season
-  counts). Twenty-one cards, so ~126 requests, and because eighteen of those
-  cards are one person's (T-049) the same profile row was fetched **90 times**.
-
-On a phone on mobile data this is the difference between the feed appearing
-and the feed appearing eventually. The feed already has the play ids in hand
-(`getFeed` returns them) and `getVenuesByIds` / `getPlaysByIds` exist; the
-cards should be handed their play, venue and author rather than asking. The
-follow and count lookups belong on the profile screen, not on every card of a
-feed that shows neither.
-
-### T-047 · A cast member with many roles is cut off at two lines
-type: bug · area: catalogue · priority: med · status: open · added: 2026-09-11
-
-Reported by Ottó from his phone, reproduced on *Kurázsi mama és gyermekei*
-(Csokonai): Bolla Bence József, Kránicz Richárd, Pálóczi Bence and Papp István
-each carry the role string "A verbuváló / Az őrmester / A bekötött szemű /
-Írnok / Paraszt / A zsoldosvezér / Az óbester / Fiatal katona / Idősebb katona /
-A lőportáros / Egy másik őrmester" (161 characters). At 375pt the row shows
-"…A zsoldosvezér / Az óbester / …" and nothing else — no press-to-expand, no
-tooltip, no way to learn the last six roles. Same on *Mester és Margarita*
-(Kiss Eszter, 145 characters) and *Jeremiás avagy Isten hidege*.
-
-The cause is `numberOfLines={2}` on the role caption at
-`app/play/[id].tsx:632`; the name above it is `numberOfLines={1}` (line 630),
-which will do the same to "Ménes Emese Orsolya e.h." on a narrower phone. The
-list is already a column of rows with room to grow, so letting the caption
-wrap is the simple fix; if two lines is a deliberate rhythm, the row needs a
-press that expands it.
-
-Two smaller truncations of the same kind, noted while here: the onboarding
-grid's three columns cut theatre names to "Vojtina Bábszín…" and "Csokonai
-Nemz…" at 375pt, and the *Melyik listára?* sheet keeps saying "0 előadás"
-after the play has been added to the list.
-
-### T-048 · The feed stops at twenty and does not say so
-type: bug · area: feed · priority: med · status: open · added: 2026-09-11
-
-`getFeed` in `services/playsService.ts:270` takes the twenty newest reviews and
-the twenty newest watchlist adds, and that is the feed: no page after it, no
-"further back" control, no end marker. The Mindenki tab today shows 21 cards (twenty
-evenings and one watchlist add) and then nothing — there are 52 reviews in the
-table. With
-one person's onboarding session filling eighteen of those twenty (T-049), the
-feed as shipped shows three days of one person and nothing older. T-016 asked
-what the feed looks like under volume; the answer is that it is not seen at
-all.
-
-### T-049 · One onboarding session is eighteen of the twenty feed cards
-type: bug · area: feed · priority: med · status: open · added: 2026-09-11
-
-Danguly Tünde ticked eighteen productions in the "Mit láttál már?" grid on
-7 September. Each became a review row with `seen_at` null and an identical
-`created_at`, and the Mindenki feed renders each as its own card: "Danguly
-Tünde megnézte · 3 napja · dátum nélkül", eighteen times in a row, every one
-with the same "Kövesd … bejegyzéseit" line under it. A visitor scrolling the
-feed on 11 September sees two real evenings, then a wall of one person's
-backfill, then the end (T-048).
-
-The onboarding entries are correct data — they are what the grid promises to
-write. What is wrong is that the feed treats a bulk backfill as eighteen
-events. Either the feed folds same-author same-minute undated entries into one
-card ("Danguly Tünde 18 előadást jelölt meg látottnak"), or undated entries
-stay out of the Mindenki feed and appear only on the profile they belong to.
-The second is simpler and matches the privacy direction: an undated tick is a
-fact about the diary, not news.
-
-### T-050 · Katona's press links are filed as fifteen contributors
-type: bug · area: data · priority: med · status: open · added: 2026-09-11
-
-`play_cast` holds 15 rows across 14 Katona productions whose `role` is
-`Sajtó` or `Kritikák` and whose `name` is the concatenated text of a link
-list: "Interjú Béres Bencével és Bíró Zsombor Auréllal - PótszékfoglalóFidelio.hu
-- ajánló" on *Megrág, kiköp*, "Art7 - Lénárt GáborNépszava - Balogh Gyula
-Index.hu - Kozár Alexandra …" on another. Each renders on the play page as a
-person row with a monogram ("IB") under the real crew, and each is a link to a
-person page of its own.
-
-The archive and the WordPress site both put press under a heading the cast
-parser does not stop at. `sync/adapters/katona.ts` and `katona-wp.ts` should end the crew list
-at the first of those headings, and the fifteen rows want deleting once it
-does — they are sync output, not user data.
-
-### T-051 · *Kövek a zsebben* has its actors and characters the wrong way round
-type: bug · area: data · priority: med · status: open · added: 2026-09-11
-
-Centrál's two-hander lists fifteen `play_cast` rows where `name` is the
-character ("Charlie Conlon, statiszta", "Caroline Giovanni, mozisztár") and
-`role` is the actor ("Rudolf Péter", "Kálloy Molnár Péter"). So
-`/person/charlie-conlon-statiszta` exists, credits "Kövek a zsebben · Rudolf
-Péter", and Rudolf Péter's own page does not list the production at all. The
-Centrál page for this play presumably prints role first and name second,
-unlike its others; `sync/adapters/central.ts` needs to notice, or to be told
-about this one production.
-
-### T-052 · Theatres' placeholder images are mirrored as if they were posters
-type: bug · area: data · priority: med · status: open · added: 2026-09-11
-
-Group live plays by `poster_checksum`: nine Katona productions share
-`KATONA-eloadasok-kezdokep-22.jpg`, the company photo the site shows for a
-production with no art yet (*Peer Gynt*, *status quo*, *Queenland*, *Freud
-élete Boswelltől*, *Őz* …), and three Radnóti premieres share
-`evad_2026_2027.jpg`, the season key visual. In the archive it is worse:
-94 + 75 + 3 Vígszínház rows carry three "archive base" images and 37 Csokonai
-rows carry the 2023 logo. On Discover the Katona row is five identical
-company photos with different titles under them, which reads as a bug even to
-someone who does not know why.
-
-The app already has a poster it prefers for a production with none — the
-letter tile — and it would be the right thing here. The sync can tell a
-placeholder from a poster by exactly this signal: a checksum that arrives for
-a third production from the same venue is not that production's poster. Drop
-it and clear the ones already stored.
-
-### T-053 · Four Katona productions exist twice, once running and once ended
-type: bug · area: data · priority: med · status: open · added: 2026-09-11
-
-*Megrág, kiköp*, *némacsend*, *Nyílt tárgyalás* and *2031* each have a
-`katona-wp:` row (status running) and a `katona-archive:` row (status ended,
-archived) with the same title and the same premiere date. Search for
-"némacsend": two results, one of them badged "Levették a műsorról". The
-archive keys are the working titles the archive URLs still carry
-(`43970-hamlet` is *némacsend*, `43699-psyche` is *Megrág, kiköp*), which is
-why whatever matches the two sources by key missed them. Matching on
-(venue, title, premiere date) would catch all four; the archived twins then
-want folding into the live rows, which touches nobody's diary since the
-archived ids have no reviews.
-
-### T-054 · Supabase's English error text is what the sign-in screens show
-type: bug · area: i18n · priority: med · status: open · added: 2026-09-11
-
-Wrong password: "Invalid login credentials". Three-character password on
-sign-up: "Password should be at least 6 characters." Malformed address:
-"Unable to validate email address: invalid format". All three in the accent
-colour under a Hungarian form, straight from `e.message` in `app/sign-in.tsx`
-and `app/sign-up.tsx:63`. The client-side checks (empty field, no e-mail) are
-translated; the server-side ones are not. Map the handful of codes the auth
-API returns to `strings.auth.*` and fall back to `genericError` for the rest —
-and check the password length on the client before sending, so the most
-common one never makes the round trip.
-
-### T-055 · An unknown URL gets expo-router's default page, sitemap included
-type: bug · area: web · priority: med · status: open · added: 2026-09-11
-
-`/nonexistent-route` on production renders "Unmatched Route — Page could not
-be found." in white system type on black, with "Go back" and "Sitemap" links;
-the sitemap lists every route in the app. No theme, no Hungarian, no way back
-into the product. An `app/+not-found.tsx` in the house style (the person and
-list screens already have the right copy pattern: "Nem találjuk ezt a …") fixes
-the page; the sitemap route only exists in development builds unless it has
-been left on, which is worth confirming in `app.config.ts`.
-
-### T-056 · The watchlist prints a five-year-old premiere as if it were news
-type: bug · area: diary · priority: med · status: open · added: 2026-09-11
-
-Add *Káli holtak* to the watchlist. The row says "Bemutató: szept. 17." — the
-production premiered on 17 September **2021**; `app/(tabs)/watchlist.tsx:185`
-prints `play.premiereDate` through a formatter that drops the year. The
-signed-out pitch for the same screen promises "Amit meg akarsz nézni, a
-következő időponttal", and the next date (tonight, 18:00, Kamra) is on the
-play row already. Show `next_perf_at` when there is one, the premiere only for
-a production that has not opened, and never a date without its year.
-
-### T-057 · Somebody else's entry has no author on it and talks to you as if it were yours
-type: bug · area: diary · priority: med · status: open · added: 2026-09-11
-
-Open `/entry/69820b15-…` (Nagy Zsófia's *Chicago*) signed out or as someone
-who does not follow her. The screen shows the play card, "Megnézve: 2026.
-szeptember 6.", "19:00 · Kamra" and "Kövesd a szerzőt, hogy lásd, mit gondolt
-róla." — and nowhere the author's name, avatar or handle. The feed card that
-led here had them; the entry does not, and "kövesd a szerzőt" is not a link.
-
-Under it: "Ehhez az estéhez még nem rögzítettél helyet, jegyárat vagy
-szereplőket." — second person, addressed to a visitor about another person's
-evening. On your own entries the same line is also wrong in a different way:
-seat, price and cast were removed from the check-in form (the comment at
-`app/checkin.tsx:552` explains why), so the sentence invites you to record
-things the form no longer asks. The delete confirmation lists the same four
-fields. Both strings live in `i18n/hu.ts` (`entry.nothingRecorded` at line 677 and
-`deleteConfirmBody` at line 666).
-
-### T-058 · Sign-up never mentions the terms or the privacy policy
-type: bug · area: legal · priority: med · status: open · added: 2026-09-11
-
-`/sign-up` is three fields and a button: Név, E-mail cím, Jelszó, *Fiók
-létrehozása*. No "a fiók létrehozásával elfogadod a Felhasználási feltételeket
-és az Adatkezelési tájékoztatót", no links. Both documents exist under
-`/legal/` and are reachable from Settings, but somebody who registers has
-never been shown them, which is the moment the ÁSZF needs to be accepted and
-the GDPR notice given. One caption line under the button with the two links
-is the whole fix; whether acceptance has to be an explicit tick is a question
-for the terms themselves.
-
 ### T-059 · Several people, or a person and their biography, in one cast row
 type: bug · area: data · priority: low · status: open · added: 2026-09-11
 
@@ -576,25 +310,6 @@ Relatives of T-033 and T-039, collected from `play_cast` in one pass:
   összeállította és elmondja: ". Tabs and double spaces survive in Csokonai
   roles ("peronőr /\tDr. Pereszlényi").
 
-### T-060 · Vígszínház's wide banners are cropped to portrait tiles, title and all
-type: bug · area: design · priority: low · status: open · added: 2026-09-11
-
-The Vígszínház site publishes landscape key visuals with the title set in the
-image. Discover's grid and the onboarding grid crop every poster to portrait,
-so the Víg tiles read "RDÁSKIRÁLY", "ÁZMIN", "MÉLET" — the middle of a title
-whose ends are outside the frame. The stored `poster_width`/`poster_height`
-already say which posters are wider than tall; a landscape image wants
-`contain` on a tinted ground, or the letter tile, rather than `cover`.
-
-### T-061 · Once an entry has a date there is no way to take it away
-type: bug · area: diary · priority: low · status: open · added: 2026-09-11
-
-The date sheet in the check-in form offers Ma, Tegnap and a calendar with the
-future disabled — correct as far as it goes — but no "nem tudom / dátum
-nélkül". An entry that was dated by mistake (including by T-044) can only be
-moved to another date, never back to undated, although undated is a state the
-diary supports and onboarding writes.
-
 ### T-062 · Lists: the sheet's "Új lista" loses the play, and nothing can be edited afterwards
 type: bug · area: catalogue · priority: low · status: open · added: 2026-09-11
 
@@ -606,24 +321,6 @@ that is the last time any of them can be changed: the list screen offers only
 `isRanked` and `isPublic`, and `is_public` defaults to `true` with no control
 anywhere, although the not-found copy already promises "a készítője privátra
 állította".
-
-### T-063 · `/people` signed out says you follow nobody
-type: bug · area: profile · priority: low · status: open · added: 2026-09-11
-
-Open `/people` without a session: "Színházbarátok / Követettek / Még senkit
-nem követ." — the empty state of a signed-in user with no follows, shown to
-somebody who has no account. Every other session-dependent screen (season,
-inbox, watchlist, profile) shows the sign-in prompt instead; this one should
-too, or show the public directory it presumably will one day.
-
-### T-064 · Tonight's performance can be logged this morning
-type: bug · area: diary · priority: low · status: open · added: 2026-09-11
-
-At 10:30 on 11 September, *Előadás naplózása* on *Káli holtak* (18:00 tonight)
-saved without comment, linked to the 18:00 showtime, and the play page now
-says "Láttad: 2026. szeptember 11." The calendar refuses tomorrow but not a
-performance later today. Small, but the entry it produces is a claim about an
-evening that has not happened, and the feed publishes it immediately.
 
 ### T-038 · A student's `e.h.` marker keeps them off their own portrait
 type: bug · area: data · priority: low · status: open · added: 2026-09-10
@@ -694,12 +391,6 @@ the fact that `program_in_range()` cannot return one. Worth deciding once for
 both: whether a performance gets a note column, and what the app does with it.
 A surtitled English-language night is exactly the thing somebody chooses a date
 for.
-
-
-
-
-
-
 
 ### T-033 · A guest marker without its final dot makes a second person
 type: bug · area: data · priority: low · status: open · added: 2026-09-10
@@ -843,14 +534,6 @@ session goes away, copying a route param into state once the list it indexes has
 loaded. None is a known bug. The count is the measure, and it should only ever
 go down. From backlog 5.5.
 
-### T-012 · The Discover tiles fetch their venue one request per tile
-type: chore · area: feed · priority: low · status: open · added: 2026-09-09
-
-`PremiereCard` and `TrendingCard` each call `useVenue`, so a rail of eight tiles
-is eight requests for what a single `getVenuesByIds` would return — the pass the
-profile screen already does. Surfaced by the design pass and recorded there as a
-non-blocking follow-up.
-
 ### T-013 · Nobody has looked at the app icon at the size it will be seen
 type: chore · area: native · priority: low · status: open · added: 2026-09-09
 
@@ -930,10 +613,6 @@ does not: **the person page should say what it is counting.** A line naming the
 theatres this catalogue covers turns a wrong answer into a partial one, costs an
 afternoon, and does not wait on either. Backlog 4.6's data-quality report is
 what would have caught all three of these without a spot-check.
-
-
-
-
 
 > **Done in part, 10 September — the page says what it is counting now.**
 > A line under the credit list names the houses the catalogue actually
@@ -1136,6 +815,359 @@ _Nothing yet._
 ---
 
 ## Done
+
+### T-012 · The Discover tiles fetch their venue one request per tile
+type: chore · area: feed · priority: low · status: done · added: 2026-09-09 · done: 2026-09-11
+
+`PremiereCard` and `TrendingCard` each call `useVenue`, so a rail of eight tiles
+is eight requests for what a single `getVenuesByIds` would return — the pass the
+profile screen already does. Surfaced by the design pass and recorded there as a
+non-blocking follow-up.
+
+> **Fixed** with T-046 (PR #9): the venues table is read once per five minutes and `getVenueById` answers from it, so the tiles' `useVenue` costs nothing after the first.
+
+### T-043 · The Évad page never loads for anyone who has dated an evening
+type: bug · area: diary · priority: high · status: done · added: 2026-09-11 · done: 2026-09-11
+
+Sign in, log two evenings with a date in the current season, open
+`/season/2026`: the heading renders, then "Nem sikerült betölteni. Ellenőrizd a
+kapcsolatot." The console shows `rpc/season_people` answering 500, and the
+Postgres log for the same second says `canceling statement due to statement
+timeout`. Seen on 11 September with a fresh account holding exactly two dated
+entries, so this is not a volume problem — it is the shape of the function.
+
+`public.season_people` builds `everyone` (every cast row of every play seen this
+season, ~40 names per production), groups by slug, and only *then* applies
+`limit top_n` — but the name lookup is a `cross join lateral
+public.person_profile(b.slug)` on the grouped set, before the limit, and
+`person_profile` costs ~280 ms a call (`explain analyze` on one slug: 281 ms;
+it walks all 17,924 `play_cast` rows through `person_slug`). Eighty people is
+twenty seconds against an eight-second timeout. Running the function as the
+service role takes 10.1 s and succeeds only because that role has no timeout.
+
+The fix is in the SQL, not the app: order and limit `by_slug` first, then look
+up the five names. The same per-row `person_profile` cost probably shows on the
+person page too, which is a separate thing to measure.
+
+> **Fixed** in `0051_season_people_limit_first.sql` (PR #7): the top five are chosen on the counts alone and named from the rows already in hand, so `person_profile` is never called. 151 ms for thirteen evenings. Applied to the live database; identical output on the demo accounts.
+
+### T-044 · Editing an entry that has no date quietly gives it today's
+type: bug · area: diary · priority: high · status: done · added: 2026-09-11 · done: 2026-09-11
+
+Tick a play in onboarding — it lands in the diary as "dátum nélkül", which is
+the honest state. Open it, press *Szerkesztés*, tap one rating mask, press
+*Mentés*. The entry now reads "Megnézve: 2026. szeptember 11." Nobody chose
+that date; the form printed it and the save wrote it.
+
+`app/checkin.tsx` initialises `seenAt` with `todayInBudapest` for a new
+check-in, and `applyEntry` only overwrites it `if (review.seenAt)` — so an
+undated entry keeps the fresh-form default and the date chip says "Ma" as if
+it were the stored answer. Every edit of an onboarding entry that does not
+touch the date turns a "don't remember" into a claim about tonight. This is
+exactly the class of default the check-in form was cleared of on the ratings
+and the tags; the date needs the same treatment on an edit, with "no date" as
+a state the field can show and keep (see T-061 for the reverse direction).
+
+> **Fixed** (PR #7): `seenAt` is `string | undefined` in the form, an edit copies exactly what the entry has, and the chip shows "Dátum nélkül". A fresh check-in still opens at today, including one that adopts an onboarding blank. Saving an undated demo entry untouched leaves `seen_at` null.
+
+### T-045 · The public handle is the e-mail address, minus the `@`
+type: bug · area: auth · priority: high · status: done · added: 2026-09-11 · done: 2026-09-11
+
+Create an account as `ottomaior94+e2e@gmail.com` and the profile shows
+`@ottomaior94e2e_a771c7` — the local part of the address with the punctuation
+stripped and six characters of the uuid appended. `handle_new_user()` in
+`supabase/migrations/0001_init.sql:186` does exactly that. The handle is
+rendered under the name on the profile, on other people's view of it, and in
+the Színházbarátok list, so every account publishes most of its e-mail address
+to every visitor, signed in or not. A real tester's row already reads
+`dtdangulytunde_d7d118`; Ottó's own is `ottomaior_30ef9b`.
+
+Nothing in the app lets the person change it: `edit-profile` offers picture,
+name, city and bio. The demo accounts only have clean handles because they
+were set by hand afterwards.
+
+Two halves: derive the handle from the display name (which the sign-up form
+already collects) with a numeric suffix on collision, and let it be edited.
+Existing handles are stored user data — rewriting them is a migration to ask
+about, not to ship.
+
+> **Fixed** in `0052_a_handle_from_the_name.sql` and the edit form (PR #7): the handle is minted from the display name, numbered on collision, pinned by a check constraint, and editable with Hungarian messages for malformed and taken. Existing handles are untouched — rewriting `ottomaior_30ef9b` and `dtdangulytunde_d7d118` is a migration to decide on, not a side effect.
+
+### T-046 · A cold load of the app is 243 requests to Supabase
+type: bug · area: feed · priority: med · status: done · added: 2026-09-11 · done: 2026-09-11
+
+Open the production URL signed out, wait for Discover to settle, count
+`performance.getEntriesByType("resource")` against the Supabase host: 243.
+The breakdown, by URL shape:
+
+- `venues?id=eq.X` — **101** times. Every tile on Discover resolves its own
+  venue (T-012), and so does every feed card, every watchlist row and the play
+  screen. The venues table has ten rows.
+- Per feed card, six more: `plays?id=eq`, `profiles?id=eq`,
+  `follows?follower_id=eq`, `follows?followee_id=eq`,
+  `reviews_readable?select=id&user_id=eq` twice (all-time and this-season
+  counts). Twenty-one cards, so ~126 requests, and because eighteen of those
+  cards are one person's (T-049) the same profile row was fetched **90 times**.
+
+On a phone on mobile data this is the difference between the feed appearing
+and the feed appearing eventually. The feed already has the play ids in hand
+(`getFeed` returns them) and `getVenuesByIds` / `getPlaysByIds` exist; the
+cards should be handed their play, venue and author rather than asking. The
+follow and count lookups belong on the profile screen, not on every card of a
+feed that shows neither.
+
+> **Fixed** (PR #9): `getFeed` returns a hydrated page — items plus their plays, authors and venues in one query each — and the cards look up instead of fetching; the venues table is read once per five minutes for every by-id lookup on every screen. A cold load went from 243 requests to 13.
+
+### T-047 · A cast member with many roles is cut off at two lines
+type: bug · area: catalogue · priority: med · status: done · added: 2026-09-11 · done: 2026-09-11
+
+Reported by Ottó from his phone, reproduced on *Kurázsi mama és gyermekei*
+(Csokonai): Bolla Bence József, Kránicz Richárd, Pálóczi Bence and Papp István
+each carry the role string "A verbuváló / Az őrmester / A bekötött szemű /
+Írnok / Paraszt / A zsoldosvezér / Az óbester / Fiatal katona / Idősebb katona /
+A lőportáros / Egy másik őrmester" (161 characters). At 375pt the row shows
+"…A zsoldosvezér / Az óbester / …" and nothing else — no press-to-expand, no
+tooltip, no way to learn the last six roles. Same on *Mester és Margarita*
+(Kiss Eszter, 145 characters) and *Jeremiás avagy Isten hidege*.
+
+The cause is `numberOfLines={2}` on the role caption at
+`app/play/[id].tsx:632`; the name above it is `numberOfLines={1}` (line 630),
+which will do the same to "Ménes Emese Orsolya e.h." on a narrower phone. The
+list is already a column of rows with room to grow, so letting the caption
+wrap is the simple fix; if two lines is a deliberate rhythm, the row needs a
+press that expands it.
+
+Two smaller truncations of the same kind, noted while here: the onboarding
+grid's three columns cut theatre names to "Vojtina Bábszín…" and "Csokonai
+Nemz…" at 375pt, and the *Melyik listára?* sheet keeps saying "0 előadás"
+after the play has been added to the list.
+
+> **Fixed** (PR #8): neither the name nor the role in a cast row is clamped any more; the row grows. The onboarding tile names and the stale list count in the sheet are still as noted — small enough to leave.
+
+### T-048 · The feed stops at twenty and does not say so
+type: bug · area: feed · priority: med · status: done · added: 2026-09-11 · done: 2026-09-11
+
+`getFeed` in `services/playsService.ts:270` takes the twenty newest reviews and
+the twenty newest watchlist adds, and that is the feed: no page after it, no
+"further back" control, no end marker. The Mindenki tab today shows 21 cards (twenty
+evenings and one watchlist add) and then nothing — there are 52 reviews in the
+table. With
+one person's onboarding session filling eighteen of those twenty (T-049), the
+feed as shipped shows three days of one person and nothing older. T-016 asked
+what the feed looks like under volume; the answer is that it is not seen at
+all.
+
+> **Fixed** (PR #9): `getFeed` takes `before`, the previous page's oldest timestamp, and the screen appends pages under a *Továbbiak betöltése* button until both sources run dry. The button's absence is the end marker.
+
+### T-049 · One onboarding session is eighteen of the twenty feed cards
+type: bug · area: feed · priority: med · status: done · added: 2026-09-11 · done: 2026-09-11
+
+Danguly Tünde ticked eighteen productions in the "Mit láttál már?" grid on
+7 September. Each became a review row with `seen_at` null and an identical
+`created_at`, and the Mindenki feed renders each as its own card: "Danguly
+Tünde megnézte · 3 napja · dátum nélkül", eighteen times in a row, every one
+with the same "Kövesd … bejegyzéseit" line under it. A visitor scrolling the
+feed on 11 September sees two real evenings, then a wall of one person's
+backfill, then the end (T-048).
+
+The onboarding entries are correct data — they are what the grid promises to
+write. What is wrong is that the feed treats a bulk backfill as eighteen
+events. Either the feed folds same-author same-minute undated entries into one
+card ("Danguly Tünde 18 előadást jelölt meg látottnak"), or undated entries
+stay out of the Mindenki feed and appear only on the profile they belong to.
+The second is simpler and matches the privacy direction: an undated tick is a
+fact about the diary, not news.
+
+> **Fixed** (PR #9): three or more undated entries by one person within fifteen minutes fold into one `backfill` card — "18 előadást jelölt meg látottnak" with a row of posters, each opening its production. The entries themselves are untouched and still on the profile one by one.
+
+### T-050 · Katona's press links are filed as fifteen contributors
+type: bug · area: data · priority: med · status: done · added: 2026-09-11 · done: 2026-09-11
+
+`play_cast` holds 15 rows across 14 Katona productions whose `role` is
+`Sajtó` or `Kritikák` and whose `name` is the concatenated text of a link
+list: "Interjú Béres Bencével és Bíró Zsombor Auréllal - PótszékfoglalóFidelio.hu
+- ajánló" on *Megrág, kiköp*, "Art7 - Lénárt GáborNépszava - Balogh Gyula
+Index.hu - Kozár Alexandra …" on another. Each renders on the play page as a
+person row with a monogram ("IB") under the real crew, and each is a link to a
+person page of its own.
+
+The archive and the WordPress site both put press under a heading the cast
+parser does not stop at. `sync/adapters/katona.ts` and `katona-wp.ts` should end the crew list
+at the first of those headings, and the fifteen rows want deleting once it
+does — they are sync output, not user data.
+
+> **Fixed** (PR #11): the archive adapter names `sajto`, `kritikak`, `musorfuzet`, `galeria`, `videok` and `sajat-link` as consumed fields, with a fixture assertion that no cast name looks like a domain; `0053_press_is_not_a_person.sql` removed the fifteen rows. Applied.
+
+### T-051 · *Kövek a zsebben* has its actors and characters the wrong way round
+type: bug · area: data · priority: med · status: done · added: 2026-09-11 · done: 2026-09-11
+
+Centrál's two-hander lists fifteen `play_cast` rows where `name` is the
+character ("Charlie Conlon, statiszta", "Caroline Giovanni, mozisztár") and
+`role` is the actor ("Rudolf Péter", "Kálloy Molnár Péter"). So
+`/person/charlie-conlon-statiszta` exists, credits "Kövek a zsebben · Rudolf
+Péter", and Rudolf Péter's own page does not list the production at all. The
+Centrál page for this play presumably prints role first and name second,
+unlike its others; `sync/adapters/central.ts` needs to notice, or to be told
+about this one production.
+
+> **Fixed** (PR #11): the one-cell cast form is read either way round — the side carrying commas and lower-case words is the character — with the page as a fixture. The Centrál sync was re-run; Rudolf Péter has his fifteen roles back.
+
+### T-052 · Theatres' placeholder images are mirrored as if they were posters
+type: bug · area: data · priority: med · status: done · added: 2026-09-11 · done: 2026-09-11
+
+Group live plays by `poster_checksum`: nine Katona productions share
+`KATONA-eloadasok-kezdokep-22.jpg`, the company photo the site shows for a
+production with no art yet (*Peer Gynt*, *status quo*, *Queenland*, *Freud
+élete Boswelltől*, *Őz* …), and three Radnóti premieres share
+`evad_2026_2027.jpg`, the season key visual. In the archive it is worse:
+94 + 75 + 3 Vígszínház rows carry three "archive base" images and 37 Csokonai
+rows carry the 2023 logo. On Discover the Katona row is five identical
+company photos with different titles under them, which reads as a bug even to
+someone who does not know why.
+
+The app already has a poster it prefers for a production with none — the
+letter tile — and it would be the right thing here. The sync can tell a
+placeholder from a poster by exactly this signal: a checksum that arrives for
+a third production from the same venue is not that production's poster. Drop
+it and clear the ones already stored.
+
+> **Fixed** (PR #11): `sync/lib/placeholders.ts` drops a poster URL that arrives for a third production in the same run, before any download, and `0054_a_poster_three_productions_share.sql` cleared the 221 rows already holding one. A Katona dry run reports the nine as "no poster"; the letter tile takes their place.
+
+### T-053 · Four Katona productions exist twice, once running and once ended
+type: bug · area: data · priority: med · status: done · added: 2026-09-11 · done: 2026-09-11
+
+*Megrág, kiköp*, *némacsend*, *Nyílt tárgyalás* and *2031* each have a
+`katona-wp:` row (status running) and a `katona-archive:` row (status ended,
+archived) with the same title and the same premiere date. Search for
+"némacsend": two results, one of them badged "Levették a műsorról". The
+archive keys are the working titles the archive URLs still carry
+(`43970-hamlet` is *némacsend*, `43699-psyche` is *Megrág, kiköp*), which is
+why whatever matches the two sources by key missed them. Matching on
+(venue, title, premiere date) would catch all four; the archived twins then
+want folding into the live rows, which touches nobody's diary since the
+archived ids have no reviews.
+
+> **Fixed** (PR #11): the archive adapter now skips a page whose *title* the live index lists, not only whose slug, since the archive keys by working title. The archive sync was re-run and reconciled the four twins away (none had user data).
+
+### T-054 · Supabase's English error text is what the sign-in screens show
+type: bug · area: i18n · priority: med · status: done · added: 2026-09-11 · done: 2026-09-11
+
+Wrong password: "Invalid login credentials". Three-character password on
+sign-up: "Password should be at least 6 characters." Malformed address:
+"Unable to validate email address: invalid format". All three in the accent
+colour under a Hungarian form, straight from `e.message` in `app/sign-in.tsx`
+and `app/sign-up.tsx:63`. The client-side checks (empty field, no e-mail) are
+translated; the server-side ones are not. Map the handful of codes the auth
+API returns to `strings.auth.*` and fall back to `genericError` for the rest —
+and check the password length on the client before sending, so the most
+common one never makes the round trip.
+
+> **Fixed** (PR #8): `authErrorMessage` maps the API's `code` to Hungarian for the dozen a person can cause and falls back to the generic line; all four auth screens use it. Sign-up checks the password length itself, with the reset screen's rule (eight) now shared.
+
+### T-055 · An unknown URL gets expo-router's default page, sitemap included
+type: bug · area: web · priority: med · status: done · added: 2026-09-11 · done: 2026-09-11
+
+`/nonexistent-route` on production renders "Unmatched Route — Page could not
+be found." in white system type on black, with "Go back" and "Sitemap" links;
+the sitemap lists every route in the app. No theme, no Hungarian, no way back
+into the product. An `app/+not-found.tsx` in the house style (the person and
+list screens already have the right copy pattern: "Nem találjuk ezt a …") fixes
+the page; the sitemap route only exists in development builds unless it has
+been left on, which is worth confirming in `app.config.ts`.
+
+> **Fixed** (PR #8): `app/+not-found.tsx` in the house style, with the same "nem találjuk" register as the person and list screens and a way back to Discover. The sitemap link went with the default page.
+
+### T-056 · The watchlist prints a five-year-old premiere as if it were news
+type: bug · area: diary · priority: med · status: done · added: 2026-09-11 · done: 2026-09-11
+
+Add *Káli holtak* to the watchlist. The row says "Bemutató: szept. 17." — the
+production premiered on 17 September **2021**; `app/(tabs)/watchlist.tsx:185`
+prints `play.premiereDate` through a formatter that drops the year. The
+signed-out pitch for the same screen promises "Amit meg akarsz nézni, a
+következő időponttal", and the next date (tonight, 18:00, Kamra) is on the
+play row already. Show `next_perf_at` when there is one, the premiere only for
+a production that has not opened, and never a date without its year.
+
+> **Fixed** (PR #8): the watchlist row shows the next performance, and only falls back to the premiere — with its year — when nothing is scheduled; the feed's watchlist card got the same year.
+
+### T-057 · Somebody else's entry has no author on it and talks to you as if it were yours
+type: bug · area: diary · priority: med · status: done · added: 2026-09-11 · done: 2026-09-11
+
+Open `/entry/69820b15-…` (Nagy Zsófia's *Chicago*) signed out or as someone
+who does not follow her. The screen shows the play card, "Megnézve: 2026.
+szeptember 6.", "19:00 · Kamra" and "Kövesd a szerzőt, hogy lásd, mit gondolt
+róla." — and nowhere the author's name, avatar or handle. The feed card that
+led here had them; the entry does not, and "kövesd a szerzőt" is not a link.
+
+Under it: "Ehhez az estéhez még nem rögzítettél helyet, jegyárat vagy
+szereplőket." — second person, addressed to a visitor about another person's
+evening. On your own entries the same line is also wrong in a different way:
+seat, price and cast were removed from the check-in form (the comment at
+`app/checkin.tsx:552` explains why), so the sentence invites you to record
+things the form no longer asks. The delete confirmation lists the same four
+fields. Both strings live in `i18n/hu.ts` (`entry.nothingRecorded` at line 677 and
+`deleteConfirmBody` at line 666).
+
+> **Fixed** (PR #8): the entry carries the author's avatar, name and handle, opening their profile (or your own tab); the follow-gate sentence names them once loaded. The "nem rögzítettél helyet, jegyárat vagy szereplőket" line is gone, and the delete confirmation lists what actually goes.
+
+### T-058 · Sign-up never mentions the terms or the privacy policy
+type: bug · area: legal · priority: med · status: done · added: 2026-09-11 · done: 2026-09-11
+
+`/sign-up` is three fields and a button: Név, E-mail cím, Jelszó, *Fiók
+létrehozása*. No "a fiók létrehozásával elfogadod a Felhasználási feltételeket
+és az Adatkezelési tájékoztatót", no links. Both documents exist under
+`/legal/` and are reachable from Settings, but somebody who registers has
+never been shown them, which is the moment the ÁSZF needs to be accepted and
+the GDPR notice given. One caption line under the button with the two links
+is the whole fix; whether acceptance has to be an explicit tick is a question
+for the terms themselves.
+
+> **Fixed** (PR #8): a caption under the button — "A fiók létrehozásával elfogadod a Felhasználási feltételeket, és tudomásul veszed az Adatkezelési tájékoztatót." — with both halves linking to `/legal/`. Whether acceptance needs an explicit tick is still the terms' question.
+
+### T-060 · Vígszínház's wide banners are cropped to portrait tiles, title and all
+type: bug · area: design · priority: low · status: done · added: 2026-09-11 · done: 2026-09-11
+
+The Vígszínház site publishes landscape key visuals with the title set in the
+image. Discover's grid and the onboarding grid crop every poster to portrait,
+so the Víg tiles read "RDÁSKIRÁLY", "ÁZMIN", "MÉLET" — the middle of a title
+whose ends are outside the frame. The stored `poster_width`/`poster_height`
+already say which posters are wider than tall; a landscape image wants
+`contain` on a tinted ground, or the letter tile, rather than `cover`.
+
+> **Fixed** (PR #10): `PosterPlaceholder` takes `portraitFrame`; a landscape image in such a frame is shown whole over a blurred copy of itself. Set on the Discover tiles and the onboarding grid.
+
+### T-061 · Once an entry has a date there is no way to take it away
+type: bug · area: diary · priority: low · status: done · added: 2026-09-11 · done: 2026-09-11
+
+The date sheet in the check-in form offers Ma, Tegnap and a calendar with the
+future disabled — correct as far as it goes — but no "nem tudom / dátum
+nélkül". An entry that was dated by mistake (including by T-044) can only be
+moved to another date, never back to undated, although undated is a state the
+diary supports and onboarding writes.
+
+> **Fixed** with T-044 (PR #7): the date sheet offers "Dátum nélkül" beside Ma and Tegnap.
+
+### T-063 · `/people` signed out says you follow nobody
+type: bug · area: profile · priority: low · status: done · added: 2026-09-11 · done: 2026-09-11
+
+Open `/people` without a session: "Színházbarátok / Követettek / Még senkit
+nem követ." — the empty state of a signed-in user with no follows, shown to
+somebody who has no account. Every other session-dependent screen (season,
+inbox, watchlist, profile) shows the sign-in prompt instead; this one should
+too, or show the public directory it presumably will one day.
+
+> **Fixed** (PR #10): signed out, `/people` asks for a sign-in under the search bar instead of reporting an empty following list.
+
+### T-064 · Tonight's performance can be logged this morning
+type: bug · area: diary · priority: low · status: done · added: 2026-09-11 · done: 2026-09-11
+
+At 10:30 on 11 September, *Előadás naplózása* on *Káli holtak* (18:00 tonight)
+saved without comment, linked to the 18:00 showtime, and the play page now
+says "Láttad: 2026. szeptember 11." The calendar refuses tomorrow but not a
+performance later today. Small, but the entry it produces is a claim about an
+evening that has not happened, and the feed publishes it immediately.
+
+> **Fixed** (PR #10): the check-in refuses a showtime that has not started, naming the curtain time, when the catalogue knows it.
 
 ### T-041 · Vígszínház's cast is in the page's data, not its markup
 type: bug · area: data · priority: high · status: done · added: 2026-09-10 · done: 2026-09-10
