@@ -284,6 +284,43 @@ show timestamps at all, which is a design change rather than a content one.
 
 ## Open
 
+### T-068 · Drop what 0056 made redundant: search_rank(), the 0019 expression indexes, play_cast_person_slug_idx
+type: chore · area: data · priority: low · status: open · added: 2026-09-11
+
+`0056_search_that_keeps_up.sql` is the additive half: generated `*_norm`
+columns, `plays_search_text_trgm_idx`, `play_cast_name_norm_trgm_idx`,
+`play_cast_slug_idx`, and the two people tables. What it replaces is still in
+the database — `public.search_rank()`, `public.person_match_rank()`,
+`plays_title_trgm_idx`, `plays_author_trgm_idx`, `play_cast_name_trgm_idx`
+(all 0019) and `play_cast_person_slug_idx` (0024) — per the rule in
+CLAUDE.md that the destructive half waits until a client reading the new shape
+is live. Once 0056 has been in production a few days: confirm
+`pg_stat_user_indexes.idx_scan` has not moved for the four indexes, that
+nothing but the old function bodies referenced the two functions, and drop
+them in one migration with the usual argument and `-- rollback:` block.
+Every generated column is also a write-time cost on the sync's upserts, which
+is fine at this size and worth a glance in the sync log after the first run.
+
+Also worth folding into the same pass: `person_profile()` and
+`person_credits()` still call `person_slug()` per cast row on every person
+page (~280 ms a call, per T-043). `play_cast.slug` and `play_people` now
+hold that answer; pointing the two functions at them is the same change 0056
+made to `search_people()`.
+
+### T-069 · Ensembles are indexed as people
+type: bug · area: catalogue · priority: low · status: open · added: 2026-09-11
+
+Type "Csokonay" into search and the *Alkotók* list is five choirs: "a Csokonai
+Nemzeti Színház Énekkara", "a Csokonai Színház Énekkara", "Közreműködik a
+Csokonai Nemzeti Színház Énekkara és a Kodály Filharmonikusok Debrecen", each
+with a person page of its own. They are cast rows whose name is an ensemble or
+a whole "közreműködik…" sentence, and `person_slug()` slugs them like anyone
+else. Same behaviour before 0056 — the index only makes it easier to see. A
+rule in `person_canonical_name()` or a filter on the way into
+`play_people` (a name that starts lower-case, or contains "énekkar",
+"zenekar", "tánckar", "közreműködik") would keep them out of people search
+without deleting the credit from the play page.
+
 Bugs and chores, confirmed and unclaimed.
 
 ### T-059 · Several people, or a person and their biography, in one cast row
@@ -815,6 +852,48 @@ _Nothing yet._
 ---
 
 ## Done
+
+### T-067 · Search takes one to two seconds per keystroke, and the screen makes it look wrong
+type: bug · area: search · priority: high · status: done · added: 2026-09-11 · done: 2026-09-11
+
+Ottó's screen recording (11 September): type into Discover, the grid empties
+into skeletons, results for an earlier fragment appear, then change. Measured
+against the project the same day — `search_plays('nagy')` 2.35 s for 296
+full rows, `search_plays('hamlet')` 1.10 s for 4, `search_people('nagy')`
+0.54 s; from the browser 1.6 s and 0.8 s per keystroke.
+
+Three things, one under the other two. **The database folded accents per
+row per query**: `search_norm()` costs ~40 µs a call (the `set search_path`
+0044 pinned on it is a GUC save/restore per call, which is most of that), and
+`search_plays` called it up to eleven times per play just to test the match,
+then nine more per hit to rank it; `search_people` ran `person_slug()`
+(~190 µs) over every matched cast row. **The RPC had no LIMIT** — "a" was
+1,227 rows, about a megabyte. **The client emptied the grid on every
+keystroke** and had no guard against a slow reply for "Nag" landing after the
+reply for "Nagy Zs" and overwriting it; two debounce timers fired two requests
+per burst; four screens had four copies of the same `setTimeout`.
+
+There was also a ranking fault the recording could not show: for "orkeny" and
+"Katonna" the live function put venue-band and fuzzy-band rows above author-
+and title-band rows — "Egy rosszaságról" (at the Örkény) above Örkény István's
+own "Tóték". The bands 0019 documents were not being applied.
+
+> **Fixed** (`0056_search_that_keeps_up.sql`, PR pending). Generated
+> `*_norm` columns on `plays`, `venues` and `play_cast` hold the folded
+> text; `play_people` and `people_index` hold what `search_people()` used
+> to recompute, rebuilt by the sync and kept current for hand-added plays;
+> `search_plays` is plpgsql (plan cached per connection), pages at 40, and
+> returns total and archived counts with the page. Warm, via the RPCs:
+> `search_plays('nagy')` 27 ms, `('hamlet')` 26 ms, `('a')` 38 ms;
+> `search_people('nagy')` 1 ms. Ranking follows the documented bands; the
+> id lists for "nagy", "hamlet", "Csokonay" and "szinhaz" are unchanged.
+> Client: `hooks/useSearchQuery.ts` debounces, caches the last fifty
+> answers, keeps the previous page on screen while the next loads, and drops
+> out-of-order replies; `components/ui/SearchField.tsx` is the one field all
+> four screens use — a pill that turns gold-tinted on focus, with the browser's
+> white focus rectangle gone; Discover shows it always, under the title,
+> instead of behind a magnifier. `search_profiles` and the venue picker fold
+> accents too ("kovacs" finds Kovács; "szinhaz" finds Színház).
 
 ### T-012 · The Discover tiles fetch their venue one request per tile
 type: chore · area: feed · priority: low · status: done · added: 2026-09-09 · done: 2026-09-11
@@ -2129,4 +2208,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-067**
+Next free id: **T-070**

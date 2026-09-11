@@ -8,17 +8,20 @@ import { inputFontSize } from "@/theme/type";
 import { gutter, radius, space } from "@/theme/tokens";
 import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
+import { useSearchQuery } from "@/hooks/useSearchQuery";
 import { useAuth } from "@/contexts/AuthContext";
 import { createPlay, createVenue, searchVenues, uploadUserPoster } from "@/services/playsService";
 import type { CastMember, Venue, VenueType } from "@/data/types";
 import { CloseIcon } from "@/components/icons/Icons";
 import { Button } from "@/components/ui/Button";
 import { ModalHeader } from "@/components/ui/ModalHeader";
+import { SearchField } from "@/components/ui/SearchField";
 import { ContentColumn } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { Chip } from "@/components/ui/Chip";
 import { strings } from "@/i18n/hu";
 import { makeStyles } from "@/theme/styles";
+import { foldSearchTerm } from "@/utils/search";
 
 const VENUE_TYPES: VenueType[] = ["kőszínház", "független", "befogadó tér", "szabadtéri"];
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -40,7 +43,6 @@ export default function AddPlayScreen() {
   const [cast, setCast] = useState<CastMember[]>([{ name: "", role: "" }]);
 
   const [venueQuery, setVenueQuery] = useState("");
-  const [venueResults, setVenueResults] = useState<Venue[]>([]);
   const [selectedVenue, setSelectedVenue] = useState<Venue>();
   const [showNewVenueForm, setShowNewVenueForm] = useState(false);
   const [newVenueName, setNewVenueName] = useState("");
@@ -65,18 +67,11 @@ export default function AddPlayScreen() {
     }
   }, [loading, session, router]);
 
-  useEffect(() => {
-    const handle = setTimeout(() => {
-      if (venueQuery.trim().length > 1) {
-        searchVenues(venueQuery)
-          .then(setVenueResults)
-          .catch(() => setVenueResults([]));
-      } else {
-        setVenueResults([]);
-      }
-    }, 250);
-    return () => clearTimeout(handle);
-  }, [venueQuery]);
+  // Two characters before the first request, as before; debounced and kept
+  // in order by the hook.
+  const venueTerm = venueQuery.trim();
+  const venueSearch = useSearchQuery(venueTerm.length > 1 ? foldSearchTerm(venueTerm) : null, () => searchVenues(venueTerm));
+  const venueResults = venueSearch.data ?? [];
 
   function updateCastMember(index: number, patch: Partial<CastMember>) {
     setCast((cur) => cur.map((c, i) => (i === index ? { ...c, ...patch } : c)));
@@ -101,7 +96,6 @@ export default function AddPlayScreen() {
       setNewVenueName("");
       setNewVenueCity("");
       setVenueQuery("");
-      setVenueResults([]);
     } catch (e) {
       setError(e instanceof Error ? e.message : strings.auth.genericError);
     } finally {
@@ -290,13 +284,11 @@ export default function AddPlayScreen() {
             </Pressable>
           ) : (
             <>
-              <TextInput
+              <SearchField
                 value={venueQuery}
                 onChangeText={setVenueQuery}
                 placeholder={strings.addPlay.venueSearchPlaceholder}
-                placeholderTextColor={colors.textFaint}
-                accessibilityLabel={strings.addPlay.venueSearchPlaceholder}
-                style={[styles.input, { fontFamily: bodyFont(fontsLoaded) }]}
+                loading={venueTerm.length > 1 && venueSearch.loading}
               />
               {venueResults.map((v) => (
                 <Pressable key={v.id} style={styles.venueResultRow} onPress={() => setSelectedVenue(v)} accessibilityRole="button">

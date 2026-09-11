@@ -1,14 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
-import { View, ScrollView, StyleSheet, Pressable, TextInput } from "react-native";
+import { View, ScrollView, StyleSheet, Pressable } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
-import { inputFontSize } from "@/theme/type";
-import { gutter, minTouchTarget, overlay, radius, space } from "@/theme/tokens";
-import { bodyFont } from "@/theme/typography";
-import { useAppFonts } from "@/hooks/useAppFonts";
+import { gutter, overlay, radius, space } from "@/theme/tokens";
 import { useAtLeast } from "@/hooks/useBreakpoint";
 import { useRecentSearches } from "@/hooks/useRecentSearches";
+import { useSearchQuery } from "@/hooks/useSearchQuery";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   getCities,
@@ -23,12 +21,11 @@ import {
 } from "@/services/playsService";
 import { getLists, type ListSummary } from "@/services/listsService";
 import { getFriendsRecentPlays } from "@/services/friendsService";
-import { searchPlays, type SortKey } from "@/services/searchService";
+import { searchPlays, type SearchPage, type SortKey } from "@/services/searchService";
 import { getPortraits, searchPeople, type PersonSearchResult } from "@/services/peopleService";
 import type { Play, Portrait, ProgramEntry, Venue, VenueType } from "@/data/types";
-import { SearchIcon, CloseIcon } from "@/components/icons/Icons";
 import { Avatar } from "@/components/ui/Avatar";
-import { Button, IconButton } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { SelectChip, type SelectOption } from "@/components/ui/SelectChip";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -42,9 +39,11 @@ import { Screen, ContentColumn } from "@/components/ui/Screen";
 import { ProgramView } from "@/components/ui/ProgramView";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Grid } from "@/components/ui/Grid";
+import { SearchField } from "@/components/ui/SearchField";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 import { personInitials } from "@/utils/people";
+import { foldSearchTerm } from "@/utils/search";
 import { budapestDayKey, formatRuntimeMinutes, formatTime, formatWeekday, todayInBudapest } from "@/utils/datetime";
 import { makeStyles } from "@/theme/styles";
 
@@ -144,7 +143,6 @@ export default function DiscoverScreen() {
   const styles = useStyles();
 
   const insets = useSafeAreaInsets();
-  const fontsLoaded = useAppFonts();
   const router = useRouter();
   // From 900pt the lead goes two-column: the hero beside the programme rather
   // than above it, so a desktop window is not a phone column with margins.
@@ -162,14 +160,15 @@ export default function DiscoverScreen() {
   const [venues, setVenues] = useState<Venue[]>([]);
   const [activeVenueId, setActiveVenueId] = useState<string>();
   const [query, setQuery] = useState("");
-  const [searchOpen, setSearchOpen] = useState(false);
   const [premieres, setPremieres] = useState<Play[]>([]);
   const [trending, setTrending] = useState<Play[]>([]);
-  const [searchResults, setSearchResults] = useState<Play[]>([]);
-  const [searchPeopleResults, setSearchPeopleResults] = useState<PersonSearchResult[]>([]);
   const [peoplePortraits, setPeoplePortraits] = useState<Map<string, Portrait>>(new Map());
-  const [searching, setSearching] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
+  // Pages after the first, appended by "Továbbiak betöltése", remembered
+  // together with the question they answer: a page for a term that has since
+  // been retyped is simply not shown, with no reset and no stale-guard needed.
+  const [morePages, setMorePages] = useState<{ key: string | null; plays: Play[] }>({ key: null, plays: [] });
+  const [loadingMoreSearch, setLoadingMoreSearch] = useState(false);
   const { recent, remember, clear: clearRecent } = useRecentSearches();
   const [browseLoading, setBrowseLoading] = useState(true);
   const [browseFailed, setBrowseFailed] = useState(false);
@@ -218,7 +217,8 @@ export default function DiscoverScreen() {
   const city = activeCity === strings.discover.filterAll ? undefined : activeCity;
   const venueId = activeVenueId;
   const genre = activeGenre;
-  const isSearching = query.trim().length > 0;
+  const trimmedQuery = query.trim();
+  const isSearching = trimmedQuery.length > 0;
 
   // Re-read when the scope changes, like the other two option lists: a chip
   // list narrower than the grid it filters cannot reach half of what is on
@@ -459,69 +459,94 @@ export default function DiscoverScreen() {
     setShowAllPremieres(false);
   }, [venueType, city, venueId, genre]);
 
-  useEffect(() => {
-    if (!isSearching) {
-      setSearchResults([]);
-      setSearching(false);
-      return;
-    }
-    setSearching(true);
-    const handle = setTimeout(() => {
-      searchPlays(query, { venueType, city, venueId, genre, sort: searchSort })
-        .then(setSearchResults)
-        .catch(() => setSearchResults([]))
-        .finally(() => setSearching(false));
-    }, 300);
-    return () => clearTimeout(handle);
-  }, [query, venueType, city, venueId, genre, searchSort, isSearching]);
+  /**
+   * The productions the term finds — one page, with the totals.
+   *
+   * The key is the folded term plus everything that changes the answer, so a
+   * retyped accent or a moved chip is a new question and a repeated one is
+   * served from the hook's cache. `useSearchQuery` keeps the last page on
+   * screen while the next is on its way and ignores answers that arrive out of
+   * order, which is what the old pair of `setTimeout` effects did not.
+   */
+  const searchKey = isSearching
+    ? [foldSearchTerm(trimmedQuery), venueType ?? "", city ?? "", venueId ?? "", genre ?? "", searchSort].join("\u001f")
+    : null;
+  const playSearch = useSearchQuery<SearchPage>(searchKey, () =>
+    searchPlays(trimmedQuery, { venueType, city, venueId, genre, sort: searchSort })
+  );
 
   /**
    * The same term, asked of the catalogue's people.
    *
-   * Its own effect, keyed on the query alone, because the chips and the sort
-   * key describe productions: a person has no premiere date to sort by and is
-   * not in one city, so re-running this when the sort changes would be a round
-   * trip that cannot change its own answer.
+   * Keyed on the query alone, because the chips and the sort key describe
+   * productions: a person has no premiere date to sort by and is not in one
+   * city, so re-running this when the sort changes would be a round trip that
+   * cannot change its own answer.
    *
    * Nor do the filters narrow it. Somebody who has typed a name is asking about
    * a person, and hiding her because the genre chip says "opera" would answer a
    * question about her work with a claim about her.
    */
+  const peopleSearch = useSearchQuery<PersonSearchResult[]>(isSearching ? foldSearchTerm(trimmedQuery) : null, () =>
+    searchPeople(trimmedQuery)
+  );
+
+  // The faces arrive a beat after the names; a row without one is the
+  // ordinary case, so nothing waits for this. Keyed on the slugs rather than
+  // the array, because the hook hands the same rows back from its cache as a
+  // fresh array.
+  const peopleResults = peopleSearch.data ?? [];
+  const peopleSlugs = peopleResults.map((r) => r.slug).join(",");
   useEffect(() => {
-    if (!isSearching) {
-      setSearchPeopleResults([]);
-      return;
+    if (!peopleSlugs) return;
+    let active = true;
+    getPortraits(peopleSlugs.split(","))
+      .then((portraits) => {
+        if (active) setPeoplePortraits(portraits);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [peopleSlugs]);
+
+  const searchPage = playSearch.data;
+  const moreSearchPlays = morePages.key === searchKey ? morePages.plays : [];
+  const shownSearchPlays = searchPage ? [...searchPage.plays, ...moreSearchPlays] : [];
+  const canLoadMoreSearch = !!searchPage && shownSearchPlays.length < searchPage.total;
+
+  const loadMoreSearch = useCallback(async () => {
+    if (!searchPage || loadingMoreSearch) return;
+    const keyAtStart = searchKey;
+    setLoadingMoreSearch(true);
+    try {
+      const next = await searchPlays(trimmedQuery, {
+        venueType,
+        city,
+        venueId,
+        genre,
+        sort: searchSort,
+        offset: shownSearchPlays.length,
+      });
+      setMorePages((cur) => ({
+        key: keyAtStart,
+        plays: [...(cur.key === keyAtStart ? cur.plays : []), ...next.plays],
+      }));
+    } catch {
+      // Silent, as the browse rail's "load more" is: what is on screen is
+      // still correct.
+    } finally {
+      setLoadingMoreSearch(false);
     }
-    const handle = setTimeout(() => {
-      searchPeople(query)
-        .then((results) => {
-          setSearchPeopleResults(results);
-          // The faces arrive a beat after the names; a row without one is
-          // the ordinary case, so nothing waits for this.
-          getPortraits(results.map((r) => r.slug))
-            .then(setPeoplePortraits)
-            .catch(() => setPeoplePortraits(new Map()));
-        })
-        // A failed people query leaves the productions to answer alone, which
-        // is what this screen did before there was a people query at all.
-        .catch(() => setSearchPeopleResults([]));
-    }, 300);
-    return () => clearTimeout(handle);
-  }, [query, isSearching]);
+  }, [searchPage, loadingMoreSearch, searchKey, trimmedQuery, venueType, city, venueId, genre, searchSort, shownSearchPlays.length]);
 
   const hasBrowseContent = upcoming.length > 0 || premieres.length > 0 || trending.length > 0;
   // Editorial lists are written about the whole catalogue and cannot answer a
   // city or genre filter, so the section steps aside once one is on rather
   // than sitting there ignoring it.
   const browseFiltered = !!(venueType || city || venueId || genre);
-  const archivedCount = searchResults.filter((p) => p.isArchived || p.status === "ended").length;
 
   const openPlay = (id: string) => router.push(`/play/${id}`);
-
-  function closeSearch() {
-    setQuery("");
-    setSearchOpen(false);
-  }
 
   /**
    * The facet chips, and why they scroll.
@@ -529,9 +554,14 @@ export default function DiscoverScreen() {
    * Everything above the rails used to be pinned: search field, a boxed mode
    * switch, this row and the city header, which on a 375pt phone cost around
    * 440pt — more than half the viewport — before a single poster. Now the
-   * pinned bar is the title and the tabs; the chips are the first thing in the
-   * scroll, so they are there when the reader arrives and gone when they are
-   * reading. Facets with nothing to choose between are left out entirely.
+   * pinned bar is the title, the search field and the tabs; the chips are the
+   * first thing in the scroll, so they are there when the reader arrives and
+   * gone when they are reading. Facets with nothing to choose between are left
+   * out entirely.
+   *
+   * The field earns its 50pt of pinned height: it is the one control on this
+   * screen that answers a question the rails cannot, and hiding it behind a
+   * magnifier made it a feature people had to know about.
    */
   const chipRow = (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
@@ -633,59 +663,50 @@ export default function DiscoverScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Screen>
         <View style={[styles.header, { paddingTop: insets.top + space.md }]}>
-          {searchOpen ? (
-            <View style={styles.searchBar}>
-              <SearchIcon />
-              <TextInput
-                autoFocus
-                value={query}
-                onChangeText={setQuery}
-                onFocus={() => setSearchFocused(true)}
-                onBlur={() => setSearchFocused(false)}
-                // Recorded on submit rather than on every keystroke, so the
-                // list holds "Katona" and not "K", "Ka", "Kat".
-                onSubmitEditing={() => remember(query)}
-                returnKeyType="search"
-                placeholder={strings.discover.searchPlaceholder}
-                placeholderTextColor={colors.textFaint}
-                accessibilityLabel={strings.discover.searchLabel}
-                style={{ flex: 1, fontFamily: bodyFont(fontsLoaded), fontSize: inputFontSize, color: colors.text }}
-              />
-              {/* One control closes the search whether or not there is a
-                  query: backspacing out of a term on a phone is tedious, and a
-                  field with nothing in it has no other way back. */}
-              <Pressable onPress={closeSearch} hitSlop={10} accessibilityRole="button" accessibilityLabel={strings.discover.searchClose}>
-                <CloseIcon size={16} color={colors.textDim} />
-              </Pressable>
+          <View style={styles.titleRow}>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text variant="display">{strings.discover.title}</Text>
+              {/* The city decides what the whole screen is about, so it is
+                  printed under the title like a season under a theatre's
+                  name, not offered as one chip among the facets. */}
+              {mode !== "lists" && (
+                <SelectChip
+                  variant="header"
+                  name={strings.discover.filterCity}
+                  value={city}
+                  subtitle={venues.length > 0 ? strings.discover.venueCount(venues.length) : undefined}
+                  options={cityOptions}
+                  onChange={(next) => setActiveCity(next ?? strings.discover.filterAll)}
+                />
+              )}
             </View>
-          ) : (
-            <View style={styles.titleRow}>
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text variant="display">{strings.discover.title}</Text>
-                {/* The city decides what the whole screen is about, so it is
-                    printed under the title like a season under a theatre's
-                    name, not offered as one chip among the facets. */}
-                {mode !== "lists" && (
-                  <SelectChip
-                    variant="header"
-                    name={strings.discover.filterCity}
-                    value={city}
-                    subtitle={venues.length > 0 ? strings.discover.venueCount(venues.length) : undefined}
-                    options={cityOptions}
-                    onChange={(next) => setActiveCity(next ?? strings.discover.filterAll)}
-                  />
-                )}
-              </View>
-              <IconButton onPress={() => setSearchOpen(true)} accessibilityLabel={strings.discover.searchOpen}>
-                <SearchIcon size={18} color={colors.text} />
-              </IconButton>
-            </View>
-          )}
+          </View>
+
+          {/* Always on screen rather than behind a magnifier: the field is the
+              one control here that answers a question the rails cannot, and
+              a search you have to discover is a search half the readers never
+              make. Typing takes the screen over; the cross gives it back. */}
+          <View style={styles.searchRow}>
+            <SearchField
+              value={query}
+              onChangeText={setQuery}
+              prominent
+              // A newer answer is on its way and the grid below is the older
+              // one. The spinner says so without emptying it.
+              loading={isSearching && (playSearch.loading || peopleSearch.loading)}
+              placeholder={strings.discover.searchPlaceholder}
+              accessibilityLabel={strings.discover.searchLabel}
+              onFocusChange={setSearchFocused}
+              // Recorded on submit rather than on every keystroke, so the
+              // list holds "Katona" and not "K", "Ka", "Kat".
+              onSubmit={() => remember(query)}
+            />
+          </View>
 
           {/* Only while the field is focused and empty: once there is a query
               the results themselves are the better answer, and the row would
               otherwise sit above the rails permanently. */}
-          {searchOpen && searchFocused && !isSearching && recent.length > 0 && (
+          {searchFocused && !isSearching && recent.length > 0 && (
             <View style={{ gap: space.xs, paddingTop: space.sm }}>
               <View style={styles.rowBetween}>
                 <Text variant="eyebrow" tone="faint">{strings.discover.recentTitle}</Text>
@@ -738,10 +759,10 @@ export default function DiscoverScreen() {
                   debounce, and a list of people from the previous keystroke
                   sitting above a grid of skeletons would be answering a
                   question that has already been retyped. */}
-              {!searching && searchPeopleResults.length > 0 && (
+              {peopleResults.length > 0 && (
                 <View style={{ gap: space.sm }}>
                   <SectionHeader eyebrow={strings.discover.searchOpen} title={strings.discover.peopleResultsTitle} />
-                  {searchPeopleResults.map((person) => (
+                  {peopleResults.map((person) => (
                     <PersonResultRow
                       key={person.slug}
                       person={person}
@@ -757,14 +778,18 @@ export default function DiscoverScreen() {
               <View style={{ gap: space.md }}>
                 <SectionHeader
                   eyebrow={strings.discover.searchOpen}
-                  title={searching ? strings.discover.searching : strings.discover.searchResultsTitle(searchResults.length)}
+                  title={searchPage ? strings.discover.searchResultsTitle(searchPage.total) : strings.discover.searching}
                   // Search covers the theatres' archives as well as what is
                   // on now — that is the point, since the app is for logging
                   // plays you have already seen — but a run of "ended" badges
                   // reads as a bug unless the list says so first.
-                  action={!searching && archivedCount > 0 ? strings.discover.includesArchived(archivedCount) : undefined}
+                  action={searchPage && searchPage.archived > 0 ? strings.discover.includesArchived(searchPage.archived) : undefined}
                 />
-                {searching ? (
+                {/* Skeletons only before the first answer. After that the
+                    grid stays put while a newer answer loads — the field's
+                    spinner carries the "still working" — so typing a letter
+                    no longer wipes the posters and rebuilds them. */}
+                {!searchPage ? (
                   <Grid>
                     {Array.from({ length: 6 }).map((_, i) => (
                       <PosterCardSkeleton key={i} />
@@ -772,7 +797,7 @@ export default function DiscoverScreen() {
                   </Grid>
                 ) : (
                   <Grid>
-                    {searchResults.map((p) => (
+                    {shownSearchPlays.map((p) => (
                       <TrendingCard
                         key={p.id}
                         play={p}
@@ -788,11 +813,25 @@ export default function DiscoverScreen() {
                     ))}
                   </Grid>
                 )}
+                {/* The rest of the match, a page at a time — the same control
+                    the "Népszerű" grid uses, for the same reason: forty tiles
+                    is a screenful, 296 is a scroll nobody finishes. */}
+                {canLoadMoreSearch && (
+                  <Button
+                    variant="outline"
+                    label={loadingMoreSearch ? strings.discover.loadingMore : strings.discover.loadMore}
+                    disabled={loadingMoreSearch}
+                    onPress={loadMoreSearch}
+                    style={styles.loadMore}
+                  />
+                )}
               </View>
               {/* "Nothing found — add it yourself" would be a lie under a list
                   of people the search did find, and the invitation it carries
-                  is to create a duplicate production. */}
-              {!searching && searchResults.length === 0 && searchPeopleResults.length === 0 && (
+                  is to create a duplicate production. Only once both answers
+                  are in: an empty state flashed while they load is a "no" the
+                  screen then takes back. */}
+              {searchPage && searchPage.total === 0 && !peopleSearch.loading && peopleResults.length === 0 && (
                 <EmptyState
                   eyebrow={strings.discover.searchOpen}
                   title={strings.discover.noResultsTitle}
@@ -1156,17 +1195,7 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     justifyContent: "space-between",
     gap: space.md,
   },
-  searchBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.sm,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    borderRadius: radius.md,
-    paddingHorizontal: space.md,
-    minHeight: minTouchTarget,
-  },
+  searchRow: { marginTop: space.lg },
   tabs: { flexDirection: "row", gap: space["2xl"], marginTop: space.sm },
   tab: { paddingVertical: space.md - 2, borderBottomWidth: 2, borderBottomColor: "transparent" },
   tabActive: { borderBottomColor: colors.gold },

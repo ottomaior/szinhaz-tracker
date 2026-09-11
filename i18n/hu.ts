@@ -23,6 +23,8 @@ export const strings = {
   common: {
     cancel: "Mégsem",
     close: "Bezárás",
+    /* The cross in a search field: empties it and keeps the keyboard up. */
+    clearSearch: "Keresés törlése",
     retry: "Újrapróbálom",
     loadError: "Nem sikerült betölteni. Ellenőrizd a kapcsolatot.",
     noRating: "—",
