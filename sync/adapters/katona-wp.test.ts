@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { parseProduction } from "./katona-wp";
+import { parseIndex, parseProduction } from "./katona-wp";
 
 /**
  * A real production page, captured from the live site.
@@ -91,5 +91,20 @@ describe("katona-wp parseProduction", () => {
 
   it("returns undefined for a page that is not a production", () => {
     expect(parseProduction("<html><body><p>Hírek</p></body></html>", "hirek")).toBeUndefined();
+  });
+});
+
+describe("katona-wp parseIndex", () => {
+  const index = parseIndex(readFileSync(join(__dirname, "..", "__fixtures__", "katona-wp-eloadasok.html"), "utf8"));
+
+  it("lists the live productions by slug", () => {
+    expect(index.slugs.has("nemacsend")).toBe(true);
+    expect(index.slugs.has("chicago")).toBe(true);
+  });
+
+  it("lists them by title too, since the archive keys by working title", () => {
+    // 43970-hamlet on the archive is némacsend here; only the title matches.
+    expect(index.titles.has("nemacsend")).toBe(true);
+    expect(index.titles.has("megrag kikop")).toBe(true);
   });
 });
