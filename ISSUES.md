@@ -794,6 +794,33 @@ _Nothing yet._
 
 ## Done
 
+### T-071 · Every person page was Jánoskúti Márta, or would not load
+type: bug · area: catalogue · priority: high · status: done · added: 2026-09-11 · done: 2026-09-11
+
+Found by Ottó a few hours after 0056 went live: no performer could be opened,
+from search or from a play page — `/person/lehotai-miksa` showed "Nem sikerült
+betölteni", and the RPC underneath answered *Jánoskúti Márta, 886 credits* for
+every slug.
+
+> **Cause.** 0056 added a stored `slug` column to `play_cast`. `person_credits(slug
+> text)` and `person_profile(slug text)` are SQL functions from 0024 whose cast
+> CTEs said `where public.person_slug(pc.name) = slug`; in a SQL function a
+> column shadows a parameter of the same name, so that became `pc.slug = pc.slug`
+> and matched the whole table. The profile then picked the most-credited name
+> in the catalogue, and the credits call returned 1,235 productions, which is
+> what the page timed out on. Not caught before merging because the search
+> verification exercised `search_people()` and the Discover grid, never a
+> person page.
+
+> **Fixed** (`0058_the_person_page_reads_its_own_slug.sql`, applied within the
+> hour). Both functions compare the stored column with the parameter qualified
+> by function name (`pc.slug = person_credits.slug`), the form that cannot be
+> shadowed, and in doing so the page finally uses `play_cast_slug_idx` instead
+> of running the slug regexes over 17,802 rows. **The lesson for the next
+> migration that adds a column:** grep every SQL-language function for an
+> unqualified reference to the new name first — `select proname from pg_proc
+> where prosrc ~ mslugM` took ten seconds and would have found this.
+
 ### T-034 · A guest company's evening at the Nemzeti is not in the catalogue at all
 type: bug · area: catalogue · priority: med · status: done · added: 2026-09-10 · done: 2026-09-11
 
@@ -2293,4 +2320,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-071**
+Next free id: **T-072**
