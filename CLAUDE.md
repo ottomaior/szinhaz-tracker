@@ -10,14 +10,19 @@ from an idea to `main` without becoming something that cannot be taken back.
   existing ones are named: a short phrase in kebab-case that says what the
   branch is for (`faces-for-the-people`, `subtitle-under-the-title`), or
   `feat/…` for a feature that will take several sessions.
-- **Merge into `main` with `git merge --no-ff`.** The merge commit is the undo
-  handle: `git revert -m 1 <merge-sha>` removes the whole feature in one step,
-  which a fast-forward makes impossible without picking through the individual
-  commits. Title the merge commit `Merge <branch>: <what it did>`.
+- **Push the branch, open a pull request, merge it on GitHub with "Create a
+  merge commit".** `main` carries a ruleset (`protect main`) that rejects a
+  direct push, so the PR is the only way in. Nobody has to approve it — the
+  PR exists so that CI runs on the exact commits about to land, and so that a
+  merge commit is created: that commit is the undo handle, `git revert -m 1
+  <merge-sha>` removes the whole feature in one step, which a squash or a
+  fast-forward would make impossible without picking through the individual
+  commits. Title the merge commit `Merge <branch>: <what it did>`, not the
+  GitHub default.
 - **CI must be green before merging.** `.github/workflows/ci.yml` typechecks,
-  lints and runs the fixture tests on every push, and `main` is protected on
-  GitHub so a red check cannot be merged. A green check on the branch, not on
-  `main` after the fact, is the gate.
+  lints and runs the fixture tests on every push, and the ruleset requires the
+  `check` job to pass before the PR can be merged. A green check on the branch,
+  not on `main` after the fact, is the gate.
 - **Pushing `main` deploys.** Railway builds from every push to `main`, so a
   merge is a release. Validate on the production URL, signed out and on a
   phone, once the deploy has finished.
