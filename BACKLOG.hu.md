@@ -14,7 +14,28 @@ Az elszórt hibák, apró szépséghibák és ötletek nem itt laknak, hanem az
 [ISSUES.md](ISSUES.md) fájlban, ami nem terv, hanem gyűjtőhely. Ami ötletből
 vállalt munka lesz, az onnan lép elő az alábbi fázisok valamelyikébe.
 
-Utoljára frissítve: 2026. szeptember 10.
+Utoljára frissítve: 2026. szeptember 11.
+
+---
+
+## Ami eddig elkészült — idővonal
+
+A nagy lépések, sorrendben. Az apró javítások kimaradtak; a cél az, hogy egy
+pillantásra látsszon, hogyan állt össze a termék, nem az, hogy minden commit
+fel legyen sorolva.
+
+| Mikor | Mi érkezett |
+|---|---|
+| **2026. aug. 31.** | Elindul a projekt. Az alkalmazás, az adatbázisa és az első éles telepítés a nap végére megvan, és a debreceni színházak műsorát a rendszer magától beolvassa. |
+| **szept. 1.** | Csatlakozik az Örkény (Budapest). Az alkalmazás magától kitalálja, mely előadások futnak épp. |
+| **szept. 4.** | A műsorszinkron megbízható és tesztelt lesz. A borítóképeket a saját oldalunkon tároljuk. Elkészül a design-rendszer és a telefonon is működő elrendezés. **Követhetők más színházbajárók**; a profilon olvasható napló és értékelések fül. A Csokonai archívumból ~170 régi debreceni előadás kerül be. Magyar README. |
+| **szept. 5.** | Valódi előadásadatok: a **keresés, a rendezés és az időpontok** már ezeken működnek. A naplóbejegyzés dátumot kap. Kivezető link a jegypénztárhoz. Minden szereposztási jegyzet (6 400 darab) **személyoldalt** kap. Megjönnek a **listák**, és egy új fiók már nem üresen indul. |
+| **szept. 6.** | **Az este, nem csak az éjszaka** — melyik előadásidőpontot láttad. Követhető egy színész vagy egy színház. Évad szerinti számolás. A követettek értékelései és egy megosztható kártya. A bejegyzések javíthatók és törölhetők. Témaválasztó, jelszó-visszaállítás, **fióktörlés**, jogi oldalak. |
+| **szept. 7.** | A termék **nevet és jelet kap: Vastaps**. Kétnyelvű bemutatóoldal saját domainen, narrált promófilmmel. Az alkalmazás olyan verzióra frissül, amit az áruházak elfogadnak. **Jelentés és tiltás** (moderáció). A Felfedezés tíz szerkesztett listával telik meg. |
+| **szept. 8.** | „A második felvonás" — a **tervezési kör**: egységes megjelenés mindenhol, a bemutatóoldalon is. Az indulás előtti **kutatási csomag** (interjúk, használhatósági tesztek, kérdőív). Márkagrafikák. A Google Play zárt tesztjének papírmunkája, és a jogi dokumentumok tényleges közzététele. |
+| **szept. 9.** | Az **adatvédelmi fordulat**: a nyilvános átlag lekerül az előadásokról; hogy valaki mit gondolt, csak a követői látják. A bejelentkezési űrlap kevesebbet kérdez, és sosem válaszol helyetted. Elindul az `ISSUES.md`, a hibák és ötletek gyűjtőhelye. |
+| **szept. 10.** | Adatbázis-megerősítés (indexek, lezárt függvények, gyorsabb hozzáférési szabályok). A cím alatti sor, ahogy a színház nyomtatja. **Színészportrék** Debrecenhez. A budapesti szereposztások a debreceni szintre hozva. A terméknév és a domain kérdése kikutatva. |
+| **szept. 11.** | **Rendes verziókövetés**: a `main` védett, minden változás pull requesten és zöld ellenőrzéseken át megy, a munkaszabályok le vannak írva, és az első mérföldkő címkét kapott (`v0.1.0`). |
 
 ---
 
@@ -410,9 +431,12 @@ lakcímét közzétenni, és mindkét formával működik.
 ## Hogyan jut ki a munka az élesbe
 
 A `main` közvetlenül a Railwayre van kötve, tehát **a `main`-be olvasztás éles
-kiadás**. A munka fázisonként külön ágon zajlik, felpusholva a GitHubra, hogy a
-CI lefusson rajta, és csak akkor olvad be, ha Ottó jóváhagyja. Semmi nem olvad
-be, amíg nincs ellenőrizve, hogy működik.
+kiadás**. A munka külön ágon zajlik, felpusholva a GitHubra, hogy a CI lefusson
+rajta, és pull requesten keresztül kerül be — a `main` védett, tehát más út
+nincs, és a beolvasztás gombja szürke marad, amíg az ellenőrzések nem zöldek.
+Semmi nem olvad be, amíg nincs ellenőrizve, hogy működik, és egy beolvasztás
+egyetlen visszavonással semmissé tehető. A szabályok teljes egészében a
+[CLAUDE.md](CLAUDE.md) fájlban vannak.
 
 Két dolgot érdemes előre tervezni:
 
