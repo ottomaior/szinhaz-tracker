@@ -10,7 +10,27 @@ Loose bugs, rough edges and feature ideas do not live here — they go to
 [ISSUES.md](ISSUES.md), which is an inbox rather than a plan. An idea that gets
 accepted graduates from there into a phase below.
 
-Last updated: 10 September 2026.
+Last updated: 11 September 2026.
+
+---
+
+## What has been built so far — a timeline
+
+The big moves, in order. Small fixes are left out; the point is to see at a
+glance how the product took shape, not to list every commit.
+
+| When | What arrived |
+|---|---|
+| **31 Aug 2026** | The project starts. The app, its database and the first live deploy exist by the end of the day, and the Debrecen theatres' programmes are read in automatically. |
+| **1 Sep** | Örkény (Budapest) joins. The app works out by itself which productions are currently playing. |
+| **4 Sep** | The programme sync becomes robust and tested. Cover art is stored on our side. The design system and a layout that works on phones. You can **follow other theatregoers**; profiles get a readable diary and a reviews tab. The Csokonai archive adds ~170 past Debrecen productions. Hungarian README. |
+| **5 Sep** | Real production data: **search, sorting and showtimes** now work on it. A diary entry gets a date. A link out to the box office. Every cast credit (6,400 of them) gets a **person page**. **Lists** arrive, and a new account starts with something to read. |
+| **6 Sep** | Logging **the evening, not just the night** — which showtime you saw. Follow a performer or a theatre. Counting by *évad* (season). Friends' ratings, and a share card. Entries can be edited and removed. Theme picker, password reset, **account deletion**, legal pages. |
+| **7 Sep** | The product gets its **name and mark: Vastaps**. A landing page in two languages, on its own domain, with a narrated promo film. The app is upgraded to a version the app stores accept. **Reporting and blocking** (moderation). Discover is filled with ten editorial lists. |
+| **8 Sep** | "The second act" — the **design pass**: one consistent look everywhere, landing page included. The pre-launch **research kit** (interviews, usability sessions, questionnaire). Brand art. The paperwork for Google Play's closed test, and the legal documents published for real. |
+| **9 Sep** | The **privacy turn**: public averages come off productions; what someone thought is visible only to the people who follow them. The check-in form asks fewer questions and never answers on your behalf. `ISSUES.md` starts as the inbox for bugs and ideas. |
+| **10 Sep** | Database hardening (indexes, locked-down functions, faster access rules). The line the theatre prints under a title. **Performer portraits** for Debrecen. Budapest casts brought to the same standard as Debrecen. The product-name and domain question researched. |
+| **11 Sep** | **Version control done properly**: `main` is protected, every change goes through a pull request with green checks, the working rules are written down, and the first milestone is tagged (`v0.1.0`). |
 
 ---
 
@@ -403,9 +423,11 @@ works with either form.
 ## How work reaches production
 
 `main` is wired straight to Railway, so **a merge to `main` is a production
-release**. Work happens on a branch per phase, pushed to GitHub so CI runs on
-it, and merges only when Ottó approves. Nothing merges until it has been
-verified to work.
+release**. Work happens on a branch, pushed to GitHub so CI runs on it, and
+lands through a pull request — `main` is protected, so there is no other way
+in, and the merge button stays grey until the checks are green. Nothing merges
+until it has been verified to work, and a merge can be undone with a single
+revert. The rules in full are in [CLAUDE.md](CLAUDE.md).
 
 Two things to plan around:
 
