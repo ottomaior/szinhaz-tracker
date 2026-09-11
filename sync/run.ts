@@ -36,6 +36,7 @@ import { orkenyCompanyAdapter } from "./adapters/orkeny-company";
 import { radnotiCompanyAdapter } from "./adapters/radnoti-company";
 import { splitPerformers } from "./lib/performers";
 import { mirrorImage, mirrorPoster } from "./lib/posters";
+import { dropSharedPosters } from "./lib/placeholders";
 import { personSlug } from "../utils/people";
 import type { CompanyAdapter, SyncAdapter, SyncedPlay } from "./lib/types";
 
@@ -510,7 +511,7 @@ function reportDryRun(adapter: SyncAdapter, plays: SyncedPlay[]) {
 
 async function runAdapter(adapter: SyncAdapter) {
   if (DRY_RUN) {
-    const plays = await adapter.run();
+    const plays = dropSharedPosters(await adapter.run());
     reportDryRun(adapter, plays);
     return;
   }
@@ -534,7 +535,10 @@ async function runAdapter(adapter: SyncAdapter) {
   const warnings: string[] = [];
 
   try {
-    const plays = await adapter.run();
+    // A house image shared by three productions is not a poster — see
+    // sync/lib/placeholders.ts. Decided over the whole run, before any
+    // download.
+    const plays = dropSharedPosters(await adapter.run());
     const seenSourceKeys = new Set<string>();
     const seenPerformanceKeys = new Set<string>();
 
