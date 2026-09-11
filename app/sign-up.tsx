@@ -6,7 +6,7 @@ import { inputFontSize } from "@/theme/type";
 import { gutter, radius, space } from "@/theme/tokens";
 import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
-import { signUp } from "@/services/authService";
+import { PASSWORD_MIN_LENGTH, authErrorMessage, signUp } from "@/services/authService";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { ContentColumn } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
@@ -50,6 +50,10 @@ export default function SignUpScreen() {
       setError(strings.auth.passwordRequired);
       return;
     }
+    if (password.length < PASSWORD_MIN_LENGTH) {
+      setError(strings.auth.resetTooShort);
+      return;
+    }
     setError(undefined);
     setSubmitting(true);
     try {
@@ -60,7 +64,7 @@ export default function SignUpScreen() {
         closeModal(router);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : strings.auth.genericError);
+      setError(authErrorMessage(e));
     } finally {
       setSubmitting(false);
     }
@@ -129,6 +133,22 @@ export default function SignUpScreen() {
         )}
 
         <Button label={strings.auth.signUpButton} onPress={handleSubmit} loading={submitting} disabled={submitting} />
+
+        {/* The moment the terms are accepted and the privacy notice given —
+            both documents existed under /legal and this screen never
+            mentioned them (T-058). Two links in a caption, the way every
+            sign-up form does it; pressing the button is the acceptance. */}
+        <Text variant="caption" tone="faint" style={{ textAlign: "center" }}>
+          {strings.auth.legalNoticeBefore}
+          <Text variant="caption" style={{ color: colors.gold }} onPress={() => router.push("/legal/feltetelek")} accessibilityRole="link">
+            {strings.auth.legalNoticeTerms}
+          </Text>
+          {strings.auth.legalNoticeBetween}
+          <Text variant="caption" style={{ color: colors.gold }} onPress={() => router.push("/legal/adatvedelem")} accessibilityRole="link">
+            {strings.auth.legalNoticePrivacy}
+          </Text>
+          {strings.auth.legalNoticeAfter}
+        </Text>
 
         <Pressable onPress={() => router.replace("/sign-in")} style={{ alignItems: "center", marginTop: 8 }} accessibilityRole="button">
           <Text variant="bodySmall" tone="faint">

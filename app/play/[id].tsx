@@ -626,10 +626,15 @@ export default function PlayDetailScreen() {
                   accessibilityLabel={c.name}
                 >
                   <Avatar uri={portraits.get(personSlug(c.name))?.thumbUrl} initials={initialsOf(c.name)} size={34} serif />
+                  {/* Neither line is clamped. A Brecht chorus member carries
+                      eleven roles in one string, and cutting that at two
+                      lines with an ellipsis left the last six unreadable with
+                      nothing to press (T-047); the list is a column of rows
+                      with room to grow, so the row grows. */}
                   <View style={{ flex: 1, gap: 1 }}>
-                    <Text variant="label" numberOfLines={1}>{c.name}</Text>
+                    <Text variant="label">{c.name}</Text>
                     {!!c.role && (
-                      <Text variant="caption" tone="faint" numberOfLines={2}>
+                      <Text variant="caption" tone="faint">
                         {c.role}
                       </Text>
                     )}

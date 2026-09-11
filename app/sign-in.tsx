@@ -6,7 +6,7 @@ import { inputFontSize } from "@/theme/type";
 import { gutter, radius, space } from "@/theme/tokens";
 import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
-import { signIn } from "@/services/authService";
+import { authErrorMessage, signIn } from "@/services/authService";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { ContentColumn } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
@@ -41,7 +41,7 @@ export default function SignInScreen() {
       await signIn(email.trim(), password);
       closeModal(router);
     } catch (e) {
-      setError(e instanceof Error ? e.message : strings.auth.genericError);
+      setError(authErrorMessage(e));
     } finally {
       setSubmitting(false);
     }

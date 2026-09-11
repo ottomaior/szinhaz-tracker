@@ -575,7 +575,10 @@ function WatchlistCard({ entry, onOpenPlay }: { entry: WatchlistEntry; onOpenPla
   const when = play.nextPerformanceAt
     ? formatShowtime(play.nextPerformanceAt)
     : play.premiereDate
-      ? `${strings.feed.premiereLabel}: ${formatDate(play.premiereDate)}`
+      // With its year: a premiere only shows here when nothing is scheduled,
+      // which for an old production means a date years back, and "szept. 17."
+      // alone read as news (T-056).
+      ? `${strings.feed.premiereLabel}: ${formatLongDate(`${play.premiereDate}T12:00:00Z`)}`
       : undefined;
 
   return (
@@ -601,10 +604,6 @@ function WatchlistCard({ entry, onOpenPlay }: { entry: WatchlistEntry; onOpenPla
       <View style={styles.divider} />
     </View>
   );
-}
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("hu-HU", { month: "short", day: "numeric" });
 }
 
 const useStyles = makeStyles((colors) => StyleSheet.create({

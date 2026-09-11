@@ -6,7 +6,7 @@ import { inputFontSize } from "@/theme/type";
 import { gutter, radius, space } from "@/theme/tokens";
 import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
-import { updatePassword } from "@/services/authService";
+import { PASSWORD_MIN_LENGTH, authErrorMessage, updatePassword } from "@/services/authService";
 import { useAuth } from "@/contexts/AuthContext";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { ContentColumn } from "@/components/ui/Screen";
@@ -14,9 +14,6 @@ import { Text } from "@/components/ui/Text";
 import { Button } from "@/components/ui/Button";
 import { strings } from "@/i18n/hu";
 import { makeStyles } from "@/theme/styles";
-
-/** Short enough to type twice, long enough not to be the year of your birth. */
-const MIN_PASSWORD_LENGTH = 8;
 
 /**
  * Where the emailed reset link lands.
@@ -52,7 +49,7 @@ export default function ResetPasswordScreen() {
 
   async function handleSubmit() {
     if (saving) return;
-    if (password.length < MIN_PASSWORD_LENGTH) {
+    if (password.length < PASSWORD_MIN_LENGTH) {
       setError(strings.auth.resetTooShort);
       return;
     }
@@ -66,7 +63,7 @@ export default function ResetPasswordScreen() {
       await updatePassword(password);
       setDone(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : strings.auth.genericError);
+      setError(authErrorMessage(e));
     } finally {
       setSaving(false);
     }

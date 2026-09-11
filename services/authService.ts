@@ -1,5 +1,30 @@
 import * as Linking from "expo-linking";
+import { isAuthApiError } from "@supabase/supabase-js";
 import { supabase } from "@/services/supabase";
+import { strings } from "@/i18n/hu";
+
+/**
+ * The shortest password a form here accepts — the reset screen's rule, now
+ * shared with sign-up, which used to let the API decide (six) and then print
+ * the API's English sentence about it. Short enough to type twice, long
+ * enough not to be the year of your birth.
+ */
+export const PASSWORD_MIN_LENGTH = 8;
+
+/**
+ * What to show when an auth call fails.
+ *
+ * The four auth screens used to print `e.message` — "Invalid login
+ * credentials", "Password should be at least 6 characters." — in the accent
+ * colour under a Hungarian form (T-054). The API attaches a stable `code` to
+ * each failure; the handful a person can actually cause are translated here,
+ * and everything else, including a network failure, is the generic line.
+ */
+export function authErrorMessage(e: unknown): string {
+  const code = isAuthApiError(e) ? e.code : undefined;
+  const known = code ? strings.auth.errors[code as keyof typeof strings.auth.errors] : undefined;
+  return known ?? strings.auth.genericError;
+}
 
 /**
  * Creates the account, and says whether the person is actually signed in.
