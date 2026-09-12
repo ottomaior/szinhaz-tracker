@@ -284,6 +284,40 @@ show timestamps at all, which is a design change rather than a content one.
 
 ## Open
 
+### T-074 · The Katona's three hosts stopped answering the GitHub runner on 12 September
+type: bug · area: data · priority: med · status: open · added: 2026-09-12
+
+Both syncs on 12 September (the scheduled one at 08:08 UTC and a manual
+re-run at 15:14) lost `katona-wp`, `katona-archive` and `katona-company` to
+`fetch failed` after ~30 seconds — no status code, so the connection was
+never answered, which is what a firewall drop looks like rather than a
+block page. The 11 September run had read all three normally, and from a
+home connection the same hosts answer within seconds
+(`katonajozsefszinhaz.hu/wp-json/` 200 in 1.7 s, the archive in 8 s). Radnóti,
+which failed the same way in the morning run, recovered in the afternoon
+one, so that was the runner's network; the Katona is not.
+
+Nothing was lost: reconciliation is skipped for an adapter that fails, so
+the Katona's 35 productions and 96 performances stand as read on the 11th.
+They will go stale by a day per day it persists. If it is still failing on
+the 13th, the likely cause is katonajozsefszinhaz.hu's hosting blocking
+GitHub's egress range (Azure), and the options are: run the sync from
+Railway on a cron instead of Actions, or fetch the Katona through a proxy.
+Check first whether their `robots.txt` changed; the adapter honours it.
+
+### T-073 · One sync request out of eleven was refused with "JWT issued at future"
+type: bug · area: data · priority: low · status: open · added: 2026-09-12
+
+In the 12 September run, `katona-wp` alone logged `could not open a sync_runs
+row: JWT issued at future` at 08:08:30 — the same second the other ten
+adapters opened theirs with the same static service-role key. The sync mints
+no tokens (`sync/lib/supabaseAdmin.ts` passes the key through), and the key's
+`iat` is the project's creation date, so nothing on our side can put it in
+the future; that message came from one node behind the API gateway
+validating with a wrong clock. Seen once. If it recurs, the fix is on the
+sync side: retry the `sync_runs` insert once on a 401 before giving up on
+the adapter for the night, since the adapter itself was fine.
+
 ### T-070 · A list entry's "Levesz" is a button inside a button
 type: bug · area: web · priority: low · status: open · added: 2026-09-11
 
@@ -793,6 +827,32 @@ _Nothing yet._
 ---
 
 ## Done
+
+### T-072 · The nightly people-index refresh never ran: safeupdate rejects the bare DELETE
+type: bug · area: data · priority: high · status: done · added: 2026-09-12 · done: 2026-09-12
+
+The first sync after 0056 (12 September, 08:19 UTC) logged `[people] index
+refresh failed (catalog rows are still up to date): DELETE requires a WHERE
+clause`, so the people index stayed at the snapshot the migration itself had
+built on the 11th — the Nemzeti's guest companies, thirty-seven names on
+*Boldogok, akik nem látnak* among them, were in the catalogue and not in
+search.
+
+> **Cause.** `authenticator`, the role every PostgREST request runs as, has
+> `session_preload_libraries = supautils, safeupdate`, and pg-safeupdate
+> rejects any DELETE or UPDATE without a WHERE clause — inside a SECURITY
+> DEFINER function too, since it hooks the executor. `refresh_people_index()`
+> had two. It had worked when the migration called it because migrations run
+> over a direct connection as `postgres`, where nothing is preloaded. The
+> lesson: **a function the sync calls has to be tried through `/rest/v1/rpc`
+> with the service key, not only from the SQL editor** — the two paths are
+> not the same database session.
+
+> **Fixed** (`0059_the_people_index_refreshes.sql`, applied). Both deletes say
+> `where true` — safeupdate tests for the clause's presence, not its
+> selectivity, and the whole table is the intent. Verified through the REST
+> path with the service key: 4,283 people indexed, and Berettyán Nándor's new
+> credit is searchable.
 
 ### T-071 · Every person page was Jánoskúti Márta, or would not load
 type: bug · area: catalogue · priority: high · status: done · added: 2026-09-11 · done: 2026-09-11
@@ -2320,4 +2380,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-072**
+Next free id: **T-075**
