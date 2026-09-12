@@ -168,7 +168,13 @@ export function parseProductionDetail(html: string): ProductionDetails | undefin
   body.find("a.more-info-link").remove();
   const synopsis = stripHtml(body.html() ?? undefined);
 
-  const posterUrl = $('meta[name="og:image"], meta[property="og:image"]').first().attr("content");
+  // Every production with a photograph carries an absolute upload URL here.
+  // A page with none falls back to the site-wide share image, written as a
+  // relative path (`frontend/img/fb-image.jpg`) — the theatre's logo card,
+  // not a poster, and not a URL the mirror can fetch either. Treated as no
+  // poster, which is what it is.
+  const ogImage = $('meta[name="og:image"], meta[property="og:image"]').first().attr("content") ?? "";
+  const posterUrl = ogImage.startsWith("http") ? ogImage : "";
 
   return {
     title,
