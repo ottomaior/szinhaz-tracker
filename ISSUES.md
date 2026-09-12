@@ -284,6 +284,27 @@ show timestamps at all, which is a design change rather than a content one.
 
 ## Open
 
+### T-074 · The Katona's three hosts stopped answering the GitHub runner on 12 September
+type: bug · area: data · priority: med · status: open · added: 2026-09-12
+
+Both syncs on 12 September (the scheduled one at 08:08 UTC and a manual
+re-run at 15:14) lost `katona-wp`, `katona-archive` and `katona-company` to
+`fetch failed` after ~30 seconds — no status code, so the connection was
+never answered, which is what a firewall drop looks like rather than a
+block page. The 11 September run had read all three normally, and from a
+home connection the same hosts answer within seconds
+(`katonajozsefszinhaz.hu/wp-json/` 200 in 1.7 s, the archive in 8 s). Radnóti,
+which failed the same way in the morning run, recovered in the afternoon
+one, so that was the runner's network; the Katona is not.
+
+Nothing was lost: reconciliation is skipped for an adapter that fails, so
+the Katona's 35 productions and 96 performances stand as read on the 11th.
+They will go stale by a day per day it persists. If it is still failing on
+the 13th, the likely cause is katonajozsefszinhaz.hu's hosting blocking
+GitHub's egress range (Azure), and the options are: run the sync from
+Railway on a cron instead of Actions, or fetch the Katona through a proxy.
+Check first whether their `robots.txt` changed; the adapter honours it.
+
 ### T-073 · One sync request out of eleven was refused with "JWT issued at future"
 type: bug · area: data · priority: low · status: open · added: 2026-09-12
 
@@ -2359,4 +2380,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-074**
+Next free id: **T-075**
