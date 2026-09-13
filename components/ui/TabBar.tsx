@@ -1,4 +1,5 @@
-import { Animated, useAnimatedValue, Platform, Pressable, StyleSheet, View } from "react-native";
+import { Animated, Platform, Pressable, StyleSheet, View } from "react-native";
+import { useAnimatedValue } from "@/hooks/useAnimatedValue";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import type { BottomTabBarProps } from "expo-router/js-tabs";

@@ -1,5 +1,6 @@
 import { useEffect, useId } from "react";
-import { Animated, useAnimatedValue, StyleSheet, View } from "react-native";
+import { Animated, StyleSheet, View } from "react-native";
+import { useAnimatedValue } from "@/hooks/useAnimatedValue";
 import Svg, { Defs, LinearGradient, Polygon, Stop } from "react-native-svg";
 import { NATIVE_DRIVER, useReducedMotion } from "@/hooks/useReducedMotion";
 import { overlay } from "@/theme/tokens";

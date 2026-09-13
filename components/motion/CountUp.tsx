@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Animated, useAnimatedValue, Easing } from "react-native";
+import { Animated, Easing } from "react-native";
+import { useAnimatedValue } from "@/hooks/useAnimatedValue";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { Text } from "@/components/ui/Text";
 import type { TypeTone, TypeVariant } from "@/theme/type";

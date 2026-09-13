@@ -1,5 +1,6 @@
 import { useEffect, useId, type ReactNode } from "react";
-import { Animated, useAnimatedValue, Easing, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
+import { Animated, Easing, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
+import { useAnimatedValue } from "@/hooks/useAnimatedValue";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { NATIVE_DRIVER, useReducedMotion } from "@/hooks/useReducedMotion";
 import { useTheme } from "@/contexts/ThemeContext";

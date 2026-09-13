@@ -107,6 +107,10 @@ h1,h2,h3,p{margin:0}
 .links a{position:relative;z-index:1;padding:0 13px;height:36px;display:inline-flex;align-items:center;font-size:13px;font-weight:600;color:var(--dim);text-decoration:none;border-radius:999px;transition:color .25s}
 .links a:hover,.links a.on{color:var(--text)}
 .links .ind{position:absolute;top:0;height:36px;border-radius:999px;background:var(--neutral-bg);transition:left .35s cubic-bezier(.3,1.3,.4,1),width .35s cubic-bezier(.3,1.3,.4,1),opacity .2s;opacity:0}
+.lang{display:flex;gap:2px;margin-left:2px}
+.lang__btn{height:32px;padding:0 9px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.4px;color:var(--faint);transition:color .2s,background .2s}
+.lang__btn:hover{color:var(--text)}
+.lang__btn[aria-pressed="true"]{color:var(--text);background:var(--neutral-bg)}
 .tog{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:var(--dim)}
 .tog:hover{background:var(--neutral-bg);color:var(--text)}
 .tog svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
@@ -124,6 +128,7 @@ h1,h2,h3,p{margin:0}
 @keyframes starL{to{transform:translateX(-33.3%)}}@keyframes starR{from{transform:translateX(-33.3%)}to{transform:none}}
 .star .btn{position:relative;z-index:1}
 @media (max-width:820px){.links,.nav .brand span{display:none}.brand{padding-right:4px}}
+@media (max-width:400px){.lang__btn{padding:0 6px}.btn.sm{padding:0 12px}}
 
 /* hero */
 .hero{position:relative;padding:150px 0 40px;overflow:hidden;isolation:isolate}
@@ -268,9 +273,13 @@ footer a{color:var(--faint);text-decoration:none}footer a:hover{color:var(--text
 <header class="nav">
   <div class="pill">
     <a class="brand" href="#top" aria-label="Vastaps"><svg viewBox="0 0 64 64"><path d="M4 9H60V14Q46 23 32 15Q18 23 4 14Z"/><path d="M6 15H23C20 27 20 41 22 51Q14 56 6 52Z"/><path d="M58 15H41C44 27 44 41 42 51Q50 56 58 52Z"/><path d="M32 26.5l2.06 5.67 6.02.2-4.75 3.71 1.67 5.8L32 38.5l-5 3.38 1.67-5.8-4.75-3.71 6.02-.2z"/></svg><span>Vastaps</span></a>
-    <nav class="links" id="links"><span class="ind"></span><a href="#felfedezes">Felfedezés</a><a href="#naplo">Napló</a><a href="#alkotok">Alkotók</a><a href="#gyik">GYIK</a><a href="mailto:ottomaior@protonmail.com?subject=Vastaps">Kapcsolat</a></nav>
-    <button class="tog" id="tog" type="button" aria-label="Téma váltása"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9c0-.5 0-1-.1-1.4A5.5 5.5 0 0 1 13.4 3.1C13 3 12.5 3 12 3z"/></svg></button>
-    <a class="btn sm" href="mailto:ottomaior@protonmail.com?subject=Vastaps%20alfa%20%E2%80%93%20teszteln%C3%A9k">Kérek meghívót</a>
+    <nav class="links" id="links" data-t-label="navLabel" aria-label="Fő navigáció"><span class="ind"></span><a href="#felfedezes" data-t="navDiscover">Felfedezés</a><a href="#naplo" data-t="navDiary">Napló</a><a href="#alkotok" data-t="navPeople">Alkotók</a><a href="#gyik" data-t="navFaq">GYIK</a><a href="mailto:ottomaior@protonmail.com?subject=Vastaps" data-t="navContact">Kapcsolat</a></nav>
+    <div class="lang" role="group" data-t-label="langLabel" aria-label="Nyelv">
+      <button class="lang__btn" type="button" data-lang="hu" aria-pressed="true">HU</button>
+      <button class="lang__btn" type="button" data-lang="en" aria-pressed="false">EN</button>
+    </div>
+    <button class="tog" id="tog" type="button" data-t-label="togLabel" aria-label="Téma váltása"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9c0-.5 0-1-.1-1.4A5.5 5.5 0 0 1 13.4 3.1C13 3 12.5 3 12 3z"/></svg></button>
+    <a class="btn sm" data-t="ctaInviteShort" data-t-href="hrefInvite" href="mailto:ottomaior@protonmail.com?subject=Vastaps%20alfa%20%E2%80%93%20teszteln%C3%A9k">Kérek meghívót</a>
   </div>
 </header>
 
@@ -279,54 +288,59 @@ footer a{color:var(--faint);text-decoration:none}footer a:hover{color:var(--text
   <canvas id="rays" aria-hidden="true"></canvas>
   <div class="wrap hero-grid">
     <div>
-      <span class="alpha"><i></i>Zárt alfa · Budapest és Debrecen</span>
-      <h1 class="display split" id="h1">A magyar színház, egy <em>naplóban</em>.</h1>
-      <p class="lede">Nézd meg, mi megy ma este <span class="rot" id="rot"><span class="on">Budapesten</span><span>Debrecenben</span><span>a Katonában</span><span>az Örkényben</span><span>a Csokonaiban</span></span>. Jegyezd fel, amit láttál, értékeld — és évek múlva is tudni fogod, melyik este volt az.</p>
+      <span class="alpha"><i></i><span data-t="heroAlpha">Zárt alfa · Budapest és Debrecen</span></span>
+      <h1 class="display split" id="h1" data-t="heroTitle">A magyar színház, egy <em>naplóban</em>.</h1>
+      <p class="lede" id="lede" data-t="heroLede">Nézd meg, mi megy ma este <span class="rot" id="rot"><span class="on">Budapesten</span><span>Debrecenben</span><span>a Katonában</span><span>az Örkényben</span><span>a Csokonaiban</span></span>. Jegyezd fel, amit láttál, értékeld — és évek múlva is tudni fogod, melyik este volt az.</p>
       <div class="ctas">
-        <span class="star"><a class="btn" data-magnet href="mailto:ottomaior@protonmail.com?subject=Vastaps%20alfa%20%E2%80%93%20teszteln%C3%A9k"><span class="shiny">Kérek meghívót</span></a></span>
-        <a class="btn ghost" data-magnet href="#felfedezes">Hogyan működik ↓</a>
+        <span class="star"><a class="btn" data-magnet data-t-href="hrefInvite" href="mailto:ottomaior@protonmail.com?subject=Vastaps%20alfa%20%E2%80%93%20teszteln%C3%A9k"><span class="shiny" data-t="ctaInvite">Kérek meghívót</span></a></span>
+        <a class="btn ghost" data-magnet href="#felfedezes" data-t="ctaHow">Hogyan működik ↓</a>
       </div>
-      <div class="facts"><span><b>1207</b> produkció</span><span><b>8</b> színház, <b>2</b> város</span><span><b>Éjszakánként</b> frissül</span><span><b>Nincs</b> hirdetés</span></div>
+      <!-- Cities, not a theatre count: "8 színház" reads as a small product and
+           invites the reader to check whether theirs is on the list. The full
+           list is in the FAQ, where somebody has gone looking for it. -->
+      <div class="facts"><span data-t="fact1"><b>1241</b> produkció</span><span data-t="fact2"><b>Budapest</b> és <b>Debrecen</b></span><span data-t="fact3"><b>Éjszakánként</b> frissül</span><span data-t="fact4"><b>Nincs</b> hirdetés</span></div>
     </div>
     <div class="phones" aria-hidden="true">
-      <div class="ph a" data-tilt><img src="shots/discover.webp" alt="" width="810" height="1761"><div class="glare"></div></div>
-      <div class="ph b" data-tilt><img src="shots/play.webp" alt="" width="810" height="1761"><div class="glare"></div></div>
+      <div class="ph a" data-tilt><img src="shots/discover.webp?v=30fead89" alt="" width="810" height="1761"><div class="glare"></div></div>
+      <div class="ph b" data-tilt><img src="shots/play.webp?v=f607f1bd" alt="" width="810" height="1761"><div class="glare"></div></div>
     </div>
   </div>
 </section>
 
-<div class="loop" aria-label="Színházak a Vastapsban">
+<div class="loop" data-t-label="loopLabel" aria-label="Színházak a Vastapsban">
   <div class="track" id="loopTrack">
-    <span>Örkény István Színház</span><span>Katona József Színház</span><span>Nemzeti Színház</span><span>Centrál Színház</span><span>Madách Színház</span><span>Vígszínház</span><span>Csokonai Nemzeti Színház</span><span>Vojtina Bábszínház</span>
+    <span>Örkény István Színház</span><span>Katona József Színház</span><span>Nemzeti Színház</span><span>Centrál Színház</span><span>Madách Színház</span><span>Radnóti Színház</span><span>Vígszínház</span><span>Csokonai Nemzeti Színház</span><span>Vojtina Bábszínház</span>
   </div>
-  <small>Több színház és több város jön — oda megyünk legközelebb, ahonnan kérik.</small>
+  <small data-t="loopNote">Több színház és több város jön — oda megyünk legközelebb, ahonnan kérik.</small>
 </div>
 
 <section id="felfedezes">
   <div class="wrap">
-    <div class="sec-head fc"><span class="eyebrow">Három felvonás</span><h2 class="display">Amit a Vastaps tud, egy estében elmesélve.</h2><p class="lede">Görgess: a felvonások egymásra rakódnak, ahogy egy este a következőre.</p></div>
+    <div class="sec-head fc"><span class="eyebrow" data-t="sec1Eyebrow">Három felvonás</span><h2 class="display" data-t="sec1Title">Amit a Vastaps tud, egy estében elmesélve.</h2><p class="lede" data-t="sec1Lede">Görgess: a felvonások egymásra rakódnak, ahogy egy este a következőre.</p></div>
     <div class="acts" id="acts">
       <article class="act">
-        <div class="txt"><span class="eyebrow">I. felvonás · Felfedezés</span><h3>Ami ma este megy, egy képernyőn.</h3>
-          <p>Budapest és Debrecen színházainak műsora egy helyen — nem jegyirodán át, hanem közvetlenül a színházak saját oldaláról, minden éjjel újraolvasva.</p>
-          <ul><li><b>Műsor.</b> Nem darabok listája: estéké. Napokra bontva, teremmel, hosszal és műfajjal.</li><li><b>Rangsorolt keresés.</b> Ékezet nélkül is megtalálja. A „Csuja Imre” a színészre keres, nem a szavakra.</li><li><b>Szűrők.</b> Műfaj, színház, terjedelem, rendezés — ahol egy városban egy színház van, a színházszűrő elrejti magát.</li><li><b>Archívum.</b> Közel kilencszáz rég levett produkció. Kereshető marad, és naplózható.</li></ul>
-          <div class="states"><span class="lbl">Négy állapot:</span><span class="state pre"><i></i>Bemutató előtt</span><span class="state on"><i></i>Műsoron</span><span class="state"><i></i>Szünetel</span><span class="state off"><i></i>Levették</span></div>
+        <div class="txt"><span class="eyebrow" data-t="act1Eyebrow">I. felvonás · Felfedezés</span><h3 data-t="act1Title">Ami ma este megy, egy képernyőn.</h3>
+          <p data-t="act1Body">Budapest és Debrecen színházainak műsora egy helyen — nem jegyirodán át, hanem közvetlenül a színházak saját oldaláról, minden éjjel újraolvasva.</p>
+          <ul><li data-t="act1Li1"><b>Műsor.</b> Nem darabok listája: estéké. Napokra bontva, teremmel, hosszal és műfajjal.</li><li data-t="act1Li2"><b>Rangsorolt keresés.</b> Ékezet nélkül is megtalálja. A „Csuja Imre” a színészre keres, nem a szavakra.</li><li data-t="act1Li3"><b>Szűrők.</b> Műfaj, színház, terjedelem, rendezés — ahol egy városban egy színház van, a színházszűrő elrejti magát.</li><li data-t="act1Li4"><b>Archívum.</b> Közel kilencszáz rég levett produkció. Kereshető marad, és naplózható.</li></ul>
+          <div class="states"><span class="lbl" data-t="statesLbl">Négy állapot:</span><span class="state pre"><i></i><span data-t="stPre">Bemutató előtt</span></span><span class="state on"><i></i><span data-t="stOn">Műsoron</span></span><span class="state"><i></i><span data-t="stDormant">Szünetel</span></span><span class="state off"><i></i><span data-t="stOff">Levették</span></span></div>
         </div>
-        <div class="vis"><span class="roman">I.</span><div class="ph"><img src="shots/discover.webp" alt="Felfedezés képernyő: Legközelebb kártya, ma esti sor, műsor" width="810" height="1761"></div></div>
+        <div class="vis"><span class="roman">I.</span><div class="ph"><img src="shots/discover.webp?v=30fead89" data-t-alt="act1Alt" alt="Felfedezés képernyő: a ma esti kiemelt előadás, alatta a következő esték műsora" width="810" height="1761"></div></div>
       </article>
       <article class="act" id="naplo">
-        <div class="txt"><span class="eyebrow">II. felvonás · A napló</span><h3>Öt maszk, három szempont, egy este.</h3>
-          <p>Naplózz egy előadást: melyik estén voltál, hol ültél, mennyibe került a jegy. A színészi játékot, a rendezést és a díszletet külön értékeled — és megírhatod, mit gondoltál róla.</p>
-          <ul><li><b>Az évad, nem a naptári év.</b> Szeptembertől augusztusig számol, ahogy a színházak is.</li><li><b>Újranézés.</b> Ugyanaz a darab másodszor külön bejegyzés — mert nem ugyanaz az este volt.</li><li><b>A jegy is.</b> Hely, ár és a jegyről készült fotó ugyanahhoz a bejegyzéshez tartozik.</li><li><b>A profilod egy műsorfüzet.</b> Az évad végén összeszámolja: hány este, mibe került, kiket láttál a legtöbbször.</li></ul>
+        <div class="txt"><span class="eyebrow" data-t="act2Eyebrow">II. felvonás · A napló</span><h3 data-t="act2Title">Öt maszk, három szempont, egy este.</h3>
+          <!-- No seat, no price, no ticket photo: the check-in stopped asking
+               for them (see app/checkin.tsx), so the page stops promising them. -->
+          <p data-t="act2Body">Naplózz egy előadást: melyik estén voltál, és mit gondoltál róla. A színészi játékot, a rendezést és a díszletet külön értékeled — és megírhatod, amire évek múlva is emlékezni akarsz.</p>
+          <ul><li data-t="act2Li1"><b>Az évad, nem a naptári év.</b> Szeptembertől augusztusig számol, ahogy a színházak is.</li><li data-t="act2Li2"><b>Újranézés.</b> Ugyanaz a darab másodszor külön bejegyzés — mert nem ugyanaz az este volt.</li><li data-t="act2Li3"><b>Címkék és jegyzet.</b> „Állótapsot kapott”, „Megkönnyeztem”, „Ajánlom” — és egy szabad szöveg, ha többet akarsz mondani.</li><li data-t="act2Li4"><b>A profilod egy bérlet.</b> Az évad végén összeszámolja: hány este, hány darab, kiket láttál a legtöbbször.</li></ul>
         </div>
-        <div class="vis"><span class="roman">II.</span><div class="ph"><img src="shots/user.webp" alt="Naplózás: maszkos értékelés három szempont szerint" width="810" height="1761"></div></div>
+        <div class="vis"><span class="roman">II.</span><div class="ph"><img src="shots/checkin.webp?v=ab2f6fb8" data-t-alt="act2Alt" alt="Naplózás, az értékelés lépése: öt maszk az összesített értékeléshez, alatta a színészi játék, a rendezés és a díszlet külön" width="810" height="1761"></div></div>
       </article>
       <article class="act" id="alkotok">
-        <div class="txt"><span class="eyebrow">III. felvonás · Alkotók</span><h3>Ki volt az a színésznő a második felvonásban?</h3>
-          <p>A katalógus 2565 névvel indul — ha egy szerepet ketten játszanak, mindkettőjüket tudja. Rákeresel egy színészre, és előjön minden előadás, amiben játszott: szereppel, évszámmal, színházzal. A rendezők ugyanígy.</p>
-          <ul><li><b>Követés.</b> Szólunk, ha egy követett alkotó új előadásban lép színpadra.</li><li><b>Saját listák.</b> „Bodó Viktor Budapesten”: nyolc rendezés három színházban — egy linkkel, fiók nélkül is megnyitható.</li></ul>
+        <div class="txt"><span class="eyebrow" data-t="act3Eyebrow">III. felvonás · Alkotók</span><h3 data-t="act3Title">Ki volt az a színésznő a második felvonásban?</h3>
+          <p data-t="act3Body">A katalógus több mint négyezer névvel indul — ha egy szerepet ketten játszanak, mindkettőjüket tudja. Rákeresel egy színészre, és előjön minden előadás, amiben játszott: szereppel, évszámmal, színházzal. A rendezők ugyanígy.</p>
+          <ul><li data-t="act3Li1"><b>Követés.</b> Szólunk, ha egy követett alkotó új előadásban lép színpadra.</li><li data-t="act3Li2"><b>Saját listák.</b> „Bodó Viktor Budapesten”: nyolc rendezés három színházban — egy linkkel, fiók nélkül is megnyitható.</li></ul>
         </div>
-        <div class="vis"><span class="roman">III.</span><div class="ph"><img src="shots/person.webp" alt="Profil: évad-összegzés és napló" width="810" height="1761"></div></div>
+        <div class="vis"><span class="roman">III.</span><div class="ph"><img src="shots/person.webp?v=6ba8bf2c" data-t-alt="act3Alt" alt="Egy alkotó oldala: az előadásai szereppel, évszámmal és színházzal" width="810" height="1761"></div></div>
       </article>
     </div>
   </div>
@@ -334,48 +348,52 @@ footer a{color:var(--faint);text-decoration:none}footer a:hover{color:var(--text
 
 <section>
   <div class="wrap">
-    <div class="sec-head fc"><span class="eyebrow">És ami még a műsorfüzetben van</span><h2 class="display">Kicsi dolgok, amikért érdemes visszajönni.</h2></div>
+    <div class="sec-head fc"><span class="eyebrow" data-t="sec2Eyebrow">És ami még a műsorfüzetben van</span><h2 class="display" data-t="sec2Title">Kicsi dolgok, amikért érdemes visszajönni.</h2></div>
     <div class="bento" id="bento">
-      <div class="tile wide fc"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 6h12M4 12h12M4 18h8M18 15v6M15 18h6"/></svg></span><h3>Készíts saját listát</h3><p>Egy rendező kézjegye, a gyerekekkel nézhető darabok, az idei legjobb esték. Sorrendbe teszed és megosztod — a barátaid fiók nélkül is megnyitják.</p></div>
-      <div class="tile fc"><span class="ic"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg></span><h3>Kívánságlista</h3><p>Amit még meg akarsz nézni, a darab oldalán egy könyvjelzővel. Mellette az alkotók és színházak, akiket követsz.</p></div>
-      <div class="tile fc"><span class="ic"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.5 7.2L4 21l1.8-5.5A8 8 0 1 1 21 12z"/></svg></span><h3>Hírfolyam</h3><p>Kik mit néztek meg és mit gondoltak róla. Követhetsz másokat, vagy nézheted mindenki bejegyzéseit.</p></div>
-      <div class="tile fc"><span class="themes"><i style="background:#1c0d13"></i><i style="background:#faf5ec"></i><i style="background:#f7f2fb"></i><i style="background:#fff"></i><i style="background:#1c2025"></i></span><h3>Öt téma</h3><p>Bársony a sötétben, Színlap a világosban — ugyanaz a ház lámpafényben és nyomtatva —, mellettük levendula, fehér és szén. Minden szövegszín 4,5:1 fölött.</p></div>
-      <div class="tile wide fc"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 9a2 2 0 0 0 2-2V5h14v2a2 2 0 0 0 0 4v2a2 2 0 0 0 0 4v2H5v-2a2 2 0 0 0-2-2z"/><path d="M10 5v14" stroke-dasharray="2 3"/></svg></span><h3>Jegyet nem itt veszel</h3><p>A Vastaps nem jegyiroda, és nem is akar az lenni. Egy koppintás kivisz a színház saját oldalára — oda, ahol tényleg meg lehet venni.</p></div>
+      <div class="tile wide fc"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 6h12M4 12h12M4 18h8M18 15v6M15 18h6"/></svg></span><h3 data-t="tile1T">Készíts saját listát</h3><p data-t="tile1B">Egy rendező kézjegye, a gyerekekkel nézhető darabok, az idei legjobb esték. Sorrendbe teszed és megosztod — a barátaid fiók nélkül is megnyitják.</p></div>
+      <div class="tile fc"><span class="ic"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg></span><h3 data-t="tile2T">Kívánságlista</h3><p data-t="tile2B">Amit még meg akarsz nézni, a darab oldalán egy könyvjelzővel. Mellette az alkotók és színházak, akiket követsz.</p></div>
+      <div class="tile fc"><span class="ic"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.5 7.2L4 21l1.8-5.5A8 8 0 1 1 21 12z"/></svg></span><h3 data-t="tile3T">Hírfolyam</h3><p data-t="tile3B">Kik mit néztek meg és mit gondoltak róla. Követhetsz másokat, vagy nézheted mindenki bejegyzéseit.</p></div>
+      <div class="tile fc"><span class="themes"><i style="background:#1c0d13"></i><i style="background:#faf5ec"></i><i style="background:#f7f2fb"></i><i style="background:#fff"></i><i style="background:#1c2025"></i></span><h3 data-t="tile4T">Öt téma</h3><p data-t="tile4B">Bársony a sötétben, Színlap a világosban — ugyanaz a ház lámpafényben és nyomtatva —, mellettük levendula, fehér és szén. Minden szövegszín 4,5:1 fölött.</p></div>
+      <div class="tile wide fc"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 9a2 2 0 0 0 2-2V5h14v2a2 2 0 0 0 0 4v2a2 2 0 0 0 0 4v2H5v-2a2 2 0 0 0-2-2z"/><path d="M10 5v14" stroke-dasharray="2 3"/></svg></span><h3 data-t="tile5T">Jegyet nem itt veszel</h3><p data-t="tile5B">A Vastaps nem jegyiroda, és nem is akar az lenni. Egy koppintás kivisz a színház saját oldalára — oda, ahol tényleg meg lehet venni.</p></div>
     </div>
+    <!-- The figures are the catalogue as of the last time somebody looked
+         (plays, people_index, performances from today, the oldest
+         premiere_date). They hold the real figure in the markup so the number
+         is right before any script runs; the animation only replays it. -->
     <div class="stats" id="stats">
-      <div><span class="num" data-count="1207">0</span><small>Produkció</small></div>
-      <div><span class="num" data-count="2565">0</span><small>Alkotó</small></div>
-      <div><span class="num" data-count="497">0</span><small>Meghirdetett időpont</small></div>
-      <div><span class="num" data-count="1960">0</span><small>A legrégebbi bemutató</small></div>
+      <div><span class="num" data-count="1241">1241</span><small data-t="stat1">Produkció</small></div>
+      <div><span class="num" data-count="4283">4283</span><small data-t="stat2">Alkotó</small></div>
+      <div><span class="num" data-count="655">655</span><small data-t="stat3">Meghirdetett időpont</small></div>
+      <div><span class="num" data-count="1960" data-plain="1">1960</span><small data-t="stat4">A legrégebbi bemutató</small></div>
     </div>
   </div>
 </section>
 
 <section id="szinfalak">
   <div class="wrap">
-    <span class="eyebrow">IV. felvonás · A színfalak mögött</span>
-    <p class="reveal" id="reveal" style="margin-top:14px">Egy ember írta, az első sortól az utolsóig. Nincs mögötte csapat és nincs mögötte cég — ami alább áll, az nem marketing, hanem döntések, amelyek a napi használatban is látszanak.</p>
+    <span class="eyebrow" data-t="act4Eyebrow">IV. felvonás · A színfalak mögött</span>
+    <p class="reveal" id="reveal" style="margin-top:14px" data-t="revealText">Egy ember írta, az első sortól az utolsóig. Nincs mögötte csapat és nincs mögötte cég — ami alább áll, az nem marketing, hanem döntések, amelyek a napi használatban is látszanak.</p>
     <div class="tech">
-      <div class="tc fc" data-spot><b>Expo · React Native · TypeScript</b><p>Egy kódbázis, amiből webes és natív build is készül. Telefonon alsó fülsor, asztali gépen felső menü: ugyanaz az app, kétféle szobában.</p></div>
-      <div class="tc fc" data-spot><b>Supabase · Postgres · RLS</b><p>Ki mit lát, az sorszinten, az adatbázisban dől el — nem az appban.</p></div>
-      <div class="tc fc" data-spot><b>Tíz beolvasó</b><p>Minden éjjel újraolvassa a színházak saját oldalait. Jegyirodai közvetítő nélkül.</p></div>
-      <div class="tc fc" data-spot><b>WCAG AA</b><p>Mind az öt témában minden szövegszín 4,5:1 kontraszt fölött van — kártyán is.</p></div>
-      <div class="tc fc" data-spot><b>expo-router</b><p>Minden képernyőnek saját, megosztható URL-je van — a darabtól az alkotóig.</p></div>
-      <div class="tc fc" data-spot><b>Ami még nincs kész</b><p>Az iOS- és Android-build készül. A webes verzió most is működik telefonon, és a kezdőképernyőre tehető.</p></div>
+      <div class="tc fc" data-spot><b>Expo · React Native · TypeScript</b><p data-t="tc1B">Egy kódbázis, amiből webes és natív build is készül. Telefonon alsó fülsor, asztali gépen felső menü: ugyanaz az app, kétféle szobában.</p></div>
+      <div class="tc fc" data-spot><b>Supabase · Postgres · RLS</b><p data-t="tc2B">Ki mit lát, az sorszinten, az adatbázisban dől el — nem az appban.</p></div>
+      <div class="tc fc" data-spot><b data-t="tc3K">Színházanként egy beolvasó</b><p data-t="tc3B">Minden éjjel újraolvassa a színházak saját oldalait. Jegyirodai közvetítő nélkül.</p></div>
+      <div class="tc fc" data-spot><b>WCAG AA</b><p data-t="tc4B">Mind az öt témában minden szövegszín 4,5:1 kontraszt fölött van — kártyán is.</p></div>
+      <div class="tc fc" data-spot><b>expo-router</b><p data-t="tc5B">Minden képernyőnek saját, megosztható URL-je van — a darabtól az alkotóig.</p></div>
+      <div class="tc fc" data-spot><b data-t="tc6K">Ami még nincs kész</b><p data-t="tc6B">Az iOS- és Android-build készül. A webes verzió most is működik telefonon, és a kezdőképernyőre tehető.</p></div>
     </div>
   </div>
 </section>
 
 <section id="gyik">
   <div class="wrap">
-    <div class="sec-head fc"><span class="eyebrow">Gyakori kérdések</span><h2 class="display">Amit meg szoktak kérdezni.</h2></div>
+    <div class="sec-head fc"><span class="eyebrow" data-t="faqEyebrow">Gyakori kérdések</span><h2 class="display" data-t="faqTitle">Amit meg szoktak kérdezni.</h2></div>
     <div class="faq">
-      <details open><summary>Ki használhatja most?<span class="pm">+</span></summary><p>Egyelőre egy szűk kör: a Vastaps zárt alfatesztben fut, és az app címe szándékosan nincs kint ezen az oldalon. Nem titok, csak félkész — vannak még hibái és hiányzó részei. Ha vállalod, hogy egy félkész appot használsz, és elmondod, mi hiányzik, írj egy e-mailt, és elküldöm a linket.</p></details>
-      <details><summary>Kerül valamibe?<span class="pm">+</span></summary><p>Ma nem. Böngészni, naplózni és értékelni fizetés nélkül lehet, és hirdetés sincs benne. Hogy hosszabb távon miből tartja el magát, az még nyitott kérdés; a színházi együttműködés például szóba jöhet. Ha ez változik, előre szólok, és nem visszamenőleg.</p></details>
-      <details><summary>Honnan jönnek az adatok?<span class="pm">+</span></summary><p>Közvetlenül a színházak saját oldalairól, minden éjjel újraolvasva — van, ahol a színház nyilvános API-jából, van, ahol a műsoroldalról. Minden új színház egy-egy külön beolvasót jelent, ezért nem egyszerre jönnek. Jegyirodai aggregátorokat szándékosan nem használ.</p></details>
-      <details><summary>Melyik színházak vannak benne?<span class="pm">+</span></summary><p>Budapesten az Örkény, a Katona, a Nemzeti, a Centrál, a Madách és a Vígszínház; Debrecenben a Csokonai Nemzeti Színház és a Vojtina Bábszínház. Hogy melyik város és ház jön ezután, azon múlik, honnan kérik — ha a tiéd hiányzik, írj.</p></details>
-      <details><summary>Kell hozzá fiók?<span class="pm">+</span></summary><p>A böngészéshez nem: a műsor, a darabok, az alkotók és a listák fiók nélkül is megnyithatók. Naplózáshoz, értékeléshez és kívánságlistához kell egy e-mail-cím és egy jelszó.</p></details>
-      <details><summary>Van belőle telefonos alkalmazás?<span class="pm">+</span></summary><p>A webes verzió most is telefonra van tervezve, és a böngésződből a kezdőképernyőre tehető. Az App Store-ba és a Google Play-be szánt változat készül — a natív projekt és a mélylinkek már megvannak hozzá.</p></details>
+      <details open><summary><span data-t="faq1Q">Ki használhatja most?</span><span class="pm">+</span></summary><p data-t="faq1A">Egyelőre egy szűk kör: a Vastaps zárt alfatesztben fut, és az app címe szándékosan nincs kint ezen az oldalon. Nem titok, csak félkész — vannak még hibái és hiányzó részei. Ha vállalod, hogy egy félkész appot használsz, és elmondod, mi hiányzik, írj egy e-mailt, és elküldöm a linket.</p></details>
+      <details><summary><span data-t="faq2Q">Kerül valamibe?</span><span class="pm">+</span></summary><p data-t="faq2A">Ma nem. Böngészni, naplózni és értékelni fizetés nélkül lehet, és hirdetés sincs benne. Hogy hosszabb távon miből tartja el magát, az még nyitott kérdés; a színházi együttműködés például szóba jöhet. Ha ez változik, előre szólok, és nem visszamenőleg.</p></details>
+      <details><summary><span data-t="faq3Q">Honnan jönnek az adatok?</span><span class="pm">+</span></summary><p data-t="faq3A">Közvetlenül a színházak saját oldalairól, minden éjjel újraolvasva — van, ahol a színház nyilvános API-jából, van, ahol a műsoroldalról. Minden új színház egy-egy külön beolvasót jelent, ezért nem egyszerre jönnek. Jegyirodai aggregátorokat szándékosan nem használ.</p></details>
+      <details><summary><span data-t="faq4Q">Melyik színházak vannak benne?</span><span class="pm">+</span></summary><p data-t="faq4A">Budapesten az Örkény, a Katona, a Nemzeti, a Centrál, a Madách, a Radnóti és a Vígszínház; Debrecenben a Csokonai Nemzeti Színház és a Vojtina Bábszínház. Hogy melyik város és ház jön ezután, azon múlik, honnan kérik — ha a tiéd hiányzik, írj.</p></details>
+      <details><summary><span data-t="faq5Q">Kell hozzá fiók?</span><span class="pm">+</span></summary><p data-t="faq5A">A böngészéshez nem: a műsor, a darabok, az alkotók és a listák fiók nélkül is megnyithatók. Naplózáshoz, értékeléshez és kívánságlistához kell egy e-mail-cím és egy jelszó.</p></details>
+      <details><summary><span data-t="faq6Q">Van belőle telefonos alkalmazás?</span><span class="pm">+</span></summary><p data-t="faq6A">A webes verzió most is telefonra van tervezve, és a böngésződből a kezdőképernyőre tehető. Az App Store-ba és a Google Play-be szánt változat készül — a natív projekt és a mélylinkek már megvannak hozzá.</p></details>
     </div>
   </div>
 </section>
@@ -383,15 +401,15 @@ footer a{color:var(--faint);text-decoration:none}footer a:hover{color:var(--text
 <section id="kapcsolat">
   <div class="wrap">
     <div class="contact fc">
-      <span class="eyebrow">V. felvonás · Kapcsolat</span>
-      <h2 class="display">Írj, ha érdekel.</h2>
-      <p class="lede">Néhány ember használja, félkész állapotban, és az ő észrevételeik alakítják. Egy e-mail elég — elküldöm a linket, cserébe csak annyit kérek, hogy mondd el, mi hiányzik. Színházat képviselsz? Ugyanerre a címre, magyarul vagy angolul.</p>
+      <span class="eyebrow" data-t="act5Eyebrow">V. felvonás · Kapcsolat</span>
+      <h2 class="display" data-t="contactTitle">Írj, ha érdekel.</h2>
+      <p class="lede" data-t="contactLede">Néhány ember használja, félkész állapotban, és az ő észrevételeik alakítják. Egy e-mail elég — elküldöm a linket, cserébe csak annyit kérek, hogy mondd el, mi hiányzik. Színházat képviselsz? Ugyanerre a címre, magyarul vagy angolul.</p>
       <a class="mail" href="mailto:ottomaior@protonmail.com">ottomaior@protonmail.com</a>
-      <div class="ctas"><span class="star"><a class="btn" data-magnet href="mailto:ottomaior@protonmail.com?subject=Vastaps%20alfa%20%E2%80%93%20teszteln%C3%A9k"><span class="shiny">Kérek meghívót</span></a></span><a class="btn ghost" data-magnet href="/kutatas">Segíts alakítani — 7 perces kérdőív</a></div>
+      <div class="ctas"><span class="star"><a class="btn" data-magnet data-t-href="hrefInvite" href="mailto:ottomaior@protonmail.com?subject=Vastaps%20alfa%20%E2%80%93%20teszteln%C3%A9k"><span class="shiny" data-t="ctaInvite2">Kérek meghívót</span></a></span><a class="btn ghost" data-magnet href="/kutatas" data-t="ctaResearch">Segíts alakítani — 7 perces kérdőív</a></div>
     </div>
     <footer>
-      <span>Vastaps — magyar színházi napló.</span>
-      <nav><a href="/impresszum">Impresszum</a><a href="/adatvedelem">Adatvédelem</a><a href="/feltetelek">Feltételek</a><a href="/fiok-torlese">Fiók törlése</a><a href="mailto:ottomaior@protonmail.com?subject=Vastaps">Kapcsolat</a></nav>
+      <span data-t="footNote">Vastaps — magyar színházi napló.</span>
+      <nav><a href="/impresszum" data-t="footImpressum">Impresszum</a><a href="/adatvedelem" data-t="footPrivacy">Adatvédelem</a><a href="/feltetelek" data-t="footTerms">Feltételek</a><a href="/fiok-torlese" data-t="footDeletion">Fiók törlése</a><a href="mailto:ottomaior@protonmail.com?subject=Vastaps" data-t="footContact">Kapcsolat</a></nav>
     </footer>
   </div>
 </section>
@@ -406,15 +424,98 @@ let theme='dark'; try{theme=localStorage.getItem('vastaps.landing.theme')||(root
 const setTheme=t=>{theme=t;root.setAttribute('data-theme',t);try{localStorage.setItem('vastaps.landing.theme',t)}catch(e){}};
 setTheme(theme); $('#tog').onclick=()=>setTheme(theme==='dark'?'light':'dark');
 
-/* split text */
-const h1=$('#h1');
-(function(){const nodes=[...h1.childNodes]; h1.textContent=''; let i=0;
-  nodes.forEach(n=>{const target=n.nodeType===1?n.cloneNode(false):h1; if(n.nodeType===1){target.textContent='';h1.appendChild(target)}
-    const txt=n.textContent; txt.split(' ').forEach((word,wi,arr)=>{if(word){const w=document.createElement('span');w.className='w';[...word].forEach(ch=>{const s=document.createElement('span');s.className='ch';s.textContent=ch;s.style.animationDelay=(i++*.03)+'s';w.appendChild(s)});target.appendChild(w)} if(wi<arr.length-1)target.appendChild(document.createTextNode(' '))})})})();
+/* ── Language ─────────────────────────────────────────────────────────────
+   Hungarian is the document; English is a dictionary applied over it, keyed
+   by data-t (innerHTML), data-t-alt, data-t-href and data-t-label. Switching
+   back restores the original nodes, so the page reads correctly in Hungarian
+   with scripts off, which is also what a crawler sees. The choice is kept in
+   localStorage under "vastaps-lang", the same key the previous page used. */
+const EN={
+  navLabel:"Main navigation",
+  navDiscover:"Discover",navDiary:"Diary",navPeople:"People",navFaq:"FAQ",navContact:"Contact",
+  langLabel:"Language",togLabel:"Switch theme",
+  ctaInviteShort:"Request an invite",
+  hrefInvite:"mailto:ottomaior@protonmail.com?subject=Vastaps%20alpha%20%E2%80%93%20I%27d%20like%20to%20test",
+  heroAlpha:"Closed alpha · Budapest and Debrecen",
+  heroTitle:"Hungarian theatre, <em>in one diary</em>.",
+  heroLede:'See what is on tonight <span class="rot" id="rot"><span class="on">in Budapest</span><span>in Debrecen</span><span>at the Katona</span><span>at the Örkény</span><span>at the Csokonai</span></span>. Note down what you saw, rate it — and years from now still know which night it was.',
+  ctaInvite:"Request an invite",ctaHow:"How it works ↓",
+  fact1:"<b>1,241</b> productions",fact2:"<b>Budapest</b> and <b>Debrecen</b>",fact3:"Synced <b>nightly</b>",fact4:"<b>No</b> advertising",
+  loopLabel:"Theatres in Vastaps",
+  loopNote:"More theatres and more cities are coming — wherever people ask for them next.",
+  sec1Eyebrow:"Three acts",sec1Title:"What Vastaps does, told as one evening.",sec1Lede:"Scroll: the acts stack on one another, the way one evening does on the next.",
+  act1Eyebrow:"Act I · Discover",act1Title:"What is on tonight, on one screen.",
+  act1Body:"Everything playing in Budapest and Debrecen in one place — not through a ticket agency, but read straight from the theatres’ own sites, every night.",
+  act1Li1:"<b>Listings.</b> Not a list of plays: a list of evenings. Day by day, with the room, the running time and the genre.",
+  act1Li2:"<b>Ranked search.</b> It finds things without accents too. Searching “Csuja Imre” looks for the performer, not for the words.",
+  act1Li3:"<b>Filters.</b> Genre, theatre, running time, sort order — in a city with only one theatre, the theatre filter hides itself.",
+  act1Li4:"<b>The archive.</b> Close to nine hundred productions long since taken off. Still searchable, still loggable.",
+  statesLbl:"Four states:",stPre:"Before opening night",stOn:"On now",stDormant:"Dormant",stOff:"Taken off",
+  act1Alt:"The Discover screen: tonight’s featured performance, with the coming evenings listed below it",
+  act2Eyebrow:"Act II · The diary",act2Title:"Five masks, three categories, one evening.",
+  act2Body:"Log a performance: which night you went, and what you made of it. You rate the acting, the directing and the set separately — and you can write down what you want to remember years from now.",
+  act2Li1:"<b>The season, not the calendar year.</b> Vastaps counts September to August, the way theatres do.",
+  act2Li2:"<b>Second viewings.</b> The same play a second time is its own entry — because it was not the same evening.",
+  act2Li3:"<b>Tags and a note.</b> “Standing ovation”, “It made me cry”, “Recommended” — and free text when you have more to say.",
+  act2Li4:"<b>Your profile is a season ticket.</b> At the end of the season it adds it up: how many evenings, how many plays, who you saw most often.",
+  act2Alt:"Logging a performance, the rating step: five masks for the overall rating, with acting, directing and set design rated separately below",
+  act3Eyebrow:"Act III · People",act3Title:"Who was that actress in the second act?",
+  act3Body:"The catalogue starts with over four thousand names — when two people share a part, it knows both. Search for a performer and every production they have appeared in comes back: with the role, the year and the house. Directors work the same way.",
+  act3Li1:"<b>Following.</b> We tell you when someone you follow steps on stage in a new production.",
+  act3Li2:"<b>Lists of your own.</b> “Bodó Viktor in Budapest”: eight productions across three theatres — one link, no account needed to open it.",
+  act3Alt:"A performer’s page: their productions with the role, the year and the theatre",
+  sec2Eyebrow:"And the rest of the programme",sec2Title:"Small things worth coming back for.",
+  tile1T:"Make a list of your own",tile1B:"One director’s signature, plays to take the children to, the best evenings of the year. You order it and share it — your friends can open it without an account.",
+  tile2T:"Watchlist",tile2B:"What you still want to see, added with the bookmark on a production’s page. Next to it, the performers and theatres you follow.",
+  tile3T:"Feed",tile3B:"Who saw what, and what they made of it. Follow people, or read everyone’s entries.",
+  tile4T:"Five themes",tile4B:"Velvet in the dark, Playbill in the light — the same house, lit and printed — plus lavender, white and charcoal. Every text colour clears 4.5:1.",
+  tile5T:"You don’t buy tickets here",tile5B:"Vastaps is not a box office and does not want to be. One tap takes you to the theatre’s own page — where you can actually buy the seat.",
+  stat1:"Productions",stat2:"People",stat3:"Announced dates",stat4:"The oldest premiere",
+  act4Eyebrow:"Act IV · Behind the curtain",
+  revealText:"Written by one person, from the first line to the last. There is no team behind it and no company — what follows is not marketing, but decisions you can feel in daily use.",
+  tc1B:"One codebase, producing both the web and the native builds. A tab bar on a phone, a top bar on a desktop: one app, two rooms.",
+  tc2B:"Who sees what is decided row by row in the database — not in the app.",
+  tc3K:"One reader per theatre",tc3B:"Re-reads the theatres’ own sites every night. No ticket-agency middleman.",
+  tc4B:"Every text colour clears 4.5:1 in all five themes — on cards as well.",
+  tc5B:"Every screen has its own shareable URL — from a production to a performer.",
+  tc6K:"What is not finished",tc6B:"The iOS and Android builds are in progress. The web version already works on a phone and can be added to the home screen.",
+  faqEyebrow:"Frequently asked",faqTitle:"What people tend to ask.",
+  faq1Q:"Who can use it now?",faq1A:"A small circle, for now: Vastaps is in closed alpha, and the app’s address is deliberately not on this page. It is not a secret, only unfinished — there are still bugs and missing pieces. If you are willing to use a half-finished app and say what is missing, send an email and I will send you the link.",
+  faq2Q:"Does it cost anything?",faq2A:"Not today. Browsing, logging and rating cost nothing, and there is no advertising. How it supports itself longer term is still an open question; partnerships with theatres, for instance, are one possibility. If that changes, you will hear about it in advance, and it will not apply retroactively.",
+  faq3Q:"Where does the data come from?",faq3A:"Straight from the theatres’ own websites, re-read every night — some through a theatre’s public API, some from its listings pages. Every new theatre means its own reader, which is why they arrive one at a time. Ticket aggregators are deliberately not used.",
+  faq4Q:"Which theatres are included?",faq4A:"In Budapest: Örkény, Katona, the National Theatre, Centrál, Madách, Radnóti and Vígszínház; in Debrecen: the Csokonai National Theatre and the Vojtina Puppet Theatre. Which city and which house comes next depends on where people ask from — if yours is missing, write in.",
+  faq5Q:"Do I need an account?",faq5A:"Not to browse: the listings, the productions, the performers and the lists all open without one. Logging, rating and the watchlist need an email address and a password.",
+  faq6Q:"Is there a phone app?",faq6A:"The web version is already built for a phone and can be added to your home screen from the browser. App Store and Play Store builds are in progress — the native project and the deep links are already in place.",
+  act5Eyebrow:"Act V · Contact",contactTitle:"Write, if this interests you.",
+  contactLede:"A few people are using it, half-finished, and their notes are shaping it. One email is enough — I will send you the link, and all I ask in return is that you tell me what is missing. Do you work at a theatre? Same address, in Hungarian or in English.",
+  ctaInvite2:"Request an invite",ctaResearch:"Help shape it — a 7-minute questionnaire",
+  footNote:"Vastaps — a Hungarian theatre diary.",
+  footImpressum:"Imprint",footPrivacy:"Privacy",footTerms:"Terms",footDeletion:"Delete account",footContact:"Contact"
+};
+const TITLE={hu:"Vastaps — magyar színházi napló",en:"Vastaps — a Hungarian theatre diary"};
+let lang='hu';
+const stash=(el,key,value)=>{if(el.dataset[key]===undefined)el.dataset[key]=value};
+function setLang(l){
+  const en=l==='en'; lang=en?'en':'hu';
+  root.lang=lang; document.title=TITLE[lang];
+  $$('[data-t]').forEach(el=>{const k=el.getAttribute('data-t');stash(el,'hu',el.innerHTML);el.innerHTML=en&&EN[k]?EN[k]:el.dataset.hu});
+  $$('[data-t-alt]').forEach(el=>{const k=el.getAttribute('data-t-alt');stash(el,'huAlt',el.alt);el.alt=en&&EN[k]?EN[k]:el.dataset.huAlt});
+  $$('[data-t-href]').forEach(el=>{const k=el.getAttribute('data-t-href');stash(el,'huHref',el.getAttribute('href'));el.setAttribute('href',en&&EN[k]?EN[k]:el.dataset.huHref)});
+  $$('[data-t-label]').forEach(el=>{const k=el.getAttribute('data-t-label');stash(el,'huLabel',el.getAttribute('aria-label')||'');el.setAttribute('aria-label',en&&EN[k]?EN[k]:el.dataset.huLabel)});
+  $$('[data-lang]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.lang===lang)));
+  splitH1(); splitReveal(); revealWords(); countUp(true);
+  try{localStorage.setItem('vastaps-lang',lang)}catch(e){}
+}
+$$('[data-lang]').forEach(b=>b.addEventListener('click',()=>setLang(b.dataset.lang)));
 
-/* rotating text */
-const rot=$$('#rot span'); let ri=0;
-setInterval(()=>{if(reduce)return;rot[ri].classList.remove('on');rot[ri].classList.add('out');const prev=ri;ri=(ri+1)%rot.length;rot[ri].classList.add('on');setTimeout(()=>rot[prev].classList.remove('out'),500)},2600);
+/* split text — re-run on every language change, on the fresh markup */
+const h1=$('#h1');
+function splitH1(){const nodes=[...h1.childNodes]; h1.textContent=''; let i=0;
+  nodes.forEach(n=>{const target=n.nodeType===1?n.cloneNode(false):h1; if(n.nodeType===1){target.textContent='';h1.appendChild(target)}
+    const txt=n.textContent; txt.split(' ').forEach((word,wi,arr)=>{if(word){const w=document.createElement('span');w.className='w';[...word].forEach(ch=>{const s=document.createElement('span');s.className='ch';s.textContent=ch;s.style.animationDelay=(i++*.03)+'s';w.appendChild(s)});target.appendChild(w)} if(wi<arr.length-1)target.appendChild(document.createTextNode(' '))})})}
+
+/* rotating text — reads the spans live, since the lede is replaced on a language change */
+setInterval(()=>{if(reduce)return;const rot=$$('#rot span');if(rot.length<2)return;let ri=rot.findIndex(s=>s.classList.contains('on'));if(ri<0)ri=0;rot[ri].classList.remove('on');rot[ri].classList.add('out');const prev=ri;ri=(ri+1)%rot.length;rot[ri].classList.add('on');setTimeout(()=>rot[prev].classList.remove('out'),500)},2600);
 
 /* light rays + dust */
 (function(){const c=$('#rays'),x=c.getContext('2d');let w,h,t=0;const fit=()=>{const r=c.getBoundingClientRect();w=c.width=r.width*devicePixelRatio|0;h=c.height=r.height*devicePixelRatio|0};fit();addEventListener('resize',fit);
@@ -443,30 +544,41 @@ $$('.tile').forEach(el=>el.addEventListener('pointerenter',e=>{if(reduce)return;
 /* scroll stack */
 const acts=$$('.act');
 function stack(){if(matchMedia('(max-width:900px)').matches){acts.forEach(a=>a.style.transform='');return}
-  acts.forEach((a,i)=>{const r=a.getBoundingClientRect();const prog=Math.min(1,Math.max(0,(96-r.top)/-1+0));
+  acts.forEach((a,i)=>{const r=a.getBoundingClientRect();
     // how far the NEXT card has covered this one
     const next=acts[i+1];let cover=0;if(next){const nr=next.getBoundingClientRect();cover=Math.min(1,Math.max(0,(r.top+r.height-nr.top)/r.height))}
     a.style.transform=`scale(${1-cover*.06}) translateY(${-cover*10}px)`;a.style.filter=`brightness(${1-cover*.35})`})}
 addEventListener('scroll',stack,{passive:true});addEventListener('resize',stack);stack();
 
-/* fade content / count up / reveal with IO */
+/* count up — the markup holds the real figure, the animation only replays it */
+const tallies=$$('[data-count]');let armed=false;
+function countUp(immediate){const loc=lang==='en'?'en-GB':'hu-HU';
+  tallies.forEach(n=>{const to=+n.dataset.count;if(n.dataset.plain==='1'){n.textContent=String(to);return}
+    if(immediate||reduce||!armed){n.textContent=to.toLocaleString(loc);return}
+    const t0=performance.now(),d=1600;const tick=now=>{const p=Math.min(1,(now-t0)/d),e=1-Math.pow(1-p,3);n.textContent=Math.round(to*e).toLocaleString(loc);if(p<1)requestAnimationFrame(tick)};requestAnimationFrame(tick)})}
+
+/* fade content / count up with IO */
 document.body.classList.add('io');
 const io=new IntersectionObserver(es=>es.forEach(en=>{if(!en.isIntersecting)return;const el=en.target;el.classList.add('in');io.unobserve(el);
-  if(el.id==='stats')$$('[data-count]',el).forEach(n=>{const to=+n.dataset.count,t0=performance.now(),d=reduce?0:1600;const tick=now=>{const p=Math.min(1,(now-t0)/d),e=1-Math.pow(1-p,3);n.textContent=Math.round(to*e).toLocaleString('hu-HU').replace(/ /g,' ');if(p<1)requestAnimationFrame(tick)};requestAnimationFrame(tick)});
+  if(el.id==='stats'){armed=true;countUp(false)}
 }),{threshold:.05});
 $$('.fc,#stats').forEach(el=>io.observe(el));
 // scroll reveal: words come into focus as the paragraph scrolls
-const rv=$('#reveal'); rv.innerHTML=rv.textContent.split(' ').map(w=>`<span class="w">${w}</span>`).join(' ');
-const words=$$('.w',rv);
+const rv=$('#reveal');let words=[];
+function splitReveal(){rv.innerHTML=rv.textContent.split(' ').map(w=>`<span class="w">${w}</span>`).join(' ');words=$$('.w',rv)}
 function revealWords(){const r=rv.getBoundingClientRect();const p=Math.min(1,Math.max(0,(innerHeight*.8-r.top)/(r.height+innerHeight*.3)));const n=Math.round(p*words.length);words.forEach((w,i)=>w.classList.toggle('on',i<n))}
-addEventListener('scroll',revealWords,{passive:true});revealWords();
+addEventListener('scroll',revealWords,{passive:true});
 
-/* nav indicator follows section */
-const links=$$('#links a'),ind=$('#links .ind');
+/* nav indicator follows section — only the in-page links; a mailto: is not a selector */
+const links=$$('#links a').filter(a=>a.getAttribute('href').startsWith('#')),ind=$('#links .ind');
 const place=a=>{if(!a){ind.style.opacity=0;return}ind.style.opacity=1;ind.style.left=a.offsetLeft+'px';ind.style.width=a.offsetWidth+'px'};
 const secs=links.map(a=>$(a.getAttribute('href')));
 const io2=new IntersectionObserver(es=>{es.forEach(en=>{if(en.isIntersecting){const i=secs.indexOf(en.target);links.forEach(l=>l.classList.remove('on'));links[i].classList.add('on');place(links[i])}})},{rootMargin:'-40% 0px -50% 0px'});
 secs.forEach(s=>s&&io2.observe(s));
+
+/* boot */
+let stored=null;try{stored=localStorage.getItem('vastaps-lang')}catch(e){}
+setLang(stored==='en'?'en':'hu');
 })();
 </script>
 

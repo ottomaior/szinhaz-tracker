@@ -2,7 +2,8 @@
  * Re-take the phone screenshots the landing page shows, into `landing/shots/`.
  *
  *     npm run shots            # every shot
- *     npm run shots -- feed    # just the named ones
+ *     npm run shots -- feed    # just the named ones (user, discover, play,
+ *                              # person, feed, checkin)
  *
  * `landing/README.md` used to say there was no script for this "because it
  * needs a dev server and a browser binary that only exist on a development
@@ -75,6 +76,20 @@ const OUTPUT_WIDTH = 810;
  */
 const ESZTER = "9bc08f86-a6b1-4599-87eb-722145cf06a1";
 const ESZTER_EMAIL = "ottomaior94+eszter@gmail.com";
+
+/**
+ * The production and the performer the public shots are taken on.
+ *
+ * Az üvegház at the Katona: on now, a poster with a credit line, four dates
+ * on the spotlight card — and Eszter has already logged it, so the check-in
+ * shot shows the "second time" note rather than an empty first visit. Für
+ * Anikó: one house, twenty-five years of credits, so the person page has a
+ * long enough list to read as a career rather than a stub. Both are constants
+ * rather than "whatever is first" so the landing page does not change faces
+ * between deploys.
+ */
+const UVEGHAZ = "158917e3-7f4f-4423-87fd-e404c3d407a6";
+const PERSON = "fur-aniko";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -273,6 +288,48 @@ async function main() {
     console.log(`${name.padEnd(12)} ${meta.width}x${meta.height}  ${(png.length / 1024).toFixed(0)}kB png -> ${((await sharp(out).toBuffer()).length / 1024).toFixed(0)}kB webp`);
   }
 
+  /**
+   * Click the first element whose text is exactly `label`, retrying for a
+   * while: the controls that depend on the session — the feed's scope tabs,
+   * the check-in's buttons — appear a beat after the screen's title, later
+   * still on a cold dev server, and `settle` only waits for the title.
+   */
+  async function clickText(label: string, selector: string): Promise<boolean> {
+    for (let i = 0; i < 40; i++) {
+      const hit = await evaluate(`(() => {
+        const el = [...document.querySelectorAll(${JSON.stringify(selector)})]
+          .find((n) => n.textContent?.trim() === ${JSON.stringify(label)});
+        if (!el) return false;
+        el.click();
+        return true;
+      })()`);
+      if (hit) return true;
+      await sleep(500);
+    }
+    return false;
+  }
+
+  /**
+   * Follow a magic link and wait until the app has actually stored the
+   * session. A fixed pause is not enough: on a cold dev server the bundle
+   * takes longer to arrive than the pause lasts, the script navigates on
+   * before the client has read the token out of the URL, and every signed-in
+   * shot after that is quietly a stranger's.
+   */
+  async function signIn(email: string) {
+    await send("Page.navigate", { url: await magicLinkFor(email) });
+    for (let i = 0; i < 120; i++) {
+      await sleep(500);
+      const stored = await evaluate(`(() => {
+        try { return Object.keys(localStorage).some((k) => k.startsWith("sb-") && k.endsWith("-auth-token")); }
+        catch (e) { return false; }
+      })()`);
+      if (stored) return;
+    }
+    console.error(`Followed the sign-in link for ${email} but no session appeared within a minute.`);
+    process.exit(1);
+  }
+
   async function goto(path: string) {
     await send("Page.navigate", { url: `${BASE}${path}` });
     await sleep(500);
@@ -289,10 +346,30 @@ async function main() {
     await capture("user.webp");
   }
 
+  // ------------------------------------- the public screens, still signed out
+  //
+  // Discover and the production are the hero's two phones; the performer is
+  // Act III. None of them needs a session, and taking them before the magic
+  // link keeps them honest as what a stranger sees.
+  if (wanted("discover")) {
+    await goto("/discover");
+    await settle("Felfedezés");
+    await capture("discover.webp");
+  }
+  if (wanted("play")) {
+    await goto(`/play/${UVEGHAZ}`);
+    await settle("Az üvegház");
+    await capture("play.webp");
+  }
+  if (wanted("person")) {
+    await goto(`/person/${PERSON}`);
+    await settle("Für Anikó");
+    await capture("person.webp");
+  }
+
   // --------------------------------------------------- feed.webp, signed in
   if (wanted("feed")) {
-    await send("Page.navigate", { url: await magicLinkFor(ESZTER_EMAIL) });
-    await sleep(2500);
+    await signIn(ESZTER_EMAIL);
     await goto("/");
     await settle("Hírfolyam");
 
@@ -300,13 +377,7 @@ async function main() {
     // choice, which is T-001 in ISSUES.md. The hero wants "Követettek",
     // because that tab shows only the demo accounts' own circle and therefore
     // cannot pull a real alpha tester's evening into frame.
-    const switched = await evaluate(`(() => {
-      const tab = [...document.querySelectorAll('[role="tab"]')]
-        .find((el) => el.textContent?.trim() === "Követettek");
-      if (!tab) return false;
-      tab.click();
-      return true;
-    })()`);
+    const switched = await clickText("Követettek", '[role="tab"]');
     if (!switched) {
       console.error('Could not find the "Követettek" tab — is the session signed in?');
       process.exit(1);
@@ -314,6 +385,27 @@ async function main() {
     await sleep(1200);
     await settle("Követettek");
     await capture("feed.webp");
+  }
+
+  // ------------------------------------------------ checkin.webp, signed in
+  //
+  // Act II on the landing page: the rating step of the three-step check-in,
+  // five masks against three questions. Nothing is saved — the form is opened,
+  // stepped forward once and photographed. Needs the session the feed shot
+  // established, so it runs after it; `npm run shots -- checkin` alone signs
+  // in on its own.
+  if (wanted("checkin")) {
+    if (!wanted("feed")) await signIn(ESZTER_EMAIL);
+    await goto(`/checkin?playId=${UVEGHAZ}`);
+    await settle("Melyik este volt?");
+    const advanced = await clickText("Tovább", '[role="button"]');
+    if (!advanced) {
+      console.error('Could not find the "Tovább" button on the check-in — is the session signed in?');
+      process.exit(1);
+    }
+    await sleep(900);
+    await settle("Öt maszk, három szempont");
+    await capture("checkin.webp");
   }
 
   ws.close();

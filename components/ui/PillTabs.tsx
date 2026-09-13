@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Animated, useAnimatedValue, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
-import { NATIVE_DRIVER, useReducedMotion } from "@/hooks/useReducedMotion";
+import { Animated, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
+import { useAnimatedValue } from "@/hooks/useAnimatedValue";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { Text } from "@/components/ui/Text";
 import { radius } from "@/theme/tokens";
 import { makeStyles } from "@/theme/styles";
@@ -80,7 +81,10 @@ export function PillTabs<K extends string>({
             accessibilityLabel={tab.label}
             style={styles.tab}
           >
-            <Text variant="label" tone={selected ? (flat ? "default" : "inverse") : "faint"}>
+            {/* Inverse only once the pill is actually behind the label: before
+                the first onLayout there is nothing gold to sit on, and an
+                inverse label on the bare track is invisible. */}
+            <Text variant="label" tone={selected ? (flat || !active ? "default" : "inverse") : "faint"}>
               {tab.label}
             </Text>
           </Pressable>

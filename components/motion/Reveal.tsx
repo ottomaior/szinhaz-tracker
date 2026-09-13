@@ -1,5 +1,6 @@
 import { Children, isValidElement, useEffect, type ReactNode } from "react";
-import { Animated, useAnimatedValue, Easing, type StyleProp, type ViewStyle } from "react-native";
+import { Animated, Easing, type StyleProp, type ViewStyle } from "react-native";
+import { useAnimatedValue } from "@/hooks/useAnimatedValue";
 import { NATIVE_DRIVER, useReducedMotion } from "@/hooks/useReducedMotion";
 
 /**

@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Animated, useAnimatedValue, Easing, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
+import { Animated, Easing, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
+import { useAnimatedValue } from "@/hooks/useAnimatedValue";
 import { NATIVE_DRIVER, useReducedMotion } from "@/hooks/useReducedMotion";
 import { radius as radii } from "@/theme/tokens";
 import { makeStyles } from "@/theme/styles";

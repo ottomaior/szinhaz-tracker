@@ -21,9 +21,11 @@ linkelőnézetek is ezt látják. Az olvasó választását a `localStorage` őr
 A paletta az app saját `velvetDark` témája (`theme/themes.ts`), az oldal
 alapja egy árnyalattal mélyebbre véve, hogy a telefonos képernyőképek
 megvilágított tárgyként olvassanak a sötét színpadon; a két betűtípus az app
-saját Bodoni Modája és Sorája, a Google Fontsról betöltve. Az oldalnak
-szándékosan egyetlen témája van — a nézőtér sötét —, ezért minden szín
-kifejezetten ki van festve, nem örökölt.
+saját Bodoni Modája és Sorája, a Google Fontsról betöltve. Minden szín
+kifejezetten ki van festve, nem örökölt: az oldal sötétben nyílik, és a
+navigáció hold gombja átváltja az app `playbillLight` témájára — ugyanaz a
+ház, nyomtatva —, a választást a `localStorage` őrzi
+`vastaps.landing.theme` néven.
 
 ## A képernyőképek
 
@@ -33,11 +35,15 @@ DevTools Protocolon keresztül vezérelve, 402×874 méretben, 3-as
 eszközskálázással, majd 810 képpont szélesre átméretezve és WebP formátumba
 kódolva a `sharp` segítségével.
 
-Csak olyan képernyők kerültek bele, amelyek **kijelentkezve** is
-megjelennek — a Felfedezés, a Műsor naptár, a keresés, egy darab, egy alkotó,
-egy nyilvános profil és egy lista —, egyetlen kivétellel: a hero hírfolyama
-csak bejelentkezve látható, azt egy demófiókból fényképeztük (lásd alább). A
-Profil, a Kívánságlista és az évadösszegző munkamenet nélkül bejelentkezési
+Az oldal négyet használ közülük: a Felfedezést és egy darabot a heróban és
+az I. felvonásban (`discover.webp`, `play.webp`), a naplózás értékelő
+lépését a II. felvonásban (`checkin.webp`) és egy alkotót a III.-ban
+(`person.webp`). Az `og.html` a hírfolyamot használja (`feed.webp`), a
+kérdőív pedig még a Műsor naptárt, a keresést, egy listát és egy nyilvános
+profilt (`musor.webp`, `search.webp`, `list.webp`, `user.webp`). A
+hírfolyamon és a naplózáson kívül mind kijelentkezve készül; az a kettő
+munkamenetet kíván, és egy demófiókból fényképezzük (lásd alább). A Profil,
+a Kívánságlista és az évadösszegző munkamenet nélkül bejelentkezési
 felszólítást ad vissza, tehát üres képernyőként fényképeződne.
 
 Az újrafényképezés az `npm run shots` — a `scripts/render-shots.ts`, amely
@@ -45,7 +51,10 @@ lefuttatja a fenti felvételt, és egyenesen ebbe a mappába ír. Alapból a
 kitelepített oldalt fényképezi, nem dev szervert, mert ugyanaz a bundle fut
 rajta, és így az látszik, ami tényleg él; a `SHOTS_BASE_URL` átirányítja
 máshová, ha a változás még nincs kint. Egy név megadásával csak azt az egy
-képet készíti újra: `npm run shots -- feed`.
+képet készíti újra: `npm run shots -- feed` — a nevek: `user`, `discover`,
+`play`, `person`, `feed` és `checkin`. Dev szerver ellen a bejelentkezett
+képek megvárják, hogy a munkamenet tényleg megérkezzen a `localStorage`-ba,
+mert egy hideg Metro bundle tovább tart, mint bármilyen rögzített várakozás.
 
 Azért van, mert az alternatívája már megtörtént. A `feed.webp` és a
 `user.webp` változatlanul átvészelte a követés-kapu bevezetését — pedig épp

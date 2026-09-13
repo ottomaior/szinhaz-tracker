@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from "react";
-import { Animated, useAnimatedValue, Easing, StyleSheet, View } from "react-native";
+import { Animated, Easing, StyleSheet, View } from "react-native";
+import { useAnimatedValue } from "@/hooks/useAnimatedValue";
 import { NATIVE_DRIVER, useReducedMotion } from "@/hooks/useReducedMotion";
 import { CheckIcon } from "@/components/icons/Icons";
 import { Text } from "@/components/ui/Text";
@@ -121,5 +122,5 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   discCurrent: { boxShadow: `0 0 0 5px ${colors.goldTintBg}` },
   label: { flex: 1, textAlign: "center" },
   bar: { flex: 1, height: 1.5, backgroundColor: colors.hairline, overflow: "hidden" },
-  barFill: { ...StyleSheet.absoluteFillObject, backgroundColor: colors.gold, transformOrigin: "left" },
+  barFill: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: colors.gold, transformOrigin: "left" },
 }));
