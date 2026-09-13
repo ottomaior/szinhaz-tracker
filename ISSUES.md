@@ -284,6 +284,18 @@ show timestamps at all, which is a design change rather than a content one.
 
 ## Open
 
+### T-077 · The Műfaj chip on Felfedezés behaves oddly; hidden for now
+type: bug · area: discover · priority: medium · status: open · added: 2026-09-13
+
+Ottó, on the redesigned Discover at desktop width: "the műfaj is acting a
+bit weird, I suggest to hide that filter for now and will work on that
+later." Hidden behind `SHOW_GENRE_FILTER = false` in `app/(tabs)/discover.tsx`,
+the same arrangement as the venue-type chip — the state and `genre` in every
+query stay wired, so it is one line to bring back. What exactly was odd is
+not yet pinned down; candidates are the option list re-scoping under the
+city and venue (`getFilterGenres`) and clearing a chosen genre when the list
+changes, which can make the chip snap back to "Műfaj" on its own.
+
 ### T-076 · The questionnaire's screenshots still show the pre-redesign app
 type: chore · area: landing · priority: low · status: open · added: 2026-09-13
 
@@ -2345,4 +2357,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-077**
+Next free id: **T-078**

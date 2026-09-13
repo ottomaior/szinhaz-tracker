@@ -83,6 +83,17 @@ const UPCOMING_LIMIT = 7;
  */
 const SHOW_VENUE_TYPE_FILTER = false;
 
+/**
+ * Whether to offer the genre chip.
+ *
+ * Off for now, at Ottó's request (T-077): the chip was behaving oddly enough
+ * on the redesigned Discover that he would rather it were not there than
+ * there and wrong. Same arrangement as the venue-type chip above — the state,
+ * the option list and `genre` in every query stay wired up, so turning it
+ * back on is this one line once the behaviour has been looked at.
+ */
+const SHOW_GENRE_FILTER = false;
+
 const FILTER_TO_VENUE_TYPE: Record<string, VenueType | undefined> = {
   [strings.discover.filterAll]: undefined,
   [strings.discover.filterKoszinhaz]: "kőszínház",
@@ -607,7 +618,7 @@ export default function DiscoverScreen() {
         />
       )}
 
-      {genres.length > 1 && (
+      {SHOW_GENRE_FILTER && genres.length > 1 && (
         <SelectChip
           name={strings.discover.filterGenre}
           value={activeGenre}
