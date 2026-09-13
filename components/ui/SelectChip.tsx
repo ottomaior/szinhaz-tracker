@@ -5,7 +5,7 @@ import { colors } from "@/theme/colors";
 import { gutter, minTouchTarget, overlay, radius, space } from "@/theme/tokens";
 import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
-import { CheckIcon, ChevronDownIcon, CloseIcon } from "@/components/icons/Icons";
+import { CheckIcon, ChevronDownIcon, CloseIcon, PinIcon } from "@/components/icons/Icons";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 import { makeStyles } from "@/theme/styles";
@@ -105,15 +105,22 @@ export function SelectChip({
             {/* The chosen city, or "Mind" — never the facet's name. Unlike a
                 chip, this trigger is the only thing on screen saying what the
                 whole page is scoped to, so it has to read as an answer even
-                when nothing has been picked. One line under the screen title,
-                the way a programme prints the season under its name. */}
-            <Text variant="bodySmall" tone="dim" numberOfLines={1} style={{ flexShrink: 1 }}>
+                when nothing has been picked. Drawn as a pill with a pin and a
+                chevron rather than as a bare line of text: it is the control
+                a reader reaches for most, and printed like a subtitle nobody
+                knew it could be pressed. */}
+            <PinIcon size={14} color={colors.gold} />
+            <Text variant="bodySmall" numberOfLines={1} style={{ flexShrink: 1 }}>
               <Text variant="bodySmall" style={{ fontFamily: bodyFont(fontsLoaded, "semibold") }}>
                 {selected?.label ?? strings.discover.filterAll}
               </Text>
-              {!!subtitle && ` · ${subtitle}`}
+              {!!subtitle && (
+                <Text variant="bodySmall" tone="dim">
+                  {` · ${subtitle}`}
+                </Text>
+              )}
             </Text>
-            <ChevronDownIcon size={12} color={colors.textDim} />
+            <ChevronDownIcon size={13} color={colors.textDim} />
           </View>
         </Pressable>
       ) : (
@@ -209,11 +216,23 @@ const useStyles = makeStyles((colors, elevation) => StyleSheet.create({
   chipActive: { backgroundColor: colors.gold },
   chipIdle: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.hairline },
 
-  /* Unpainted on purpose: this trigger sits over the header's wash and reads
-     as a heading you can change, not as a control dropped on top of one. The
-     touch target is met by the two lines plus the vertical padding. */
-  header: { paddingVertical: space.xs, paddingRight: space.sm, minHeight: 32, justifyContent: "center", alignSelf: "flex-start" },
-  headerLine: { flexDirection: "row", alignItems: "center", gap: space.xs },
+  /* Painted like the idle chips, a size up, so it is unmistakably a button:
+     the city is the control most readers touch first, and unpainted it read
+     as a subtitle. Sits under the title with a little air above it. */
+  header: {
+    alignSelf: "flex-start",
+    marginTop: space.xs,
+    minHeight: 36,
+    paddingVertical: 7,
+    paddingLeft: 12,
+    paddingRight: 14,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    justifyContent: "center",
+  },
+  headerLine: { flexDirection: "row", alignItems: "center", gap: space.sm },
 
   /*
    * Absolutely filled rather than `flex: 1`.
