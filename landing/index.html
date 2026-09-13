@@ -61,7 +61,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,600;0,6..96,700;1,6..96,400;1,6..96,600&family=Sora:wght@400;500;600;700&display=swap">
 <style>
 /* Vastaps landing · redesign. Tokens from theme/themes.ts. ReactBits ideas re-implemented:
-   Pill Nav · Light Rays · Particles · Split Text · Rotating Text · Shiny Text · Star Border · Magnet ·
+   Pill Nav · Light Rays · Particles · Split Text · Shiny Text · Star Border · Magnet ·
    Logo Loop · Tilted Card · Scroll Stack · Magic Bento · Count Up · Scroll Reveal · Spotlight Card · Fade Content */
 :root{
   --bg:#0f0709;--bg-el:#170b0f;--surface:#1c0d13;--surface2:#2a1520;
@@ -140,10 +140,6 @@ h1,h2,h3,p{margin:0}
 .split .w{display:inline-block;white-space:nowrap}
 .split .ch{display:inline-block;opacity:0;transform:translateY(.5em) rotate(2deg);animation:chIn .7s cubic-bezier(.2,.8,.2,1) forwards}
 @keyframes chIn{to{opacity:1;transform:none}}
-.rot{display:inline-grid;justify-items:start;vertical-align:bottom;overflow:hidden;height:1.6em;color:var(--text);font-weight:600}
-.rot span{grid-area:1/1;transition:transform .55s cubic-bezier(.3,1,.3,1),opacity .4s;transform:translateY(110%);opacity:0}
-.rot span.on{transform:none;opacity:1}
-.rot span.out{transform:translateY(-110%);opacity:0}
 .ctas{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:30px}
 .alpha{display:inline-flex;align-items:center;gap:8px;padding:6px 12px 6px 8px;border-radius:999px;background:var(--gold-bg);border:1px solid var(--gold-border);font-size:12px;font-weight:600;color:var(--gold)}
 .alpha i{width:8px;height:8px;border-radius:50%;background:var(--gold);animation:pulse 2s infinite}
@@ -297,7 +293,7 @@ footer a{color:var(--faint);text-decoration:none}footer a:hover{color:var(--text
     <div>
       <span class="alpha"><i></i><span data-t="heroAlpha">Zárt alfa · Budapest és Debrecen</span></span>
       <h1 class="display split" id="h1" data-t="heroTitle">A magyar színház, egy <em>naplóban</em>.</h1>
-      <p class="lede" id="lede" data-t="heroLede">Nézd meg, mi megy ma este <span class="rot" id="rot"><span class="on">Budapesten</span><span>Debrecenben</span><span>a Katonában</span><span>az Örkényben</span><span>a Csokonaiban</span></span>. Jegyezd fel, amit láttál, értékeld — és évek múlva is tudni fogod, melyik este volt az.</p>
+      <p class="lede" id="lede" data-t="heroLede">Nézd meg, mi megy ma este Budapesten és Debrecenben. Jegyezd fel, amit láttál, értékeld — és évek múlva is tudni fogod, melyik este volt az.</p>
       <div class="ctas">
         <span class="star"><a class="btn" data-magnet data-t-href="hrefInvite" href="mailto:ottomaior@protonmail.com?subject=Vastaps%20alfa%20%E2%80%93%20teszteln%C3%A9k"><span class="shiny" data-t="ctaInvite">Kérek meghívót</span></a></span>
         <a class="btn ghost" data-magnet href="#felfedezes" data-t="ctaHow">Hogyan működik ↓</a>
@@ -456,7 +452,7 @@ const EN={
   hrefInvite:"mailto:ottomaior@protonmail.com?subject=Vastaps%20alpha%20%E2%80%93%20I%27d%20like%20to%20test",
   heroAlpha:"Closed alpha · Budapest and Debrecen",
   heroTitle:"Hungarian theatre, <em>in one diary</em>.",
-  heroLede:'See what is on tonight <span class="rot" id="rot"><span class="on">in Budapest</span><span>in Debrecen</span><span>at the Katona</span><span>at the Örkény</span><span>at the Csokonai</span></span>. Note down what you saw, rate it — and years from now still know which night it was.',
+  heroLede:"See what is on tonight in Budapest and Debrecen. Note down what you saw, rate it — and years from now still know which night it was.",
   ctaInvite:"Request an invite",ctaHow:"How it works ↓",
   fact1:"<b>1,241</b> productions",fact2:"<b>Budapest</b> and <b>Debrecen</b>",fact3:"Synced <b>nightly</b>",fact4:"<b>No</b> advertising",
   loopLabel:"Theatres in Vastaps",
@@ -531,9 +527,6 @@ const h1=$('#h1');
 function splitH1(){const nodes=[...h1.childNodes]; h1.textContent=''; let i=0;
   nodes.forEach(n=>{const target=n.nodeType===1?n.cloneNode(false):h1; if(n.nodeType===1){target.textContent='';h1.appendChild(target)}
     const txt=n.textContent; txt.split(' ').forEach((word,wi,arr)=>{if(word){const w=document.createElement('span');w.className='w';[...word].forEach(ch=>{const s=document.createElement('span');s.className='ch';s.textContent=ch;s.style.animationDelay=(i++*.03)+'s';w.appendChild(s)});target.appendChild(w)} if(wi<arr.length-1)target.appendChild(document.createTextNode(' '))})})}
-
-/* rotating text — reads the spans live, since the lede is replaced on a language change */
-setInterval(()=>{if(reduce)return;const rot=$$('#rot span');if(rot.length<2)return;let ri=rot.findIndex(s=>s.classList.contains('on'));if(ri<0)ri=0;rot[ri].classList.remove('on');rot[ri].classList.add('out');const prev=ri;ri=(ri+1)%rot.length;rot[ri].classList.add('on');setTimeout(()=>rot[prev].classList.remove('out'),500)},2600);
 
 /* light rays + dust */
 (function(){const c=$('#rays'),x=c.getContext('2d');let w,h,t=0;const fit=()=>{const r=c.getBoundingClientRect();w=c.width=r.width*devicePixelRatio|0;h=c.height=r.height*devicePixelRatio|0};fit();addEventListener('resize',fit);
