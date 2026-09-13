@@ -36,6 +36,7 @@ export function PosterPlaceholder({
   contentFit = "cover",
   priority,
   portraitFrame = false,
+  backdrop = false,
 }: {
   poster?: Poster;
   /** The production's title. Its first letter becomes the stand-in's monogram. */
@@ -59,6 +60,14 @@ export function PosterPlaceholder({
    * image is shown whole, letterboxed over a blurred copy of itself.
    */
   portraitFrame?: boolean;
+  /**
+   * With `contentFit="contain"`, fill the frame's bare edges with a blurred
+   * copy of the image rather than the surface colour — the letterbox
+   * `portraitFrame` draws, offered on its own. The play hero on a wide
+   * screen uses it: the whole still is shown, and the band it sits in still
+   * reads as the picture rather than as a picture with margins.
+   */
+  backdrop?: boolean;
 }) {
   const styles = useStyles();
 
@@ -84,7 +93,7 @@ export function PosterPlaceholder({
   // Wider than 5:4 is a banner, not a poster; anything nearer square still
   // crops acceptably.
   const isLandscape = !!poster?.width && !!poster?.height && poster.width / poster.height > 1.25;
-  const letterbox = portraitFrame && isLandscape && contentFit === "cover";
+  const letterbox = (portraitFrame && isLandscape && contentFit === "cover") || (backdrop && contentFit === "contain");
   const fit = letterbox ? "contain" : contentFit;
 
   if (uri && failedUri !== uri) {
