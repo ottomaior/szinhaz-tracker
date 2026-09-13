@@ -25,7 +25,6 @@ import { ContentColumn } from "@/components/ui/Screen";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Text } from "@/components/ui/Text";
 import { SpotlightCard } from "@/components/ui/SpotlightCard";
-import { LightRays } from "@/components/motion/LightRays";
 import { SplitText } from "@/components/motion/SplitText";
 import { StarBorder } from "@/components/motion/StarBorder";
 import { FadeIn } from "@/components/motion/Reveal";
@@ -287,9 +286,22 @@ export default function PlayDetailScreen() {
             stage in every theme, and a printed theme's near-black text would
             vanish into it. */}
         <View style={[styles.hero, { aspectRatio: heroAspect(play.poster) }, wide && styles.heroWide]}>
-          <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} height="100%" radius={0} scrim priority="high" />
-          {/* Stage light across the still — see components/motion/LightRays. */}
-          <LightRays />
+          {/* Whole picture on a wide screen, over a blurred copy of itself:
+              a window-wide hero cropped to a 500pt band kept the middle third
+              of every still and the title of every poster, and on a desktop
+              there is room to show the frame as shot. On a phone `cover`
+              stays — the ratio there follows the image, so little is lost. */}
+          <PosterPlaceholder
+            poster={play.poster}
+            title={play.title}
+            seed={play.id}
+            height="100%"
+            radius={0}
+            scrim
+            priority="high"
+            contentFit={wide ? "contain" : "cover"}
+            backdrop={wide}
+          />
           <View style={[styles.heroTop, { top: insets.top + space.lg }]}>
             <IconButton translucent onPress={() => closeModal(router, "/(tabs)")} accessibilityLabel={strings.playDetail.back}>
               <ChevronLeftIcon color={overlay.onImageHeading} />
@@ -814,8 +826,8 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     justifyContent: "flex-end",
   },
   // On a desktop the image spans the window, so its height is what needs
-  // bounding rather than its ratio; `cover` in PosterPlaceholder crops the
-  // sides of a portrait poster, which is the lesser loss on a wide screen.
+  // bounding rather than its ratio; the picture is then shown whole inside
+  // that band (`contain` + `backdrop` above) instead of cropped to it.
   heroWide: { maxHeight: 500 },
   heroTop: {
     position: "absolute",
