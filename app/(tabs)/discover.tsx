@@ -13,6 +13,7 @@ import {
   getFilterGenres,
   getFilterVenues,
   getPremieres,
+  getProgramForDay,
   getTrending,
   getUpcomingProgram,
   getPlaysByIds,
@@ -41,6 +42,12 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Grid } from "@/components/ui/Grid";
 import { SearchField } from "@/components/ui/SearchField";
 import { Text } from "@/components/ui/Text";
+import { PillTabs } from "@/components/ui/PillTabs";
+import { useDockInset } from "@/components/ui/TabBar";
+import { PosterRail } from "@/components/ui/PosterRail";
+import { PressCard } from "@/components/motion/PressCard";
+import { AnimatedList } from "@/components/motion/Reveal";
+import { SplitText } from "@/components/motion/SplitText";
 import { strings } from "@/i18n/hu";
 import { personInitials } from "@/utils/people";
 import { foldSearchTerm } from "@/utils/search";
@@ -143,6 +150,7 @@ export default function DiscoverScreen() {
   const styles = useStyles();
 
   const insets = useSafeAreaInsets();
+  const dockInset = useDockInset();
   const router = useRouter();
   // From 900pt the lead goes two-column: the hero beside the programme rather
   // than above it, so a desktop window is not a phone column with margins.
@@ -189,6 +197,10 @@ export default function DiscoverScreen() {
   const [listCovers, setListCovers] = useState<Map<string, Play>>(new Map());
   const [friendsSeen, setFriendsSeen] = useState<{ play: Play; friends: number }[]>([]);
   const [upcoming, setUpcoming] = useState<ProgramEntry[]>([]);
+  // Every curtain going up on the lead's evening, for the poster rail. Keyed
+  // by the day it answers for, so a rail fetched for Friday is never shown
+  // under a hero that has moved to Saturday.
+  const [curtains, setCurtains] = useState<{ day: string; entries: ProgramEntry[] }>({ day: "", entries: [] });
 
   // Built here rather than inline so each list is one object per render and
   // the "Mind" entry is written once instead of at four call sites.
@@ -345,6 +357,27 @@ export default function DiscoverScreen() {
       active = false;
     };
   }, [city, mode]);
+
+  /**
+   * The rest of that evening. Tonight when anything is on tonight, otherwise
+   * the evening the hero has moved to — the rail and the hero must agree on
+   * which night they are talking about.
+   */
+  const heroDay = upcoming[0] ? budapestDayKey(upcoming[0].startsAt) : undefined;
+  useEffect(() => {
+    if (mode !== "browse" || !heroDay) return;
+    let active = true;
+    getProgramForDay(heroDay, { city })
+      .then((entries) => {
+        if (active) setCurtains({ day: heroDay, entries });
+      })
+      .catch(() => {
+        if (active) setCurtains({ day: heroDay, entries: [] });
+      });
+    return () => {
+      active = false;
+    };
+  }, [heroDay, city, mode]);
 
   // Scoped to the selected city, so picking Debrecen offers Debrecen's
   // theatres rather than all of them.
@@ -633,6 +666,8 @@ export default function DiscoverScreen() {
 
   const hero = upcoming[0];
   const programme = upcoming.slice(1);
+  // Only for the day the hero is on; a stale answer for another day is dropped.
+  const curtainsTonight = hero && curtains.day === heroDay ? curtains.entries : [];
 
   /**
    * The lead: the next evening as a hero, and the evenings after it as a
@@ -649,11 +684,11 @@ export default function DiscoverScreen() {
             action={strings.discover.upcomingAction}
             onAction={() => setMode("program")}
           />
-          <View style={{ marginTop: space.xs }}>
+          <AnimatedList style={{ marginTop: space.xs }} stagger={55} initialDelay={120}>
             {programme.map((entry) => (
               <ProgramRow key={entry.performanceId} entry={entry} onPress={() => openPlay(entry.playId)} />
             ))}
-          </View>
+          </AnimatedList>
         </View>
       )}
     </View>
@@ -665,7 +700,7 @@ export default function DiscoverScreen() {
         <View style={[styles.header, { paddingTop: insets.top + space.md }]}>
           <View style={styles.titleRow}>
             <View style={{ flex: 1, gap: 2 }}>
-              <Text variant="display">{strings.discover.title}</Text>
+              <SplitText text={strings.discover.title} />
               {/* The city decides what the whole screen is about, so it is
                   printed under the title like a season under a theatre's
                   name, not offered as one chip among the facets. */}
@@ -725,31 +760,12 @@ export default function DiscoverScreen() {
           {/* Hidden while searching: results are their own answer, and a tab
               row above them would silently change what a query returns. */}
           {!isSearching && (
-            <View style={styles.tabs} accessibilityRole="tablist">
-              {MODES.map(({ key, label }) => {
-                const active = mode === key;
-                return (
-                  <Pressable
-                    key={key}
-                    onPress={() => setMode(key)}
-                    style={[styles.tab, active && styles.tabActive]}
-                    accessibilityRole="tab"
-                    aria-selected={active}
-                    accessibilityState={{ selected: active }}
-                    accessibilityLabel={label}
-                  >
-                    <Text variant="label" tone={active ? "default" : "faint"}>
-                      {label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
+            <PillTabs<DiscoverMode> tabs={MODES} value={mode} onChange={setMode} style={styles.tabs} />
           )}
         </View>
 
         {isSearching ? (
-          <ScrollView contentContainerStyle={styles.scrollBody} keyboardShouldPersistTaps="handled">
+          <ScrollView contentContainerStyle={[styles.scrollBody, { paddingBottom: dockInset }]} keyboardShouldPersistTaps="handled">
             {chipRow}
             <ContentColumn width="content" style={{ paddingHorizontal: gutter, gap: space.xl }}>
               {/* The people first, and above the count that heads the grid.
@@ -844,13 +860,13 @@ export default function DiscoverScreen() {
         ) : mode === "program" ? (
           <ProgramView filters={{ venueType, city, venueId, genre }} header={chipRow} />
         ) : mode === "lists" ? (
-          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scrollBody}>
+          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.scrollBody, { paddingBottom: dockInset }]}>
             <ContentColumn width="content" style={{ padding: gutter }}>
               <ListsBody />
             </ContentColumn>
           </ScrollView>
         ) : (
-          <ScrollView contentContainerStyle={styles.scrollBody}>
+          <ScrollView contentContainerStyle={[styles.scrollBody, { paddingBottom: dockInset }]}>
             {chipRow}
 
             {browseLoading && (
@@ -874,6 +890,26 @@ export default function DiscoverScreen() {
             {!browseLoading && (
               <View style={{ gap: space["3xl"] }}>
                 {!!lead && <View style={{ paddingHorizontal: gutter }}>{lead}</View>}
+
+                {/* The evening as a row of faces. Only once there are at
+                    least two curtains going up that night — one is the hero
+                    already, and a rail of one is a hero drawn smaller. */}
+                {curtainsTonight.length > 1 && (
+                  <View style={{ gap: space.md }}>
+                    <SectionHeader
+                      style={{ paddingHorizontal: gutter }}
+                      eyebrow={
+                        curtains.day === todayInBudapest()
+                          ? strings.discover.curtainsEyebrowTonight
+                          : strings.discover.curtainsEyebrowOn(formatWeekday(curtainsTonight[0].startsAt))
+                      }
+                      title={strings.discover.curtainsTitle(curtainsTonight.length)}
+                      action={strings.discover.upcomingAction}
+                      onAction={() => setMode("program")}
+                    />
+                    <PosterRail entries={curtainsTonight} onOpen={openPlay} />
+                  </View>
+                )}
 
                 {/* Above the editorial lists, and only for an account that
                     follows somebody: a handful of people you chose beats
@@ -1042,9 +1078,9 @@ function TonightHero({ entry, onPress, tall }: { entry: ProgramEntry; onPress: (
   // <button> on the web, which the DOM forbids.
   return (
     <View style={[styles.hero, tall ? styles.heroTall : { aspectRatio: HERO_ASPECT }]}>
-      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={entry.title} style={StyleSheet.absoluteFill}>
+      <PressCard onPress={onPress} accessibilityRole="button" accessibilityLabel={entry.title} style={StyleSheet.absoluteFill} surfaceStyle={{ flex: 1 }} tilt={4}>
         <PosterPlaceholder poster={entry.poster} title={entry.title} seed={entry.playId} height="100%" radius={0} scrim priority="high" />
-      </Pressable>
+      </PressCard>
       <View style={[styles.heroBadge, { pointerEvents: "none" }]}>
         <Text variant="eyebrow" style={{ color: overlay.onImageAccent }}>
           {isToday ? strings.discover.heroTonight : strings.discover.heroNext(formatWeekday(entry.startsAt))}
@@ -1186,8 +1222,6 @@ function PersonResultRow({
 const useStyles = makeStyles((colors) => StyleSheet.create({
   header: {
     paddingHorizontal: gutter,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.hairlineSoft,
   },
   titleRow: {
     flexDirection: "row",
@@ -1196,12 +1230,10 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     gap: space.md,
   },
   searchRow: { marginTop: space.lg },
-  tabs: { flexDirection: "row", gap: space["2xl"], marginTop: space.sm },
-  tab: { paddingVertical: space.md - 2, borderBottomWidth: 2, borderBottomColor: "transparent" },
-  tabActive: { borderBottomColor: colors.gold },
+  tabs: { marginTop: space.md, marginBottom: space.md },
   chipRow: { gap: space.sm, paddingHorizontal: gutter, paddingVertical: space.md },
   rowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  scrollBody: { paddingBottom: 100 },
+  scrollBody: {},
 
   // `flex-start`, not `stretch`: the programme beside the hero is six rows
   // tall, and a hero stretched to match became a portrait twice the height of

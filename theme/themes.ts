@@ -67,6 +67,12 @@ export type Palette = {
   neutralTintBg: string;
   shadow: string;
   goldGlow: string;
+  /**
+   * The floating tab bar's glass: the elevated ground at an alpha the page can
+   * be seen through. Its own token for the reason every other alpha here is —
+   * `rgba(var(--vc-bg-rgb), .78)` never reaches the browser.
+   */
+  dockGlass: string;
 };
 
 export type ThemeId =
@@ -118,6 +124,7 @@ const velvetDark: Palette = {
 
   shadow: "rgba(0,0,0,0.5)",
   goldGlow: "rgba(228,191,114,0.38)",
+  dockGlass: "rgba(28,13,19,0.80)",
 };
 
 /**
@@ -172,6 +179,7 @@ const playbillLight: Palette = {
   // as depth on near-black reads as dirt on cream.
   shadow: "rgba(70,30,30,0.16)",
   goldGlow: "rgba(122,36,51,0.26)",
+  dockGlass: "rgba(250,245,236,0.84)",
 };
 
 /**
@@ -205,6 +213,7 @@ const minimalLight: Palette = {
 
   shadow: "rgba(0,0,0,0.12)",
   goldGlow: "rgba(107,87,21,0.22)",
+  dockGlass: "rgba(255,255,255,0.84)",
 };
 
 /**
@@ -235,6 +244,7 @@ const modernDark: Palette = {
 
   shadow: "rgba(0,0,0,0.55)",
   goldGlow: "rgba(216,180,92,0.38)",
+  dockGlass: "rgba(22,25,29,0.82)",
 };
 
 /**
@@ -283,6 +293,7 @@ const lavenderLight: Palette = {
   // reads as dirt, the same problem the playbill theme has with cream.
   shadow: "rgba(58,30,88,0.16)",
   goldGlow: "rgba(107,63,160,0.26)",
+  dockGlass: "rgba(247,242,251,0.84)",
 };
 
 export const themes: Record<ThemeId, Palette> = {

@@ -5,6 +5,22 @@
  */
 import { elapsedSince } from "@/utils/datetime";
 
+/** Hungarian number words for the curtains heading on Discover. */
+const CURTAIN_WORDS: Record<number, string> = {
+  1: "Egy",
+  2: "Két",
+  3: "Három",
+  4: "Négy",
+  5: "Öt",
+  6: "Hat",
+  7: "Hét",
+  8: "Nyolc",
+  9: "Kilenc",
+  10: "Tíz",
+  11: "Tizenegy",
+  12: "Tizenkét",
+};
+
 export const strings = {
   appName: "Vastaps",
 
@@ -198,6 +214,12 @@ export const strings = {
     heroNext: (weekday: string) => `Legközelebb · ${weekday}`,
     heroOpen: "Megnézem",
     heroDirected: (name: string) => `${name} rendezése`,
+    /* The poster rail under the lead: every curtain going up that evening
+       across the theatres in scope. Spelled out up to twelve, because "8
+       függöny" on a heading reads as a count and "Nyolc függöny" as a line. */
+    curtainsTitle: (n: number) => `${CURTAIN_WORDS[n] ?? String(n)} függöny, egy este`,
+    curtainsEyebrowTonight: "Ma este",
+    curtainsEyebrowOn: (weekday: string) => `${weekday} este`,
     /* Section eyebrows: what kind of shelf each one is. */
     featuredEyebrow: "Szerkesztői válogatás",
     premieresEyebrow: "Bemutató előtt",
@@ -460,6 +482,15 @@ export const strings = {
       "Ezt már bejelölted a naplódban dátum nélkül — most kiegészíted, nem új bejegyzés lesz.",
     save: "Mentés",
     saving: "Mentés…",
+    /* The three acts of the form, in the order they are asked. */
+    stepLabels: ["Este", "Értékelés", "Jegyzet"],
+    stepWhenTitle: "Melyik este volt?",
+    stepRateTitle: "Öt maszk, három szempont",
+    stepRateHint: "Az összesített a kötelező kérdés; a három szempont csak ha van róla véleményed.",
+    stepNoteTitle: "Mit gondoltál róla?",
+    stepNoteHint: "Nem kötelező. Évek múlva ez lesz, amire emlékszel.",
+    next: "Tovább",
+    back: "Vissza",
     overallRating: "Összesített értékelés",
     acting: "Színészi játék",
     directing: "Rendezés",
@@ -873,6 +904,8 @@ export const strings = {
     signInPrompt: "Jelentkezz be, hogy lásd a profilod",
     signInButton: "Bejelentkezés",
     edit: "Profil szerkesztése",
+    /* The season on the reader's card, the way a theatre prints it: 2026/27. */
+    seasonEyebrow: (start: number) => `${start}/${String(start + 1).slice(-2)} · évad`,
   },
 
   settings: {

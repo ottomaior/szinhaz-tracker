@@ -1,6 +1,7 @@
 import { View, Pressable } from "react-native";
 import Svg, { Path, Ellipse } from "react-native-svg";
 import { useColors } from "@/theme/styles";
+import { useSpark } from "@/components/motion/ClickSpark";
 import { strings } from "@/i18n/hu";
 import { fillPaint, paint, strokePaint } from "@/components/icons/svgPaint";
 import {
@@ -67,6 +68,7 @@ export function MaskRatingRow({
   size = 16,
   gap = 4,
   onPressMask,
+  spark = false,
 }: {
   /**
    * `undefined` is "not answered", and draws as five empty masks with nothing
@@ -86,8 +88,16 @@ export function MaskRatingRow({
    * rating — which is the only way back out of a rating once it is given.
    */
   onPressMask?: (value: number | undefined) => void;
+  /**
+   * A burst of gold from the mask that was tapped — see
+   * components/motion/ClickSpark. Only meaningful with `onPressMask`; the
+   * check-in's overall row is the one place a rating is enough of a moment
+   * to earn it.
+   */
+  spark?: boolean;
 }) {
   const filled = rating === undefined ? 0 : Math.round(rating);
+  const sparks = useSpark();
   return (
     <View
       style={{ flexDirection: "row", gap }}
@@ -104,7 +114,12 @@ export function MaskRatingRow({
             // tapping the fifth mask on a stored 4.5 rounds it up to a 5
             // rather than clearing it. Only a tap on the exact whole number
             // already given is read as "I did not mean to answer this".
-            onPress={() => onPressMask(rating === i + 1 ? undefined : i + 1)}
+            onPress={() => {
+              // Fired at the mask's own centre rather than at the touch point,
+              // which needs no measuring and lands the same on both platforms.
+              if (spark && rating !== i + 1) sparks.fire(i * (size + gap) + size / 2, size / 2);
+              onPressMask(rating === i + 1 ? undefined : i + 1);
+            }}
             hitSlop={6}
             accessibilityRole="radio"
             accessibilityLabel={`${i + 1}/5`}
@@ -118,6 +133,7 @@ export function MaskRatingRow({
           <MaskIcon key={i} state={i < filled ? "on" : "off"} size={size} />
         )
       )}
+      {spark && sparks.element}
     </View>
   );
 }

@@ -3,7 +3,7 @@ import { View, ScrollView, StyleSheet, Pressable } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
-import { gutter, radius, space } from "@/theme/tokens";
+import { gutter, overlay, radius, space } from "@/theme/tokens";
 import { getCurrentUser, getDiaryEntriesForUser, getVenuesByIds, getWatchlist, type DiaryEntry } from "@/services/playsService";
 import { signOut } from "@/services/authService";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,6 +16,11 @@ import { ChevronRightIcon, SettingsIcon } from "@/components/icons/Icons";
 import { Screen } from "@/components/ui/Screen";
 import { SignedOutState } from "@/components/ui/SignedOutState";
 import { Text } from "@/components/ui/Text";
+import { HoloCard } from "@/components/ui/HoloCard";
+import { PillTabs } from "@/components/ui/PillTabs";
+import { useDockInset } from "@/components/ui/TabBar";
+import { CountUp } from "@/components/motion/CountUp";
+import { AnimatedList } from "@/components/motion/Reveal";
 import { strings } from "@/i18n/hu";
 import { currentSeasonStart } from "@/utils/season";
 import { makeStyles } from "@/theme/styles";
@@ -26,6 +31,7 @@ export default function ProfileScreen() {
   const styles = useStyles();
 
   const insets = useSafeAreaInsets();
+  const dockInset = useDockInset();
   const router = useRouter();
   const { session, loading } = useAuth();
   const [user, setUser] = useState<User>();
@@ -99,7 +105,7 @@ export default function ProfileScreen() {
         <View style={styles.signedOutBar}>
           <SettingsButton onPress={() => router.push("/settings")} />
         </View>
-        <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+        <ScrollView contentContainerStyle={{ paddingBottom: dockInset }}>
           <SignedOutState lead="diary" />
         </ScrollView>
       </View>
@@ -113,7 +119,7 @@ export default function ProfileScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Screen>
-      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: dockInset }}>
         <View style={{ paddingHorizontal: gutter }}>
           {/* No cover band. There was one for a while — 118pt of `surface2`
               holding nothing, with the avatar pulled back up into it — which
@@ -127,32 +133,26 @@ export default function ProfileScreen() {
               but they open with a line of text; this screen opens with a 78pt
               circle hard against the top edge, so it takes the gutter instead
               and the avatar's top and left spacing agree. */}
-          <View style={[styles.profileRow, { paddingTop: insets.top + gutter }]}>
-            <Avatar uri={user.avatarUrl} initials={user.initials} size={78} serif />
-            {/* The edit pill used to be here with no press handler at all, next
-                to a settings gear that signed the user out on a single tap with
-                no confirmation. Now it goes somewhere, signing out asks first,
-                and the gear leads to the settings it always looked like it
-                would. */}
-            <View style={styles.headerActions}>
-              <Pressable
-                style={styles.headerBtn}
-                onPress={() => router.push("/edit-profile")}
-                accessibilityRole="button"
-              >
-                <Text variant="label">{strings.profile.edit}</Text>
-              </Pressable>
-              <SettingsButton onPress={() => router.push("/settings")} />
-              <Pressable
-                style={styles.headerBtn}
-                onPress={() => setConfirmingSignOut((s) => !s)}
-                accessibilityRole="button"
-                aria-expanded={confirmingSignOut}
-                accessibilityState={{ expanded: confirmingSignOut }}
-              >
-                <Text variant="label" tone="dim">{strings.auth.signOut}</Text>
-              </Pressable>
-            </View>
+          {/* The controls above the card rather than on it: a ticket does
+              not carry its own edit button. */}
+          <View style={[styles.headerActions, { paddingTop: insets.top + space.md }]}>
+            <Pressable
+              style={styles.headerBtn}
+              onPress={() => router.push("/edit-profile")}
+              accessibilityRole="button"
+            >
+              <Text variant="label">{strings.profile.edit}</Text>
+            </Pressable>
+            <SettingsButton onPress={() => router.push("/settings")} />
+            <Pressable
+              style={styles.headerBtn}
+              onPress={() => setConfirmingSignOut((s) => !s)}
+              accessibilityRole="button"
+              aria-expanded={confirmingSignOut}
+              accessibilityState={{ expanded: confirmingSignOut }}
+            >
+              <Text variant="label" tone="dim">{strings.auth.signOut}</Text>
+            </Pressable>
           </View>
 
           {confirmingSignOut && (
@@ -171,42 +171,51 @@ export default function ProfileScreen() {
             </View>
           )}
 
-          <View style={{ marginTop: 12, gap: 2 }}>
-            <Text variant="display">{user.name}</Text>
-            <Text variant="bodySmall" tone="faint">
-              {[`@${user.handle}`, user.city].filter(Boolean).join(" · ")}
-            </Text>
+          {/* The reader as a season ticket — see components/ui/HoloCard. The
+              name, the handle and the four counts used to sit on the page as
+              a column of text between two hairlines; on the card they are one
+              object, and the one the diary belongs to. Everything on it takes
+              `overlay` colours: the card is dark in every theme. */}
+          <HoloCard style={{ marginTop: space.md }}>
+            <View style={styles.cardHead}>
+              <Avatar uri={user.avatarUrl} initials={user.initials} size={56} serif />
+              <View style={{ flex: 1, gap: 2, paddingRight: 48 }}>
+                <Text variant="title" numberOfLines={2} style={{ color: overlay.onImageHeading }}>{user.name}</Text>
+                <Text variant="bodySmall" numberOfLines={1} style={{ color: overlay.onImageText }}>
+                  {[`@${user.handle}`, user.city].filter(Boolean).join(" · ")}
+                </Text>
+              </View>
+            </View>
             {!!user.bio && (
-              <Text variant="bodySmall" tone="dim" style={{ marginTop: 6 }}>
+              <Text variant="bodySmall" style={{ marginTop: space.md, color: overlay.onImageText }}>
                 {user.bio}
               </Text>
             )}
-          </View>
-
-          <View style={styles.statsRow}>
-            <Stat value={user.stats.playsSeen} label={strings.profile.playsSeen} />
-            <View style={styles.statDivider} />
-            {/* The one stat that opens something. It used to count the calendar
-                year, which cuts every Hungarian season in half; it now counts
-                the évad and leads to the screen that breaks it down. */}
-            <Pressable
-              onPress={() =>
-                router.push({
-                  pathname: "/season/[start]",
-                  params: { start: String(currentSeasonStart()) },
-                })
-              }
-              accessibilityRole="button"
-              accessibilityLabel={strings.profile.thisSeason}
-              style={{ flex: 1 }}
-            >
-              <Stat value={user.stats.thisSeason} label={strings.profile.thisSeason} gold />
-            </Pressable>
-            <View style={styles.statDivider} />
-            <Stat value={user.stats.followers} label={strings.profile.followers} />
-            <View style={styles.statDivider} />
-            <Stat value={user.stats.following} label={strings.profile.following} />
-          </View>
+            <Text variant="eyebrow" style={{ marginTop: space.lg, color: overlay.onImageAccent }}>
+              {strings.profile.seasonEyebrow(currentSeasonStart())}
+            </Text>
+            <View style={styles.statsRow}>
+              <Stat value={user.stats.playsSeen} label={strings.profile.playsSeen} />
+              {/* The one stat that opens something. It used to count the calendar
+                  year, which cuts every Hungarian season in half; it now counts
+                  the évad and leads to the screen that breaks it down. */}
+              <Pressable
+                onPress={() =>
+                  router.push({
+                    pathname: "/season/[start]",
+                    params: { start: String(currentSeasonStart()) },
+                  })
+                }
+                accessibilityRole="button"
+                accessibilityLabel={strings.profile.thisSeason}
+                style={{ flex: 1 }}
+              >
+                <Stat value={user.stats.thisSeason} label={strings.profile.thisSeason} delay={120} />
+              </Pressable>
+              <Stat value={user.stats.followers} label={strings.profile.followers} delay={240} />
+              <Stat value={user.stats.following} label={strings.profile.following} delay={360} />
+            </View>
+          </HoloCard>
 
           {/* Lists are a screen of their own rather than a fourth tab here.
               The three tabs are all "productions, filtered" and read as one
@@ -221,22 +230,12 @@ export default function ProfileScreen() {
             <ChevronRightIcon size={15} color={colors.textFaint} />
           </Pressable>
 
-          <View style={styles.tabsRow}>
-            {TABS.map((t) => (
-              <Pressable
-                key={t}
-                onPress={() => setActiveTab(t)}
-                accessibilityRole="tab"
-                aria-selected={activeTab === t}
-                accessibilityState={{ selected: activeTab === t }}
-                style={[styles.tabItem, activeTab === t && styles.tabItemActive]}
-              >
-                <Text variant="label" tone={activeTab === t ? "default" : "faint"}>
-                  {t}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
+          <PillTabs
+            tabs={TABS.map((t) => ({ key: t, label: t }))}
+            value={activeTab}
+            onChange={setActiveTab}
+            style={{ marginTop: space.lg }}
+          />
 
           {/* All three tabs are lists rather than poster grids. A grid of cover
               art is unreadable the moment a production has no poster, and half
@@ -373,7 +372,7 @@ function TabBody({
       </View>
     );
   }
-  return <View style={styles.tabList}>{children}</View>;
+  return <AnimatedList style={styles.tabList} stagger={50}>{children}</AnimatedList>;
 }
 
 /**
@@ -392,15 +391,13 @@ function formatDate(dayKey: string) {
   });
 }
 
-function Stat({ value, label, gold = false }: { value: number; label: string; gold?: boolean }) {
+function Stat({ value, label, delay = 0 }: { value: number; label: string; delay?: number }) {
   const styles = useStyles();
 
   return (
     <View style={styles.stat}>
-      <Text variant="numeral" tone={gold ? "accent" : "default"}>
-        {value}
-      </Text>
-      <Text variant="caption" tone="faint" style={{ textAlign: "center" }}>
+      <CountUp value={value} delay={delay} style={{ color: overlay.onImageAccent }} />
+      <Text variant="caption" style={{ textAlign: "center", color: overlay.onImageText }}>
         {label}
       </Text>
     </View>
@@ -428,21 +425,15 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   // `alignItems: "flex-end"` rather than centred: the right-hand pills wrap to
   // two lines on a narrow screen, and sitting them on the avatar's baseline
   // keeps the row reading as one block whether they wrap or not.
-  profileRow: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-  },
-  // Wraps rather than overflows: two pills plus a 78pt avatar do not fit on a
-  // 375pt screen, and the second one was being cut off by the right edge.
+  // Wraps rather than overflows: three pills do not always fit on a 375pt
+  // screen, and the last one was being cut off by the right edge.
   headerActions: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "flex-end",
-    flexShrink: 1,
     gap: 8,
-    marginBottom: 6,
   },
+  cardHead: { flexDirection: "row", alignItems: "center", gap: space.md },
   signedOutBar: { flexDirection: "row", justifyContent: "flex-end", paddingHorizontal: gutter, paddingTop: space.md },
   headerBtn: {
     borderWidth: 1,
@@ -464,15 +455,12 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   },
   statsRow: {
     flexDirection: "row",
-    marginTop: 18,
-    paddingVertical: 14,
+    marginTop: space.md,
+    paddingTop: space.md,
     borderTopWidth: 1,
-    borderTopColor: colors.hairlineSoft,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.hairlineSoft,
+    borderTopColor: "rgba(246,238,232,0.14)",
   },
   stat: { flex: 1, alignItems: "center", gap: 2 },
-  statDivider: { width: 1, backgroundColor: colors.hairlineSoft },
   listsLink: {
     flexDirection: "row",
     alignItems: "center",
@@ -483,15 +471,6 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     borderRadius: radius.md,
     backgroundColor: colors.surface,
   },
-  tabsRow: {
-    flexDirection: "row",
-    gap: 22,
-    marginTop: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.hairlineSoft,
-  },
-  tabItem: { paddingBottom: 10 },
-  tabItemActive: { borderBottomWidth: 2, borderBottomColor: colors.gold },
   tabList: { marginTop: space.lg, gap: space.lg },
   reviewMeta: { flexDirection: "row", alignItems: "center", gap: space.sm },
   emptyState: { marginTop: 24, alignItems: "center", paddingVertical: 30, gap: space.lg },

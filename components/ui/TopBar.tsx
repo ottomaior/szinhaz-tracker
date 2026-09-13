@@ -10,6 +10,7 @@ import { PlusIcon } from "@/components/icons/Icons";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
+import { PillTabs } from "@/components/ui/PillTabs";
 import { strings } from "@/i18n/hu";
 import { makeStyles } from "@/theme/styles";
 
@@ -59,6 +60,11 @@ export function TopBar() {
     }, [session])
   );
 
+  // Which section the address is in, for the pill. "/" only matches itself:
+  // every other path starts with it too.
+  const activePath =
+    SECTIONS.find(({ path }) => (path === "/" ? pathname === "/" || pathname === "/index" : pathname.startsWith(path)))?.path ?? "/";
+
   return (
     <View style={styles.bar}>
       <View style={styles.inner}>
@@ -67,24 +73,16 @@ export function TopBar() {
           <Text variant="heading">{strings.appName}</Text>
         </Pressable>
 
-        <View style={styles.nav} accessibilityRole="tablist">
-          {SECTIONS.map(({ path, href, label }) => {
-            const active = path === "/" ? pathname === "/" || pathname === "/index" : pathname.startsWith(path);
-            return (
-              <Pressable
-                key={path}
-                onPress={() => router.push(href)}
-                style={[styles.navItem, active && styles.navItemActive]}
-                accessibilityRole="tab"
-                aria-selected={active}
-                accessibilityState={{ selected: active }}
-              >
-                <Text variant="label" tone={active ? "default" : "faint"}>
-                  {label}
-                </Text>
-              </Pressable>
-            );
-          })}
+        <View style={styles.nav}>
+          <PillTabs
+            variant="bar"
+            tabs={SECTIONS.map(({ path, label }) => ({ key: path, label }))}
+            value={activePath}
+            onChange={(path) => {
+              const section = SECTIONS.find((s) => s.path === path);
+              if (section) router.push(section.href);
+            }}
+          />
         </View>
 
         <View style={styles.actions}>
@@ -124,9 +122,7 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     gap: space["3xl"],
   },
   brand: { flexDirection: "row", alignItems: "center", gap: space.sm },
-  nav: { flexDirection: "row", gap: space["2xl"], flex: 1, height: "100%" },
-  navItem: { justifyContent: "center", borderBottomWidth: 2, borderBottomColor: "transparent" },
-  navItemActive: { borderBottomColor: colors.gold },
+  nav: { flex: 1, flexDirection: "row", alignItems: "center" },
   actions: { flexDirection: "row", alignItems: "center", gap: space.lg },
   logButton: { paddingVertical: 8, paddingHorizontal: space.lg, borderRadius: radius.pill },
 }));

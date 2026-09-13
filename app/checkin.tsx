@@ -33,10 +33,15 @@ import { SearchField } from "@/components/ui/SearchField";
 import { ContentColumn } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { Chip } from "@/components/ui/Chip";
+import { Button } from "@/components/ui/Button";
+import { StepIndicator, StepPane } from "@/components/ui/Stepper";
+import { StarBorder } from "@/components/motion/StarBorder";
 import { strings } from "@/i18n/hu";
 import { formatTime, todayInBudapest } from "@/utils/datetime";
 import { closeModal } from "@/utils/navigation";
 import { makeStyles } from "@/theme/styles";
+
+type Step = 1 | 2 | 3;
 
 const MOMENT_TAGS = [strings.checkin.tagStandingOvation, strings.checkin.tagCried, strings.checkin.tagRecommend];
 
@@ -57,6 +62,9 @@ export default function CheckInScreen() {
   const [saving, setSaving] = useState(false);
   const [playLoadFailed, setPlayLoadFailed] = useState(false);
   const [error, setError] = useState<string>();
+  // Which of the three acts is on screen, and which way the next one enters.
+  const [step, setStep] = useState<Step>(1);
+  const [direction, setDirection] = useState<1 | -1>(1);
 
   // The entry being written to. Set from the route in edit mode, and set on its
   // own when the chosen production already has a blank entry from onboarding —
@@ -457,6 +465,11 @@ export default function CheckInScreen() {
     return <PlayPicker insetTop={insets.top} onCancel={() => closeModal(router)} onPick={setPlay} />;
   }
 
+  const goTo = (next: Step) => {
+    setDirection(next > step ? 1 : -1);
+    setStep(next);
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ModalHeader
@@ -494,88 +507,130 @@ export default function CheckInScreen() {
           </View>
         </View>
 
-        {/* When and where.
-            The date used to be `new Date()` printed into a box with no press
-            handler — so the one field that decides where an entry lands in the
-            diary was both wrong for anything but tonight and impossible to
-            correct. Half the catalogue is the theatres' own archives, kept
-            loggable precisely so somebody can record a production they saw
-            years ago. */}
-        <View style={{ gap: 10 }}>
-          <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.checkin.dateLabel}</Text>
-          <View style={{ flexDirection: "row", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-            <DateField value={seenAt} onChange={setSeenAt} />
-            <View style={[styles.field, { flex: 1, minWidth: 140 }]}>
-              <PinIcon />
-              {/* This was hardcoded to a single stage name for every play, no
-                  matter where it actually runs. It shows the real venue now. */}
-              <Text numberOfLines={1} variant="bodySmall" style={{ flex: 1 }}>
-                {venue?.name ?? strings.common.noRating}
-              </Text>
-            </View>
-          </View>
+        {/* Three questions, one at a time — see components/ui/Stepper. The
+            form used to ask all of them on one scroll; the questions are the
+            same, only the pacing changed, and the header's Mentés still saves
+            from any step for somebody who has answered enough. */}
+        <StepIndicator steps={3} current={step} labels={strings.checkin.stepLabels} />
 
-          {/* Said out loud, because the screen is quietly doing something other
-              than what the button that opened it implied: this is not a new
-              entry, it is the one already sitting in the diary with no date on
-              it. Filling it in silently would leave somebody wondering why
-              their diary did not grow. */}
-          {adoptedBlank && (
-            <Text variant="caption" tone="accent">{strings.checkin.completingBlank}</Text>
-          )}
+        {/* Shown on every step: the header's Mentés can fail from any of them. */}
+        {!!error && step !== 3 && (
+          <Text variant="bodySmall" tone="accent" accessibilityRole="alert">
+            {error}
+          </Text>
+        )}
 
-          {/* The rewatch line counts other entries, so it does not fire for the
-              blank one this form has adopted. */}
-          {!adoptedBlank && priorCount > (editingId ? 1 : 0) && (
-            <Text variant="caption" tone="accent">
-              {strings.checkin.rewatchNotice(priorCount - (editingId ? 1 : 0))}
-            </Text>
-          )}
+        {step === 1 && (
+          <StepPane key="when" direction={direction}>
+            <View style={{ gap: space.lg }}>
+              <Text variant="title">{strings.checkin.stepWhenTitle}</Text>
 
-          {showtimes.length > 1 && (
-            <View style={{ gap: 8, marginTop: 4 }}>
-              <Text variant="caption" tone="faint">{strings.checkin.whichShowtime}</Text>
-              <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
-                {showtimes.map((p) => (
-                  <Chip
-                    key={p.id}
-                    label={[formatTime(p.startsAt), p.room].filter(Boolean).join(" · ")}
-                    active={performanceId === p.id}
-                    // Tapping the chosen one again clears it: the two showings
-                    // are indistinguishable in memory often enough that "I am
-                    // not sure" has to stay reachable.
-                    onPress={() => setPerformanceId((cur) => (cur === p.id ? undefined : p.id))}
-                  />
-                ))}
+              {/* When and where.
+                  The date used to be `new Date()` printed into a box with no press
+                  handler — so the one field that decides where an entry lands in the
+                  diary was both wrong for anything but tonight and impossible to
+                  correct. Half the catalogue is the theatres' own archives, kept
+                  loggable precisely so somebody can record a production they saw
+                  years ago. */}
+              <View style={{ gap: 10 }}>
+                <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.checkin.dateLabel}</Text>
+                <View style={{ flexDirection: "row", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                  <DateField value={seenAt} onChange={setSeenAt} />
+                  <View style={[styles.field, { flex: 1, minWidth: 140 }]}>
+                    <PinIcon />
+                    {/* This was hardcoded to a single stage name for every play, no
+                        matter where it actually runs. It shows the real venue now. */}
+                    <Text numberOfLines={1} variant="bodySmall" style={{ flex: 1 }}>
+                      {venue?.name ?? strings.common.noRating}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Said out loud, because the screen is quietly doing something other
+                    than what the button that opened it implied: this is not a new
+                    entry, it is the one already sitting in the diary with no date on
+                    it. Filling it in silently would leave somebody wondering why
+                    their diary did not grow. */}
+                {adoptedBlank && (
+                  <Text variant="caption" tone="accent">{strings.checkin.completingBlank}</Text>
+                )}
+
+                {/* The rewatch line counts other entries, so it does not fire for the
+                    blank one this form has adopted. */}
+                {!adoptedBlank && priorCount > (editingId ? 1 : 0) && (
+                  <Text variant="caption" tone="accent">
+                    {strings.checkin.rewatchNotice(priorCount - (editingId ? 1 : 0))}
+                  </Text>
+                )}
+
+                {showtimes.length > 1 && (
+                  <View style={{ gap: 8, marginTop: 4 }}>
+                    <Text variant="caption" tone="faint">{strings.checkin.whichShowtime}</Text>
+                    <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
+                      {showtimes.map((p) => (
+                        <Chip
+                          key={p.id}
+                          label={[formatTime(p.startsAt), p.room].filter(Boolean).join(" · ")}
+                          active={performanceId === p.id}
+                          // Tapping the chosen one again clears it: the two showings
+                          // are indistinguishable in memory often enough that "I am
+                          // not sure" has to stay reachable.
+                          onPress={() => setPerformanceId((cur) => (cur === p.id ? undefined : p.id))}
+                        />
+                      ))}
+                    </View>
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.stepActions}>
+                <Button variant="outline" label={strings.common.cancel} style={{ flex: 1 }} onPress={() => closeModal(router)} />
+                <Button label={strings.checkin.next} style={{ flex: 1 }} onPress={() => goTo(2)} />
               </View>
             </View>
-          )}
-        </View>
+          </StepPane>
+        )}
 
-        <View style={styles.ratingCard}>
-          <View style={styles.overallBlock}>
-            <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.checkin.overallRating}</Text>
-            <MaskRatingRow rating={overall} size={26} gap={6} onPressMask={setOverall} />
-            {/* A readout rather than a dash, and always on screen. The sub-rows
-                below can hang their "not answered" cue off the label, but this
-                block is centred and stacked, so anything that appears and
-                disappears here shoves the three rows under it up and down on
-                the first tap. One line that always says something holds the
-                height still and gives the score a figure to be read as. */}
-            <Text variant="caption" tone="faint">
-              {overall === undefined ? strings.common.notRated : `${overall}/5`}
-            </Text>
-          </View>
+        {step === 2 && (
+          <StepPane key="rate" direction={direction}>
+            <View style={{ gap: space.lg }}>
+              <View style={{ gap: 4 }}>
+                <Text variant="title">{strings.checkin.stepRateTitle}</Text>
+                <Text variant="bodySmall" tone="dim">{strings.checkin.stepRateHint}</Text>
+              </View>
 
-          <SubRatingRow label={strings.checkin.acting} value={acting} onChange={setActing} />
-          <SubRatingRow label={strings.checkin.directing} value={directing} onChange={setDirecting} />
-          <SubRatingRow label={strings.checkin.setAndCostume} value={setDesign} onChange={setSetDesign} />
+              <View style={styles.ratingCard}>
+                <View style={styles.overallBlock}>
+                  <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.checkin.overallRating}</Text>
+                  <MaskRatingRow rating={overall} size={30} gap={8} onPressMask={setOverall} spark />
+                  {/* A readout rather than a dash, and always on screen. The sub-rows
+                      below can hang their "not answered" cue off the label, but this
+                      block is centred and stacked, so anything that appears and
+                      disappears here shoves the three rows under it up and down on
+                      the first tap. One line that always says something holds the
+                      height still and gives the score a figure to be read as. */}
+                  <Text variant="caption" tone="faint">
+                    {overall === undefined ? strings.common.notRated : `${overall}/5`}
+                  </Text>
+                </View>
 
-          {/* Nothing on a filled mask suggests it can be tapped off again, and
-              a rating given by accident is otherwise permanent — you can move
-              it, but not take it back. Said once for all four rows. */}
-          <Text variant="caption" tone="faint">{strings.checkin.clearRatingHint}</Text>
-        </View>
+                <SubRatingRow label={strings.checkin.acting} value={acting} onChange={setActing} />
+                <SubRatingRow label={strings.checkin.directing} value={directing} onChange={setDirecting} />
+                <SubRatingRow label={strings.checkin.setAndCostume} value={setDesign} onChange={setSetDesign} />
+
+                {/* Nothing on a filled mask suggests it can be tapped off again, and
+                    a rating given by accident is otherwise permanent — you can move
+                    it, but not take it back. Said once for all four rows. */}
+                <Text variant="caption" tone="faint">{strings.checkin.clearRatingHint}</Text>
+              </View>
+
+              <View style={styles.stepActions}>
+                <Button variant="outline" label={strings.checkin.back} style={{ flex: 1 }} onPress={() => goTo(1)} />
+                <Button label={strings.checkin.next} style={{ flex: 1 }} onPress={() => goTo(3)} />
+              </View>
+            </View>
+          </StepPane>
+        )}
 
         {/* Four questions came off here: who was on, where you sat, what it
             cost, and a photograph of the ticket. Removed from the form only —
@@ -590,31 +645,54 @@ export default function CheckInScreen() {
             code, which is not what somebody uploading to a public diary means
             to publish. If people ask for any of them, they come back. */}
 
-        <View style={{ gap: 8 }}>
-          <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.checkin.momentTags}</Text>
-          <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
-            {MOMENT_TAGS.map((tag) => (
-              <Chip key={tag} label={tag} active={selectedTags.includes(tag)} onPress={() => toggleTag(tag)} />
-            ))}
-          </View>
-        </View>
+        {step === 3 && (
+          <StepPane key="note" direction={direction}>
+            <View style={{ gap: space.lg }}>
+              <View style={{ gap: 4 }}>
+                <Text variant="title">{strings.checkin.stepNoteTitle}</Text>
+                <Text variant="bodySmall" tone="dim">{strings.checkin.stepNoteHint}</Text>
+              </View>
 
-        <View style={{ gap: 8 }}>
-          <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.checkin.reviewLabel}</Text>
-          <TextInput
-            value={reviewText}
-            onChangeText={setReviewText}
-            placeholder={strings.checkin.reviewPlaceholder}
-            placeholderTextColor={colors.textFaint}
-            multiline
-            style={[styles.textArea, { fontFamily: bodyFont(fontsLoaded) }]}
-          />
-        </View>
+              <View style={{ gap: 8 }}>
+                <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.checkin.momentTags}</Text>
+                <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
+                  {MOMENT_TAGS.map((tag) => (
+                    <Chip key={tag} label={tag} active={selectedTags.includes(tag)} onPress={() => toggleTag(tag)} />
+                  ))}
+                </View>
+              </View>
 
-        {error && (
-          <Text variant="bodySmall" tone="accent" accessibilityRole="alert">
-            {error}
-          </Text>
+              <View style={{ gap: 8 }}>
+                <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.checkin.reviewLabel}</Text>
+                <TextInput
+                  value={reviewText}
+                  onChangeText={setReviewText}
+                  placeholder={strings.checkin.reviewPlaceholder}
+                  placeholderTextColor={colors.textFaint}
+                  multiline
+                  style={[styles.textArea, { fontFamily: bodyFont(fontsLoaded) }]}
+                />
+              </View>
+
+              {error && (
+                <Text variant="bodySmall" tone="accent" accessibilityRole="alert">
+                  {error}
+                </Text>
+              )}
+
+              <View style={styles.stepActions}>
+                <Button variant="outline" label={strings.checkin.back} style={{ flex: 1 }} onPress={() => goTo(2)} />
+                <StarBorder style={{ flex: 1 }} radius={radius.pill}>
+                  <Button
+                    label={saving ? strings.checkin.saving : strings.checkin.save}
+                    loading={saving}
+                    style={{ borderRadius: radius.pill }}
+                    onPress={handleSave}
+                  />
+                </StarBorder>
+              </View>
+            </View>
+          </StepPane>
         )}
         </ContentColumn>
       </ScrollView>
@@ -761,6 +839,7 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   sectionLabel: {
     letterSpacing: 0.2,
   },
+  stepActions: { flexDirection: "row", gap: 10, marginTop: space.sm },
   textArea: {
     backgroundColor: colors.surface,
     borderWidth: 1,
