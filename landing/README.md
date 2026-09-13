@@ -18,8 +18,10 @@ crawler and a link preview see. The reader's choice is kept in
 The palette is the app's own `velvetDark` (`theme/themes.ts`), one shade
 deeper at the page ground so the phone screenshots read as the lit object on
 a dark stage, and the two faces are the app's own Bodoni Moda and Sora,
-loaded from Google Fonts. It is single-theme on purpose — an auditorium is
-dark — so every colour is painted explicitly rather than inherited.
+loaded from Google Fonts. Every colour is painted explicitly rather than
+inherited: the page opens in the dark, and the moon button in the nav flips
+it to the app's `playbillLight` — the same house, printed — with the
+choice kept in `localStorage` under `vastaps.landing.theme`.
 
 ## The screenshots
 
@@ -28,19 +30,26 @@ taken against `npx expo start --web` in a headless browser driven over the
 Chrome DevTools Protocol at 402×874 with a device scale factor of 3, then
 resized to 810px wide and encoded as WebP with `sharp`.
 
-Only screens that render **signed out** are in there — Discover, the listings
-calendar, search, a production, a performer, a public profile and a list —
-with one exception: the feed in the hero, which is signed-in only and was
-captured from a demo account (below). Profile, Watchlist and the season recap
-return a sign-in prompt without a session, so they photograph as an empty
-screen.
+The page uses four of them: Discover and a production in the hero and Act I
+(`discover.webp`, `play.webp`), the rating step of the check-in in Act II
+(`checkin.webp`) and a performer in Act III (`person.webp`). `og.html`
+uses the feed (`feed.webp`) and the questionnaire still shows the listings
+calendar, search, a list and a public profile (`musor.webp`, `search.webp`,
+`list.webp`, `user.webp`). Everything but the feed and the check-in renders
+signed out; those two need a session and are captured from a demo account
+(below). Profile, Watchlist and the season recap return a sign-in prompt
+without a session, so they photograph as an empty screen.
 
 Re-taking them is `npm run shots` — `scripts/render-shots.ts`, which drives
 that capture and writes straight into this directory. It photographs the
 deployed site by default rather than a dev server, because the deployed site
 runs the same bundle and is the more honest source; point it somewhere else
 with `SHOTS_BASE_URL` when the change has not shipped yet. Pass a name to
-re-take one shot instead of all of them: `npm run shots -- feed`.
+re-take one shot instead of all of them: `npm run shots -- feed` — the
+names are `user`, `discover`, `play`, `person`, `feed` and `checkin`.
+Against a dev server the signed-in shots wait for the session to actually
+land in `localStorage` before moving on, because a cold Metro bundle takes
+longer to arrive than any fixed pause.
 
 It exists because the alternative was what actually happened. `feed.webp` and
 `user.webp` sat unchanged through the follow-gate shipping — which changed what
@@ -51,8 +60,9 @@ somebody did. Always run `npm run stamp:shots` afterwards, or just
 
 Nobody real appears in any of them. The author’s name belongs in the contact
 section and nowhere else on the page, and no alpha tester agreed to be on a
-poster, so the two shots that show people — the feed in the hero
-(`feed.webp`) and the public profile (`user.webp`) — come from three demo
+poster, so the shots that show people — the feed on the share card
+(`feed.webp`), the check-in (`checkin.webp`) and the public profile
+(`user.webp`) — come from three demo
 accounts that live in the production database: **Tóth Eszter**, **Kovács
 Bence** and **Nagy Zsófia**. They are real accounts with real entries against
 real productions, following, liking and commenting on one another; the feed

@@ -3,7 +3,7 @@ import { View, ScrollView, StyleSheet, Pressable, Share, Platform, Linking } fro
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
-import { gutter, overlay, space } from "@/theme/tokens";
+import { gutter, overlay, radius, space } from "@/theme/tokens";
 import {
   addToWatchlist,
   getPlayById,
@@ -24,6 +24,11 @@ import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { ContentColumn } from "@/components/ui/Screen";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Text } from "@/components/ui/Text";
+import { SpotlightCard } from "@/components/ui/SpotlightCard";
+import { LightRays } from "@/components/motion/LightRays";
+import { SplitText } from "@/components/motion/SplitText";
+import { StarBorder } from "@/components/motion/StarBorder";
+import { FadeIn } from "@/components/motion/Reveal";
 import { MaskRatingRow } from "@/components/icons/MaskIcon";
 import { ChevronLeftIcon, ListPlusIcon, ShareIcon, TicketIcon, PlusIcon } from "@/components/icons/Icons";
 import { StatusInline } from "@/components/ui/StatusBadge";
@@ -283,6 +288,8 @@ export default function PlayDetailScreen() {
             vanish into it. */}
         <View style={[styles.hero, { aspectRatio: heroAspect(play.poster) }, wide && styles.heroWide]}>
           <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} height="100%" radius={0} scrim priority="high" />
+          {/* Stage light across the still — see components/motion/LightRays. */}
+          <LightRays />
           <View style={[styles.heroTop, { top: insets.top + space.lg }]}>
             <IconButton translucent onPress={() => closeModal(router, "/(tabs)")} accessibilityLabel={strings.playDetail.back}>
               <ChevronLeftIcon color={overlay.onImageHeading} />
@@ -309,9 +316,7 @@ export default function PlayDetailScreen() {
                 {heroFacts}
               </Text>
             )}
-            <Text variant="display" style={{ color: overlay.onImageHeading }}>
-              {play.title}
-            </Text>
+            <SplitText text={play.title} color={overlay.onImageHeading} />
             {/* The line the house prints under the title, where the house
                 prints it. Csokonai sets it on its production page and on every
                 calendar row, and it is the only thing that says what kind of
@@ -415,12 +420,14 @@ export default function PlayDetailScreen() {
               second full-width bar, and the venue follow a third — three
               stacked bars, two of them gold, before the showtimes. */}
           <View style={styles.actions}>
-            <Button
-              label={strings.playDetail.logButton}
-              icon={<PlusIcon size={16} />}
-              style={{ flex: 1 }}
-              onPress={() => router.push({ pathname: "/checkin", params: { playId: play.id } })}
-            />
+            <StarBorder style={{ flex: 1 }} radius={radius.pill}>
+              <Button
+                label={strings.playDetail.logButton}
+                icon={<PlusIcon size={16} />}
+                style={styles.logButton}
+                onPress={() => router.push({ pathname: "/checkin", params: { playId: play.id } })}
+              />
+            </StarBorder>
             <IconButton
               onPress={toggleWatchlist}
               active={inWatchlist}
@@ -567,12 +574,16 @@ export default function PlayDetailScreen() {
               address; the link sits on the showtimes' baseline because that is
               where the decision is made. Absent for hand-added plays and for
               Örkény, whose API publishes no slug to build a route from. */}
-          <ShowtimeList
-            performances={performances}
-            play={play}
-            action={play.sourceUrl ? strings.playDetail.ticketsShort : undefined}
-            onAction={play.sourceUrl ? () => openTickets(play.sourceUrl!) : undefined}
-          />
+          <FadeIn delay={120}>
+            <SpotlightCard>
+              <ShowtimeList
+                performances={performances}
+                play={play}
+                action={play.sourceUrl ? strings.playDetail.ticketsShort : undefined}
+                onAction={play.sourceUrl ? () => openTickets(play.sourceUrl!) : undefined}
+              />
+            </SpotlightCard>
+          </FadeIn>
 
           {/* The theatre, not the production. This is the one place in the app
               a house can be subscribed to, and it belongs here rather than on
@@ -831,6 +842,7 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     gap: space.sm,
   },
   actions: { flexDirection: "row", alignItems: "stretch", gap: space.sm },
+  logButton: { borderRadius: radius.pill },
   ratingBlock: {
     flexDirection: "row",
     alignItems: "center",

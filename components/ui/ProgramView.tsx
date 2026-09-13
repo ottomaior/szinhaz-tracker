@@ -11,6 +11,7 @@ import { getProgramDays, getProgramForDay, type ProgramFilters } from "@/service
 import type { ProgramDay, ProgramEntry } from "@/data/types";
 import { formatDayLabel, formatLongDate, formatWeekday, todayInBudapest } from "@/utils/datetime";
 import { strings } from "@/i18n/hu";
+import { useDockInset } from "@/components/ui/TabBar";
 
 /**
  * The catalogue read from the calendar end: pick an evening, see what is on.
@@ -31,6 +32,7 @@ import { strings } from "@/i18n/hu";
  * to scroll — loading, failed, no days at all — it simply sits on top.
  */
 export function ProgramView({ filters, header }: { filters: ProgramFilters; header?: ReactNode }) {
+  const dockInset = useDockInset();
   const router = useRouter();
   const [days, setDays] = useState<ProgramDay[]>([]);
   const [selectedDay, setSelectedDay] = useState<string>();
@@ -137,7 +139,7 @@ export function ProgramView({ filters, header }: { filters: ProgramFilters; head
   }
 
   return (
-    <ScrollView contentContainerStyle={{ paddingBottom: 100, gap: space.xl }}>
+    <ScrollView contentContainerStyle={{ paddingBottom: dockInset, gap: space.xl }}>
       {header}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dayRow}>
         {days.map((d) => (

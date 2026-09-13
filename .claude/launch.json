@@ -49,6 +49,19 @@
         "--no-clipboard"
       ],
       "port": 8107
+    },
+    {
+      "name": "static-export-dev",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "--yes",
+        "serve",
+        "dist-dev",
+        "-l",
+        "8091",
+        "--no-clipboard"
+      ],
+      "port": 8091
     }
   ]
 }

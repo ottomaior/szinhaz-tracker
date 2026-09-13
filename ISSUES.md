@@ -284,6 +284,31 @@ show timestamps at all, which is a design change rather than a content one.
 
 ## Open
 
+### T-076 · The questionnaire's screenshots still show the pre-redesign app
+type: chore · area: landing · priority: low · status: open · added: 2026-09-13
+
+`landing/kutatas.html` illustrates its questions with `musor.webp`,
+`search.webp`, `list.webp` and `user.webp`. The first three were taken by
+hand before `render-shots.ts` existed and are not in its list, so the
+redesign re-took the landing page's own shots and left the questionnaire's
+showing the underlined tabs and the welded tab bar. Add the listings calendar,
+search and a list to the script (they are signed-out routes), re-take them
+once the redesign is live, and stamp.
+
+### T-075 · Hydration mismatch on every static page at desktop width
+type: bug · area: web · priority: medium · status: open · added: 2026-09-13
+
+Any route opened in a browser wider than the `expanded` breakpoint logs
+React error #418 ("Hydration failed because the server rendered HTML didn't
+match the client") and re-renders the tree on the client. `(tabs)/_layout`
+picks the top bar or the dock from `useAtLeast("expanded")`; the static
+export renders with no window, so the HTML carries the phone layout and a
+desktop client disagrees at the first child. Predates the redesign — the
+production build on `main` does it too — and the page recovers, but it costs
+a full re-render on every desktop load and hides any real mismatch behind it.
+Fix is to render the phone layout until after mount (a `mounted` flag in the
+breakpoint hook) or to render neither bar on the server.
+
 ### T-070 · A list entry's "Levesz" is a button inside a button
 type: bug · area: web · priority: low · status: open · added: 2026-09-11
 
@@ -2320,4 +2345,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-072**
+Next free id: **T-077**

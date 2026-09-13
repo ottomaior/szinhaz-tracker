@@ -1,10 +1,9 @@
 <!doctype html>
 <html lang="hu">
-<head>
-<meta charset="utf-8">
+<head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0a0507">
-<title>Vastaps — magyar színházi napló</title>
+
 <meta name="description" content="Magyar színházi napló — nézd meg, mi megy ma este, és jegyezd fel, amit láttál.">
 <link rel="canonical" href="https://vastaps.pages.dev/">
 
@@ -35,9 +34,9 @@
 <meta name="twitter:description" content="Nézd meg, mi megy ma este Budapesten és Debrecenben. Jegyezd fel, amit láttál.">
 <meta name="twitter:image" content="https://vastaps.pages.dev/og.png">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500;6..96,600;6..96,700&family=Sora:wght@300;400;500;600;700&display=swap">
+
+
+
 
 <!-- Enough structure for a search result to carry the name, the icon and a
      sentence rather than a guess. Deliberately no `offers` block: pricing
@@ -55,1143 +54,533 @@
   "description": "Magyar színházi napló: Budapest és Debrecen színházainak műsora egy helyen, és egy napló az előadásokról, amelyeket láttál."
 }
 </script>
+<title>Vastaps — magyar színházi napló</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,600;0,6..96,700;1,6..96,400;1,6..96,600&family=Sora:wght@400;500;600;700&display=swap">
 <style>
-/* ── Tokens ───────────────────────────────────────────────────────────────
-   The palette is the app's own `velvetDark` (theme/themes.ts), one shade
-   deeper at the page ground so the phones read as the lit object on a dark
-   stage. Single theme on purpose: an auditorium is dark, and every colour
-   below is painted explicitly so the page never borrows a host ground. */
-:root {
-  color-scheme: dark;
-
-  --ink:        #0a0507;
-  --ink-2:      #0f0709;
-  --surface:    #170b0f;
-  --surface-2:  #1c0d13;
-  --surface-3:  #2a1520;
-
-  --hairline:      rgba(245,237,228,0.10);
-  --hairline-soft: rgba(245,237,228,0.055);
-
-  --text:  #f6efe6;
-  --dim:   #c2afa8;
-  --faint: #9f8e8a;
-
-  --gold:      #e4bf72;
-  --gold-deep: #a97c2e;
-  --gold-lift: #f0d38f;
-  --on-gold:   #140709;
-  --gold-tint:   rgba(228,191,114,0.14);
-  --gold-edge:   rgba(228,191,114,0.42);
-  --gold-glow:   rgba(228,191,114,0.40);
-
-  --display: "Bodoni Moda", "Bodoni MT", "Didot", "Times New Roman", serif;
-  --sans: "Sora", ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
-
-  --step--1: clamp(0.78rem, 0.76rem + 0.10vw, 0.84rem);
-  --step-0:  clamp(0.98rem, 0.94rem + 0.18vw, 1.08rem);
-  --step-1:  clamp(1.15rem, 1.06rem + 0.42vw, 1.38rem);
-  --step-2:  clamp(1.45rem, 1.24rem + 0.95vw, 2.05rem);
-  --step-3:  clamp(1.95rem, 1.48rem + 2.10vw, 3.20rem);
-  --step-4:  clamp(2.45rem, 1.70rem + 3.30vw, 4.55rem);
-
-  --gutter: clamp(1.15rem, 4vw, 2.5rem);
-  --bay:    clamp(3.75rem, 6.5vw, 6.25rem);
-  --shell:  1140px;
+/* Vastaps landing · redesign. Tokens from theme/themes.ts. ReactBits ideas re-implemented:
+   Pill Nav · Light Rays · Particles · Split Text · Rotating Text · Shiny Text · Star Border · Magnet ·
+   Logo Loop · Tilted Card · Scroll Stack · Magic Bento · Count Up · Scroll Reveal · Spotlight Card · Fade Content */
+:root{
+  --bg:#0f0709;--bg-el:#170b0f;--surface:#1c0d13;--surface2:#2a1520;
+  --hair:rgba(246,238,232,.11);--hair-soft:rgba(246,238,232,.06);--edge:rgba(246,238,232,.06);
+  --text:#f6efe6;--dim:#c2afa8;--faint:#9f8e8a;
+  --gold:#e4bf72;--gold-deep:#a97c2e;--on-accent:#140709;
+  --gold-bg:rgba(228,191,114,.14);--gold-border:rgba(228,191,114,.42);--neutral-bg:rgba(246,239,230,.08);
+  --shadow:rgba(0,0,0,.5);--glow:rgba(228,191,114,.38);--ray:228,191,114;
+  --display:"Bodoni Moda","Bodoni 72","Didot",Georgia,serif;--ui:"Sora","Segoe UI",system-ui,sans-serif;
+  color-scheme:dark;
 }
-
-*, *::before, *::after { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  background: var(--ink);
-  color: var(--text);
-  font-family: var(--sans);
-  font-size: var(--step-0);
-  font-weight: 400;
-  line-height: 1.65;
-  -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
+:root[data-theme="light"]{
+  --bg:#faf5ec;--bg-el:#f5eddf;--surface:#f1e8d7;--surface2:#e6dac4;
+  --hair:rgba(31,23,20,.14);--hair-soft:rgba(31,23,20,.08);--edge:transparent;
+  --text:#1f1714;--dim:#574a42;--faint:#6b5d54;
+  --gold:#7a2433;--gold-deep:#b7727d;--on-accent:#fff8f0;
+  --gold-bg:rgba(122,36,51,.10);--gold-border:rgba(122,36,51,.36);--neutral-bg:rgba(31,23,20,.06);
+  --shadow:rgba(70,30,30,.16);--glow:rgba(122,36,51,.26);--ray:122,36,51;
+  color-scheme:light;
 }
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--ui);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+h1,h2,h3,p{margin:0}
+.wrap{width:min(1180px,100% - 40px);margin-inline:auto}
+@media (max-width:640px){.wrap{width:calc(100% - 32px)}}
+.eyebrow{font-size:11px;letter-spacing:1.8px;text-transform:uppercase;font-weight:700;color:var(--gold)}
+.display{font-family:var(--display);font-weight:600;letter-spacing:-.01em;text-wrap:balance}
+.lede{color:var(--dim);font-size:18px;line-height:1.6;max-width:56ch;text-wrap:pretty}
+.num{font-family:var(--display);font-weight:600;color:var(--gold);font-variant-numeric:tabular-nums}
 
-h1, h2, h3 { margin: 0; font-family: var(--display); font-weight: 500; line-height: 1.04; letter-spacing: -0.015em; text-wrap: balance; }
-p { margin: 0; }
-a { color: inherit; }
-img { display: block; }
-button { font: inherit; color: inherit; }
+/* pill nav */
+.nav{position:fixed;top:16px;left:0;right:0;z-index:50;display:flex;justify-content:center;padding:0 16px;pointer-events:none}
+.nav .pill{pointer-events:auto;display:flex;align-items:center;gap:4px;height:52px;padding:0 8px 0 10px;border-radius:999px;
+  background:rgba(28,13,19,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--hair);box-shadow:0 1px 0 var(--edge) inset,0 20px 50px -20px var(--shadow)}
+:root[data-theme="light"] .nav .pill{background:rgba(250,245,236,.78)}
+.brand{display:flex;align-items:center;gap:9px;font-family:var(--display);font-size:20px;font-weight:600;padding-right:10px;text-decoration:none}
+.brand svg{width:26px;height:26px;fill:var(--gold)}
+.links{position:relative;display:flex;gap:2px}
+.links a{position:relative;z-index:1;padding:0 13px;height:36px;display:inline-flex;align-items:center;font-size:13px;font-weight:600;color:var(--dim);text-decoration:none;border-radius:999px;transition:color .25s}
+.links a:hover,.links a.on{color:var(--text)}
+.links .ind{position:absolute;top:0;height:36px;border-radius:999px;background:var(--neutral-bg);transition:left .35s cubic-bezier(.3,1.3,.4,1),width .35s cubic-bezier(.3,1.3,.4,1),opacity .2s;opacity:0}
+.lang{display:flex;gap:2px;margin-left:2px}
+.lang__btn{height:32px;padding:0 9px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.4px;color:var(--faint);transition:color .2s,background .2s}
+.lang__btn:hover{color:var(--text)}
+.lang__btn[aria-pressed="true"]{color:var(--text);background:var(--neutral-bg)}
+.tog{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:var(--dim)}
+.tog:hover{background:var(--neutral-bg);color:var(--text)}
+.tog svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 20px;border-radius:999px;background:var(--gold);color:var(--on-accent);font-weight:700;font-size:14px;text-decoration:none;white-space:nowrap;transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s}
+.btn:hover{box-shadow:0 12px 30px -12px var(--glow)}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--hair)}
+.btn.ghost:hover{border-color:var(--gold-border)}
+.btn.sm{height:36px;padding:0 16px;font-size:13px}
+.shiny{position:relative;background:linear-gradient(110deg,var(--on-accent) 35%,rgba(255,255,255,.95) 50%,var(--on-accent) 65%);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 3.2s linear infinite}
+:root[data-theme="light"] .shiny{background:linear-gradient(110deg,var(--on-accent) 35%,#ffd9a8 50%,var(--on-accent) 65%);background-size:220% 100%;-webkit-background-clip:text;background-clip:text}
+@keyframes shine{0%{background-position:120% 0}100%{background-position:-120% 0}}
+.star{position:relative;display:inline-block;overflow:hidden;border-radius:999px;padding:1.5px;background:var(--surface2)}
+.star::before,.star::after{content:"";position:absolute;width:300%;height:50%;left:-100%;border-radius:50%;background:radial-gradient(circle,var(--gold),transparent 12%);opacity:.9;animation:starL 6s linear infinite}
+.star::before{top:-10px}.star::after{bottom:-10px;animation-name:starR}
+@keyframes starL{to{transform:translateX(-33.3%)}}@keyframes starR{from{transform:translateX(-33.3%)}to{transform:none}}
+.star .btn{position:relative;z-index:1}
+@media (max-width:820px){.links,.nav .brand span{display:none}.brand{padding-right:4px}}
+@media (max-width:400px){.lang__btn{padding:0 6px}.btn.sm{padding:0 12px}}
 
-:focus-visible {
-  outline: 2px solid var(--gold);
-  outline-offset: 3px;
-  border-radius: 4px;
-}
+/* hero */
+.hero{position:relative;padding:150px 0 40px;overflow:hidden;isolation:isolate}
+#rays{position:absolute;inset:0;width:100%;height:100%;z-index:-1}
+.hero::after{content:"";position:absolute;inset:auto 0 0 0;height:180px;background:linear-gradient(180deg,transparent,var(--bg));z-index:-1;pointer-events:none}
+.hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center}
+.hero h1{font-size:clamp(44px,6.4vw,84px);line-height:1;margin:16px 0 22px}
+.hero h1 em{font-style:italic;font-weight:400;color:var(--gold)}
+.split .w{display:inline-block;white-space:nowrap}
+.split .ch{display:inline-block;opacity:0;transform:translateY(.5em) rotate(2deg);animation:chIn .7s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes chIn{to{opacity:1;transform:none}}
+.rot{display:inline-grid;justify-items:start;vertical-align:bottom;overflow:hidden;height:1.6em;color:var(--text);font-weight:600}
+.rot span{grid-area:1/1;transition:transform .55s cubic-bezier(.3,1,.3,1),opacity .4s;transform:translateY(110%);opacity:0}
+.rot span.on{transform:none;opacity:1}
+.rot span.out{transform:translateY(-110%);opacity:0}
+.ctas{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:30px}
+.alpha{display:inline-flex;align-items:center;gap:8px;padding:6px 12px 6px 8px;border-radius:999px;background:var(--gold-bg);border:1px solid var(--gold-border);font-size:12px;font-weight:600;color:var(--gold)}
+.alpha i{width:8px;height:8px;border-radius:50%;background:var(--gold);animation:pulse 2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 var(--glow)}70%{box-shadow:0 0 0 8px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.facts{display:flex;flex-wrap:wrap;gap:8px 26px;margin-top:34px;color:var(--faint);font-size:13px;font-weight:500}
+.facts b{color:var(--text);font-weight:600}
+.phones{position:relative;height:640px;perspective:1400px}
+.ph{position:absolute;border-radius:36px;overflow:hidden;box-shadow:0 60px 100px -40px rgba(0,0,0,.8),0 0 0 1px var(--hair);transform-style:preserve-3d;transition:transform .15s ease-out;will-change:transform;background:var(--surface)}
+.ph img{display:block;width:100%;height:auto}
+.ph .glare{position:absolute;inset:0;background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.18) 50%,transparent 60%);background-size:260% 100%;background-position:130% 0;transition:background-position .7s;pointer-events:none}
+.ph:hover .glare{background-position:-30% 0}
+.ph.a{width:290px;left:50%;top:20px;transform:translateX(-58%) rotate(-4deg);z-index:2}
+.ph.b{width:250px;left:50%;top:110px;transform:translateX(12%) rotate(6deg);z-index:1;opacity:.92}
+@media (max-width:900px){.hero{padding-top:120px}.hero-grid{grid-template-columns:1fr;gap:20px}.phones{height:520px}.ph.a{width:240px;transform:translateX(-70%) rotate(-4deg)}.ph.b{width:210px;transform:translateX(0) rotate(6deg)}}
+@media (max-width:480px){.phones{height:440px}.ph.a{width:200px;transform:translateX(-80%) rotate(-4deg)}.ph.b{width:180px;transform:translateX(-5%) rotate(6deg)}}
 
-html { scroll-behavior: smooth; }
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
-[id] { scroll-margin-top: 88px; }
+/* logo loop */
+.loop{padding:10px 0 30px;border-block:1px solid var(--hair-soft);position:relative;overflow:hidden;
+  -webkit-mask:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
+.loop .track{display:flex;gap:0;width:max-content;animation:loop 38s linear infinite;padding-top:14px}
+.loop:hover .track{animation-play-state:paused}
+.loop .track span{font-family:var(--display);font-size:22px;font-weight:400;font-style:italic;color:var(--dim);padding:0 28px;white-space:nowrap;display:inline-flex;align-items:center;gap:28px}
+.loop .track span::after{content:"";width:5px;height:5px;border-radius:50%;background:var(--gold);opacity:.7}
+.loop small{display:block;text-align:center;color:var(--faint);font-size:12.5px;margin-top:12px}
+@keyframes loop{to{transform:translateX(-50%)}}
 
-.shell { width: 100%; max-width: var(--shell); margin-inline: auto; padding-inline: var(--gutter); }
+/* sections */
+section{padding:96px 0}
+.sec-head{max-width:64ch;margin-bottom:44px}
+.sec-head h2{font-size:clamp(32px,4.2vw,52px);line-height:1.05;margin:12px 0 16px}
+.acts{position:relative}
+.act{position:sticky;top:96px;margin-bottom:28px;background:var(--surface);border:1px solid var(--hair-soft);border-radius:28px;overflow:hidden;
+  box-shadow:0 1px 0 var(--edge) inset,0 40px 80px -40px var(--shadow);display:grid;grid-template-columns:1.05fr .95fr;min-height:560px;transform-origin:50% 0;transition:transform .2s ease-out,filter .2s}
+.act .txt{padding:48px 48px 44px}
+.act .txt h3{font-family:var(--display);font-weight:600;font-size:clamp(28px,3.4vw,42px);line-height:1.08;margin:10px 0 14px;text-wrap:balance}
+.act .txt p{color:var(--dim);max-width:52ch}
+.act ul{list-style:none;padding:0;margin:22px 0 0;display:grid;gap:12px}
+.act li{padding-left:22px;position:relative;color:var(--dim);font-size:15px;line-height:1.55}
+.act li b{color:var(--text);font-weight:600}
+.act li::before{content:"";position:absolute;left:0;top:.62em;width:10px;height:10px;border-radius:50%;background:var(--gold);box-shadow:0 0 10px var(--glow)}
+.act .vis{position:relative;background:linear-gradient(160deg,var(--surface2),var(--bg));display:grid;place-items:end center;overflow:hidden;padding:44px 40px 0}
+.act .vis::before{content:"";position:absolute;inset:0;background:radial-gradient(60% 50% at 50% 30%,rgba(var(--ray),.18),transparent 70%)}
+.act .vis .ph{position:relative;width:min(300px,80%);border-radius:36px 36px 0 0;box-shadow:0 -20px 60px -30px var(--glow),0 0 0 1px var(--hair);transform:none}
+.act .roman{font-family:var(--display);font-style:italic;font-weight:400;font-size:64px;line-height:1;color:var(--gold);opacity:.35;position:absolute;right:28px;top:18px}
+@media (max-width:900px){.act{grid-template-columns:1fr;min-height:0;position:relative;top:0}.act .txt{padding:32px 24px}.act .vis{padding:32px 24px 0}.act .roman{display:none}}
 
-.skip {
-  position: absolute; left: 50%; top: 0; transform: translate(-50%, -140%);
-  z-index: 60; background: var(--gold); color: var(--on-gold);
-  padding: 0.6rem 1.1rem; border-radius: 0 0 10px 10px; font-weight: 600; text-decoration: none;
-}
-.skip:focus { transform: translate(-50%, 0); }
+/* states row */
+.states{display:flex;flex-wrap:wrap;gap:10px;margin-top:36px;align-items:center}
+.states .lbl{color:var(--faint);font-size:13px;font-weight:600;margin-right:6px}
+.state{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--hair);font-size:13px;font-weight:600;color:var(--dim)}
+.state i{width:8px;height:8px;border-radius:50%;background:var(--faint)}
+.state.on{border-color:var(--gold-border);background:var(--gold-bg);color:var(--gold)}.state.on i{background:var(--gold);box-shadow:0 0 8px var(--glow)}
+.state.pre i{background:var(--dim)}.state.off i{background:transparent;border:1px solid var(--faint)}
 
-/* ── Running-order label ─────────────────────────────────────────────────
-   A programme lists its acts, so the numbering here is real sequence, not
-   ornament: the page walks through the app in the order you would meet it. */
-.act {
-  display: flex; align-items: center; gap: 0.85rem;
-  border-top: 1px solid var(--hairline);
-  padding-top: 1.1rem; margin-bottom: clamp(2rem, 4vw, 3.25rem);
-  font-size: var(--step--1); letter-spacing: 0.16em; text-transform: uppercase;
-  color: var(--faint);
-}
-.act__num { font-family: var(--display); font-size: 1.05em; letter-spacing: 0.08em; color: var(--gold); }
-.act__rule { flex: 1; height: 1px; background: var(--hairline-soft); }
+/* magic bento */
+.bento{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}
+.tile{--mx:50%;--my:50%;position:relative;grid-column:span 2;padding:26px 26px 24px;border-radius:22px;background:var(--surface);border:1px solid var(--hair-soft);overflow:hidden;min-height:220px;display:flex;flex-direction:column;justify-content:flex-end;gap:8px;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+.tile.wide{grid-column:span 3}
+.tile::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1px;pointer-events:none;opacity:0;transition:opacity .3s;
+  background:radial-gradient(280px circle at var(--mx) var(--my),var(--gold),transparent 60%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.tile::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .3s;background:radial-gradient(360px circle at var(--mx) var(--my),rgba(var(--ray),.14),transparent 50%)}
+.tile:hover::before,.tile:hover::after{opacity:1}
+.tile:hover{transform:translateY(-3px)}
+.tile h3{font-family:var(--display);font-weight:600;font-size:24px;line-height:1.15}
+.tile p{color:var(--dim);font-size:14.5px;line-height:1.55}
+.tile .ic{position:absolute;top:22px;left:24px;width:34px;height:34px;color:var(--gold)}
+.tile .ic svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.tile .themes{display:flex;gap:6px;position:absolute;top:24px;right:24px}
+.tile .themes i{width:22px;height:22px;border-radius:50%;border:1px solid var(--hair)}
+.tile .sp{position:absolute;width:3px;height:3px;border-radius:50%;background:var(--gold);pointer-events:none;animation:spf 1.1s ease-out forwards}
+@keyframes spf{to{transform:translate(var(--dx),var(--dy));opacity:0}}
+@media (max-width:900px){.tile,.tile.wide{grid-column:span 3}}
+@media (max-width:600px){.tile,.tile.wide{grid-column:span 6;min-height:180px}}
 
-.eyebrow {
-  font-size: var(--step--1); letter-spacing: 0.2em; text-transform: uppercase;
-  color: var(--gold); font-weight: 500;
-}
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:64px;border-top:1px solid var(--hair-soft);padding-top:34px}
+.stats div{padding:8px 0}
+.stats .num{font-size:clamp(40px,5vw,64px);line-height:1;display:block}
+.stats small{display:block;color:var(--faint);font-size:13px;font-weight:600;margin-top:8px;letter-spacing:.3px}
+@media (max-width:640px){.stats{grid-template-columns:repeat(2,1fr)}}
 
-.lede { color: var(--dim); font-size: var(--step-1); font-weight: 300; line-height: 1.6; max-width: 40ch; }
-.body-dim { color: var(--dim); max-width: 58ch; }
+/* backstage */
+.reveal{font-family:var(--display);font-weight:400;font-size:clamp(24px,3.2vw,40px);line-height:1.25;max-width:30ch;text-wrap:pretty}
+.reveal .w{display:inline-block;opacity:.18;filter:blur(3px);transition:opacity .5s,filter .5s}
+.reveal .w.on{opacity:1;filter:none}
+.tech{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:44px}
+.tc{--mx:50%;--my:50%;position:relative;padding:22px 22px 20px;border-radius:18px;background:var(--surface);border:1px solid var(--hair-soft);overflow:hidden}
+.tc::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s;background:radial-gradient(300px circle at var(--mx) var(--my),rgba(var(--ray),.16),transparent 50%)}
+.tc:hover::before{opacity:1}
+.tc b{display:block;font-size:12.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+.tc p{color:var(--dim);font-size:14.5px;line-height:1.55}
+@media (max-width:820px){.tech{grid-template-columns:1fr 1fr}}@media (max-width:520px){.tech{grid-template-columns:1fr}}
 
-/* ── Navigation ─────────────────────────────────────────────────────────── */
-.nav {
-  position: sticky; top: 0; z-index: 50;
-  background: color-mix(in srgb, var(--ink) 82%, transparent);
-  backdrop-filter: blur(14px) saturate(140%);
-  border-bottom: 1px solid transparent;
-  transition: border-color 0.25s ease, background 0.25s ease;
-}
-.nav.is-stuck { border-bottom-color: var(--hairline-soft); }
-.nav__in { display: flex; align-items: center; gap: 1rem; height: 64px; }
-.brand { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; margin-right: auto; }
-.brand__mark { width: 26px; height: 26px; flex: none; }
-.brand__name { font-family: var(--display); font-size: 1.22rem; font-weight: 600; letter-spacing: 0.005em; }
-.nav__links { display: none; gap: 1.6rem; font-size: 0.9rem; color: var(--dim); }
-.nav__links a { text-decoration: none; transition: color 0.18s ease; }
-.nav__links a:hover { color: var(--text); }
-.nav__links a.is-research { color: var(--gold); }
+/* faq */
+.faq{max-width:760px}
+details{border-top:1px solid var(--hair-soft);padding:6px 0}
+details:last-of-type{border-bottom:1px solid var(--hair-soft)}
+summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:20px;padding:16px 0;font-family:var(--display);font-size:22px;font-weight:600}
+summary::-webkit-details-marker{display:none}
+summary .pm{width:28px;height:28px;border-radius:50%;border:1px solid var(--hair);display:grid;place-items:center;color:var(--gold);flex:none;transition:transform .3s,background .3s}
+details[open] summary .pm{transform:rotate(45deg);background:var(--gold-bg)}
+details p{color:var(--dim);padding:0 0 18px;max-width:64ch;animation:fade .5s cubic-bezier(.2,.8,.2,1)}
+@keyframes fade{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
 
-/* ── The research notice ──────────────────────────────────────────────────
-   A strip under the header while the pre-launch questionnaire is open. It
-   is the one thing a visitor is asked to do right now, so it sits where a
-   visitor lands rather than in the contact section after the FAQ. Remove
-   the strip when the fieldwork closes. */
-.notice { background: var(--gold); color: var(--on-gold); }
-.notice__in { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.35rem 1rem; min-height: 44px; padding-block: 0.55rem; font-size: 0.9rem; text-align: center; }
-.notice__in b { font-weight: 600; }
-.notice__link { display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 700; color: inherit; text-decoration: none; border-bottom: 1.5px solid rgba(20,7,9,0.45); padding-bottom: 1px; white-space: nowrap; }
-.notice__link:hover { border-bottom-color: var(--on-gold); }
-.notice__link svg { width: 16px; height: 16px; }
+/* contact */
+.contact{position:relative;border-radius:32px;padding:64px 48px;background:var(--surface);border:1px solid var(--gold-border);overflow:hidden;text-align:center}
+.contact::before{content:"";position:absolute;inset:0;background:radial-gradient(60% 80% at 50% 120%,rgba(var(--ray),.22),transparent 70%);pointer-events:none}
+.contact h2{font-size:clamp(34px,4.6vw,58px);line-height:1.02;margin:12px auto 18px;max-width:18ch}
+.contact .lede{margin:0 auto}
+.contact .mail{display:inline-block;margin-top:22px;font-family:var(--display);font-size:22px;color:var(--gold);text-decoration:none;border-bottom:1px solid var(--gold-border)}
+.contact .ctas{justify-content:center}
+@media (max-width:640px){.contact{padding:44px 22px}}
+footer{padding:40px 0 60px;color:var(--faint);font-size:13px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px}
+footer nav{display:flex;flex-wrap:wrap;gap:6px 20px}
+footer a{color:var(--faint);text-decoration:none}footer a:hover{color:var(--text)}
 
-.lang { display: flex; padding: 3px; gap: 2px; border: 1px solid var(--hairline); border-radius: 999px; background: rgba(245,237,228,0.03); }
-.lang__btn {
-  border: 0; background: transparent; cursor: pointer;
-  padding: 0.28rem 0.72rem; border-radius: 999px;
-  font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em;
-  color: var(--faint); transition: color 0.18s ease, background 0.18s ease;
-  min-height: 30px;
-}
-.lang__btn:hover { color: var(--text); }
-.lang__btn[aria-pressed="true"] { background: var(--gold); color: var(--on-gold); }
-
-.btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
-  min-height: 46px; padding: 0.7rem 1.35rem; border-radius: 999px;
-  font-size: 0.95rem; font-weight: 600; text-decoration: none; cursor: pointer;
-  border: 1px solid transparent; transition: transform 0.16s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-}
-.btn--gold { background: var(--gold); color: var(--on-gold); box-shadow: 0 0 0 rgba(228,191,114,0); }
-.btn--gold:hover { background: var(--gold-lift); box-shadow: 0 8px 34px -12px var(--gold-glow); }
-.btn--ghost { border-color: var(--hairline); color: var(--text); background: rgba(245,237,228,0.03); }
-.btn--ghost:hover { border-color: var(--gold-edge); background: var(--gold-tint); }
-.btn:active { transform: scale(0.98); }
-.btn--sm { min-height: 38px; padding: 0.4rem 0.95rem; font-size: 0.85rem; }
-.nav .btn--sm { display: none; }
-
-@media (min-width: 900px) {
-  .nav__links { display: flex; }
-  .nav .btn--sm { display: inline-flex; }
-}
-</style>
-<style>
-/* ── Hero: the stage ─────────────────────────────────────────────────────
-   Two soft beams from the top and a warm pool of light on the floor. The
-   phone is the lit object; everything else in the section is dark. */
-.hero { position: relative; padding-top: clamp(1.75rem, 4vw, 3.25rem); padding-bottom: clamp(3rem, 5vw, 4.5rem); overflow: hidden; --rig-x: 50%; --rig-y: 26%; }
-/* The house itself, behind everything: an empty auditorium seen from the
-   stage, its own left third already in shadow. Two gradients pull it into
-   the page ground — leftward under the copy so the type sits on ink rather
-   than on velvet, and downward so the section ends on the same black the
-   next one starts on. `object-position` keeps the seats under the phone. */
-.hero__backdrop { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
-.hero__backdrop img {
-  width: 100%; height: 100%; object-fit: cover; object-position: 64% 42%;
-  opacity: 0; filter: saturate(0.88) brightness(0.92);
-  animation: backdrop-in 1.8s ease-out 0.05s forwards;
-}
-.hero__backdrop::after {
-  content: ""; position: absolute; inset: 0;
-  background:
-    linear-gradient(to right, var(--ink) 0%, rgba(10,5,7,0.86) 26%, rgba(10,5,7,0.42) 52%, rgba(10,5,7,0.18) 78%, rgba(10,5,7,0.30) 100%),
-    linear-gradient(to bottom, rgba(10,5,7,0.55) 0%, rgba(10,5,7,0.08) 32%, rgba(10,5,7,0.28) 68%, var(--ink) 100%);
-}
-@keyframes backdrop-in { to { opacity: 0.94; } }
-.hero__light { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
-.beam {
-  position: absolute; top: -18%; left: var(--rig-x); width: 46vw; height: 92vh;
-  background: linear-gradient(to bottom, rgba(228,191,114,0.17), rgba(228,191,114,0.045) 42%, rgba(228,191,114,0) 72%);
-  filter: blur(46px);
-  clip-path: polygon(43% 0, 57% 0, 100% 100%, 0 100%);
-  opacity: 0;
-  animation: beam-up 1.5s cubic-bezier(0.22,0.8,0.3,1) 0.05s forwards;
-}
-.beam--l { transform: translateX(-96%) rotate(-13deg); transform-origin: top center; }
-.beam--r { transform: translateX(-4%) rotate(13deg); transform-origin: top center; animation-delay: 0.22s; }
-.pool {
-  position: absolute; left: var(--rig-x); top: var(--rig-y); width: min(900px, 128vw); aspect-ratio: 1.75;
-  transform: translateX(-50%);
-  background: radial-gradient(ellipse at center, rgba(228,191,114,0.28), rgba(169,124,46,0.10) 38%, rgba(10,5,7,0) 68%);
-  filter: blur(18px);
-  opacity: 0;
-  animation: beam-up 1.7s ease-out 0.1s forwards;
-}
-@keyframes beam-up { to { opacity: 1; } }
-
-.hero__in { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; text-align: center; gap: clamp(1.5rem, 3vw, 2.2rem); }
-.hero__phone { animation: rise-in 1.15s cubic-bezier(0.16,0.9,0.3,1) 0.1s both; }
-.hero__copy { display: flex; flex-direction: column; align-items: center; gap: 1.15rem; max-width: 780px; }
-.hero__eyebrow { animation: rise-in 0.75s cubic-bezier(0.16,0.9,0.3,1) 0.42s both; }
-.hero h1 {
-  font-size: var(--step-4); line-height: 0.98; letter-spacing: -0.025em;
-  animation: rise-in 0.85s cubic-bezier(0.16,0.9,0.3,1) 0.5s both;
-}
-.hero h1 em { font-style: italic; color: var(--gold); font-weight: 400; }
-.hero__lede { animation: rise-in 0.85s cubic-bezier(0.16,0.9,0.3,1) 0.62s both; max-width: 46ch; text-align: center; }
-/* The alpha note. It sits between the promise and the door so that a
-   visitor reads why the door asks for an email before they reach it. */
-.hero__stage {
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.55rem 0.75rem;
-  max-width: 46ch; font-size: 0.95rem; line-height: 1.55; color: var(--dim);
-  animation: rise-in 0.85s cubic-bezier(0.16,0.9,0.3,1) 0.68s both;
-}
-.hero__stage .badge { flex: none; font-weight: 600; letter-spacing: 0.04em; }
-.hero__cta { display: flex; flex-wrap: wrap; gap: 0.7rem; justify-content: center; animation: rise-in 0.85s cubic-bezier(0.16,0.9,0.3,1) 0.74s both; }
-.hero__meta {
-  display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem 1.1rem;
-  font-size: var(--step--1); color: var(--faint); font-variant-numeric: tabular-nums;
-  animation: rise-in 0.85s cubic-bezier(0.16,0.9,0.3,1) 0.86s both;
-}
-.hero__meta span { display: inline-flex; align-items: center; gap: 0.55rem; }
-.hero__meta span + span::before { content: ""; width: 3px; height: 3px; border-radius: 50%; background: var(--gold-deep); }
-@keyframes rise-in { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
-
-/* Stacked, the copy comes first and the phone stands underneath it, so the
-   light has to point down there too rather than staying up in the type.
-   Two buttons of different widths read as ragged when they are centred one
-   above the other, so below the fold of a phone they take the full measure;
-   and the dot separators are dropped, because a wrapped row leaves one
-   stranded at the head of the second line looking like a stray bullet. */
-@media (max-width: 899px) {
-  .hero { --rig-y: 46%; }
-  /* Stacked, the section is four times taller than it is wide, and a 21:9
-     still stretched behind all of it is cropped to a sliver of seat backs
-     under the headline. So the picture is not wallpaper here: it is a band
-     pinned to the bottom, just tall enough to stand behind the phone, and
-     it fades to ink upward before it reaches the meta line. The copy sits
-     on plain black, the phone stands in front of the house. */
-  .hero__backdrop { top: auto; bottom: 0; height: min(720px, 100%); }
-  .hero__backdrop img { object-position: 62% 58%; }
-  .hero__backdrop::after {
-    background:
-      linear-gradient(to bottom, var(--ink) 0%, rgba(10,5,7,0.72) 22%, rgba(10,5,7,0.22) 48%, rgba(10,5,7,0.28) 82%, var(--ink) 100%),
-      linear-gradient(to right, rgba(10,5,7,0.35), rgba(10,5,7,0) 30%, rgba(10,5,7,0) 70%, rgba(10,5,7,0.35));
-  }
-  /* At a phone's width the two beams are only ~180px each, so the same blur
-     that reads as light on a monitor leaves their clipped edges showing as a
-     hard-sided shape behind the headline. More blur, less shape. */
-  .beam { filter: blur(66px); }
-  .hero__cta { flex-direction: column; align-self: stretch; }
-  .hero__cta .btn { width: 100%; }
-  .hero__meta { flex-direction: column; gap: 0.4rem; }
-  .hero__meta span + span::before { content: none; }
-}
-
-/* Above the fold, the page has one job: say what this is and offer the door.
-   Stacked, the phone alone is 560px tall, which pushed the headline across
-   the fold on a laptop and the button clean off it. Wide enough for two
-   columns, the copy takes the left and the phone keeps its place in the
-   light on the right; below that the copy simply comes first. The beams and
-   the pool follow the phone rather than staying nailed to the page centre. */
-@media (min-width: 900px) {
-  .hero { --rig-x: 71%; padding-bottom: clamp(2.5rem, 4vw, 3.75rem); }
-  .hero__in {
-    display: grid;
-    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
-    align-items: center;
-    gap: clamp(2.25rem, 4.5vw, 4rem);
-    text-align: left;
-  }
-  .hero__phone { grid-column: 2; justify-self: center; }
-  .hero__copy { align-items: flex-start; max-width: none; }
-  .hero h1 { font-size: clamp(2.45rem, 3.7vw, 3.85rem); }
-  .hero__lede { text-align: left; max-width: 34ch; }
-  .hero__stage { justify-content: flex-start; text-align: left; max-width: 40ch; }
-  .hero__cta, .hero__meta { justify-content: flex-start; }
-}
-
-/* ── Phone frame ─────────────────────────────────────────────────────────── */
-.phone { position: relative; width: min(var(--w, 300px), 78vw); flex: none; transform: translateY(var(--py, 0px)); will-change: transform; }
-.phone__body {
-  position: relative; border-radius: 13.5%/6.4%; padding: 2.4%;
-  background: linear-gradient(155deg, #4a3a30, #1a0f0c 34%, #120908 62%, #3b2c25);
-  box-shadow:
-    0 2px 2px rgba(245,237,228,0.10) inset,
-    0 42px 90px -30px rgba(0,0,0,0.85),
-    0 0 78px -22px var(--gold-glow);
-}
-.phone__screen { position: relative; border-radius: 11.4%/5.4%; overflow: hidden; background: var(--ink-2); }
-.phone__screen img { width: 100%; height: auto; }
-.phone__glare {
-  position: absolute; inset: 0; z-index: 3; pointer-events: none; border-radius: inherit;
-  background: linear-gradient(118deg, rgba(245,237,228,0.10) 0%, rgba(245,237,228,0.02) 22%, rgba(245,237,228,0) 46%);
-}
-.phone--tilt .phone__body { transform: rotate(var(--tilt, -6deg)); }
-
-/* Two screens that answer the same question: the search that found the
-   performer, and the page it leads to. */
-.duo { display: flex; align-items: center; justify-content: center; }
-.duo .phone--back { margin-right: -24%; }
-@media (max-width: 699px) { .duo .phone--back { display: none; } }
-
-/* ── Marquee: the houses ─────────────────────────────────────────────────── */
-.houses { border-block: 1px solid var(--hairline-soft); background: var(--ink-2); padding-block: 1.5rem; overflow: hidden; }
-.houses__label { text-align: center; font-size: var(--step--1); letter-spacing: 0.18em; text-transform: uppercase; color: var(--faint); margin-bottom: 1.1rem; }
-.marquee { display: flex; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }
-.marquee__track { display: flex; flex: none; gap: clamp(1.6rem, 4vw, 3.2rem); padding-right: clamp(1.6rem, 4vw, 3.2rem); animation: slide 42s linear infinite; }
-.marquee__track span { font-family: var(--display); font-size: clamp(1rem, 2.4vw, 1.5rem); white-space: nowrap; color: var(--dim); }
-@keyframes slide { to { transform: translateX(-100%); } }
-.marquee:hover .marquee__track { animation-play-state: paused; }
-.houses__note { text-align: center; margin-top: 1.15rem; color: var(--faint); font-size: var(--step--1); padding-inline: var(--gutter); }
-</style>
-<style>
-/* ── Section scaffolding ────────────────────────────────────────────────── */
-.bay { padding-block: var(--bay); position: relative; }
-.bay--tint { background: linear-gradient(180deg, var(--ink), var(--ink-2) 40%, var(--ink)); }
-
-.split { display: grid; gap: clamp(2.5rem, 6vw, 4.5rem); align-items: center; }
-.split__copy { display: flex; flex-direction: column; gap: 1.1rem; align-items: flex-start; }
-.split__copy h2 { font-size: var(--step-3); }
-.split__art { display: flex; justify-content: center; position: relative; }
-@media (min-width: 880px) {
-  .split { grid-template-columns: 1fr 1fr; }
-  .split--flip .split__art { order: -1; }
-}
-
-.center-stage { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 1.15rem; }
-.center-stage h2 { font-size: var(--step-3); max-width: 18ch; }
-.center-stage .lede { text-align: center; max-width: 52ch; }
-
-/* Notes hung off a phone — the app's own vocabulary, pointed at. */
-.callouts { list-style: none; margin: 0.35rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.85rem; }
-.callouts li { display: flex; gap: 0.8rem; align-items: flex-start; color: var(--dim); }
-.callouts svg { flex: none; width: 20px; height: 20px; margin-top: 3px; color: var(--gold); }
-.callouts b { color: var(--text); font-weight: 600; }
-
-/* Status vocabulary, straight out of the app. */
-.badges { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.badge {
-  font-size: var(--step--1); padding: 0.28rem 0.75rem; border-radius: 999px;
-  border: 1px solid var(--hairline); color: var(--dim); background: rgba(245,237,228,0.035);
-}
-.badge--on { border-color: var(--gold-edge); color: var(--gold); background: var(--gold-tint); }
-
-/* ── Playbill grid ───────────────────────────────────────────────────────── */
-.playbill { display: grid; gap: 1rem; grid-template-columns: 1fr; }
-@media (min-width: 700px) { .playbill { grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 1000px) { .playbill { grid-template-columns: repeat(3, 1fr); } }
-.tile {
-  display: flex; flex-direction: column; gap: 0.6rem;
-  padding: clamp(1.4rem, 2.6vw, 1.9rem);
-  border: 1px solid var(--hairline-soft); border-radius: 18px;
-  background: linear-gradient(168deg, var(--surface), var(--ink-2));
-  transition: border-color 0.25s ease, transform 0.25s ease;
-}
-.tile:hover { border-color: var(--gold-edge); transform: translateY(-3px); }
-.tile__icon { width: 26px; height: 26px; color: var(--gold); margin-bottom: 0.35rem; }
-.tile h3 { font-family: var(--sans); font-size: 1.05rem; font-weight: 600; letter-spacing: 0; line-height: 1.35; }
-.tile p { color: var(--dim); font-size: 0.94rem; line-height: 1.6; }
-@media (min-width: 700px) { .tile--wide { grid-column: span 2; } }
-.tile--shot { padding: 0; gap: 0; overflow: hidden; }
-.tile__inner { display: grid; grid-template-columns: 1fr; gap: 1.5rem; padding: clamp(1.4rem, 2.6vw, 1.9rem); }
-.tile__text { display: flex; flex-direction: column; gap: 0.6rem; }
-.tile__inner .phone__body { box-shadow: 0 22px 46px -24px rgba(0,0,0,0.9), 0 0 44px -24px var(--gold-glow); }
-@media (min-width: 560px) {
-  .tile__inner { grid-template-columns: minmax(0, 1fr) auto; align-items: end; padding-bottom: 0; }
-  .tile__inner .phone { margin-bottom: -16%; }
-}
-
-/* ── Counters ────────────────────────────────────────────────────────────── */
-.tally { display: grid; gap: 1px; background: var(--hairline-soft); border-block: 1px solid var(--hairline-soft); grid-template-columns: repeat(2, 1fr); }
-@media (min-width: 780px) { .tally { grid-template-columns: repeat(4, 1fr); } }
-.tally__cell { background: var(--ink); padding: clamp(1.6rem, 3.4vw, 2.6rem) 1.2rem; text-align: center; }
-.tally__n { font-family: var(--display); font-size: clamp(2.3rem, 5.5vw, 3.6rem); font-weight: 600; line-height: 1; color: var(--gold); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
-.tally__k { display: block; margin-top: 0.6rem; font-size: var(--step--1); letter-spacing: 0.13em; text-transform: uppercase; color: var(--faint); }
-
-/* ── Under the hood ──────────────────────────────────────────────────────── */
-.specs { margin: 0; padding: 0; display: grid; gap: 1px; background: var(--hairline-soft); border: 1px solid var(--hairline-soft); border-radius: 16px; overflow: hidden; }
-@media (min-width: 760px) { .specs { grid-template-columns: repeat(2, 1fr); } }
-.specs__row { background: var(--ink-2); padding: 1.25rem 1.4rem; display: flex; flex-direction: column; gap: 0.3rem; }
-.specs__k { font-size: var(--step--1); letter-spacing: 0.13em; text-transform: uppercase; color: var(--gold-deep); }
-.specs__v { color: var(--dim); font-size: 0.95rem; margin: 0; }
-
-/* ── FAQ ─────────────────────────────────────────────────────────────────── */
-.faq { border-top: 1px solid var(--hairline-soft); }
-.faq details { border-bottom: 1px solid var(--hairline-soft); }
-.faq summary {
-  display: flex; align-items: center; justify-content: space-between; gap: 1.5rem;
-  padding: 1.35rem 0; cursor: pointer; list-style: none;
-  font-size: var(--step-1); font-weight: 500; min-height: 48px;
-  transition: color 0.18s ease;
-}
-.faq summary::-webkit-details-marker { display: none; }
-.faq summary:hover { color: var(--gold); }
-.faq__sign { flex: none; width: 22px; height: 22px; color: var(--gold); transition: transform 0.3s cubic-bezier(0.22,0.8,0.3,1); }
-.faq details[open] .faq__sign { transform: rotate(45deg); }
-.faq__a p { color: var(--dim); padding-bottom: 1.5rem; max-width: 66ch; margin: 0; }
-.faq details[open] .faq__a { animation: unfold 0.36s cubic-bezier(0.22,0.8,0.3,1); }
-@keyframes unfold { from { opacity: 0; transform: translateY(-8px); } }
-
-/* ── The close ───────────────────────────────────────────────────────────── */
-.contact { display: flex; flex-direction: column; gap: 1.15rem; align-items: center; text-align: center; }
-.contact h2 { font-size: var(--step-3); }
-.contact .lede { text-align: center; max-width: 50ch; }
-.mailto {
-  display: inline-flex; align-items: center; gap: 0.7rem;
-  overflow-wrap: anywhere; min-width: 0;
-  font-family: var(--display); font-size: clamp(1.05rem, 3vw, 1.55rem); color: var(--gold);
-  text-decoration: none; border-bottom: 1px solid var(--gold-edge); padding-bottom: 0.25rem;
-  transition: color 0.2s ease, border-color 0.2s ease;
-}
-.mailto:hover { color: var(--gold-lift); border-color: var(--gold-lift); }
-.mailto svg { flex: none; width: 22px; height: 22px; }
-
-/* ── Footer ──────────────────────────────────────────────────────────────── */
-.foot { border-top: 1px solid var(--hairline-soft); padding-block: 2.5rem 3.5rem; background: var(--ink-2); }
-.foot__in { display: flex; flex-wrap: wrap; gap: 1rem 2rem; align-items: center; justify-content: space-between; color: var(--faint); font-size: 0.88rem; }
-.foot a { color: var(--dim); text-decoration: none; }
-.foot a:hover { color: var(--gold); }
-.foot__links { display: flex; flex-wrap: wrap; gap: 1.2rem; }
-
-/* ── Reveal-on-scroll ────────────────────────────────────────────────────
-   Visible by default. Only a page with JS running hides them first, so a
-   thumbnail, a no-JS reader and a reduced-motion viewer all get the page
-   at rest rather than a column of blanks. */
-.js-anim [data-reveal] { opacity: 0; transform: translateY(28px); }
-.js-anim [data-reveal].is-in { opacity: 1; transform: none; transition: opacity 0.7s cubic-bezier(0.22,0.8,0.3,1), transform 0.7s cubic-bezier(0.22,0.8,0.3,1); }
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
-  .js-anim [data-reveal] { opacity: 1; transform: none; }
-  .marquee__track { animation: none; }
-}
+/* fade content */
+.fc{opacity:1;transform:none}
+.io .fc{opacity:0;transform:translateY(22px);transition:opacity .7s cubic-bezier(.2,.8,.2,1),transform .7s cubic-bezier(.2,.8,.2,1)}
+.io .fc.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}.split .ch{opacity:1;transform:none}.reveal .w{opacity:1;filter:none}.io .fc{opacity:1;transform:none}}
 </style>
 </head>
 <body>
-<a class="skip" href="#main" data-t="skip">Ugrás a tartalomra</a>
 
-<header class="nav" id="nav">
-  <div class="shell nav__in">
-    <a class="brand" href="#top">
-      <svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
-        <path d="M4 9H60V14Q46 23 32 15Q18 23 4 14Z" fill="#e4bf72"/>
-        <path d="M6 15H23C20 27 20 41 22 51Q14 56 6 52Z" fill="#e4bf72"/>
-        <path d="M58 15H41C44 27 44 41 42 51Q50 56 58 52Z" fill="#e4bf72"/>
-        <path d="M32 26.5l2.06 5.67 6.02.2-4.75 3.71 1.67 5.8L32 38.5l-5 3.38 1.67-5.8-4.75-3.71 6.02-.2z" fill="#e4bf72"/>
-      </svg>
-      <span class="brand__name">Vastaps</span>
-    </a>
 
-    <nav class="nav__links" aria-label="Fő navigáció" data-t-label="navLabel">
-      <a href="#felfedezes" data-t="navDiscover">Felfedezés</a>
-      <a href="#naplo" data-t="navDiary">Napló</a>
-      <a href="#alkotok" data-t="navPeople">Alkotók</a>
-      <a href="#gyik" data-t="navFaq">GYIK</a>
-      <a href="#kapcsolat" data-t="navContact">Kapcsolat</a>
-      <a class="is-research" href="/kutatas" data-t="navResearch">Kérdőív</a>
-    </nav>
-
-    <div class="lang" role="group" aria-label="Nyelv" data-t-label="langLabel">
+<header class="nav">
+  <div class="pill">
+    <a class="brand" href="#top" aria-label="Vastaps"><svg viewBox="0 0 64 64"><path d="M4 9H60V14Q46 23 32 15Q18 23 4 14Z"/><path d="M6 15H23C20 27 20 41 22 51Q14 56 6 52Z"/><path d="M58 15H41C44 27 44 41 42 51Q50 56 58 52Z"/><path d="M32 26.5l2.06 5.67 6.02.2-4.75 3.71 1.67 5.8L32 38.5l-5 3.38 1.67-5.8-4.75-3.71 6.02-.2z"/></svg><span>Vastaps</span></a>
+    <nav class="links" id="links" data-t-label="navLabel" aria-label="Fő navigáció"><span class="ind"></span><a href="#felfedezes" data-t="navDiscover">Felfedezés</a><a href="#naplo" data-t="navDiary">Napló</a><a href="#alkotok" data-t="navPeople">Alkotók</a><a href="#gyik" data-t="navFaq">GYIK</a><a href="mailto:ottomaior@protonmail.com?subject=Vastaps" data-t="navContact">Kapcsolat</a></nav>
+    <div class="lang" role="group" data-t-label="langLabel" aria-label="Nyelv">
       <button class="lang__btn" type="button" data-lang="hu" aria-pressed="true">HU</button>
       <button class="lang__btn" type="button" data-lang="en" aria-pressed="false">EN</button>
     </div>
-
-    <a class="btn btn--gold btn--sm" href="mailto:ottomaior@protonmail.com?subject=Vastaps%20alfa%20%E2%80%93%20teszteln%C3%A9k" data-t="ctaInviteShort" data-t-href="hrefInvite">Kérek meghívót</a>
+    <button class="tog" id="tog" type="button" data-t-label="togLabel" aria-label="Téma váltása"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9c0-.5 0-1-.1-1.4A5.5 5.5 0 0 1 13.4 3.1C13 3 12.5 3 12 3z"/></svg></button>
+    <a class="btn sm" data-t="ctaInviteShort" data-t-href="hrefInvite" href="mailto:ottomaior@protonmail.com?subject=Vastaps%20alfa%20%E2%80%93%20teszteln%C3%A9k">Kérek meghívót</a>
   </div>
 </header>
 
-<main id="main">
-
-  <!-- ── Research notice — remove when the fieldwork closes ───────────── -->
-  <aside class="notice" aria-label="Kérdőív" data-t-label="noticeLabel">
-    <div class="shell notice__in">
-      <span data-t="noticeText"><b>Készül.</b> Segíts eldönteni, mi kerüljön bele — hét perc, névtelenül.</span>
-      <a class="notice__link" href="/kutatas" data-t="noticeLink">Kitöltöm a kérdőívet <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+<main id="top">
+<section class="hero">
+  <canvas id="rays" aria-hidden="true"></canvas>
+  <div class="wrap hero-grid">
+    <div>
+      <span class="alpha"><i></i><span data-t="heroAlpha">Zárt alfa · Budapest és Debrecen</span></span>
+      <h1 class="display split" id="h1" data-t="heroTitle">A magyar színház, egy <em>naplóban</em>.</h1>
+      <p class="lede" id="lede" data-t="heroLede">Nézd meg, mi megy ma este <span class="rot" id="rot"><span class="on">Budapesten</span><span>Debrecenben</span><span>a Katonában</span><span>az Örkényben</span><span>a Csokonaiban</span></span>. Jegyezd fel, amit láttál, értékeld — és évek múlva is tudni fogod, melyik este volt az.</p>
+      <div class="ctas">
+        <span class="star"><a class="btn" data-magnet data-t-href="hrefInvite" href="mailto:ottomaior@protonmail.com?subject=Vastaps%20alfa%20%E2%80%93%20teszteln%C3%A9k"><span class="shiny" data-t="ctaInvite">Kérek meghívót</span></a></span>
+        <a class="btn ghost" data-magnet href="#felfedezes" data-t="ctaHow">Hogyan működik ↓</a>
+      </div>
+      <!-- Cities, not a theatre count: "8 színház" reads as a small product and
+           invites the reader to check whether theirs is on the list. The full
+           list is in the FAQ, where somebody has gone looking for it. -->
+      <div class="facts"><span data-t="fact1"><b>1241</b> produkció</span><span data-t="fact2"><b>Budapest</b> és <b>Debrecen</b></span><span data-t="fact3"><b>Éjszakánként</b> frissül</span><span data-t="fact4"><b>Nincs</b> hirdetés</span></div>
     </div>
-  </aside>
-
-  <!-- ── Hero ─────────────────────────────────────────────────────────── -->
-  <section class="hero" id="top">
-    <div class="hero__backdrop" aria-hidden="true">
-      <img src="hero.webp" srcset="hero-1200.webp 1200w, hero.webp 2400w" sizes="100vw" width="2400" height="1018" alt="" decoding="async" fetchpriority="high">
-    </div>
-    <div class="hero__light" aria-hidden="true">
-      <div class="beam beam--l"></div>
-      <div class="beam beam--r"></div>
-      <div class="pool"></div>
-    </div>
-
-    <div class="shell hero__in">
-      <div class="hero__copy">
-        <p class="eyebrow hero__eyebrow" data-t="heroEyebrow">Magyar színházi napló</p>
-        <h1 data-t="heroTitle">A magyar színház,<br><em>egy naplóban</em>.</h1>
-        <p class="lede hero__lede" data-t="heroLede">Nézd meg, mi megy ma este Budapesten és Debrecenben. Jegyezd fel, amit láttál, értékeld, és évek múlva is tudni fogod, melyik este volt az.</p>
-        <p class="hero__stage" data-t="heroStage"><span class="badge badge--on">Zárt alfa</span><span>Most még néhány ember próbálja, félkész állapotban. Ha te is kipróbálnád, írj — elküldöm a linket.</span></p>
-        <div class="hero__cta">
-          <a class="btn btn--gold" href="mailto:ottomaior@protonmail.com?subject=Vastaps%20alfa%20%E2%80%93%20teszteln%C3%A9k" data-t-href="hrefInvite">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></svg>
-            <span data-t="ctaInvite">Kérek meghívót</span>
-          </a>
-          <a class="btn btn--ghost" href="#felfedezes">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v13M6 12l6 6 6-6"/></svg>
-            <span data-t="ctaTour">Hogyan működik</span>
-          </a>
-
-        </div>
-        <p class="hero__meta">
-          <span data-t="metaPlays">1207 produkció</span>
-          <span data-t="metaCities">Budapest és Debrecen</span>
-          <span data-t="metaSync">Éjszakánként frissül</span>
-        </p>
-      </div>
-
-      <div class="hero__phone">
-        <div class="phone" style="--w: 264px" data-parallax="0.045">
-          <div class="phone__body">
-            <div class="phone__screen">
-              <img src="shots/feed.webp?v=5f0e06fb" width="810" height="1761" alt="A Vastaps hírfolyama, a Követettek fülön: Nagy Zsófia megnézte a Chicagót a Katona József Színházban, négy maszkot adott, két kedvelést és egy hozzászólást kapott; alatta Tóth Eszter Anyegin-bejegyzése az Örkényből." data-t-alt="altFeed">
-              <span class="phone__glare"></span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ── The houses ───────────────────────────────────────────────────── -->
-  <section class="houses" aria-label="A katalógusban szereplő színházak" data-t-label="housesLabel">
-    <p class="houses__label" data-t="housesHeading">Most Budapesten és Debrecenben</p>
-    <div class="marquee" aria-hidden="true">
-      <div class="marquee__track">
-        <span>Örkény István Színház</span><span>·</span><span>Katona József Színház</span><span>·</span><span>Nemzeti Színház</span><span>·</span><span>Centrál Színház</span><span>·</span><span>Madách Színház</span><span>·</span><span>Vígszínház</span><span>·</span><span>Csokonai Nemzeti Színház</span><span>·</span><span>Vojtina Bábszínház</span><span>·</span>
-      </div>
-      <div class="marquee__track">
-        <span>Örkény István Színház</span><span>·</span><span>Katona József Színház</span><span>·</span><span>Nemzeti Színház</span><span>·</span><span>Centrál Színház</span><span>·</span><span>Madách Színház</span><span>·</span><span>Vígszínház</span><span>·</span><span>Csokonai Nemzeti Színház</span><span>·</span><span>Vojtina Bábszínház</span><span>·</span>
-      </div>
-    </div>
-    <p class="houses__note" data-t="housesNote">Több színház és több város jön — oda megyünk legközelebb, ahonnan kérik.</p>
-  </section>
-
-  <!-- ── Act I ────────────────────────────────────────────────────────── -->
-  <section class="bay" id="felfedezes">
-    <div class="shell">
-      <p class="act" data-reveal><span class="act__num">I.</span> <span data-t="act1">Felvonás · Felfedezés</span> <span class="act__rule"></span></p>
-
-      <div class="center-stage" data-reveal>
-        <h2 data-t="d1Title">Ami ma este megy, egy képernyőn.</h2>
-        <p class="lede" data-t="d1Lede">Budapest és Debrecen színházainak műsora egy helyen — nem jegyirodán át, hanem közvetlenül a színházak saját oldaláról, minden éjjel újraolvasva.</p>
-        <div class="duo" style="margin-top: 1.5rem">
-          <div class="phone phone--back phone--tilt" style="--w: 236px; --tilt: -6deg" data-parallax="0.06">
-            <div class="phone__body">
-              <div class="phone__screen">
-                <img src="shots/discover.webp?v=2f90c15f" width="810" height="1761" loading="lazy" alt="A Vastaps Felfedezés képernyője: a következő este a Káli holtak a Katona József Színházban, plakáttal, kezdési idővel és egy Megnézem gombbal; alatta a hét további estéi." data-t-alt="altDiscoverTop">
-                <span class="phone__glare"></span>
-              </div>
-            </div>
-          </div>
-          <div class="phone phone--tilt" style="--w: 300px; --tilt: 3deg" data-parallax="0.03">
-            <div class="phone__body">
-              <div class="phone__screen">
-                <img src="shots/discover2.webp?v=9ab9697a" width="810" height="1761" loading="lazy" alt="A Felfedezés képernyő folytatása: a következő esték műsorlistaként — dátum, kezdési idő, színház és műfaj soronként —, alatta a szerkesztői listák." data-t-alt="altDiscover">
-                <span class="phone__glare"></span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="bay bay--tint">
-    <div class="shell split">
-      <div class="split__copy" data-reveal>
-        <p class="eyebrow" data-t="d2Eyebrow">Műsor</p>
-        <h2 data-t="d2Title">Nem darabok listája. Estéké.</h2>
-        <p class="body-dim" data-t="d2Body">A Műsor nézet napokra bontva mutatja, mi hol és hánykor kezdődik — teremmel, hosszal és műfajjal együtt. Ma, holnap, vagy bármelyik este az évadban.</p>
-        <ul class="callouts">
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"/><path d="m20 20-4.2-4.2"/></svg>
-            <span data-t="d2Point1"><b>Rangsorolt keresés.</b> Ékezet nélkül is megtalálja. A „Csuja Imre” a színészre keres, nem a szavakra.</span>
-          </li>
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 5h18M6 12h12M10 19h4"/></svg>
-            <span data-t="d2Point2"><b>Szűrők.</b> Műfaj, színház, terjedelem, rendezés. Ahol egy városban csak egy színház van, a színházszűrő elrejti magát.</span>
-          </li>
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 7h18v13H3zM3 7l2-3h14l2 3M9 12h6"/></svg>
-            <span data-t="d2Point3"><b>És az archívum.</b> Közel kilencszáz régi produkció, amit rég levettek. Kereshető marad, és naplózható.</span>
-          </li>
-        </ul>
-        <div style="margin-top: 0.6rem">
-          <p class="eyebrow" style="margin-bottom: 0.7rem" data-t="d2StatesLabel">Az app négy állapotot ismer</p>
-          <div class="badges">
-            <span class="badge" data-t="stAnnounced">Bemutató előtt</span>
-            <span class="badge badge--on" data-t="stRunning">Műsoron</span>
-            <span class="badge" data-t="stDormant">Szünetel</span>
-            <span class="badge" data-t="stEnded">Levették a műsorról</span>
-          </div>
-        </div>
-      </div>
-      <div class="split__art" data-reveal>
-        <div class="phone phone--tilt" style="--w: 288px; --tilt: 4deg" data-parallax="0.05">
-          <div class="phone__body">
-            <div class="phone__screen">
-              <img src="shots/musor.webp?v=668811a7" width="810" height="1761" loading="lazy" alt="A Műsor naptárnézet: 2026. szeptember 11., két előadás — az „Izzik a galagonya” a Csokonai Nemzeti Színházban 19:00-kor, és a Káli holtak a Katona Kamrájában 18:00-kor." data-t-alt="altMusor">
-              <span class="phone__glare"></span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ── Act II ───────────────────────────────────────────────────────── -->
-  <section class="bay" id="naplo">
-    <div class="shell">
-      <p class="act" data-reveal><span class="act__num">II.</span> <span data-t="act2">Felvonás · A napló</span> <span class="act__rule"></span></p>
-      <div class="split">
-        <div class="split__art" data-reveal>
-          <div class="phone phone--tilt" style="--w: 288px; --tilt: -4deg" data-parallax="0.05">
-            <div class="phone__body">
-              <div class="phone__screen">
-                <img src="shots/play.webp?v=ef61a5db" width="810" height="1761" loading="lazy" alt="A Lidércek, Shaxpeare, Delírium adatlapja az Örkény István Színházból: a cím és az alkotók a plakáton, alatta a „Műsoron” állapot a következő időponttal, egy naplózás gomb, és az előadás következő időpontjai." data-t-alt="altPlay">
-                <span class="phone__glare"></span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="split__copy" data-reveal>
-          <p class="eyebrow" data-t="j1Eyebrow">Előadás naplózása</p>
-          <h2 data-t="j1Title">Öt maszk, három szempont, egy este.</h2>
-          <p class="body-dim" data-t="j1Body">Naplózz egy előadást: melyik estén voltál, hol ültél, mennyibe került a jegy. A színészi játékot, a rendezést és a díszletet külön értékeled — és megírhatod, mit gondoltál róla.</p>
-          <ul class="callouts">
-            <li>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
-              <span data-t="j1Point1"><b>Az évad, nem a naptári év.</b> A Vastaps szeptembertől augusztusig számol, ahogy a színházak is.</span>
-            </li>
-            <li>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 12a8 8 0 1 1 2.4 5.7"/><path d="M4 20v-5h5"/></svg>
-              <span data-t="j1Point2"><b>Újranézés.</b> Ugyanaz a darab másodszor külön bejegyzés, külön értékeléssel — mert nem ugyanaz az este volt.</span>
-            </li>
-            <li>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2 2 2 0 0 0 0 4 2 2 0 0 0 0 4 2 2 0 0 1-2 2H6a2 2 0 0 1-2-2 2 2 0 0 0 0-4 2 2 0 0 0 0-4Z"/><path d="M13 6v12"/></svg>
-              <span data-t="j1Point3"><b>A jegy is.</b> A hely, az ár és a jegyről készült fotó ugyanahhoz a bejegyzéshez tartozik.</span>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="bay bay--tint">
-    <div class="shell split split--flip">
-      <div class="split__copy" data-reveal>
-        <p class="eyebrow" data-t="j2Eyebrow">Profil</p>
-        <h2 data-t="j2Title">A profilod egy műsorfüzet.</h2>
-        <p class="body-dim" data-t="j2Body">Minden megnézett előadás egy lapon, plakáttal, dátummal és értékeléssel. Nyilvános, ha akarod — így meg lehet mutatni, mit láttál ebben az évadban.</p>
-        <p class="body-dim" data-t="j2Body2">Az évad végén a Vastaps összeszámolja: hány estét töltöttél színházban, mibe került, milyen műfajokat néztél, és kiket láttál a legtöbbször színpadon.</p>
-      </div>
-      <div class="split__art" data-reveal>
-        <div class="phone phone--tilt" style="--w: 288px; --tilt: 4deg" data-parallax="0.05">
-          <div class="phone__body">
-            <div class="phone__screen">
-              <img src="shots/user.webp?v=96750353" width="810" height="1761" loading="lazy" alt="Tóth Eszter nyilvános profilja: 8 megnézett darab, két követő, alatta a napló plakátokkal és maszk-értékelésekkel." data-t-alt="altUser">
-              <span class="phone__glare"></span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ── Act III ──────────────────────────────────────────────────────── -->
-  <section class="bay" id="alkotok">
-    <div class="shell">
-      <p class="act" data-reveal><span class="act__num">III.</span> <span data-t="act3">Felvonás · Alkotók</span> <span class="act__rule"></span></p>
-      <div class="split">
-        <div class="split__copy" data-reveal>
-          <p class="eyebrow" data-t="p1Eyebrow">Színészek és rendezők</p>
-          <h2 data-t="p1Title">Ki volt az a színésznő a második felvonásban?</h2>
-          <p class="body-dim" data-t="p1Body">A katalógus 2565 névvel indul — ha egy szerepet ketten játszanak, mindkettőjüket tudja. Rákeresel egy színészre, és előjön minden előadás, amiben játszott — szereppel, évszámmal, színházzal. A rendezők ugyanígy.</p>
-          <p class="body-dim" data-t="p1Body2">Ha bejelentkezel, szólunk, amikor egy követett alkotó új előadásban lép színpadra.</p>
-        </div>
-        <div class="split__art duo" data-reveal>
-          <div class="phone phone--back phone--tilt" style="--w: 226px; --tilt: -7deg" data-parallax="0.075">
-            <div class="phone__body">
-              <div class="phone__screen">
-                <img src="shots/search.webp?v=5dbd3458" width="810" height="1761" loading="lazy" alt="Keresés a „Csuja Imre” névre: az alkotó találata 49 közreműködéssel, alatta 50 darab, amiből 47 már nincs műsoron." data-t-alt="altSearch">
-                <span class="phone__glare"></span>
-              </div>
-            </div>
-          </div>
-          <div class="phone phone--tilt" style="--w: 252px; --tilt: 3deg" data-parallax="0.045">
-            <div class="phone__body">
-              <div class="phone__screen">
-                <img src="shots/person.webp?v=31089e4b" width="810" height="1761" loading="lazy" alt="Für Anikó oldala: 48 közreműködés egy színházban, 2002-től 2027-ig, alatta az előadások szerepekkel." data-t-alt="altPerson">
-                <span class="phone__glare"></span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ── Playbill grid ────────────────────────────────────────────────── -->
-  <section class="bay bay--tint">
-    <div class="shell">
-      <div class="center-stage" data-reveal style="margin-bottom: clamp(2.5rem, 5vw, 3.5rem)">
-        <h2 data-t="gridTitle">És ami még a műsorfüzetben van</h2>
-      </div>
-      <div class="playbill">
-
-        <article class="tile tile--wide tile--shot" data-reveal>
-          <div class="tile__inner">
-            <div class="tile__text">
-              <svg class="tile__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/></svg>
-              <h3 data-t="tile1T">Készíts saját listát</h3>
-              <p data-t="tile1B">Bármilyen téma köré: egy rendező kézjegye, a gyerekekkel megnézhető darabok, az idei legjobb esték, a Shakespeare-ek. Összeállítod, sorrendbe teszed, és megosztod egy linkkel — a barátaid fiók nélkül is meg tudják nyitni. A „Bodó Viktor Budapesten” a mi példánk rá: nyolc rendezés három színházban.</p>
-            </div>
-            <div class="phone phone--tilt" style="--w: 176px; --tilt: -4deg">
-              <div class="phone__body">
-                <div class="phone__screen">
-                  <img src="shots/list.webp?v=4d43e4a8" width="810" height="1761" loading="lazy" alt="A „Bodó Viktor Budapesten” lista: nyolc rendezés három színházban, 2014-től." data-t-alt="altList">
-                  <span class="phone__glare"></span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </article>
-
-        <article class="tile" data-reveal>
-          <svg class="tile__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 4h12a1 1 0 0 1 1 1v15l-7-4-7 4V5a1 1 0 0 1 1-1Z"/></svg>
-          <h3 data-t="tile2T">Kívánságlista</h3>
-          <p data-t="tile2B">Amit még meg akarsz nézni, egy helyen — a darab oldalán a könyvjelzővel teszed rá. Ugyanezen a képernyőn látod azokat az alkotókat és színházakat is, akiket követsz.</p>
-        </article>
-
-        <article class="tile" data-reveal>
-          <svg class="tile__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9" cy="8" r="3.2"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16.5 5.4a3.2 3.2 0 0 1 0 5.2M19 20a6 6 0 0 0-2.6-4.9"/></svg>
-          <h3 data-t="tile3T">Hírfolyam</h3>
-          <p data-t="tile3B">Kik mit néztek meg és mit gondoltak róla. Követhetsz másokat, vagy nézheted mindenki bejegyzéseit.</p>
-        </article>
-
-        <article class="tile" data-reveal>
-          <svg class="tile__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.9 1.8-1.8 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-1 .8-1.8 1.8-1.8H16a5 5 0 0 0 5-5c0-3.9-4-7-9-7Z"/><circle cx="7.7" cy="11.2" r="1.1" fill="currentColor" stroke="none"/><circle cx="11" cy="7.7" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.6" r="1.1" fill="currentColor" stroke="none"/></svg>
-          <h3 data-t="tile5T">Öt téma</h3>
-          <p data-t="tile5B">Bársony a sötétben, Színlap a világosban — ugyanaz a ház, lámpafényben és nyomtatva —, mellettük levendula, letisztult fehér és éjszakai szén. Mindegyikben minden szövegszín 4,5:1 fölött van, és bejelentkezés nélkül is át lehet váltani.</p>
-        </article>
-
-        <article class="tile" data-reveal>
-          <svg class="tile__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></svg>
-          <h3 data-t="tile6T">Jegyet nem itt veszel</h3>
-          <p data-t="tile6B">A Vastaps nem jegyiroda, és nem is akar az lenni. Egy koppintás kivisz a színház saját oldalára, oda, ahol tényleg meg lehet venni.</p>
-        </article>
-
-      </div>
-    </div>
-  </section>
-
-  <!-- ── Tally ────────────────────────────────────────────────────────── -->
-  <section class="tally" aria-label="A katalógus számokban" data-t-label="tallyLabel">
-    <div class="tally__cell"><span class="tally__n" data-count="1207">1207</span><span class="tally__k" data-t="tally1">Produkció</span></div>
-    <div class="tally__cell"><span class="tally__n" data-count="2565">2565</span><span class="tally__k" data-t="tally2">Alkotó</span></div>
-    <div class="tally__cell"><span class="tally__n" data-count="497">497</span><span class="tally__k" data-t="tally3">Meghirdetett időpont</span></div>
-    <div class="tally__cell"><span class="tally__n" data-count="1960" data-plain="1">1960</span><span class="tally__k" data-t="tally4">A legrégebbi bemutató</span></div>
-  </section>
-
-  <!-- ── Under the hood ───────────────────────────────────────────────── -->
-  <section class="bay">
-    <div class="shell">
-      <p class="act" data-reveal><span class="act__num">IV.</span> <span data-t="act4">Felvonás · A színfalak mögött</span> <span class="act__rule"></span></p>
-      <div class="center-stage" data-reveal style="margin-bottom: clamp(2rem, 4vw, 3rem)">
-        <h2 data-t="techTitle">Egy ember írta, az első sortól az utolsóig.</h2>
-        <p class="lede" data-t="techLede">Nincs mögötte csapat és nincs mögötte cég. Ami alább áll, az nem marketing: ezek a döntések látszanak a napi használatban is.</p>
-      </div>
-      <dl class="specs" data-reveal>
-        <div class="specs__row"><dt class="specs__k">Expo · React Native · TypeScript</dt><dd class="specs__v" data-t="spec1">Egy kódbázis, amiből webes és natív build is készül.</dd></div>
-        <div class="specs__row"><dt class="specs__k">Supabase · Postgres · RLS</dt><dd class="specs__v" data-t="spec2">Ki mit lát, az sorszinten, az adatbázisban dől el — nem az appban.</dd></div>
-        <div class="specs__row"><dt class="specs__k" data-t="spec3K">Tíz beolvasó</dt><dd class="specs__v" data-t="spec3">Minden éjjel újraolvassa a színházak saját oldalait. Jegyirodai közvetítő nélkül.</dd></div>
-        <div class="specs__row"><dt class="specs__k">WCAG AA</dt><dd class="specs__v" data-t="spec4">Mind az öt témában minden szövegszín 4,5:1 kontraszt fölött van, kártyán is.</dd></div>
-        <div class="specs__row"><dt class="specs__k">expo-router</dt><dd class="specs__v" data-t="spec5">Minden képernyőnek saját URL-je van, és megosztható — a darabtól az alkotóig. Telefonon alsó fülsor, asztali gépen felső menü: ugyanaz az app, kétféle szobában.</dd></div>
-        <div class="specs__row"><dt class="specs__k" data-t="spec6K">Ami még nincs kész</dt><dd class="specs__v" data-t="spec6">Az iOS- és Android-build készül. A webes verzió most is működik telefonon.</dd></div>
-      </dl>
-    </div>
-  </section>
-
-  <!-- ── FAQ ──────────────────────────────────────────────────────────── -->
-  <section class="bay bay--tint" id="gyik">
-    <div class="shell">
-      <div class="center-stage" data-reveal style="margin-bottom: clamp(2rem, 4vw, 3rem)">
-        <h2 data-t="faqTitle">Gyakori kérdések</h2>
-      </div>
-      <div class="faq" data-reveal>
-        <details>
-          <summary><span data-t="faq0Q">Ki használhatja most?</span><svg class="faq__sign" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></summary>
-          <div class="faq__a"><p data-t="faq0A">Egyelőre egy szűk kör: a Vastaps zárt alfatesztben fut, és az app címe szándékosan nincs kint ezen az oldalon. Nem titok, csak félkész — vannak még hibái és hiányzó részei, és ezeket előbb néhány tesztelővel szeretném megtalálni. Ha vállalod, hogy egy félkész appot használsz, és elmondod, mi hiányzik, írj egy e-mailt, és elküldöm a linket. Amikor nyilvános lesz, itt lesz a gomb.</p></div>
-        </details>
-        <details>
-          <summary><span data-t="faq1Q">Kerül valamibe?</span><svg class="faq__sign" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></summary>
-          <div class="faq__a"><p data-t="faq1A">Ma nem. Böngészni, naplózni és értékelni fizetés nélkül lehet, és hirdetés sincs benne. Hogy hosszabb távon miből tartja el magát, az még nyitott kérdés; a színházi együttműködés például szóba jöhet. Ha ez változik, előre szólok, és nem visszamenőleg.</p></div>
-        </details>
-        <details>
-          <summary><span data-t="faq2Q">Honnan jönnek az adatok?</span><svg class="faq__sign" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></summary>
-          <div class="faq__a"><p data-t="faq2A">Közvetlenül a színházak saját oldalairól, minden éjjel újraolvasva — van, ahol a színház nyilvános API-jából, van, ahol a műsoroldalról. Minden új színház egy-egy külön beolvasót jelent, ezért nem egyszerre jönnek. Jegyirodai aggregátorokat szándékosan nem használ.</p></div>
-        </details>
-        <details>
-          <summary><span data-t="faq3Q">Melyik színházak vannak benne?</span><svg class="faq__sign" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></summary>
-          <div class="faq__a"><p data-t="faq3A">Egyelőre Budapest és Debrecen. Budapesten az Örkény István Színház, a Katona József Színház, a Nemzeti Színház, a Centrál Színház, a Madách Színház és a Vígszínház; Debrecenben a Csokonai Nemzeti Színház és a Vojtina Bábszínház. Hogy melyik város és melyik ház jön ezután, azon múlik, honnan kérik — úgyhogy ha a tiéd hiányzik, írj, mert pont ez dönti el a sorrendet.</p></div>
-        </details>
-        <details>
-          <summary><span data-t="faq4Q">Kell hozzá fiók?</span><svg class="faq__sign" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></summary>
-          <div class="faq__a"><p data-t="faq4A">A böngészéshez nem: a műsor, a darabok, az alkotók és a listák fiók nélkül is megnyithatók. Naplózáshoz, értékeléshez és kívánságlistához kell egy e-mail-cím és egy jelszó.</p></div>
-        </details>
-        <details>
-          <summary><span data-t="faq5Q">Van belőle telefonos alkalmazás?</span><svg class="faq__sign" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></summary>
-          <div class="faq__a"><p data-t="faq5A">A webes verzió most is telefonra van tervezve, és a böngésződből a kezdőképernyőre tehető. Az App Store-ba és a Google Play-be szánt változat készül — a natív projekt és a mélylinkek már megvannak hozzá.</p></div>
-        </details>
-        <details>
-          <summary><span data-t="faq6Q">Ki csinálja?</span><svg class="faq__sign" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></summary>
-          <div class="faq__a"><p data-t="faq6A">Egy ember, egyedül: a tervezéstől az adatbázison és a szinkronon át a szövegekig. Az elérhetősége lentebb, a Kapcsolat résznél van.</p></div>
-        </details>
-      </div>
-    </div>
-  </section>
-
-  <!-- ── Credits & contact ────────────────────────────────────────────── -->
-  <section class="bay" id="kapcsolat">
-    <div class="shell">
-      <p class="act" data-reveal><span class="act__num">V.</span> <span data-t="act5">Felvonás · Kapcsolat</span> <span class="act__rule"></span></p>
-      <div class="contact" data-reveal>
-        <h2 data-t="contactTitle">Írj, ha érdekel.</h2>
-        <p class="lede" data-t="contactAlpha">A Vastaps zárt alfatesztben fut: néhány ember használja, félkész állapotban, és az ő észrevételeik alakítják. Ha te is kipróbálnád, egy e-mail elég — elküldöm a linket, és cserébe csak annyit kérek, hogy mondd el, mi hiányzik.</p>
-        <p class="lede" data-t="contactBody">Színházat képviselsz, és szeretnéd, hogy a műsorotok is benne legyen? Sajtó, együttműködés, hibajelentés, vagy csak kíváncsi vagy, hogyan készült? Ugyanerre a címre — magyarul vagy angolul.</p>
-        <a class="mailto" href="mailto:ottomaior@protonmail.com?subject=Vastaps">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></svg>
-          ottomaior@protonmail.com
-        </a>
-        <div class="hero__cta" style="margin-top: 0.4rem">
-          <a class="btn btn--gold" href="mailto:ottomaior@protonmail.com?subject=Vastaps%20alfa%20%E2%80%93%20teszteln%C3%A9k" data-t="ctaInvite2" data-t-href="hrefInvite">Kérek meghívót</a>
-          <a class="btn btn--ghost" href="/kutatas" data-t="ctaResearch">Segíts alakítani — 7 perces kérdőív</a>
-        </div>
-      </div>
-    </div>
-  </section>
-</main>
-
-<footer class="foot">
-  <div class="shell foot__in">
-    <p data-t="footNote">Vastaps — magyar színházi napló.</p>
-    <div class="foot__links">
-      <a href="/impresszum" data-t="footImpressum">Impresszum</a>
-      <a href="/adatvedelem" data-t="footPrivacy">Adatvédelem</a>
-      <a href="/feltetelek" data-t="footTerms">Feltételek</a>
-      <a href="/fiok-torlese" data-t="footDeletion">Fiók törlése</a>
-      <a href="mailto:ottomaior@protonmail.com?subject=Vastaps" data-t="footContact">Kapcsolat</a>
+    <div class="phones" aria-hidden="true">
+      <div class="ph a" data-tilt><img src="shots/discover.webp?v=30fead89" alt="" width="810" height="1761"><div class="glare"></div></div>
+      <div class="ph b" data-tilt><img src="shots/play.webp?v=f607f1bd" alt="" width="810" height="1761"><div class="glare"></div></div>
     </div>
   </div>
-</footer>
+</section>
+
+<div class="loop" data-t-label="loopLabel" aria-label="Színházak a Vastapsban">
+  <div class="track" id="loopTrack">
+    <span>Örkény István Színház</span><span>Katona József Színház</span><span>Nemzeti Színház</span><span>Centrál Színház</span><span>Madách Színház</span><span>Radnóti Színház</span><span>Vígszínház</span><span>Csokonai Nemzeti Színház</span><span>Vojtina Bábszínház</span>
+  </div>
+  <small data-t="loopNote">Több színház és több város jön — oda megyünk legközelebb, ahonnan kérik.</small>
+</div>
+
+<section id="felfedezes">
+  <div class="wrap">
+    <div class="sec-head fc"><span class="eyebrow" data-t="sec1Eyebrow">Három felvonás</span><h2 class="display" data-t="sec1Title">Amit a Vastaps tud, egy estében elmesélve.</h2><p class="lede" data-t="sec1Lede">Görgess: a felvonások egymásra rakódnak, ahogy egy este a következőre.</p></div>
+    <div class="acts" id="acts">
+      <article class="act">
+        <div class="txt"><span class="eyebrow" data-t="act1Eyebrow">I. felvonás · Felfedezés</span><h3 data-t="act1Title">Ami ma este megy, egy képernyőn.</h3>
+          <p data-t="act1Body">Budapest és Debrecen színházainak műsora egy helyen — nem jegyirodán át, hanem közvetlenül a színházak saját oldaláról, minden éjjel újraolvasva.</p>
+          <ul><li data-t="act1Li1"><b>Műsor.</b> Nem darabok listája: estéké. Napokra bontva, teremmel, hosszal és műfajjal.</li><li data-t="act1Li2"><b>Rangsorolt keresés.</b> Ékezet nélkül is megtalálja. A „Csuja Imre” a színészre keres, nem a szavakra.</li><li data-t="act1Li3"><b>Szűrők.</b> Műfaj, színház, terjedelem, rendezés — ahol egy városban egy színház van, a színházszűrő elrejti magát.</li><li data-t="act1Li4"><b>Archívum.</b> Közel kilencszáz rég levett produkció. Kereshető marad, és naplózható.</li></ul>
+          <div class="states"><span class="lbl" data-t="statesLbl">Négy állapot:</span><span class="state pre"><i></i><span data-t="stPre">Bemutató előtt</span></span><span class="state on"><i></i><span data-t="stOn">Műsoron</span></span><span class="state"><i></i><span data-t="stDormant">Szünetel</span></span><span class="state off"><i></i><span data-t="stOff">Levették</span></span></div>
+        </div>
+        <div class="vis"><span class="roman">I.</span><div class="ph"><img src="shots/discover.webp?v=30fead89" data-t-alt="act1Alt" alt="Felfedezés képernyő: a ma esti kiemelt előadás, alatta a következő esték műsora" width="810" height="1761"></div></div>
+      </article>
+      <article class="act" id="naplo">
+        <div class="txt"><span class="eyebrow" data-t="act2Eyebrow">II. felvonás · A napló</span><h3 data-t="act2Title">Öt maszk, három szempont, egy este.</h3>
+          <!-- No seat, no price, no ticket photo: the check-in stopped asking
+               for them (see app/checkin.tsx), so the page stops promising them. -->
+          <p data-t="act2Body">Naplózz egy előadást: melyik estén voltál, és mit gondoltál róla. A színészi játékot, a rendezést és a díszletet külön értékeled — és megírhatod, amire évek múlva is emlékezni akarsz.</p>
+          <ul><li data-t="act2Li1"><b>Az évad, nem a naptári év.</b> Szeptembertől augusztusig számol, ahogy a színházak is.</li><li data-t="act2Li2"><b>Újranézés.</b> Ugyanaz a darab másodszor külön bejegyzés — mert nem ugyanaz az este volt.</li><li data-t="act2Li3"><b>Címkék és jegyzet.</b> „Állótapsot kapott”, „Megkönnyeztem”, „Ajánlom” — és egy szabad szöveg, ha többet akarsz mondani.</li><li data-t="act2Li4"><b>A profilod egy bérlet.</b> Az évad végén összeszámolja: hány este, hány darab, kiket láttál a legtöbbször.</li></ul>
+        </div>
+        <div class="vis"><span class="roman">II.</span><div class="ph"><img src="shots/checkin.webp?v=ab2f6fb8" data-t-alt="act2Alt" alt="Naplózás, az értékelés lépése: öt maszk az összesített értékeléshez, alatta a színészi játék, a rendezés és a díszlet külön" width="810" height="1761"></div></div>
+      </article>
+      <article class="act" id="alkotok">
+        <div class="txt"><span class="eyebrow" data-t="act3Eyebrow">III. felvonás · Alkotók</span><h3 data-t="act3Title">Ki volt az a színésznő a második felvonásban?</h3>
+          <p data-t="act3Body">A katalógus több mint négyezer névvel indul — ha egy szerepet ketten játszanak, mindkettőjüket tudja. Rákeresel egy színészre, és előjön minden előadás, amiben játszott: szereppel, évszámmal, színházzal. A rendezők ugyanígy.</p>
+          <ul><li data-t="act3Li1"><b>Követés.</b> Szólunk, ha egy követett alkotó új előadásban lép színpadra.</li><li data-t="act3Li2"><b>Saját listák.</b> „Bodó Viktor Budapesten”: nyolc rendezés három színházban — egy linkkel, fiók nélkül is megnyitható.</li></ul>
+        </div>
+        <div class="vis"><span class="roman">III.</span><div class="ph"><img src="shots/person.webp?v=6ba8bf2c" data-t-alt="act3Alt" alt="Egy alkotó oldala: az előadásai szereppel, évszámmal és színházzal" width="810" height="1761"></div></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head fc"><span class="eyebrow" data-t="sec2Eyebrow">És ami még a műsorfüzetben van</span><h2 class="display" data-t="sec2Title">Kicsi dolgok, amikért érdemes visszajönni.</h2></div>
+    <div class="bento" id="bento">
+      <div class="tile wide fc"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 6h12M4 12h12M4 18h8M18 15v6M15 18h6"/></svg></span><h3 data-t="tile1T">Készíts saját listát</h3><p data-t="tile1B">Egy rendező kézjegye, a gyerekekkel nézhető darabok, az idei legjobb esték. Sorrendbe teszed és megosztod — a barátaid fiók nélkül is megnyitják.</p></div>
+      <div class="tile fc"><span class="ic"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg></span><h3 data-t="tile2T">Kívánságlista</h3><p data-t="tile2B">Amit még meg akarsz nézni, a darab oldalán egy könyvjelzővel. Mellette az alkotók és színházak, akiket követsz.</p></div>
+      <div class="tile fc"><span class="ic"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.5 7.2L4 21l1.8-5.5A8 8 0 1 1 21 12z"/></svg></span><h3 data-t="tile3T">Hírfolyam</h3><p data-t="tile3B">Kik mit néztek meg és mit gondoltak róla. Követhetsz másokat, vagy nézheted mindenki bejegyzéseit.</p></div>
+      <div class="tile fc"><span class="themes"><i style="background:#1c0d13"></i><i style="background:#faf5ec"></i><i style="background:#f7f2fb"></i><i style="background:#fff"></i><i style="background:#1c2025"></i></span><h3 data-t="tile4T">Öt téma</h3><p data-t="tile4B">Bársony a sötétben, Színlap a világosban — ugyanaz a ház lámpafényben és nyomtatva —, mellettük levendula, fehér és szén. Minden szövegszín 4,5:1 fölött.</p></div>
+      <div class="tile wide fc"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 9a2 2 0 0 0 2-2V5h14v2a2 2 0 0 0 0 4v2a2 2 0 0 0 0 4v2H5v-2a2 2 0 0 0-2-2z"/><path d="M10 5v14" stroke-dasharray="2 3"/></svg></span><h3 data-t="tile5T">Jegyet nem itt veszel</h3><p data-t="tile5B">A Vastaps nem jegyiroda, és nem is akar az lenni. Egy koppintás kivisz a színház saját oldalára — oda, ahol tényleg meg lehet venni.</p></div>
+    </div>
+    <!-- The figures are the catalogue as of the last time somebody looked
+         (plays, people_index, performances from today, the oldest
+         premiere_date). They hold the real figure in the markup so the number
+         is right before any script runs; the animation only replays it. -->
+    <div class="stats" id="stats">
+      <div><span class="num" data-count="1241">1241</span><small data-t="stat1">Produkció</small></div>
+      <div><span class="num" data-count="4283">4283</span><small data-t="stat2">Alkotó</small></div>
+      <div><span class="num" data-count="655">655</span><small data-t="stat3">Meghirdetett időpont</small></div>
+      <div><span class="num" data-count="1960" data-plain="1">1960</span><small data-t="stat4">A legrégebbi bemutató</small></div>
+    </div>
+  </div>
+</section>
+
+<section id="szinfalak">
+  <div class="wrap">
+    <span class="eyebrow" data-t="act4Eyebrow">IV. felvonás · A színfalak mögött</span>
+    <p class="reveal" id="reveal" style="margin-top:14px" data-t="revealText">Egy ember írta, az első sortól az utolsóig. Nincs mögötte csapat és nincs mögötte cég — ami alább áll, az nem marketing, hanem döntések, amelyek a napi használatban is látszanak.</p>
+    <div class="tech">
+      <div class="tc fc" data-spot><b>Expo · React Native · TypeScript</b><p data-t="tc1B">Egy kódbázis, amiből webes és natív build is készül. Telefonon alsó fülsor, asztali gépen felső menü: ugyanaz az app, kétféle szobában.</p></div>
+      <div class="tc fc" data-spot><b>Supabase · Postgres · RLS</b><p data-t="tc2B">Ki mit lát, az sorszinten, az adatbázisban dől el — nem az appban.</p></div>
+      <div class="tc fc" data-spot><b data-t="tc3K">Színházanként egy beolvasó</b><p data-t="tc3B">Minden éjjel újraolvassa a színházak saját oldalait. Jegyirodai közvetítő nélkül.</p></div>
+      <div class="tc fc" data-spot><b>WCAG AA</b><p data-t="tc4B">Mind az öt témában minden szövegszín 4,5:1 kontraszt fölött van — kártyán is.</p></div>
+      <div class="tc fc" data-spot><b>expo-router</b><p data-t="tc5B">Minden képernyőnek saját, megosztható URL-je van — a darabtól az alkotóig.</p></div>
+      <div class="tc fc" data-spot><b data-t="tc6K">Ami még nincs kész</b><p data-t="tc6B">Az iOS- és Android-build készül. A webes verzió most is működik telefonon, és a kezdőképernyőre tehető.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="gyik">
+  <div class="wrap">
+    <div class="sec-head fc"><span class="eyebrow" data-t="faqEyebrow">Gyakori kérdések</span><h2 class="display" data-t="faqTitle">Amit meg szoktak kérdezni.</h2></div>
+    <div class="faq">
+      <details open><summary><span data-t="faq1Q">Ki használhatja most?</span><span class="pm">+</span></summary><p data-t="faq1A">Egyelőre egy szűk kör: a Vastaps zárt alfatesztben fut, és az app címe szándékosan nincs kint ezen az oldalon. Nem titok, csak félkész — vannak még hibái és hiányzó részei. Ha vállalod, hogy egy félkész appot használsz, és elmondod, mi hiányzik, írj egy e-mailt, és elküldöm a linket.</p></details>
+      <details><summary><span data-t="faq2Q">Kerül valamibe?</span><span class="pm">+</span></summary><p data-t="faq2A">Ma nem. Böngészni, naplózni és értékelni fizetés nélkül lehet, és hirdetés sincs benne. Hogy hosszabb távon miből tartja el magát, az még nyitott kérdés; a színházi együttműködés például szóba jöhet. Ha ez változik, előre szólok, és nem visszamenőleg.</p></details>
+      <details><summary><span data-t="faq3Q">Honnan jönnek az adatok?</span><span class="pm">+</span></summary><p data-t="faq3A">Közvetlenül a színházak saját oldalairól, minden éjjel újraolvasva — van, ahol a színház nyilvános API-jából, van, ahol a műsoroldalról. Minden új színház egy-egy külön beolvasót jelent, ezért nem egyszerre jönnek. Jegyirodai aggregátorokat szándékosan nem használ.</p></details>
+      <details><summary><span data-t="faq4Q">Melyik színházak vannak benne?</span><span class="pm">+</span></summary><p data-t="faq4A">Budapesten az Örkény, a Katona, a Nemzeti, a Centrál, a Madách, a Radnóti és a Vígszínház; Debrecenben a Csokonai Nemzeti Színház és a Vojtina Bábszínház. Hogy melyik város és ház jön ezután, azon múlik, honnan kérik — ha a tiéd hiányzik, írj.</p></details>
+      <details><summary><span data-t="faq5Q">Kell hozzá fiók?</span><span class="pm">+</span></summary><p data-t="faq5A">A böngészéshez nem: a műsor, a darabok, az alkotók és a listák fiók nélkül is megnyithatók. Naplózáshoz, értékeléshez és kívánságlistához kell egy e-mail-cím és egy jelszó.</p></details>
+      <details><summary><span data-t="faq6Q">Van belőle telefonos alkalmazás?</span><span class="pm">+</span></summary><p data-t="faq6A">A webes verzió most is telefonra van tervezve, és a böngésződből a kezdőképernyőre tehető. Az App Store-ba és a Google Play-be szánt változat készül — a natív projekt és a mélylinkek már megvannak hozzá.</p></details>
+    </div>
+  </div>
+</section>
+
+<section id="kapcsolat">
+  <div class="wrap">
+    <div class="contact fc">
+      <span class="eyebrow" data-t="act5Eyebrow">V. felvonás · Kapcsolat</span>
+      <h2 class="display" data-t="contactTitle">Írj, ha érdekel.</h2>
+      <p class="lede" data-t="contactLede">Néhány ember használja, félkész állapotban, és az ő észrevételeik alakítják. Egy e-mail elég — elküldöm a linket, cserébe csak annyit kérek, hogy mondd el, mi hiányzik. Színházat képviselsz? Ugyanerre a címre, magyarul vagy angolul.</p>
+      <a class="mail" href="mailto:ottomaior@protonmail.com">ottomaior@protonmail.com</a>
+      <div class="ctas"><span class="star"><a class="btn" data-magnet data-t-href="hrefInvite" href="mailto:ottomaior@protonmail.com?subject=Vastaps%20alfa%20%E2%80%93%20teszteln%C3%A9k"><span class="shiny" data-t="ctaInvite2">Kérek meghívót</span></a></span><a class="btn ghost" data-magnet href="/kutatas" data-t="ctaResearch">Segíts alakítani — 7 perces kérdőív</a></div>
+    </div>
+    <footer>
+      <span data-t="footNote">Vastaps — magyar színházi napló.</span>
+      <nav><a href="/impresszum" data-t="footImpressum">Impresszum</a><a href="/adatvedelem" data-t="footPrivacy">Adatvédelem</a><a href="/feltetelek" data-t="footTerms">Feltételek</a><a href="/fiok-torlese" data-t="footDeletion">Fiók törlése</a><a href="mailto:ottomaior@protonmail.com?subject=Vastaps" data-t="footContact">Kapcsolat</a></nav>
+    </footer>
+  </div>
+</section>
+</main>
+
 <script>
-(function () {
-  "use strict";
+(function(){
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches, root=document.documentElement;
+/* theme */
+let theme='dark'; try{theme=localStorage.getItem('vastaps.landing.theme')||(root.getAttribute('data-theme')==='light'?'light':'dark')}catch(e){}
+const setTheme=t=>{theme=t;root.setAttribute('data-theme',t);try{localStorage.setItem('vastaps.landing.theme',t)}catch(e){}};
+setTheme(theme); $('#tog').onclick=()=>setTheme(theme==='dark'?'light':'dark');
 
-  /* ── Language ───────────────────────────────────────────────────────────
-     Hungarian is the document, not a translation of one: it is what the
-     markup says, so the page reads correctly with no JavaScript at all.
-     English is a dictionary applied over it, and switching back restores
-     the original nodes rather than translating a second time. */
-  var EN = {
-    skip: "Skip to content",
-    navLabel: "Main navigation",
-    navDiscover: "Discover", navDiary: "Diary", navPeople: "People", navFaq: "FAQ", navContact: "Contact",
-    navResearch: "Questionnaire",
-    noticeLabel: "Questionnaire",
-    noticeText: "<b>In the making.</b> Help decide what goes in — seven minutes, anonymous.",
-    noticeLink: 'Take the questionnaire <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
-    langLabel: "Language",
-    ctaInviteShort: "Request an invite",
-    hrefInvite: "mailto:ottomaior@protonmail.com?subject=Vastaps%20alpha%20%E2%80%93%20I%27d%20like%20to%20test",
+/* ── Language ─────────────────────────────────────────────────────────────
+   Hungarian is the document; English is a dictionary applied over it, keyed
+   by data-t (innerHTML), data-t-alt, data-t-href and data-t-label. Switching
+   back restores the original nodes, so the page reads correctly in Hungarian
+   with scripts off, which is also what a crawler sees. The choice is kept in
+   localStorage under "vastaps-lang", the same key the previous page used. */
+const EN={
+  navLabel:"Main navigation",
+  navDiscover:"Discover",navDiary:"Diary",navPeople:"People",navFaq:"FAQ",navContact:"Contact",
+  langLabel:"Language",togLabel:"Switch theme",
+  ctaInviteShort:"Request an invite",
+  hrefInvite:"mailto:ottomaior@protonmail.com?subject=Vastaps%20alpha%20%E2%80%93%20I%27d%20like%20to%20test",
+  heroAlpha:"Closed alpha · Budapest and Debrecen",
+  heroTitle:"Hungarian theatre, <em>in one diary</em>.",
+  heroLede:'See what is on tonight <span class="rot" id="rot"><span class="on">in Budapest</span><span>in Debrecen</span><span>at the Katona</span><span>at the Örkény</span><span>at the Csokonai</span></span>. Note down what you saw, rate it — and years from now still know which night it was.',
+  ctaInvite:"Request an invite",ctaHow:"How it works ↓",
+  fact1:"<b>1,241</b> productions",fact2:"<b>Budapest</b> and <b>Debrecen</b>",fact3:"Synced <b>nightly</b>",fact4:"<b>No</b> advertising",
+  loopLabel:"Theatres in Vastaps",
+  loopNote:"More theatres and more cities are coming — wherever people ask for them next.",
+  sec1Eyebrow:"Three acts",sec1Title:"What Vastaps does, told as one evening.",sec1Lede:"Scroll: the acts stack on one another, the way one evening does on the next.",
+  act1Eyebrow:"Act I · Discover",act1Title:"What is on tonight, on one screen.",
+  act1Body:"Everything playing in Budapest and Debrecen in one place — not through a ticket agency, but read straight from the theatres’ own sites, every night.",
+  act1Li1:"<b>Listings.</b> Not a list of plays: a list of evenings. Day by day, with the room, the running time and the genre.",
+  act1Li2:"<b>Ranked search.</b> It finds things without accents too. Searching “Csuja Imre” looks for the performer, not for the words.",
+  act1Li3:"<b>Filters.</b> Genre, theatre, running time, sort order — in a city with only one theatre, the theatre filter hides itself.",
+  act1Li4:"<b>The archive.</b> Close to nine hundred productions long since taken off. Still searchable, still loggable.",
+  statesLbl:"Four states:",stPre:"Before opening night",stOn:"On now",stDormant:"Dormant",stOff:"Taken off",
+  act1Alt:"The Discover screen: tonight’s featured performance, with the coming evenings listed below it",
+  act2Eyebrow:"Act II · The diary",act2Title:"Five masks, three categories, one evening.",
+  act2Body:"Log a performance: which night you went, and what you made of it. You rate the acting, the directing and the set separately — and you can write down what you want to remember years from now.",
+  act2Li1:"<b>The season, not the calendar year.</b> Vastaps counts September to August, the way theatres do.",
+  act2Li2:"<b>Second viewings.</b> The same play a second time is its own entry — because it was not the same evening.",
+  act2Li3:"<b>Tags and a note.</b> “Standing ovation”, “It made me cry”, “Recommended” — and free text when you have more to say.",
+  act2Li4:"<b>Your profile is a season ticket.</b> At the end of the season it adds it up: how many evenings, how many plays, who you saw most often.",
+  act2Alt:"Logging a performance, the rating step: five masks for the overall rating, with acting, directing and set design rated separately below",
+  act3Eyebrow:"Act III · People",act3Title:"Who was that actress in the second act?",
+  act3Body:"The catalogue starts with over four thousand names — when two people share a part, it knows both. Search for a performer and every production they have appeared in comes back: with the role, the year and the house. Directors work the same way.",
+  act3Li1:"<b>Following.</b> We tell you when someone you follow steps on stage in a new production.",
+  act3Li2:"<b>Lists of your own.</b> “Bodó Viktor in Budapest”: eight productions across three theatres — one link, no account needed to open it.",
+  act3Alt:"A performer’s page: their productions with the role, the year and the theatre",
+  sec2Eyebrow:"And the rest of the programme",sec2Title:"Small things worth coming back for.",
+  tile1T:"Make a list of your own",tile1B:"One director’s signature, plays to take the children to, the best evenings of the year. You order it and share it — your friends can open it without an account.",
+  tile2T:"Watchlist",tile2B:"What you still want to see, added with the bookmark on a production’s page. Next to it, the performers and theatres you follow.",
+  tile3T:"Feed",tile3B:"Who saw what, and what they made of it. Follow people, or read everyone’s entries.",
+  tile4T:"Five themes",tile4B:"Velvet in the dark, Playbill in the light — the same house, lit and printed — plus lavender, white and charcoal. Every text colour clears 4.5:1.",
+  tile5T:"You don’t buy tickets here",tile5B:"Vastaps is not a box office and does not want to be. One tap takes you to the theatre’s own page — where you can actually buy the seat.",
+  stat1:"Productions",stat2:"People",stat3:"Announced dates",stat4:"The oldest premiere",
+  act4Eyebrow:"Act IV · Behind the curtain",
+  revealText:"Written by one person, from the first line to the last. There is no team behind it and no company — what follows is not marketing, but decisions you can feel in daily use.",
+  tc1B:"One codebase, producing both the web and the native builds. A tab bar on a phone, a top bar on a desktop: one app, two rooms.",
+  tc2B:"Who sees what is decided row by row in the database — not in the app.",
+  tc3K:"One reader per theatre",tc3B:"Re-reads the theatres’ own sites every night. No ticket-agency middleman.",
+  tc4B:"Every text colour clears 4.5:1 in all five themes — on cards as well.",
+  tc5B:"Every screen has its own shareable URL — from a production to a performer.",
+  tc6K:"What is not finished",tc6B:"The iOS and Android builds are in progress. The web version already works on a phone and can be added to the home screen.",
+  faqEyebrow:"Frequently asked",faqTitle:"What people tend to ask.",
+  faq1Q:"Who can use it now?",faq1A:"A small circle, for now: Vastaps is in closed alpha, and the app’s address is deliberately not on this page. It is not a secret, only unfinished — there are still bugs and missing pieces. If you are willing to use a half-finished app and say what is missing, send an email and I will send you the link.",
+  faq2Q:"Does it cost anything?",faq2A:"Not today. Browsing, logging and rating cost nothing, and there is no advertising. How it supports itself longer term is still an open question; partnerships with theatres, for instance, are one possibility. If that changes, you will hear about it in advance, and it will not apply retroactively.",
+  faq3Q:"Where does the data come from?",faq3A:"Straight from the theatres’ own websites, re-read every night — some through a theatre’s public API, some from its listings pages. Every new theatre means its own reader, which is why they arrive one at a time. Ticket aggregators are deliberately not used.",
+  faq4Q:"Which theatres are included?",faq4A:"In Budapest: Örkény, Katona, the National Theatre, Centrál, Madách, Radnóti and Vígszínház; in Debrecen: the Csokonai National Theatre and the Vojtina Puppet Theatre. Which city and which house comes next depends on where people ask from — if yours is missing, write in.",
+  faq5Q:"Do I need an account?",faq5A:"Not to browse: the listings, the productions, the performers and the lists all open without one. Logging, rating and the watchlist need an email address and a password.",
+  faq6Q:"Is there a phone app?",faq6A:"The web version is already built for a phone and can be added to your home screen from the browser. App Store and Play Store builds are in progress — the native project and the deep links are already in place.",
+  act5Eyebrow:"Act V · Contact",contactTitle:"Write, if this interests you.",
+  contactLede:"A few people are using it, half-finished, and their notes are shaping it. One email is enough — I will send you the link, and all I ask in return is that you tell me what is missing. Do you work at a theatre? Same address, in Hungarian or in English.",
+  ctaInvite2:"Request an invite",ctaResearch:"Help shape it — a 7-minute questionnaire",
+  footNote:"Vastaps — a Hungarian theatre diary.",
+  footImpressum:"Imprint",footPrivacy:"Privacy",footTerms:"Terms",footDeletion:"Delete account",footContact:"Contact"
+};
+const TITLE={hu:"Vastaps — magyar színházi napló",en:"Vastaps — a Hungarian theatre diary"};
+let lang='hu';
+const stash=(el,key,value)=>{if(el.dataset[key]===undefined)el.dataset[key]=value};
+function setLang(l){
+  const en=l==='en'; lang=en?'en':'hu';
+  root.lang=lang; document.title=TITLE[lang];
+  $$('[data-t]').forEach(el=>{const k=el.getAttribute('data-t');stash(el,'hu',el.innerHTML);el.innerHTML=en&&EN[k]?EN[k]:el.dataset.hu});
+  $$('[data-t-alt]').forEach(el=>{const k=el.getAttribute('data-t-alt');stash(el,'huAlt',el.alt);el.alt=en&&EN[k]?EN[k]:el.dataset.huAlt});
+  $$('[data-t-href]').forEach(el=>{const k=el.getAttribute('data-t-href');stash(el,'huHref',el.getAttribute('href'));el.setAttribute('href',en&&EN[k]?EN[k]:el.dataset.huHref)});
+  $$('[data-t-label]').forEach(el=>{const k=el.getAttribute('data-t-label');stash(el,'huLabel',el.getAttribute('aria-label')||'');el.setAttribute('aria-label',en&&EN[k]?EN[k]:el.dataset.huLabel)});
+  $$('[data-lang]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.lang===lang)));
+  splitH1(); splitReveal(); revealWords(); countUp(true);
+  try{localStorage.setItem('vastaps-lang',lang)}catch(e){}
+}
+$$('[data-lang]').forEach(b=>b.addEventListener('click',()=>setLang(b.dataset.lang)));
 
-    heroEyebrow: "A Hungarian theatre diary",
-    heroTitle: "Hungarian theatre,<br><em>in one diary</em>.",
-    heroLede: "See what is on tonight in Budapest and Debrecen. Note down what you saw, rate it, and years from now still know which night it was.",
-    heroStage: '<span class="badge badge--on">Closed alpha</span><span>A few people are trying it right now, half-finished on purpose. If you would like to as well, write — I will send you the link.</span>',
-    ctaInvite: "Request an invite", ctaTour: "How it works",
-    metaPlays: "1,207 productions", metaCities: "Budapest and Debrecen", metaSync: "Synced nightly",
-    altFeed: "The Vastaps feed on the Following tab: Nagy Zsófia saw Chicago at the Katona József Theatre, gave it four masks and got two likes and a comment; below it, Tóth Eszter’s entry for Anyegin at the Örkény.",
+/* split text — re-run on every language change, on the fresh markup */
+const h1=$('#h1');
+function splitH1(){const nodes=[...h1.childNodes]; h1.textContent=''; let i=0;
+  nodes.forEach(n=>{const target=n.nodeType===1?n.cloneNode(false):h1; if(n.nodeType===1){target.textContent='';h1.appendChild(target)}
+    const txt=n.textContent; txt.split(' ').forEach((word,wi,arr)=>{if(word){const w=document.createElement('span');w.className='w';[...word].forEach(ch=>{const s=document.createElement('span');s.className='ch';s.textContent=ch;s.style.animationDelay=(i++*.03)+'s';w.appendChild(s)});target.appendChild(w)} if(wi<arr.length-1)target.appendChild(document.createTextNode(' '))})})}
 
-    housesLabel: "Theatres in the catalogue",
-    housesNote: "More theatres and more cities are coming — wherever people ask for them next.",
-    housesHeading: "Right now in Budapest and Debrecen",
+/* rotating text — reads the spans live, since the lede is replaced on a language change */
+setInterval(()=>{if(reduce)return;const rot=$$('#rot span');if(rot.length<2)return;let ri=rot.findIndex(s=>s.classList.contains('on'));if(ri<0)ri=0;rot[ri].classList.remove('on');rot[ri].classList.add('out');const prev=ri;ri=(ri+1)%rot.length;rot[ri].classList.add('on');setTimeout(()=>rot[prev].classList.remove('out'),500)},2600);
 
-    act1: "Discover",
-    d1Title: "What is on tonight, on one screen.",
-    d1Lede: "Everything playing in Budapest and Debrecen in one place — not through a ticket agency, but read straight from the theatres’ own sites, every night.",
-    altDiscoverTop: "The Vastaps Discover screen: the next evening is Káli holtak at the Katona József Theatre, with the poster, the curtain time and a button to open it; below it, the rest of the week.",
-    altDiscover: "The Discover screen, further down: the next evenings as a programme — date, curtain time, theatre and genre on each line — and the editorial lists below.",
+/* light rays + dust */
+(function(){const c=$('#rays'),x=c.getContext('2d');let w,h,t=0;const fit=()=>{const r=c.getBoundingClientRect();w=c.width=r.width*devicePixelRatio|0;h=c.height=r.height*devicePixelRatio|0};fit();addEventListener('resize',fit);
+  function f(){t+=reduce?0:.0035;const rgb=getComputedStyle(root).getPropertyValue('--ray').trim();x.clearRect(0,0,w,h);x.globalCompositeOperation='lighter';
+    const ox=w*.62,oy=-h*.35,N=12;for(let i=0;i<N;i++){const a=(i/N-.5)*Math.PI*.9+Math.sin(t*1.2+i*1.9)*.05,len=h*2,wid=(.025+.035*Math.abs(Math.sin(i*2.1+t)))*Math.PI;
+      const g=x.createLinearGradient(ox,oy,ox+Math.sin(a)*len,oy+Math.cos(a)*len);const al=.075*(.6+.4*Math.sin(t*2+i));g.addColorStop(0,`rgba(${rgb},${al})`);g.addColorStop(1,`rgba(${rgb},0)`);
+      x.fillStyle=g;x.beginPath();x.moveTo(ox,oy);x.lineTo(ox+Math.sin(a-wid/2)*len,oy+Math.cos(a-wid/2)*len);x.lineTo(ox+Math.sin(a+wid/2)*len,oy+Math.cos(a+wid/2)*len);x.closePath();x.fill()}
+    x.globalCompositeOperation='source-over';for(let i=0;i<70;i++){const px=(Math.sin(i*12.9+t*.6)*.5+.5)*w,py=((i*131+t*50)%h);x.fillStyle=`rgba(${rgb},${.18+.2*Math.sin(t*3+i)})`;x.beginPath();x.arc(px,py,(1+(i%3)*.4)*devicePixelRatio,0,7);x.fill()}
+    requestAnimationFrame(f)} f()})();
 
-    d2Eyebrow: "Listings",
-    d2Title: "Not a list of plays. A list of evenings.",
-    d2Body: "The listings view breaks the season down day by day: what starts where and at what time, with the room, the running time and the genre. Tonight, tomorrow, or any evening in the season.",
-    d2Point1: "<b>Ranked search.</b> It finds things without accents too. Searching “Csuja Imre” looks for the performer, not for the words.",
-    d2Point2: "<b>Filters.</b> Genre, theatre, running time, sort order. In a city with only one theatre, the theatre filter hides itself.",
-    d2Point3: "<b>And the archive.</b> Close to nine hundred past productions, long since taken off. Still searchable, still loggable.",
-    d2StatesLabel: "The app knows four states",
-    stAnnounced: "Before opening night", stRunning: "On now", stDormant: "Dormant", stEnded: "Taken off",
-    altMusor: "The listings calendar: 11 September 2026, two performances — “Izzik a galagonya” at the Csokonai National Theatre at 19:00, and Káli holtak in the Katona’s Kamra at 18:00.",
+/* logo loop: duplicate */
+const tr=$('#loopTrack'); tr.innerHTML+=tr.innerHTML;
 
-    act2: "The diary",
-    altPlay: "The page for Lidércek, Shaxpeare, Delírium at the Örkény István Theatre: the title and credits set on the poster, an “On now” line with the next date, a log button, and the production’s upcoming dates.",
-    j1Eyebrow: "Logging a performance",
-    j1Title: "Five masks, three categories, one evening.",
-    j1Body: "Log a performance: which night you went, where you sat, what the ticket cost. You rate the acting, the directing and the set separately — and you can write down what you made of it.",
-    j1Point1: "<b>The season, not the calendar year.</b> Vastaps counts September to August, the way theatres do.",
-    j1Point2: "<b>Second viewings.</b> The same play a second time is its own entry with its own rating — because it was not the same evening.",
-    j1Point3: "<b>The ticket, too.</b> The seat, the price and a photo of the stub all belong to the same entry.",
+/* tilt */
+$$('[data-tilt]').forEach(el=>{const base=getComputedStyle(el).transform;
+  el.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse'||reduce)return;const r=el.getBoundingClientRect(),px=(e.clientX-r.left)/r.width,py=(e.clientY-r.top)/r.height;el.style.transform=`${base} perspective(900px) rotateX(${(py-.5)*-10}deg) rotateY(${(px-.5)*12}deg)`});
+  el.addEventListener('pointerleave',()=>el.style.transform='')});
 
-    j2Eyebrow: "Profile",
-    j2Title: "Your profile is a programme.",
-    j2Body: "Every performance you have seen on one page, with the poster, the date and your rating. Public if you want it to be — so you can show what you saw this season.",
-    j2Body2: "At the end of the season Vastaps adds it up: how many evenings you spent at the theatre, what it cost, which genres you watched, and who you saw on stage most often.",
-    altUser: "Tóth Eszter’s public profile: 8 plays seen, two followers, and below it the diary with posters and mask ratings.",
+/* magnet */
+$$('[data-magnet]').forEach(el=>{el.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse'||reduce)return;const r=el.getBoundingClientRect();el.style.transform=`translate(${(e.clientX-r.left-r.width/2)*.18}px,${(e.clientY-r.top-r.height/2)*.28}px)`});el.addEventListener('pointerleave',()=>el.style.transform='')});
 
-    act3: "People",
-    p1Eyebrow: "Performers and directors",
-    p1Title: "Who was that actress in the second act?",
-    p1Body: "The catalogue starts with 2,565 names — when two people share a part, it knows both. Search for a performer and every production they have appeared in comes back — with the role, the year and the house. Directors work the same way.",
-    p1Body2: "Sign in and we will tell you when someone you follow steps on stage in a new production.",
-    altSearch: "Searching for “Csuja Imre”: the performer match with 49 credits, and below it 50 productions, 47 of them no longer running.",
-    altPerson: "Für Anikó’s page: 48 credits at one theatre, from 2002 to 2027, with the productions and roles below.",
+/* spotlight / bento glow + stars */
+$$('.tile,[data-spot]').forEach(el=>el.addEventListener('pointermove',e=>{const r=el.getBoundingClientRect();el.style.setProperty('--mx',(e.clientX-r.left)+'px');el.style.setProperty('--my',(e.clientY-r.top)+'px')}));
+$$('.tile').forEach(el=>el.addEventListener('pointerenter',e=>{if(reduce)return;const r=el.getBoundingClientRect();for(let i=0;i<8;i++){const s=document.createElement('i');s.className='sp';s.style.left=(e.clientX-r.left)+'px';s.style.top=(e.clientY-r.top)+'px';s.style.setProperty('--dx',(Math.random()*120-60)+'px');s.style.setProperty('--dy',(Math.random()*120-60)+'px');el.appendChild(s);setTimeout(()=>s.remove(),1100)}}));
 
-    gridTitle: "And the rest of the programme",
-    altList: "The “Bodó Viktor in Budapest” list: eight productions across three theatres, from 2014 onwards.",
-    tile1T: "Make a list of your own",
-    tile1B: "Around any theme you like: one director’s signature, plays to take the children to, the best evenings of the year, the Shakespeares. You put it together, order it, and share it with a link — your friends can open it without an account. “Bodó Viktor in Budapest” is our own example: eight productions across three theatres.",
-    tile2T: "Watchlist",
-    tile2B: "What you still want to see, in one place — you add a production with the bookmark on its page. The same screen also holds the performers and theatres you follow.",
-    tile3T: "Feed",
-    tile3B: "Who saw what, and what they made of it. Follow people, or read everyone’s entries.",
-    tile5T: "Five themes",
-    tile5B: "Velvet in the dark, Playbill in the light — the same house, lit and printed — plus lavender, plain white and a night-time charcoal. Every text colour clears 4.5:1 in all five, and you can switch without signing in.",
-    tile6T: "You don’t buy tickets here",
-    tile6B: "Vastaps is not a box office and does not want to be. One tap takes you to the theatre’s own page, where you can actually buy the seat.",
+/* scroll stack */
+const acts=$$('.act');
+function stack(){if(matchMedia('(max-width:900px)').matches){acts.forEach(a=>a.style.transform='');return}
+  acts.forEach((a,i)=>{const r=a.getBoundingClientRect();
+    // how far the NEXT card has covered this one
+    const next=acts[i+1];let cover=0;if(next){const nr=next.getBoundingClientRect();cover=Math.min(1,Math.max(0,(r.top+r.height-nr.top)/r.height))}
+    a.style.transform=`scale(${1-cover*.06}) translateY(${-cover*10}px)`;a.style.filter=`brightness(${1-cover*.35})`})}
+addEventListener('scroll',stack,{passive:true});addEventListener('resize',stack);stack();
 
-    tallyLabel: "The catalogue in numbers",
-    tally1: "Productions", tally2: "People", tally3: "Announced dates", tally4: "The oldest premiere",
+/* count up — the markup holds the real figure, the animation only replays it */
+const tallies=$$('[data-count]');let armed=false;
+function countUp(immediate){const loc=lang==='en'?'en-GB':'hu-HU';
+  tallies.forEach(n=>{const to=+n.dataset.count;if(n.dataset.plain==='1'){n.textContent=String(to);return}
+    if(immediate||reduce||!armed){n.textContent=to.toLocaleString(loc);return}
+    const t0=performance.now(),d=1600;const tick=now=>{const p=Math.min(1,(now-t0)/d),e=1-Math.pow(1-p,3);n.textContent=Math.round(to*e).toLocaleString(loc);if(p<1)requestAnimationFrame(tick)};requestAnimationFrame(tick)})}
 
-    act4: "Behind the curtain",
-    techTitle: "Written by one person, from the first line to the last.",
-    techLede: "There is no team behind it and no company. What follows is not marketing — these are the decisions you feel in daily use.",
-    spec1: "One codebase, producing both the web and the native builds.",
-    spec2: "Who sees what is decided row by row in the database — not in the app.",
-    spec3K: "Ten sync adapters",
-    spec3: "Re-reads the theatres’ own sites every night. No ticket-agency middleman.",
-    spec4: "Every text colour clears 4.5:1 in all five themes, on cards as well as on the page.",
-    spec5: "Every screen has its own URL and can be shared — from a production to a performer. A tab bar on a phone, a top bar on a desktop: one app, two rooms.",
-    spec6K: "What is not finished",
-    spec6: "The iOS and Android builds are in progress. The web version already works on a phone.",
+/* fade content / count up with IO */
+document.body.classList.add('io');
+const io=new IntersectionObserver(es=>es.forEach(en=>{if(!en.isIntersecting)return;const el=en.target;el.classList.add('in');io.unobserve(el);
+  if(el.id==='stats'){armed=true;countUp(false)}
+}),{threshold:.05});
+$$('.fc,#stats').forEach(el=>io.observe(el));
+// scroll reveal: words come into focus as the paragraph scrolls
+const rv=$('#reveal');let words=[];
+function splitReveal(){rv.innerHTML=rv.textContent.split(' ').map(w=>`<span class="w">${w}</span>`).join(' ');words=$$('.w',rv)}
+function revealWords(){const r=rv.getBoundingClientRect();const p=Math.min(1,Math.max(0,(innerHeight*.8-r.top)/(r.height+innerHeight*.3)));const n=Math.round(p*words.length);words.forEach((w,i)=>w.classList.toggle('on',i<n))}
+addEventListener('scroll',revealWords,{passive:true});
 
-    faqTitle: "Frequently asked",
-    faq0Q: "Who can use it now?",
-    faq0A: "A small circle, for now: Vastaps is in closed alpha, and the app’s address is deliberately not on this page. It is not a secret, only unfinished — there are still bugs and missing pieces, and I would rather find them with a few testers first. If you are willing to use a half-finished app and say what is missing, send an email and I will send you the link. When it opens up, the button will be here.",
-    faq1Q: "Does it cost anything?",
-    faq1A: "Not today. Browsing, logging and rating cost nothing, and there is no advertising. How it supports itself longer term is still an open question — partnerships with theatres, for instance, are one possibility. If that changes, you will hear about it in advance, and it will not apply retroactively.",
-    faq2Q: "Where does the data come from?",
-    faq2A: "Straight from the theatres’ own websites, re-read every night — some through a theatre’s public API, some from its listings pages. Every new theatre means its own reader, which is why they arrive one at a time rather than all at once. Ticket aggregators are deliberately not used.",
-    faq3Q: "Which theatres are included?",
-    faq3A: "Budapest and Debrecen for now. In Budapest: Örkény István, Katona József, the National Theatre, Centrál, Madách and Vígszínház. In Debrecen: the Csokonai National Theatre and the Vojtina Puppet Theatre. Which city and which house comes next depends on where people ask from — so if yours is missing, write in, because that is exactly what decides the order.",
-    faq4Q: "Do I need an account?",
-    faq4A: "Not to browse: the listings, the productions, the performers and the lists all open without one. Logging, rating and the watchlist need an email address and a password.",
-    faq5Q: "Is there a phone app?",
-    faq5A: "The web version is already built for a phone and can be added to your home screen from the browser. App Store and Play Store builds are in progress — the native project and the deep links are already in place.",
-    faq6Q: "Who makes it?",
-    faq6A: "One person, alone: from the design through the database and the sync to the copy. The address is just below, in the contact section.",
+/* nav indicator follows section — only the in-page links; a mailto: is not a selector */
+const links=$$('#links a').filter(a=>a.getAttribute('href').startsWith('#')),ind=$('#links .ind');
+const place=a=>{if(!a){ind.style.opacity=0;return}ind.style.opacity=1;ind.style.left=a.offsetLeft+'px';ind.style.width=a.offsetWidth+'px'};
+const secs=links.map(a=>$(a.getAttribute('href')));
+const io2=new IntersectionObserver(es=>{es.forEach(en=>{if(en.isIntersecting){const i=secs.indexOf(en.target);links.forEach(l=>l.classList.remove('on'));links[i].classList.add('on');place(links[i])}})},{rootMargin:'-40% 0px -50% 0px'});
+secs.forEach(s=>s&&io2.observe(s));
 
-    act5: "Contact",
-    contactTitle: "Write, if this interests you.",
-    contactAlpha: "Vastaps is in closed alpha: a few people are using it, half-finished, and their notes are shaping it. If you would like to try it too, one email is enough — I will send you the link, and all I ask in return is that you tell me what is missing.",
-    contactBody: "Do you work at a theatre and want its listings in here? Press, partnerships, a bug you found, or just curious how it was built? Same address — in Hungarian or in English.",
-    ctaInvite2: "Request an invite",
-    ctaResearch: "Help shape it — a 7-minute questionnaire",
-
-    footNote: "Vastaps — a Hungarian theatre diary.",
-    footImpressum: "Imprint", footPrivacy: "Privacy", footTerms: "Terms",
-    footDeletion: "Delete account", footContact: "Contact"
-  };
-
-  var TITLE = { hu: "Vastaps — magyar színházi napló", en: "Vastaps — a Hungarian theatre diary" };
-  var root = document.documentElement;
-  var buttons = document.querySelectorAll("[data-lang]");
-
-  function stash(el, key, value) {
-    if (el.dataset[key] === undefined) el.dataset[key] = value;
-  }
-
-  function setLang(lang) {
-    var en = lang === "en";
-    root.lang = en ? "en" : "hu";
-    document.title = TITLE[en ? "en" : "hu"];
-
-    document.querySelectorAll("[data-t]").forEach(function (el) {
-      var k = el.getAttribute("data-t");
-      stash(el, "hu", el.innerHTML);
-      if (en && EN[k]) el.innerHTML = EN[k];
-      else if (!en) el.innerHTML = el.dataset.hu;
-    });
-
-    document.querySelectorAll("[data-t-alt]").forEach(function (el) {
-      var k = el.getAttribute("data-t-alt");
-      stash(el, "huAlt", el.alt);
-      el.alt = en && EN[k] ? EN[k] : el.dataset.huAlt;
-    });
-
-    document.querySelectorAll("[data-t-href]").forEach(function (el) {
-      var k = el.getAttribute("data-t-href");
-      stash(el, "huHref", el.getAttribute("href"));
-      el.setAttribute("href", en && EN[k] ? EN[k] : el.dataset.huHref);
-    });
-
-    document.querySelectorAll("[data-t-label]").forEach(function (el) {
-      var k = el.getAttribute("data-t-label");
-      stash(el, "huLabel", el.getAttribute("aria-label") || "");
-      el.setAttribute("aria-label", en && EN[k] ? EN[k] : el.dataset.huLabel);
-    });
-
-    buttons.forEach(function (b) {
-      b.setAttribute("aria-pressed", String(b.dataset.lang === (en ? "en" : "hu")));
-    });
-
-    countUp(en ? "en-GB" : "hu-HU", true);
-
-    try { localStorage.setItem("vastaps-lang", en ? "en" : "hu"); } catch (e) {}
-  }
-
-  buttons.forEach(function (b) {
-    b.addEventListener("click", function () { setLang(b.dataset.lang); });
-  });
-
-  /* ── Counters ───────────────────────────────────────────────────────────
-     They hold the real figure in the markup, so the number is correct before
-     any script runs; the animation only replays it. */
-  var tallies = Array.prototype.slice.call(document.querySelectorAll("[data-count]"));
-  var locale = "hu-HU";
-  var calm = window.matchMedia("(prefers-reduced-motion: reduce)");
-
-  function countUp(loc, immediate) {
-    if (loc) locale = loc;
-    var fmt = new Intl.NumberFormat(locale);
-    tallies.forEach(function (el) {
-      var target = Number(el.dataset.count);
-      if (el.dataset.plain === "1") { el.textContent = String(target); return; }
-      if (immediate || calm.matches || !el.dataset.armed) {
-        el.textContent = fmt.format(target);
-        return;
-      }
-      var start = performance.now(), dur = 1100;
-      (function step(now) {
-        var p = Math.min(1, (now - start) / dur);
-        var eased = 1 - Math.pow(1 - p, 3);
-        el.textContent = fmt.format(Math.round(target * eased));
-        if (p < 1) requestAnimationFrame(step);
-      })(start);
-    });
-  }
-
-  /* ── Reveal on scroll ───────────────────────────────────────────────── */
-  if ("IntersectionObserver" in window && !calm.matches) {
-    root.classList.add("js-anim");
-    var reveals = document.querySelectorAll("[data-reveal]");
-    var seen = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (!entry.isIntersecting) return;
-        var el = entry.target;
-        var siblings = Array.prototype.slice.call(el.parentElement.children).filter(function (n) { return n.hasAttribute("data-reveal"); });
-        var i = siblings.indexOf(el);
-        el.style.transitionDelay = Math.min(i, 5) * 70 + "ms";
-        el.classList.add("is-in");
-        seen.unobserve(el);
-      });
-    }, { rootMargin: "0px 0px -12% 0px", threshold: 0.06 });
-    reveals.forEach(function (el) { seen.observe(el); });
-
-    var counting = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (!entry.isIntersecting) return;
-        entry.target.dataset.armed = "1";
-        counting.unobserve(entry.target);
-        countUp();
-      });
-    }, { threshold: 0.5 });
-    tallies.forEach(function (el) { counting.observe(el); });
-  }
-
-  /* ── Parallax and the nav's hairline ────────────────────────────────── */
-  var floats = Array.prototype.slice.call(document.querySelectorAll("[data-parallax]"));
-  var nav = document.getElementById("nav");
-  var ticking = false;
-
-  function frame() {
-    ticking = false;
-    nav.classList.toggle("is-stuck", window.scrollY > 8);
-    if (calm.matches) return;
-    var mid = window.innerHeight / 2;
-    floats.forEach(function (el) {
-      var box = el.getBoundingClientRect();
-      var offset = (box.top + box.height / 2 - mid) * Number(el.dataset.parallax);
-      el.style.setProperty("--py", offset.toFixed(1) + "px");
-    });
-  }
-
-  function onScroll() {
-    if (ticking) return;
-    ticking = true;
-    requestAnimationFrame(frame);
-  }
-
-  window.addEventListener("scroll", onScroll, { passive: true });
-  window.addEventListener("resize", onScroll, { passive: true });
-
-  /* ── Boot ───────────────────────────────────────────────────────────── */
-  var stored = null;
-  try { stored = localStorage.getItem("vastaps-lang"); } catch (e) {}
-  if (stored === "en") setLang("en");
-  frame();
+/* boot */
+let stored=null;try{stored=localStorage.getItem('vastaps-lang')}catch(e){}
+setLang(stored==='en'?'en':'hu');
 })();
 </script>
+
 </body>
 </html>

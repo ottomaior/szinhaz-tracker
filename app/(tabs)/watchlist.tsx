@@ -15,6 +15,8 @@ import { Screen } from "@/components/ui/Screen";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { SignedOutState } from "@/components/ui/SignedOutState";
 import { Text } from "@/components/ui/Text";
+import { SplitText } from "@/components/motion/SplitText";
+import { useDockInset } from "@/components/ui/TabBar";
 import { strings } from "@/i18n/hu";
 import { formatLongDate, formatShowtime } from "@/utils/datetime";
 import { makeStyles } from "@/theme/styles";
@@ -23,6 +25,7 @@ export default function WatchlistScreen() {
   const styles = useStyles();
 
   const insets = useSafeAreaInsets();
+  const dockInset = useDockInset();
   const router = useRouter();
   const { session, loading: authLoading } = useAuth();
   const [items, setItems] = useState<{ play: Play; addedAt: string }[]>([]);
@@ -77,7 +80,7 @@ export default function WatchlistScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Screen width="reading">
         <View style={[styles.header, { paddingTop: insets.top + space.md }]}>
-          <Text variant="display">{strings.watchlist.title}</Text>
+          <SplitText text={strings.watchlist.title} />
           {!!session && (
             <Text variant="bodySmall" tone="faint">
               {strings.watchlist.subtitle(items.length)}
@@ -86,11 +89,11 @@ export default function WatchlistScreen() {
         </View>
 
         {!session && !authLoading ? (
-          <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+          <ScrollView contentContainerStyle={{ paddingBottom: dockInset }}>
             <SignedOutState lead="watchlist" />
           </ScrollView>
         ) : (
-        <ScrollView contentContainerStyle={styles.body}>
+        <ScrollView contentContainerStyle={[styles.body, { paddingBottom: dockInset }]}>
           {items.map(({ play }) => (
             <WatchlistRow key={play.id} play={play} onPress={() => router.push(`/play/${play.id}`)} />
           ))}
@@ -234,7 +237,7 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.hairlineSoft,
   },
-  body: { padding: gutter, paddingBottom: 100, gap: space.lg },
+  body: { padding: gutter, gap: space.lg },
   row: { flexDirection: "row", gap: space.md },
   subjectRow: {
     flexDirection: "row",

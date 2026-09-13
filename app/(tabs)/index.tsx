@@ -20,6 +20,11 @@ import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { Avatar } from "@/components/ui/Avatar";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Screen } from "@/components/ui/Screen";
+import { PillTabs } from "@/components/ui/PillTabs";
+import { useDockInset } from "@/components/ui/TabBar";
+import { PressCard } from "@/components/motion/PressCard";
+import { AnimatedList } from "@/components/motion/Reveal";
+import { SplitText } from "@/components/motion/SplitText";
 import { Text } from "@/components/ui/Text";
 import { formatTimeAgo, strings } from "@/i18n/hu";
 import { budapestDayKey, formatLongDate, formatShowtime } from "@/utils/datetime";
@@ -44,6 +49,7 @@ export default function FeedScreen() {
   const styles = useStyles();
 
   const insets = useSafeAreaInsets();
+  const dockInset = useDockInset();
   const router = useRouter();
   // The pages so far, flattened for rendering and kept as maps for lookup.
   // Every card reads its play, venue and author out of `page` rather than
@@ -168,7 +174,7 @@ export default function FeedScreen() {
         <View style={[styles.topBar, { paddingTop: insets.top + space.md }]}>
           {/* The screen names itself rather than the app: every other tab
               does, and the tab bar underneath already says which app this is. */}
-          <Text variant="display">{strings.tabs.feed}</Text>
+          <SplitText text={strings.tabs.feed} />
           <View style={styles.topBarActions}>
             {/* Only when signed in: an inbox is per account, and a bell that
                 can only ever be empty is a control that teaches you to ignore
@@ -218,30 +224,14 @@ export default function FeedScreen() {
             needs it, so the row renders for them too with the link alone. */}
         <View style={styles.scopeRow}>
           {!!session ? (
-            <View style={styles.tabs} accessibilityRole="tablist">
-              {(
-                [
-                  ["everyone", strings.feed.scopeEveryone],
-                  ["following", strings.feed.scopeFollowing],
-                ] as [FeedScope, string][]
-              ).map(([key, label]) => {
-                const active = scope === key;
-                return (
-                  <Pressable
-                    key={key}
-                    onPress={() => setScope(key)}
-                    style={[styles.tab, active && styles.tabActive]}
-                    accessibilityRole="tab"
-                    aria-selected={active}
-                    accessibilityState={{ selected: active }}
-                  >
-                    <Text variant="label" tone={active ? "default" : "faint"}>
-                      {label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
+            <PillTabs<FeedScope>
+              tabs={[
+                { key: "everyone", label: strings.feed.scopeEveryone },
+                { key: "following", label: strings.feed.scopeFollowing },
+              ]}
+              value={scope}
+              onChange={setScope}
+            />
           ) : (
             <View style={{ flex: 1 }} />
           )}
@@ -251,9 +241,10 @@ export default function FeedScreen() {
         </View>
 
         <ScrollView
-          contentContainerStyle={styles.body}
+          contentContainerStyle={[styles.body, { paddingBottom: dockInset }]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.gold} />}
         >
+          <AnimatedList stagger={70} axis="y" style={styles.list}>
           {page.items.map((item) => (
             <FeedCardRouter
               key={feedItemKey(item)}
@@ -271,6 +262,7 @@ export default function FeedScreen() {
               }
             />
           ))}
+          </AnimatedList>
 
           {!!page.nextBefore && (
             <Button
@@ -550,10 +542,11 @@ function CheckinCard({
         meta={[formatTimeAgo(review.createdAt), seenNote(review)].filter(Boolean).join(" · ")}
       />
 
-      <Pressable onPress={() => onOpenPlay(play.id)} accessibilityRole="button" accessibilityLabel={play.title}>
+      <View style={styles.card}>
+      <PressCard onPress={() => onOpenPlay(play.id)} accessibilityRole="button" accessibilityLabel={play.title} radius={0} tilt={5}>
         {/* `scrim` matters here: these are production photos, and bright ones
             left the white caption below completely unreadable. */}
-        <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} height={220} radius={radius.md} scrim priority="high" />
+        <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} height={220} radius={0} scrim priority="high" />
         {/* Everything on the image takes its colour from `overlay`, not from
             the palette. The scrim is dark in every theme, so a theme with
             near-black text would print this caption in ink over a lit
@@ -575,8 +568,9 @@ function CheckinCard({
             </Text>
           )}
         </View>
-      </Pressable>
+      </PressCard>
 
+      <View style={styles.cardBody}>
       {/* An entry whose opinion is not this reader's to see. The card above
           still says who went and to what — that is what the feed is for, and
           what makes somebody worth following — but the rating, the note and
@@ -641,8 +635,8 @@ function CheckinCard({
       )}
       </>
       )}
-
-      <View style={styles.divider} />
+      </View>
+      </View>
     </View>
   );
 }
@@ -702,7 +696,7 @@ function WatchlistCard({
   );
 }
 
-const useStyles = makeStyles((colors) => StyleSheet.create({
+const useStyles = makeStyles((colors, elevation) => StyleSheet.create({
   topBar: {
     paddingHorizontal: gutter,
     paddingBottom: space.sm,
@@ -738,16 +732,28 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   badgeText: { color: colors.onAccent, fontWeight: "700", fontSize: 10, lineHeight: 16 },
   scopeRow: {
     flexDirection: "row",
-    alignItems: "flex-end",
+    alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: gutter,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.hairlineSoft,
+    paddingBottom: space.sm,
   },
-  tabs: { flexDirection: "row", gap: space["2xl"] },
-  tab: { paddingVertical: space.md - 2, borderBottomWidth: 2, borderBottomColor: "transparent" },
-  tabActive: { borderBottomColor: colors.gold },
-  body: { padding: gutter, paddingBottom: 100, gap: space["2xl"] },
+  tab: { paddingVertical: space.md - 2 },
+  body: { padding: gutter, gap: space["2xl"] },
+  list: { gap: space["2xl"] },
+  // The evening as one object: poster on top, opinion underneath, one rounded
+  // surface around both. The card used to be a poster and some text
+  // separated from the next by a hairline; on a surface the rating and the
+  // note read as belonging to the picture above them.
+  card: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.hairlineSoft,
+    borderRadius: radius.xl,
+    overflow: "hidden",
+    ...elevation.raised,
+    boxShadow: `0 14px 30px -18px ${colors.shadow}`,
+  },
+  cardBody: { paddingHorizontal: space.lg, paddingTop: space.md, paddingBottom: space.lg, gap: space.md },
   byline: { flexDirection: "row", alignItems: "center", gap: space.md },
   backfillRow: { flexDirection: "row", gap: space.md },
   backfillTile: { width: 72, gap: space.xs },
