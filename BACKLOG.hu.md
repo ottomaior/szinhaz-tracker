@@ -120,7 +120,7 @@ pedig **kizárólag** a kezdőképernyőre kitett oldalnál működik. (Az Apple
 februárjában bejelentette a kezdőképernyős webalkalmazások megszüntetését az
 EU-ban a DMA miatt, majd márciusban visszavonta — Magyarországon működnek.)
 
-- **2.1** `public/manifest.webmanifest`, `display: "standalone"`, 192/512/maskable ikonok az `assets/images/icon.png`-ből generálva (a `sharp` már devDependency). `<link rel="manifest">` és `apple-touch-icon` az `app/+html.tsx`-be.
+- **2.1** ~~`public/manifest.webmanifest`, `display: "standalone"`, 192/512/maskable ikonok~~ **Kész, 2026. szeptember 18.** (6.4): az ikonokat az `npm run icons` írja a `public/icons/` mappába, a manifest és az `apple-*` meták az `app/+html.tsx`-ben vannak, az nginx típusozza a manifestet, és a Beállítások telepítőkártyát mutat, ahol van értelme (`components/ui/InstallCard.tsx`).
 - **2.2** Kézzel írt `public/sw.js` — app-shell gyorsítótár, `push` és `notificationclick`. Az `nginx.conf`-ba kell `Service-Worker-Allowed: /` és `Cache-Control: no-cache` a `/sw.js`-re, mert az `/assets/` egy évig `immutable`, egy beragadt service worker pedig visszafordíthatatlan.
 - **2.3** `0038_push_subscriptions.sql` migráció — `push_subscriptions` tábla (`user_id`, egyedi `endpoint`, `p256dh`, `auth`, `user_agent`, időbélyegek) tulajdonosra szűkített RLS-sel, plusz `pushed_at` a `notifications`-ön.
 - **2.4** VAPID kulcspár a Supabase secretsben; `send-push` Edge Function, ami a `pushed_at is null` sorokat olvassa, a magyar szöveget **az `i18n/hu.ts`-ből importálva, nem újra begépelve** rendereli (a `0030` épp azért tárol strukturált `payload` jsonb-t, hogy az alkalmazás hangja egy fájlban éljen), `web-push`-sal küld, `pushed_at`-et bélyegez, és kiszórja a 404/410-et adó feliratkozásokat. A `sync/run.ts` végén hívva, a `generate_notifications()` után.
@@ -308,7 +308,7 @@ vannak kifejtve a megadott azonosítók alatt.
 | **6.1** | **Bejelentkezés Google-fiókkal** weben és Androidon, egy szolgáltatógomb mindkét űrlap fölött, a regisztrációs trigger a szolgáltató küldte nevet olvassa (`0060`) — T-082 · **kész** (Androidhoz újra kell buildelni) | M | — |
 | **6.2** | **Egy első futás, ami tényleg lefut**: név, ha hiányzik, város, a város színházainak követése, az archívumrács, egy záró képernyő; a `profiles.onboarded_at` kapuzza — T-083 · **kész** | M | 6.1 |
 | **6.3** | **A visszajelzési réteg**: toast visszavonással (T-085), haptika (T-086), hibahatár (T-087), offline sáv (T-088), csontváz és lehúzva frissítés (T-093) · **kész**, a napló csontváza és az optimista írások kivételével | M | semmi |
-| **6.4** | **Telepíthető**: a 2. fázis 2.1-e (manifest, ikonok, „add a kezdőképernyőhöz" kártya) plusz hibafigyelés (5.1) | S–M | semmi |
+| **6.4** | **Telepíthető**: a 2. fázis 2.1-e (manifest, ikonok, „add a kezdőképernyőhöz" kártya) · **kész** · plusz hibafigyelés (5.1), ami egy Sentry-projektre és annak DSN-jére vár | S–M | egy Sentry DSN Ottótól |
 | **6.5** | **Értesítések, amik megérkeznek**: a 2. fázis Web Pushja, natív push az Expón át ugyanabba a táblába, fajtánkénti kapcsolók, és az engedélykérés a jó pillanatban; a `playing_tomorrow` az első — T-089 | L | VAPID-kulcsok; egy development build |
 | **6.6** | **A heti levél** a Resenden át — T-090 | M | a 6.5 küldője |
 | **6.7** | **Bejelentkezés Apple-lel**, OTA-frissítések (T-014), az ikon a valódi méreteiben (T-013), jelszó- és címváltás a Beállításokban (T-092) | M | egy Apple Developer-fiók |

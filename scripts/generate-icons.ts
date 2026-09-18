@@ -20,8 +20,17 @@
  *   adaptive-icon.png 1024²      Android foreground, cropped to the OEM's shape
  *   splash.png        1284×2778  iPhone portrait, letterboxed by expo-splash-screen
  *   favicon.png       48²        browser tab
+ *
+ * and, under public/icons/ so `expo export` copies them to the site root, the
+ * web manifest's set (6.4, the installable web app):
+ *   icon-192.png, icon-512.png   the "any" icons, ground included
+ *   maskable-512.png             the mark held inside the 80% safe circle a
+ *                                launcher may mask to — the adaptive inset,
+ *                                which is the same rule under another name
+ *   apple-touch-icon.png  180²   what iOS puts on the Home Screen; it takes
+ *                                no transparency, so the ground is baked in
  */
-import { writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -32,6 +41,7 @@ import { themes } from "../theme/themes";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const images = join(root, "assets", "images");
+const webIcons = join(root, "public", "icons");
 
 /**
  * The launcher ground is Velvet Curtain's, whatever theme the app is running
@@ -116,6 +126,10 @@ const outputs = [
     mark: 48 * BRAND_INSET.icon,
     background: GROUND,
   },
+  { dir: "web", file: "icon-192.png", width: 192, height: 192, mark: 192 * BRAND_INSET.icon, background: GROUND },
+  { dir: "web", file: "icon-512.png", width: 512, height: 512, mark: 512 * BRAND_INSET.icon, background: GROUND },
+  { dir: "web", file: "maskable-512.png", width: 512, height: 512, mark: 512 * BRAND_INSET.adaptive, background: GROUND },
+  { dir: "web", file: "apple-touch-icon.png", width: 180, height: 180, mark: 180 * BRAND_INSET.icon, background: GROUND },
 ] as const;
 
 async function main() {
@@ -131,16 +145,20 @@ async function main() {
   writeFileSync(join(root, "assets", "logo-source.svg"), source + "\n", "utf8");
   console.log("wrote assets/logo-source.svg");
 
+  mkdirSync(webIcons, { recursive: true });
+
   for (const out of outputs) {
     const svg = markSvg(out);
     const supersample = out.width < 512 ? 8 : 1;
+    const dir = "dir" in out && out.dir === "web" ? webIcons : images;
+    const shown = dir === webIcons ? `public/icons/${out.file}` : `assets/images/${out.file}`;
 
     await sharp(Buffer.from(svg), { density: 96 * supersample })
       .resize(out.width, out.height, { fit: "fill" })
       .png()
-      .toFile(join(images, out.file));
+      .toFile(join(dir, out.file));
 
-    console.log(`wrote assets/images/${out.file}  ${out.width}×${out.height}`);
+    console.log(`wrote ${shown}  ${out.width}×${out.height}`);
   }
 }
 

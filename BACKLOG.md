@@ -114,7 +114,7 @@ and on iOS it works **only** for a site added to the Home Screen. (Apple
 announced removing Home Screen web apps in the EU under the DMA in February
 2024 and reversed it that March — they work in Hungary.)
 
-- **2.1** `public/manifest.webmanifest`, `display: "standalone"`, 192/512/maskable icons generated from `assets/images/icon.png` (`sharp` is already a devDependency). Wire `<link rel="manifest">` and `apple-touch-icon` into `app/+html.tsx`.
+- **2.1** ~~`public/manifest.webmanifest`, `display: "standalone"`, 192/512/maskable icons~~ **Done, 18 September 2026** (6.4): the icons come out of `npm run icons` into `public/icons/`, the manifest and the `apple-*` meta are in `app/+html.tsx`, nginx types the manifest, and Settings shows an install card where one applies (`components/ui/InstallCard.tsx`).
 - **2.2** A hand-written `public/sw.js` — app-shell cache plus `push` and `notificationclick`. `nginx.conf` needs `Service-Worker-Allowed: /` and `Cache-Control: no-cache` on `/sw.js`, since `/assets/` is served `immutable` for a year and a pinned service worker is unrecoverable.
 - **2.3** Migration `0038_push_subscriptions.sql` — `push_subscriptions` (`user_id`, `endpoint` unique, `p256dh`, `auth`, `user_agent`, timestamps) with owner-scoped RLS, plus `pushed_at` on `notifications`.
 - **2.4** VAPID keypair in Supabase secrets; Edge Function `send-push` reading `notifications` where `pushed_at is null`, rendering the Hungarian **from `i18n/hu.ts` rather than re-typing it** (`0030` stores structured `payload` jsonb precisely so the app's voice lives in one file), sending via `web-push`, stamping `pushed_at`, pruning subscriptions that 404/410. Called at the end of `sync/run.ts`, after `generate_notifications()`.
@@ -302,7 +302,7 @@ Each row is its own branch and pull request; the ideas are written up in
 | **6.1** | **Sign in with Google** on web and Android, a provider button above both auth forms, the sign-up trigger reading a provider's name (`0060`) — T-082 · **done** (Android needs a rebuild) | M | — |
 | **6.2** | **A first run that runs**: name if missing, city, follow the city's theatres, the archive grid, one closing screen; gated on `profiles.onboarded_at` — T-083 · **done** | M | 6.1 |
 | **6.3** | **The feedback layer**: a toast with undo (T-085), haptics (T-086), an error boundary (T-087), an offline banner (T-088), skeletons and pull-to-refresh (T-093) · **done**, bar a diary-list skeleton and the optimistic writes | M | nothing |
-| **6.4** | **Installable**: Phase 2's 2.1 (manifest, icons, add-to-Home-Screen card) plus error monitoring (5.1) | S–M | nothing |
+| **6.4** | **Installable**: Phase 2's 2.1 (manifest, icons, add-to-Home-Screen card) · **done** · plus error monitoring (5.1), which waits on a Sentry project and its DSN | S–M | a Sentry DSN from Ottó |
 | **6.5** | **Notifications that arrive**: Phase 2's Web Push, native push through Expo on the same table, per-kind toggles, and the permission asked at the right moment; `playing_tomorrow` first — T-089 | L | VAPID keys; a development build |
 | **6.6** | **The weekly letter** through Resend — T-090 | M | 6.5's sender |
 | **6.7** | **Sign in with Apple**, OTA updates (T-014), the icon at its real sizes (T-013), password and address change in Settings (T-092) | M | an Apple Developer account |
