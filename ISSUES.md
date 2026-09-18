@@ -429,20 +429,6 @@ the `verify-bundle` needle, and re-run `npm run render:legal`. If a company is
 formed for it, `operator.registrationNumber` gets the tax number in the same
 change.
 
-### T-078 · One tap on a list entry removes it; editing should be a mode
-type: bug · area: web · priority: high · status: open · added: 2026-09-18
-
-Ottó removed a play from the Debrecen list by accident: on `/list/[id]` the
-owner's *Levesz* control sits inside every row, always live, and a tap meant
-for the row itself hits it. There is no confirmation and no undo, and the
-entry is gone from the database (`removeFromList` in `app/list/[id].tsx`).
-Expected: a list is read-only until its owner enters *Szerkesztés* — the
-page already has an `editing` state for the title and description, and the
-per-row remove control should only appear in that same mode. Only the list's
-author (and the admin) may edit at all; that part holds today via `isOwner`
-and RLS, it is the always-on remove that is wrong. Related: T-070 is about
-the same control's markup.
-
 ### T-079 · Signed out, the watchlist and profile tabs show the same page
 type: bug · area: web · priority: med · status: open · added: 2026-09-18
 
@@ -895,6 +881,29 @@ _Nothing yet._
 ---
 
 ## Done
+
+### T-078 · One tap on a list entry removes it; editing should be a mode
+type: bug · area: web · priority: high · status: done · added: 2026-09-18 · done: 2026-09-19
+
+Ottó removed a play from the Debrecen list by accident: on `/list/[id]` the
+owner's *Levesz* control sits inside every row, always live, and a tap meant
+for the row itself hits it. There is no confirmation and no undo, and the
+entry is gone from the database (`removeFromList` in `app/list/[id].tsx`).
+Expected: a list is read-only until its owner enters *Szerkesztés* — the
+page already has an `editing` state for the title and description, and the
+per-row remove control should only appear in that same mode. Only the list's
+author (and the admin) may edit at all; that part holds today via `isOwner`
+and RLS, it is the always-on remove that is wrong. Related: T-070 is about
+the same control's markup.
+
+> **Done, 19 September.** The undo half had already landed with the toast
+> (T-085): a removed play comes back with its note, only a ranked list's order
+> is lost. What remained was the always-on control, and that is now gated on
+> the page's existing `editing` state — the row's *Levesz* renders only while
+> the owner is in *Szerkesztés*, the same mode that edits the title and
+> description. Read-only otherwise, for the owner as for everybody else. The
+> markup problem in T-070 (a button inside a button) is unchanged and still
+> open.
 
 ### T-014 · Decide about OTA updates before the first submission, not after
 type: question · area: native · priority: low · status: done · added: 2026-09-09 · done: 2026-09-19

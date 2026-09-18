@@ -227,7 +227,10 @@ export default function ListScreen() {
                             {i + 1}
                           </Text>
                         )}
-                        {isOwner && (
+                        {/* Only while editing (T-078): a control that is
+                            always live inside a tappable row is the one a
+                            tap meant for the row hits. */}
+                        {isOwner && editing && (
                           <Pressable
                             onPress={() => handleRemove(entry.play.id, entry.play.title, entry.note)}
                             hitSlop={8}
