@@ -903,6 +903,22 @@ _Nothing yet._
 
 ## Done
 
+### T-102 · The hero phones flicker when the mouse sweeps across them
+type: bug · area: web · priority: med · status: done · added: 2026-09-18
+
+Seen by Ottó on vastaps.app in Chrome: move the cursor left to right over
+the two phone mock-ups in the hero and they flicker badly. Cause: each phone
+had its own `pointermove` (tilt) and `pointerleave` (reset) handler, and the
+two overlap. A tilted phone's edge moves with the perspective, so at the
+overlap the cursor was alternately inside phone A (tilt) and outside it
+(reset), several times a second, with the `:hover` glare toggling in step.
+
+Fixed the same day: the tilt is measured against the `.phones` container,
+which never moves, and is written as a `--tilt` custom property that each
+breakpoint's own transform appends — so nothing is read back from computed
+style and the bases stay with the stylesheet. Crossing from one phone to the
+other no longer resets anything; only leaving the box does.
+
 ### T-100 · Name the analytics processor in the privacy policy
 type: chore · area: legal · priority: med · status: done · added: 2026-09-18
 
@@ -3099,4 +3115,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-102**
+Next free id: **T-103**

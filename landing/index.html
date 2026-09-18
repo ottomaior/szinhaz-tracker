@@ -151,10 +151,10 @@ h1,h2,h3,p{margin:0}
 .ph img{display:block;width:100%;height:auto}
 .ph .glare{position:absolute;inset:0;background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.18) 50%,transparent 60%);background-size:260% 100%;background-position:130% 0;transition:background-position .7s;pointer-events:none}
 .ph:hover .glare{background-position:-30% 0}
-.ph.a{width:290px;left:50%;top:20px;transform:translateX(-58%) rotate(-4deg);z-index:2}
-.ph.b{width:250px;left:50%;top:110px;transform:translateX(12%) rotate(6deg);z-index:1;opacity:.92}
-@media (max-width:900px){.hero{padding-top:120px}.hero-grid{grid-template-columns:1fr;gap:20px}.phones{height:520px}.ph.a{width:240px;transform:translateX(-70%) rotate(-4deg)}.ph.b{width:210px;transform:translateX(0) rotate(6deg)}}
-@media (max-width:480px){.phones{height:440px}.ph.a{width:200px;transform:translateX(-80%) rotate(-4deg)}.ph.b{width:180px;transform:translateX(-5%) rotate(6deg)}}
+.ph.a{width:290px;left:50%;top:20px;transform:translateX(-58%) rotate(-4deg) var(--tilt,);z-index:2}
+.ph.b{width:250px;left:50%;top:110px;transform:translateX(12%) rotate(6deg) var(--tilt,);z-index:1;opacity:.92}
+@media (max-width:900px){.hero{padding-top:120px}.hero-grid{grid-template-columns:1fr;gap:20px}.phones{height:520px}.ph.a{width:240px;transform:translateX(-70%) rotate(-4deg) var(--tilt,)}.ph.b{width:210px;transform:translateX(0) rotate(6deg) var(--tilt,)}}
+@media (max-width:480px){.phones{height:440px}.ph.a{width:200px;transform:translateX(-80%) rotate(-4deg) var(--tilt,)}.ph.b{width:180px;transform:translateX(-5%) rotate(6deg) var(--tilt,)}}
 
 /* questionnaire strip */
 .notice{position:relative;z-index:1;border-top:1px solid var(--gold-border);background:var(--gold-bg)}
@@ -539,10 +539,16 @@ function splitH1(){const nodes=[...h1.childNodes]; h1.textContent=''; let i=0;
 /* logo loop: duplicate */
 const tr=$('#loopTrack'); tr.innerHTML+=tr.innerHTML;
 
-/* tilt */
-$$('[data-tilt]').forEach(el=>{const base=getComputedStyle(el).transform;
-  el.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse'||reduce)return;const r=el.getBoundingClientRect(),px=(e.clientX-r.left)/r.width,py=(e.clientY-r.top)/r.height;el.style.transform=`${base} perspective(900px) rotateX(${(py-.5)*-10}deg) rotateY(${(px-.5)*12}deg)`});
-  el.addEventListener('pointerleave',()=>el.style.transform='')});
+/* tilt — measured against the .phones box, not each phone. The two phones
+   overlap, and a tilted phone's edge moves; measured per phone, the cursor
+   at the overlap kept leaving one (reset) and re-entering it (tilt), which
+   flickered. The container never moves, so there is nothing to oscillate.
+   The tilt is a custom property the stylesheet appends to each phone's own
+   transform, so the breakpoints keep their bases and nothing is read back. */
+$$('.phones').forEach(box=>{const els=$$('[data-tilt]',box);
+  box.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse'||reduce)return;const r=box.getBoundingClientRect(),px=(e.clientX-r.left)/r.width,py=(e.clientY-r.top)/r.height;
+    els.forEach(el=>el.style.setProperty('--tilt',`perspective(900px) rotateX(${(py-.5)*-10}deg) rotateY(${(px-.5)*12}deg)`))});
+  box.addEventListener('pointerleave',()=>els.forEach(el=>el.style.removeProperty('--tilt')))});
 
 /* magnet */
 $$('[data-magnet]').forEach(el=>{el.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse'||reduce)return;const r=el.getBoundingClientRect();el.style.transform=`translate(${(e.clientX-r.left-r.width/2)*.18}px,${(e.clientY-r.top-r.height/2)*.28}px)`});el.addEventListener('pointerleave',()=>el.style.transform='')});
