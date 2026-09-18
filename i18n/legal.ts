@@ -206,7 +206,10 @@ export const privacyPolicy: LegalDocument = {
       heading: "Sütik és nyomkövetés",
       blocks: [
         p(
-          "Az alkalmazás nem használ hirdetési vagy analitikai sütiket, és nem épít be külső nyomkövető szkriptet. Két dolgot tárolunk a böngésződben, mindkettőt a működéshez: a bejelentkezési munkamenetet (enélkül minden oldalbetöltésnél újra be kellene jelentkezned) és a kiválasztott színvilágot. Egyik sem hagyja el az eszközödet a szolgáltatás felé, és egyikhez sem kérünk hozzájárulást, mert az elektronikus hírközlési szabályok az ilyen, feltétlenül szükséges tárolást mentesítik alóla."
+          "Az alkalmazás nem használ hirdetési vagy analitikai sütiket. Két dolgot tárolunk a böngésződben, mindkettőt a működéshez: a bejelentkezési munkamenetet (enélkül minden oldalbetöltésnél újra be kellene jelentkezned) és a kiválasztott színvilágot. Egyik sem hagyja el az eszközödet a szolgáltatás felé, és egyikhez sem kérünk hozzájárulást, mert az elektronikus hírközlési szabályok az ilyen, feltétlenül szükséges tárolást mentesítik alóla."
+        ),
+        p(
+          "A látogatottságot a Cloudflare Web Analytics méri, a webes alkalmazásban és a vastaps.app oldalon egyaránt. Ez a szolgáltatás nem helyez el sütit és nem tárol azonosítót az eszközödön, ezért egyik látogatásodat sem tudja a másikhoz kötni; azt jegyzi fel, hogy melyik oldal nyílt meg, honnan érkezett a látogató, melyik országból és milyen böngészővel, valamint hogy milyen gyorsan töltött be az oldal. Ebből mi csak összesített számokat látunk. Az adatkezelés jogalapja a jogos érdekünk (6. cikk (1) f) pont): tudni, hogy hányan és mire használják a szolgáltatást."
         ),
       ],
     },
@@ -217,6 +220,7 @@ export const privacyPolicy: LegalDocument = {
         ul(
           "Supabase (adatbázis, bejelentkezés, fájltárolás). Itt tárolódik gyakorlatilag minden, amit fentebb felsoroltunk.",
           `${hostingProvider.name} (tárhelyszolgáltatás) — az alkalmazást kiszolgáló szerver üzemeltetője.`,
+          "Cloudflare (a vastaps.app oldal kiszolgálása és a látogatottság mérése). Csak a fenti, összesített látogatottsági adatot látja, fiókadatot nem.",
           "GitHub (az éjszakai színházi műsorfrissítést futtató szolgáltatás). Ez a folyamat a színházak műsorát olvassa, felhasználói adatot nem."
         ),
         p(

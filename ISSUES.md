@@ -334,6 +334,43 @@ productions, and adding to them to keep a marketing picture fresh is a step
 toward the picture driving the data. The alternative is a hero that does not
 show timestamps at all, which is a design change rather than a content one.
 
+### T-098 · Product analytics across web and native
+type: idea · area: infra · size: M · status: idea · added: 2026-09-18
+
+**The problem.** Cloudflare Web Analytics (the beacon in `app/+html.tsx` and
+the Pages toggle for the landing) says how many people came and from where,
+but nothing about what they did once inside — whether the check-in form is
+abandoned, whether anyone reaches the follow request, which city is picked —
+and it cannot see the native app at all. App Store Connect and the Play
+Console cover installs, active devices and crashes for free, but not
+behaviour either.
+
+**Roughly.** One event vocabulary (`check_in_saved`, `follow_requested`,
+`city_picked`…) sent from both the web and the native build through a single
+SDK, so one dashboard answers questions across platforms. PostHog fits: it has
+a React Native SDK and a web snippet, EU hosting, and a free tier of a million
+events a month. Aptabase is the lighter alternative if screen views and a few
+counters are enough. Either way, cookieless and without a consent banner —
+the same standard as the beacon — and the events must describe actions, never
+carry an opinion's text or anything else the privacy direction keeps private.
+
+**Depends on.** Having enough users that behaviour is a question worth asking;
+T-100 having named a processor once already; the second one is a sentence.
+
+### T-099 · Usage numbers straight from the database
+type: idea · area: data · size: S · status: idea · added: 2026-09-18
+
+**The problem.** Page views measure curiosity; signups, check-ins and returning
+users measure whether the product works. Those numbers are already in
+Supabase and nobody is looking at them.
+
+**Roughly.** A view or a `scripts/` report — signups per week, entries per day,
+accounts active in the last seven and thirty days, follows requested and
+accepted — printed as a table, the way `scripts/research-report.ts` already
+does for its own subject. Reads only; nothing changes in the data.
+
+**Depends on.** Nothing.
+
 ---
 
 ## Open
@@ -839,6 +876,19 @@ _Nothing yet._
 ---
 
 ## Done
+
+### T-100 · Name the analytics processor in the privacy policy
+type: chore · area: legal · priority: med · status: done · added: 2026-09-18
+
+Cloudflare Web Analytics sets no cookie, so no banner is owed, but the policy
+in `i18n/legal.ts` (rendered both by `app/legal/adatvedelem.tsx` and into
+`landing/adatvedelem.html`) still has to say that Cloudflare receives page, referrer and country for each visit.
+Do it in the same release the beacon token is set on Railway, not after.
+
+Done on 18 September, in the same branch as the beacon: the "Sütik és
+nyomkövetés" section of `i18n/legal.ts` no longer promises that no external
+script is embedded, says what Cloudflare Web Analytics records and on what
+legal basis, and Cloudflare is listed among the processors.
 
 ### T-074 · The Katona's three hosts stopped answering the GitHub runner on 12 September
 type: bug · area: data · priority: med · status: done · added: 2026-09-12
@@ -3023,4 +3073,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-098**
+Next free id: **T-101**

@@ -16,6 +16,12 @@ ARG EXPO_PUBLIC_SUPABASE_ANON_KEY
 ENV EXPO_PUBLIC_SUPABASE_URL=$EXPO_PUBLIC_SUPABASE_URL
 ENV EXPO_PUBLIC_SUPABASE_ANON_KEY=$EXPO_PUBLIC_SUPABASE_ANON_KEY
 
+# The Cloudflare Web Analytics site token for web.vastaps.app. Optional: when
+# it is unset, app/+html.tsx renders no beacon tag and the build measures
+# nothing, which is the right outcome for any build that is not production.
+ARG EXPO_PUBLIC_CF_BEACON_TOKEN
+ENV EXPO_PUBLIC_CF_BEACON_TOKEN=$EXPO_PUBLIC_CF_BEACON_TOKEN
+
 RUN npm run build
 
 # expo export names a dynamic route's pre-rendered shell after the route file —
