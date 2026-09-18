@@ -356,28 +356,6 @@ show timestamps at all, which is a design change rather than a content one.
 
 ## Open
 
-### T-094 · The ticket-photo feature is retired; drop its column and bucket
-type: chore · area: diary · priority: med · status: open · added: 2026-09-18
-
-Ottó decided on 18 September 2026 that the ticket photo ("jegyfotó") has no
-place in the app: a ticket carries the person's name and a booking code, the
-`stubs` bucket was public, and keeping the feature would have meant signed
-URLs for a photo nobody needs. The app side is done in the same day's PR: no
-screen reads, writes or shows `stub_path`, the strings and the legal copy no
-longer mention it, `uploadStub` is gone. The database still holds the
-remains, and per the migration rules they come out in a later, destructive
-migration once this PR has been live for a while:
-
-- `reviews.stub_path` and the `reviews_guard_stub_path` trigger (0028);
-- the `stubs` storage bucket, its policies, and the one orphan object in it
-  (no `reviews` row ever pointed at it — checked before the PR: zero
-  entries carried a photo, one file in the bucket);
-- the `stubs` branch of `supabase/functions/delete-account`, which cleans a
-  bucket that no longer exists once the above is done.
-
-Deleting the orphan object is the one step that removes something a user
-stored, so it waits for Ottó's word even though nothing references it.
-
 ### T-078 · One tap on a list entry removes it; editing should be a mode
 type: bug · area: web · priority: high · status: open · added: 2026-09-18
 
@@ -851,6 +829,42 @@ _Nothing yet._
 ---
 
 ## Done
+
+### T-094 · The ticket-photo feature is retired; drop its column and bucket
+type: chore · area: diary · priority: med · status: done · added: 2026-09-18
+
+Ottó decided on 18 September 2026 that the ticket photo ("jegyfotó") has no
+place in the app: a ticket carries the person's name and a booking code, the
+`stubs` bucket was public, and keeping the feature would have meant signed
+URLs for a photo nobody needs. The app side is done in the same day's PR: no
+screen reads, writes or shows `stub_path`, the strings and the legal copy no
+longer mention it, `uploadStub` is gone. The database still holds the
+remains, and per the migration rules they come out in a later, destructive
+migration once this PR has been live for a while:
+
+- `reviews.stub_path` and the `reviews_guard_stub_path` trigger (0028);
+- the `stubs` storage bucket, its policies, and the one orphan object in it
+  (no `reviews` row ever pointed at it — checked before the PR: zero
+  entries carried a photo, one file in the bucket);
+- the `stubs` branch of `supabase/functions/delete-account`, which cleans a
+  bucket that no longer exists once the above is done.
+
+Deleting the orphan object is the one step that removes something a user
+stored, so it waits for Ottó's word even though nothing references it.
+
+**Done, 18 September 2026, with Ottó's go-ahead for the file.** `0064` drops
+the column and its guard trigger, the four storage policies, and recreates
+`reviews_readable` without the column (it had exposed `stub_path` masked, so
+the plain drop would have failed; no `cascade`). The object and the bucket
+went through the Storage API, because Storage's `protect_delete` trigger
+refuses SQL deletes on its tables — the first attempt at the migration
+rolled back on exactly that, and the file now asserts the bucket is gone
+rather than deleting it. `delete-account` no longer sweeps `stubs`, which
+mattered more than it looked: with the bucket gone, its list call would have
+errored and refused every account deletion until the function was redeployed
+— done in the same hour. Checked afterwards: column, trigger, policies and
+bucket absent; the view has 18 columns and both grants; an anonymous read of
+the view and both `friends_*` functions answer.
 
 ### T-090 · A weekly letter: this week in your theatres
 type: idea · area: notifications · size: M · status: done · added: 2026-09-18
