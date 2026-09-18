@@ -787,6 +787,38 @@ export const strings = {
     prompt: "Láttál már előadásokat? Jelöld be őket.",
   },
 
+  /**
+   * The first run (T-083): opened once, by `FirstRunGate`, the first time a
+   * new account lands on a tab. Three short questions and the archive grid,
+   * every one of them skippable, none of them answered in advance.
+   */
+  firstRun: {
+    headerTitle: "Üdv a Vastapsban",
+    skipAll: "Kihagyom",
+    later: "Később",
+    next: "Tovább",
+    stepLabels: ["Név", "Város", "Színházak", "Láttad"],
+
+    nameTitle: "Hogy szólítsunk?",
+    nameLede: "Ez a név áll majd a bejegyzéseid fölött. A felhasználónév az, amivel mások megtalálnak.",
+
+    cityTitle: "Hol jársz színházba?",
+    cityLede: "A Felfedezés ezt a várost nyitja meg először, és a következő lépés ennek a színházait ajánlja. Bármikor átállíthatod.",
+
+    theatresTitle: "Melyik színházakat követnéd?",
+    theatresLede: "Ha egy követett színház új előadást hirdet, a postaládádban látod. Egy koppintás követ, még egy elenged.",
+    theatresEmpty: "Ebben a városban még nincs színház a katalógusban.",
+    follow: (n: number) =>
+      n === 0 ? "Válassz színházat" : n === 1 ? "1 színház követése" : `${n} színház követése`,
+
+    doneTitle: "Készen állsz.",
+    doneBody:
+      "A postaládád szól, ha egy követett színház bemutatót hirdet, vagy egy kívánságlistás előadás új időpontot kap. A naplód a tiéd: hogy hol jártál, mindenki látja, hogy mit gondoltál, csak a követőid.",
+    doneButton: "Irány a Felfedezés",
+
+    saveError: "Nem sikerült menteni. Próbáld újra.",
+  },
+
   /** Productions gathered under a title — user-made and editorial alike. */
   lists: {
     headerTitle: "Listák",

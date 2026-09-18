@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { View, ScrollView, StyleSheet, Pressable } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -8,6 +8,7 @@ import { useAtLeast } from "@/hooks/useBreakpoint";
 import { useRecentSearches } from "@/hooks/useRecentSearches";
 import { useSearchQuery } from "@/hooks/useSearchQuery";
 import { useAuth } from "@/contexts/AuthContext";
+import { getFirstRunStatus } from "@/services/profileService";
 import {
   getCities,
   getFilterGenres,
@@ -176,6 +177,14 @@ export default function DiscoverScreen() {
   const [activeFilter, setActiveFilter] = useState(strings.discover.filterAll);
   const [cities, setCities] = useState<string[]>([]);
   const [activeCity, setActiveCity] = useState(strings.discover.filterAll);
+  /**
+   * The city on the profile, applied once when both it and the option list
+   * are known, and only while the chip still says "Mind" (the first run
+   * writes `profiles.city` for exactly this). After that the chip is the
+   * reader's: a preference that reasserted itself on every render would be a
+   * filter nobody could change.
+   */
+  const seededCity = useRef(false);
   const [venues, setVenues] = useState<Venue[]>([]);
   const [activeVenueId, setActiveVenueId] = useState<string>();
   const [query, setQuery] = useState("");
@@ -247,6 +256,24 @@ export default function DiscoverScreen() {
   // list narrower than the grid it filters cannot reach half of what is on
   // screen. Debrecen has theatres with nothing currently on and 166 archived
   // productions between them.
+  useEffect(() => {
+    if (!session || seededCity.current || cities.length === 0) return;
+    let cancelled = false;
+    getFirstRunStatus()
+      .then((status) => {
+        if (cancelled || seededCity.current) return;
+        seededCity.current = true;
+        const home = status?.city;
+        if (home && cities.includes(home)) {
+          setActiveCity((current) => (current === strings.discover.filterAll ? home : current));
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [session, cities]);
+
   useEffect(() => {
     getCities(includeArchived)
       .then(setCities)

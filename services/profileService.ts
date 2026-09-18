@@ -154,3 +154,69 @@ export async function updateProfile(input: {
     await supabase.storage.from("avatars").remove([previousPath]).catch(() => undefined);
   }
 }
+
+// ------------------------------------------------------------- the first run
+
+/** What the first-run flow needs to know before it decides what to ask. */
+export type FirstRunStatus = {
+  /** Null until the flow has been shown once — `0061_the_first_run.sql`. */
+  onboardedAt: string | null;
+  name: string;
+  handle: string;
+  city: string | null;
+};
+
+export async function getFirstRunStatus(): Promise<FirstRunStatus | null> {
+  const uid = await currentUserId();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("onboarded_at, name, handle, city")
+    .eq("id", uid)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return {
+    onboardedAt: data.onboarded_at ?? null,
+    name: data.name ?? "",
+    handle: data.handle ?? "",
+    city: data.city ?? null,
+  };
+}
+
+/**
+ * Writes a few columns of the profile without asking for the rest.
+ *
+ * `updateProfile` above takes the whole editable half because the edit form
+ * holds the whole editable half. The first run asks one thing at a time —
+ * a city here, a name there — and must not send back a bio it never loaded.
+ * The same `23505` reading as `updateProfile`, since the handle is the only
+ * unique column an update can trip over.
+ */
+export async function patchProfile(fields: {
+  name?: string;
+  handle?: string;
+  city?: string | null;
+  onboardedAt?: string;
+}): Promise<void> {
+  const uid = await currentUserId();
+  const row: Record<string, string | null> = {};
+  if (fields.name !== undefined) row.name = fields.name.trim();
+  if (fields.handle !== undefined) row.handle = fields.handle.trim().toLowerCase();
+  if (fields.city !== undefined) row.city = fields.city?.trim() || null;
+  if (fields.onboardedAt !== undefined) row.onboarded_at = fields.onboardedAt;
+  if (Object.keys(row).length === 0) return;
+  const { error } = await supabase.from("profiles").update(row).eq("id", uid);
+  if (error) {
+    if (error.code === "23505") throw new HandleTakenError();
+    throw error;
+  }
+}
+
+/**
+ * Stamps the flow as shown. Called the moment it opens rather than when it
+ * finishes: shown once is the promise, and the profile keeps offering the
+ * archive grid to an empty diary for anybody who left early.
+ */
+export function markOnboarded(): Promise<void> {
+  return patchProfile({ onboardedAt: new Date().toISOString() });
+}

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { View, ScrollView, StyleSheet, Pressable } from "react-native";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
 import { gutter, overlay, radius, space } from "@/theme/tokens";
 import {
@@ -46,9 +46,16 @@ export default function OnboardingScreen() {
 
   const router = useRouter();
   const { session, loading: authLoading } = useAuth();
+  /**
+   * From the first run (`app/first-run.tsx`) this is the last act rather than
+   * a screen of its own: it opens on the city chosen a step earlier, and both
+   * ways out lead to the closing screen instead of the profile.
+   */
+  const params = useLocalSearchParams<{ next?: string; city?: string }>();
+  const fromFirstRun = params.next === "first-run";
 
   const [cities, setCities] = useState<string[]>([]);
-  const [city, setCity] = useState<string>();
+  const [city, setCity] = useState<string | undefined>(fromFirstRun ? params.city || undefined : undefined);
   const [candidates, setCandidates] = useState<Play[]>([]);
   const [venues, setVenues] = useState<Map<string, Venue>>(new Map());
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -112,11 +119,16 @@ export default function OnboardingScreen() {
     setSaving(true);
     try {
       await markManyAsSeen([...selected]);
-      closeModal(router, "/(tabs)/profile");
+      finish();
     } catch (e) {
       setError(e instanceof Error ? e.message : strings.onboarding.saveError);
       setSaving(false);
     }
+  }
+
+  function finish() {
+    if (fromFirstRun) router.replace("/first-run?step=done");
+    else closeModal(router, "/(tabs)/profile");
   }
 
   if (!session) return null;
@@ -128,7 +140,7 @@ export default function OnboardingScreen() {
       <ModalHeader
         title={strings.onboarding.headerTitle}
         action={
-          <Pressable onPress={() => closeModal(router, "/(tabs)/profile")} hitSlop={12} accessibilityRole="button">
+          <Pressable onPress={finish} hitSlop={12} accessibilityRole="button">
             <Text variant="label" tone="faint">{strings.onboarding.skip}</Text>
           </Pressable>
         }
