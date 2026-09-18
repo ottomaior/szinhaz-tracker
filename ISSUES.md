@@ -642,13 +642,6 @@ so it is *valid*, which is all that has been checked. It has never been seen at
 48pt on a home screen beside other apps, which is the only test that matters for
 an icon. From the store track's A.2.
 
-### T-014 · Decide about OTA updates before the first submission, not after
-type: question · area: native · priority: low · status: open · added: 2026-09-09
-
-`expo-updates` is not installed. Without it, every JavaScript fix in a shipped
-store build costs a full review cycle. Not a blocker for submitting — but far
-cheaper to decide before the first submission than to add after one. From A.2.
-
 ### T-015 · The native styling path has never run on a device
 type: question · area: native · priority: low · status: open · added: 2026-09-09
 
@@ -911,6 +904,23 @@ the same control's markup.
 > description. Read-only otherwise, for the owner as for everybody else. The
 > markup problem in T-070 (a button inside a button) is unchanged and still
 > open.
+### T-014 · Decide about OTA updates before the first submission, not after
+type: question · area: native · priority: low · status: done · added: 2026-09-09 · done: 2026-09-19
+
+`expo-updates` was not installed, so every JavaScript fix in a shipped build
+meant a rebuilt APK and every tester reinstalling it. Decided and done on the
+eve of the first testers: `expo-updates` is in, `app.config.ts` points
+`updates.url` at EAS's update server for this project, and the runtime
+version follows the **fingerprint** policy — a hash of the native side — so an
+update is only offered to a binary whose native code matches, and a change
+that adds a native module simply reaches nobody until the next build rather
+than crashing the old one. `eas.json` names a channel per profile
+(`preview`, `production`); a fix ships with
+`eas update --channel preview --message "…"` and lands on the phone at its
+next launch. The development profile has no channel: the dev client loads
+from Metro. Store review cycles were the original reason; the closer one was
+that the 7 September APK could not be fixed without asking twelve people to
+reinstall.
 
 ### T-102 · The hero phones flicker when the mouse sweeps across them
 type: bug · area: web · priority: med · status: done · added: 2026-09-18

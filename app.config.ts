@@ -56,6 +56,22 @@ const config: ExpoConfig = {
 
   assetBundlePatterns: ["**/*"],
 
+  // Updates over the air (T-014). A JavaScript-only change reaches installed
+  // phones on their next launch through `eas update --channel <channel>`,
+  // instead of a rebuilt APK that every tester has to reinstall. The URL is
+  // EAS's update server keyed by the project id in `extra.eas` below.
+  updates: {
+    url: "https://u.expo.dev/a9344b1d-53ca-4b15-891b-be9a503cf051",
+  },
+
+  // Which builds an update may land on. "fingerprint" hashes the native side
+  // of the project — the modules, the config plugins, the SDK — so an update
+  // is only ever offered to a binary whose native code matches, and a change
+  // that adds a native module simply gets no over-the-air audience until the
+  // next build. The alternative, "appVersion", ties it to the `version`
+  // string above, which nobody remembers to bump when a native module lands.
+  runtimeVersion: { policy: "fingerprint" },
+
   ios: {
     supportsTablet: false,
     bundleIdentifier: "hu.szinhaztracker.app",

@@ -305,7 +305,7 @@ Each row is its own branch and pull request; the ideas are written up in
 | **6.4** | **Installable**: Phase 2's 2.1 (manifest, icons, add-to-Home-Screen card) · **done** · plus error monitoring (5.1), which waits on a Sentry project and its DSN | S–M | a Sentry DSN from Ottó |
 | **6.5** | **Notifications that arrive**: Phase 2's Web Push, native push through Expo on the same table, per-kind toggles, and the permission asked at the right moment — T-089 · **done** on the web; native waits for the next EAS build | L | — |
 | **6.6** | **The weekly letter** through Resend — T-090 · **done**; Mondays from the sync | M | — |
-| **6.7** | **Sign in with Apple**, OTA updates (T-014), the icon at its real sizes (T-013), password and address change in Settings (T-092) | M | an Apple Developer account |
+| **6.7** | **Sign in with Apple**, ~~OTA updates (T-014)~~ **done**, the icon at its real sizes (T-013), password and address change in Settings (T-092) | M | an Apple Developer account |
 
 Deliberately not on the list: a paid tier, streaks and badges, the public
 average (taken off on purpose), animated copy, an admin app. An English
@@ -418,7 +418,7 @@ Nothing on this list is engineering.
 | Deep links unverified | The app-side claim is configured; `/.well-known/apple-app-site-association` and `/.well-known/assetlinks.json` need the Apple Team ID and the Play App Signing fingerprint. The keystore now exists, so the Android half is available as soon as there is a Play Console to read the signing key from. `scripts/write-well-known.ts` writes both. |
 | Icons never seen at store sizes | 1024×1024, the iOS one fully opaque, the Android foreground inside the 66% safe zone — so they are *valid*. Nobody has looked at them at 48pt on a shelf next to other apps. |
 | Share card is web-only | Canvas-based; native needs `react-native-view-shot`. Now checkable against a real device build, which did not exist when this line was written. |
-| No OTA updates | `expo-updates` is not installed. Not a blocker, but a store app without it means a full review cycle for every JavaScript fix. Worth deciding before the first submission rather than after. |
+| ~~No OTA updates~~ **done** | `expo-updates` is installed with the fingerprint runtime policy and a channel per EAS profile (T-014). A JavaScript fix ships with `eas update --channel preview` and lands at the next launch; a native change still needs a build. |
 | iOS never compiled | `expo prebuild` will not generate an Xcode project from Windows, so the privacy manifest and the entitlements are still unexercised. The first EAS iOS build is where they are first tested — and it needs the Apple Developer account. |
 
 Account deletion and the legal pages are **done** (Phase 1) and satisfy both
