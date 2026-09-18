@@ -1,6 +1,6 @@
 /**
  * Render `landing/og.html` to `landing/og.png` — the 1200×630 card that a
- * link to vastaps.pages.dev turns into inside Facebook, Messenger, Slack,
+ * link to vastaps.app turns into inside Facebook, Messenger, Slack,
  * iMessage, X and Google's result cards.
  *
  *     npm run og

@@ -30,7 +30,7 @@ import type { ExpoConfig } from "expo/config";
  * host is compiled into the binary, not read at runtime — and re-uploading the
  * `.well-known` files, in that order.
  */
-export const PRODUCTION_HOST = "szinhaz-tracker-production.up.railway.app";
+export const PRODUCTION_HOST = "web.vastaps.app";
 const config: ExpoConfig = {
   name: "Vastaps",
   slug: "szinhaz-tracker",

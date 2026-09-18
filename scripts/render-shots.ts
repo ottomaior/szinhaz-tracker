@@ -58,7 +58,7 @@ const OUT = resolve("landing/shots");
  *
  *     SHOTS_BASE_URL=http://localhost:8081 npm run shots
  */
-const BASE = (process.env.SHOTS_BASE_URL ?? "https://szinhaz-tracker-production.up.railway.app").replace(/\/$/, "");
+const BASE = (process.env.SHOTS_BASE_URL ?? "https://web.vastaps.app").replace(/\/$/, "");
 
 /** The capture geometry. See the header — these three numbers are load-bearing. */
 const WIDTH = 402;

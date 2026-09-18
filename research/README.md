@@ -21,7 +21,7 @@ Ezért három forrásból dolgozunk, és a súlyuk nem egyforma:
 |---|---|---|
 | **Interjúk** (8–10 beszélgetés) | A valódi helyzeteket: hogyan választanak, hogyan emlékeznek, kivel beszélik meg. Ez dönti el, hogy létezik-e a probléma. | elsődleges |
 | **Használhatósági tesztek** (5 ülés az élő appon) | Mi működik és mi akad el, amikor valaki ténylegesen használja. Öt ember többet mond a funkciókról, mint ötven kérdőív. | elsődleges |
-| **Kérdőív** (`vastaps.pages.dev/kutatas`) | Rangsort a funkciók között — nem osztályzatot, hanem kényszerű választást —, és a viselkedési alapadatokat. | támogató |
+| **Kérdőív** (`vastaps.app/kutatas`) | Rangsort a funkciók között — nem osztályzatot, hanem kényszerű választást —, és a viselkedési alapadatokat. | támogató |
 
 ## A kérdőív módszere
 

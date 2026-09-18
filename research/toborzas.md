@@ -8,7 +8,7 @@
 
 > Szia! Egy színházi appot csinálok — egy napló arról, mit láttál, meg egy műsor, mi megy ma este Budapesten és Debrecenben. Mielőtt elindul, szeretném tudni, mi kell bele és mi nem. Ez egy hétperces kérdőív, nincs benne jó válasz, csak az, amit te gondolsz:
 >
-> https://vastaps.pages.dev/kutatas
+> https://vastaps.app/kutatas
 >
 > És ha ismersz valakit, aki jár színházba, küldd tovább neki — az ér a legtöbbet. Köszönöm!
 
@@ -22,7 +22,7 @@
 
 ### Emlékeztető (a 11. nap körül, annak, aki nem töltötte ki)
 
-> Szia, csak egy emlékeztető a kérdőívről — még pár napig nyitva van, és tényleg hét perc: https://vastaps.pages.dev/kutatas Köszi!
+> Szia, csak egy emlékeztető a kérdőívről — még pár napig nyitva van, és tényleg hét perc: https://vastaps.app/kutatas Köszi!
 
 ## 2. Facebook- és Reddit-csoportoknak — később
 
@@ -40,9 +40,9 @@ Csoportok, ahol érdemes megpróbálni (a csoportszabályokat előbb elolvasva):
 >
 > Egy magyar színházi appot építek egyedül — napló arról, mit láttál (mikor, ki játszott, hol ültél), és egy műsor, ami minden este a színházak saját oldaláról frissül. Most Budapest és Debrecen, aztán oda, ahonnan kérik.
 >
-> Mielőtt elindul, szeretném tudni, mi kell bele valójában — ezért egy rövid kérdőív, ahol nem osztályozni kell, hanem választani: https://vastaps.pages.dev/kutatas
+> Mielőtt elindul, szeretném tudni, mi kell bele valójában — ezért egy rövid kérdőív, ahol nem osztályozni kell, hanem választani: https://vastaps.app/kutatas
 >
-> Aki kíváncsi, magát az appot is megnézheti: https://szinhaz-tracker-production.up.railway.app — kritikát ide a kommentbe, annak örülök a legjobban.
+> Aki kíváncsi, magát az appot is megnézheti: https://web.vastaps.app — kritikát ide a kommentbe, annak örülök a legjobban.
 
 ### Ha megkérdezik, mennyibe kerül
 
