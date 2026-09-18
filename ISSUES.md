@@ -955,8 +955,14 @@ where the `.hu` is ours.
 
 ## Doing
 
+_Nothing yet._
+
+---
+
+## Done
+
 ### T-082 · Sign in with Google, and with Apple when there is an account to register it under
-type: idea · area: auth · size: M · status: doing · added: 2026-09-18
+type: idea · area: auth · size: M · status: done · added: 2026-09-18
 
 **The problem.** The only way in is an e-mail address and a password typed
 twice, then a confirmation mail. On a phone that already holds a Google
@@ -977,9 +983,14 @@ with the Google SDK) is a later refinement over the browser flow.
 in Supabase — `check:launch` now says so. A native rebuild for
 `expo-web-browser`.
 
----
-
-## Done
+**Done, 18 September 2026.** Google Cloud project `vastaps-509009`, consent
+screen in production, a Web-application OAuth client with the Supabase
+callback; the provider is on in Supabase and `0060` is applied. Verified on
+the dev server from Chrome: the round trip lands back on the app signed in,
+and a password account that tapped Google gained a second identity on the
+*same* `auth.users` row — one diary, not two. Apple stays on the list for the
+day there is a Developer account. Native still needs a rebuild for
+`expo-web-browser`.
 
 ### T-076 · The questionnaire's screenshots still show the pre-redesign app
 type: chore · area: landing · priority: low · status: done · added: 2026-09-13 · done: 2026-09-18
