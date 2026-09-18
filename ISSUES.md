@@ -375,14 +375,6 @@ does for its own subject. Reads only; nothing changes in the data.
 
 ## Open
 
-### T-100 · Name the analytics processor in the privacy policy
-type: chore · area: legal · priority: med · status: open · added: 2026-09-18
-
-Cloudflare Web Analytics sets no cookie, so no banner is owed, but the policy
-in `i18n/legal.ts` (rendered both by `app/legal/adatvedelem.tsx` and into
-`landing/adatvedelem.html`) still has to say that Cloudflare receives page, referrer and country for each visit.
-Do it in the same release the beacon token is set on Railway, not after.
-
 ### T-073 · One sync request out of eleven was refused with "JWT issued at future"
 type: bug · area: data · priority: low · status: open · added: 2026-09-12
 
@@ -884,6 +876,19 @@ _Nothing yet._
 ---
 
 ## Done
+
+### T-100 · Name the analytics processor in the privacy policy
+type: chore · area: legal · priority: med · status: done · added: 2026-09-18
+
+Cloudflare Web Analytics sets no cookie, so no banner is owed, but the policy
+in `i18n/legal.ts` (rendered both by `app/legal/adatvedelem.tsx` and into
+`landing/adatvedelem.html`) still has to say that Cloudflare receives page, referrer and country for each visit.
+Do it in the same release the beacon token is set on Railway, not after.
+
+Done on 18 September, in the same branch as the beacon: the "Sütik és
+nyomkövetés" section of `i18n/legal.ts` no longer promises that no external
+script is embedded, says what Cloudflare Web Analytics records and on what
+legal basis, and Cloudflare is listed among the processors.
 
 ### T-074 · The Katona's three hosts stopped answering the GitHub runner on 12 September
 type: bug · area: data · priority: med · status: done · added: 2026-09-12

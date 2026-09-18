@@ -93,7 +93,9 @@ const NO_FLASH_SCRIPT = `
  * The beacon sets no cookie and keeps no identifier across visits, which is
  * what lets it run without a consent banner; it reports the page, referrer,
  * country and Core Web Vitals, and follows expo-router's history navigations
- * on its own. The site token is not a secret — it is visible in the served
+ * on its own. `type="module"` is what Cloudflare's own snippet uses — a module
+ * script is deferred by definition — and matching it means the tag here is
+ * the snippet the dashboard shows, not a variation of it. The site token is not a secret — it is visible in the served
  * HTML either way — but it is read from the environment rather than written
  * here so that a local `expo export` or a preview build sends nothing: the
  * tag is rendered only when the token is set, and Railway sets it for
@@ -139,7 +141,7 @@ export default function Root({ children }: PropsWithChildren) {
 
         {CF_BEACON_TOKEN ? (
           <script
-            defer
+            type="module"
             src="https://static.cloudflareinsights.com/beacon.min.js"
             data-cf-beacon={JSON.stringify({ token: CF_BEACON_TOKEN })}
           />
