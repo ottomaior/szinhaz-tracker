@@ -886,6 +886,13 @@ Depends on T-029, because the name decides the domain.
 > permission, and the destination address needs a click in Ottó's inbox
 > either way. The impresszum's contact is still the ProtonMail address, so
 > nothing depends on it yet.
+>
+> **The doors open, 18 September.** With confirmation on and the app on its
+> own hostname, the landing page links to `web.vastaps.app` again — header,
+> hero and contact buttons — under a *Nyílt béta* badge; the first FAQ says
+> anyone can use it; the questionnaire's thanks screen sends people to the
+> app. Ottó's call: better that people use and test it than wait for an
+> invite.
 
 ### T-005 · Anyone can sign up with somebody else's email address
 type: bug · area: auth · priority: high · status: done · added: 2026-09-09 · done: 2026-09-18

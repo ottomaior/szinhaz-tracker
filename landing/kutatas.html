@@ -237,9 +237,9 @@ dialog button { position: absolute; top: -14px; right: -14px; width: 40px; heigh
   var PICK = DESIGN.pickCount;
   var MISSING = DESIGN.missing;
   var MISSING_LABELS = DESIGN.missingLabels;
-  // The app's address stays off this page while the alpha is closed: the way
-  // in is to ask for an invite, the same door the landing page offers.
-  var INVITE = "mailto:hello@vastaps.app?subject=Vastaps%20%E2%80%93%20kipr%C3%B3b%C3%A1ln%C3%A1m";
+  // Open beta since 18 September 2026: the thanks screen sends people to the
+  // app itself. The footer keeps the mail address for those who want to talk.
+  var APP = "https://web.vastaps.app/";
   var PRIVACY = "/adatvedelem";
   var CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>';
   var CROSS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg>';
@@ -429,7 +429,7 @@ dialog button { position: absolute; top: -14px; right: -14px; width: 40px; heigh
       '<h1>' + (already ? "Ezt már beküldted." : "Megvan. Köszönjük!") + '</h1>' +
       '<p class="lede">' + (already ? "Ebből a böngészőből már érkezett válasz, és egy ember egy szavazat. Ha másvalaki töltené ki, más eszközön vagy privát ablakban megteheti." : "A legtöbbet most azzal segítesz, ha továbbküldöd egy ismerősödnek, aki jár színházba. Egy ember egy szavazat — és minden szavazat számít, amíg kevesen vagyunk.") + "</p></div>" +
       '<div class="thanks__acts"><button class="btn btn--gold" type="button" data-share data-url="' + url + '">Továbbküldöm</button>' +
-      '<a class="btn btn--ghost" href="' + INVITE + '">Kérek meghívót az appba</a></div>' +
+      '<a class="btn btn--ghost" href="' + APP + '">Megnyitom az appot</a></div>' +
       '<p class="faint" id="share-note"></p></div>';
   }
 
