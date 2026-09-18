@@ -99,7 +99,7 @@ export const hostingProvider = {
  * typo fix is not a new version, and telling people the policy changed when it
  * did not is how a change notice stops being read.
  */
-export const legalLastUpdated = "2026. szeptember 8.";
+export const legalLastUpdated = "2026. szeptember 18.";
 
 export type LegalBlock =
   | { kind: "p"; text: string }
@@ -157,10 +157,10 @@ export const privacyPolicy: LegalDocument = {
           "A Vastaps félig nyilvános napló, és érdemes tudni, hol húzódik a határ. Az, hogy egy előadást láttál és mikor, bárki számára olvasható, aki megnyitja az alkalmazást, akkor is, ha nincs fiókja. Ez a szolgáltatás lényege: így lehet egyáltalán megtalálni azokat, akiket érdemes követni."
         ),
         p(
-          "Amit viszont az előadásról gondoltál, azt csak te látod, és azok, akik követnek téged. Ide tartozik az értékelésed, a leírt véleményed, a címkéid, az ülőhelyed, a jegy ára, a feltöltött jegyfotó, az aznap esti szereposztás, valamint a bejegyzésed kedvelései és hozzászólásai. Aki nem követ, annak a bejegyzésed annyit mond: itt jártál."
+          "Amit viszont az előadásról gondoltál, azt csak te látod, és azok, akik követnek téged. Ide tartozik az értékelésed, a leírt véleményed, a címkéid, az ülőhelyed, a jegy ára, az aznap esti szereposztás, valamint a bejegyzésed kedvelései és hozzászólásai. Aki nem követ, annak a bejegyzésed annyit mond: itt jártál."
         ),
         p(
-          "Két dolog következik ebből, amit érdemes elolvasni, mielőtt beírsz valamit. A jegyfotó fájlja nyilvános tárhelyen van: a hivatkozását már nem adjuk ki annak, aki nem követ, de akinek egyszer a birtokába került, az később is meg tudja nyitni — a legtöbb magyar színházban pedig rajta van a neved és a foglalási azonosítód. És a naplód együtt olvasva elárulja, mikor nem vagy otthon, még akkor is, ha az értékelések rejtve maradnak: a dátumok maguk nyilvánosak. Ez ugyanaz a megfontolás, mint bármelyik közösségi oldalon."
+          "Egy dolog következik ebből, amit érdemes elolvasni, mielőtt beírsz valamit. A naplód együtt olvasva elárulja, mikor nem vagy otthon, még akkor is, ha az értékelések rejtve maradnak: a dátumok maguk nyilvánosak. Ez ugyanaz a megfontolás, mint bármelyik közösségi oldalon. Jegyről készült fotót az alkalmazás nem kér és nem tárol — egy jegyen rajta van a neved és a foglalási azonosítód, és ennek nincs helye egy naplóban."
         ),
         p(
           "Amit senki más nem lát: az e-mail-címed, a jelszavad és az értesítéseid (a postaláda tartalma a te kívánságlistád sorrendje, ezért csak neked olvasható)."
@@ -176,12 +176,12 @@ export const privacyPolicy: LegalDocument = {
         ul(
           "E-mail-cím és jelszó. A jelszót nem ismerjük: azt az adatfeldolgozónk sózott, egyirányú lenyomatként tárolja.",
           "Profil: megjelenített név, automatikusan képzett felhasználónév, a névből képzett monogram, valamint amit magadról megadsz — város, bemutatkozás, profilkép.",
-          "Napló: melyik előadást láttad, mikor, hányra értékelted (összesítve és színészi játék / rendezés / díszlet bontásban), a szöveges kritikád, a hangulatcímkék, hogy hányadszor láttad, melyik előadásra váltottál jegyet, hol ültél, mennyit fizettél a jegyért, a feltöltött jegyfotó, és hogy aznap este kik léptek fel.",
+          "Napló: melyik előadást láttad, mikor, hányra értékelted (összesítve és színészi játék / rendezés / díszlet bontásban), a szöveges kritikád, a hangulatcímkék, hogy hányadszor láttad, melyik előadásra váltottál jegyet, hol ültél, mennyit fizettél a jegyért, és hogy aznap este kik léptek fel.",
           "Kívánságlista, saját listák, követések (más felhasználók, alkotók és színházak), kedvelések és hozzászólások.",
           "Értesítések, amelyeket az éjszakai frissítés generál neked."
         ),
         p(
-          "Hozzájárulás alapján (6. cikk (1) a) pont) kezeljük a profilképet és a jegyfotót — ezek megadása önkéntes, a hozzájárulást a kép törlésével bármikor visszavonhatod, ami a jövőre nézve szünteti meg az adatkezelést."
+          "Hozzájárulás alapján (6. cikk (1) a) pont) kezeljük a profilképet — megadása önkéntes, a hozzájárulást a kép törlésével bármikor visszavonhatod, ami a jövőre nézve szünteti meg az adatkezelést."
         ),
         p(
           "Jogos érdek alapján (6. cikk (1) f) pont) kezelünk technikai naplóadatokat a szolgáltatás üzemeltetéséhez, a visszaélések és a rosszindulatú forgalom kiszűréséhez, valamint a bejelentett tartalmak elbírálásához. A jogos érdek itt a szolgáltatás működőképessége és a többi felhasználó védelme."
@@ -224,7 +224,7 @@ export const privacyPolicy: LegalDocument = {
       blocks: [
         ul(
           "A fiókodhoz kötött adatokat addig, amíg a fiókod fennáll.",
-          "Ha törlöd a fiókodat, a profilod, a naplód, az értékeléseid, a listáid, a követéseid, a kedveléseid, a hozzászólásaid, valamint a feltöltött profilképed és jegyfotóid azonnal és véglegesen törlődnek.",
+          "Ha törlöd a fiókodat, a profilod, a naplód, az értékeléseid, a listáid, a követéseid, a kedveléseid, a hozzászólásaid, valamint a feltöltött profilképed azonnal és véglegesen törlődnek.",
           "Ami nem törlődik: az általad kézzel felvett előadások és színházak megmaradnak a katalógusban, de a szerzőségük megszűnik — a rekord többé nem kapcsolódik hozzád. Ezek ugyanis közös katalógusadatok, amelyekre mások naplóbejegyzései hivatkozhatnak.",
           "A technikai üzemeltetési naplókat legfeljebb 30 napig őrizzük.",
           "A kérdőív névtelen válaszait a termék tervezéséhez őrizzük meg; a hozzájuk kapcsolódó e-mail-címeket az indulásról szóló értesítés kiküldése után töröljük."
@@ -338,7 +338,7 @@ export const termsOfService: LegalDocument = {
       heading: "Ki látja, amit írsz",
       blocks: [
         p(
-          "Az, hogy egy előadást megnéztél és mikor, bárki számára látható, ahogy a nyilvánosnak jelölt listáid és az is, hogy kiket követsz. Amit az előadásról gondoltál — az értékelésed, a kritikád, a címkéid, az ülőhelyed, a jegy ára, a jegyfotó, az aznapi szereposztás, a bejegyzésed kedvelései és hozzászólásai — csak neked és a követőidnek látszik."
+          "Az, hogy egy előadást megnéztél és mikor, bárki számára látható, ahogy a nyilvánosnak jelölt listáid és az is, hogy kiket követsz. Amit az előadásról gondoltál — az értékelésed, a kritikád, a címkéid, az ülőhelyed, a jegy ára, az aznapi szereposztás, a bejegyzésed kedvelései és hozzászólásai — csak neked és a követőidnek látszik."
         ),
         p(
           "Ez a határ nem állítható fiókszinten: nem lehet a bejegyzéseidet teljesen elrejteni, és nem lehet mindenki számára megnyitni sem. Aki követ, az látja a véleményeidet; a követőidet pedig te választod meg annyiban, hogy bárkit blokkolhatsz. Amit senkinek nem szánsz, azt ne írd ide."
@@ -499,7 +499,7 @@ export const accountDeletion: LegalDocument = {
           "a kívánságlistád és az általad készített listák",
           "a követéseid, a téged követők kapcsolatai, a tetszéseid és a hozzászólásaid",
           "az értesítéseid",
-          "a feltöltött profilképeid és a jegyekről készült fotóid"
+          "a feltöltött profilképed"
         ),
         p(
           "A törölt értékelések azonnal kikerülnek az előadás átlagából is."

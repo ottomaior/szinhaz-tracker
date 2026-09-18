@@ -549,11 +549,13 @@ export const strings = {
     rewatchNotice: (count: number) =>
       count === 1 ? "Ezt már láttad egyszer — ez a második alkalom." : `Ezt már ${count}-szer láttad.`,
 
-    /* Everything from here to `stubHint` belongs to four questions the form
-       no longer asks — the cast, the seat, the price and the ticket photo.
-       Kept rather than deleted: entries that answered them still show them on
-       the entry screen, and if any of the four comes back it should come back
-       already written rather than hastily retranslated. */
+    /* Everything from here to `notYetStarted` belongs to three questions the
+       form no longer asks — the cast, the seat and the price. Kept rather than
+       deleted: entries that answered them still show them on the entry screen,
+       and if any of the three comes back it should come back already written
+       rather than hastily retranslated. (The fourth, the ticket photo, is gone
+       for good: a ticket carries a name and a booking code, and a photo of it
+       has no place in this app.) */
     /* Who was on that night — the one question a film log never has to ask. */
     castLabel: "Kiket láttál?",
     castHint: "Koppints azokra, akik aznap este játszottak. Ha beugró volt, vedd fel a nevét.",
@@ -572,18 +574,6 @@ export const strings = {
     priceInvalid: "A jegyár csak szám lehet, 0 és 1 000 000 Ft között.",
     /* Tonight's show, logged this morning. */
     notYetStarted: (time: string) => `Ez az előadás ${time}-kor kezdődik — naplózd, ha már láttad.`,
-
-    stubLabel: "Jegy vagy fotó",
-    stubAdd: "Fotó hozzáadása",
-    stubReplace: "Fotó cseréje",
-    stubRemove: "Fotó eltávolítása",
-    stubUploading: "Feltöltés…",
-    /* Said before the camera comes out, not after. A ticket usually has a name
-       and a booking code printed on it, and this entry is public. */
-    stubHint:
-      "A napló bejegyzései nyilvánosak, így ez a fotó is az lesz. Egy jegyen általában rajta van a neved és a foglalási kódod — takard ki, ha nem szeretnéd megosztani.",
-    stubPermission: "A fotó feltöltéséhez engedélyt kell adnod a galériához.",
-    stubUploadFailed: "A fotó feltöltése nem sikerült. Próbáld újra.",
   },
 
   /**
@@ -756,7 +746,6 @@ export const strings = {
     seatHeading: "Hely",
     priceHeading: "Jegyár",
     priceValue: (huf: number) => (huf === 0 ? "Tiszteletjegy" : `${huf.toLocaleString("hu-HU")} Ft`),
-    stubHeading: "Jegy",
     reviewHeading: "Vélemény",
     openPlay: "Az előadás adatlapja",
   },

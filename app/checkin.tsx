@@ -145,7 +145,6 @@ export default function CheckInScreen() {
   const [alternates, setAlternates] = useState<SeenCastMember[]>([]);
   const [seat, setSeat] = useState("");
   const [price, setPrice] = useState("");
-  const [stubPath, setStubPath] = useState<string>();
 
   useEffect(() => {
     if (!loading && !session) {
@@ -218,11 +217,10 @@ export default function CheckInScreen() {
     setSelectedTags(review.tags);
     setReviewText(review.text);
     // Read back and written out again untouched: the form stopped asking these
-    // four, and an edit must not be the thing that erases them. See the state
+    // three, and an edit must not be the thing that erases them. See the state
     // declarations above.
     setSeat(review.seat ?? "");
     setPrice(review.priceHuf !== undefined ? String(review.priceHuf) : "");
-    setStubPath(review.stubPath);
 
     // The cast splits back into ticked and typed the way the form holds it.
     const published = new Map(
@@ -416,12 +414,11 @@ export default function CheckInScreen() {
         text: reviewText.trim(),
         tags: selectedTags,
         // Empty on a new entry, because the form no longer asks; on an edit,
-        // whatever the entry already had, handed straight back. These four
-        // columns are written on every update, so passing nothing would delete
-        // them — see the state declarations.
+        // whatever the entry already had, handed straight back. These columns
+        // are written on every update, so passing nothing would delete them —
+        // see the state declarations.
         seat,
         priceHuf,
-        stubPath,
         castSeen: [
           ...castOptions
             .filter((c) => seenSlugs.has(c.slug))

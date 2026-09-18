@@ -128,11 +128,12 @@ describe("privacy policy says the things it must", () => {
     expect(text).toMatch(/akik követnek téged/);
   });
 
-  it("still warns that the ticket photo outlives the link to it", () => {
-    // The `stubs` bucket is `public: true`. 0041 stopped publishing the path
-    // to people who do not follow the author, but the file itself is still
-    // fetchable by anybody holding the URL, so the notice must not imply the
-    // photo became private.
-    expect(text).toMatch(/nyilvános tárhelyen/);
+  it("says the app does not take ticket photos, and promises nothing about them", () => {
+    // The ticket-photo feature was removed on 18 September 2026 on privacy
+    // grounds: a ticket carries a name and a booking code, and the bucket that
+    // held them was public. The notice must say so, and must not still
+    // describe a photo the app no longer collects.
+    expect(text).toMatch(/Jegyről készült fotót az alkalmazás nem kér/);
+    expect(text).not.toMatch(/jegyfotó/);
   });
 });
