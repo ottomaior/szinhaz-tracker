@@ -16,7 +16,7 @@
  *
  * **Hermes keeps two string tables.** Pure-ASCII strings sit in a UTF-8 table;
  * anything with an accent goes into a UTF-16 one. Read the bundle as text and
- * search for "Maior Ottó" and it is not there — while "ottomaior@protonmail.com"
+ * search for "Maior Ottó" and it is not there — while "hello@vastaps.app"
  * in the very same object is. That looks exactly like missing content. Every
  * needle here is therefore searched for as raw bytes, in both encodings.
  *
@@ -75,7 +75,7 @@ const checks: Check[] = [
   },
   {
     label: "Contact email",
-    needle: "ottomaior@protonmail.com",
+    needle: "hello@vastaps.app",
     want: true,
     why: "The address for privacy requests and content reports.",
   },

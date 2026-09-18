@@ -22,6 +22,7 @@ import {
   accountDeletion,
   imprint,
   legalLastUpdated,
+  operator,
   operatorDetailsComplete,
   pendingNotice,
   privacyPolicy,
@@ -129,7 +130,7 @@ ${body(doc)}
 <footer class="foot">
   <div class="shell foot__in">
     <p>Vastaps — magyar színházi napló.</p>
-    <p><a href="/impresszum">Impresszum</a> &nbsp;·&nbsp; <a href="/adatvedelem">Adatvédelem</a> &nbsp;·&nbsp; <a href="/feltetelek">Feltételek</a> &nbsp;·&nbsp; <a href="mailto:ottomaior@protonmail.com?subject=Vastaps">Kapcsolat</a></p>
+    <p><a href="/impresszum">Impresszum</a> &nbsp;·&nbsp; <a href="/adatvedelem">Adatvédelem</a> &nbsp;·&nbsp; <a href="/feltetelek">Feltételek</a> &nbsp;·&nbsp; <a href="mailto:${operator.email}?subject=Vastaps">Kapcsolat</a></p>
   </div>
 </footer>
 </body>

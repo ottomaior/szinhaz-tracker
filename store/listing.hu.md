@@ -117,7 +117,7 @@ munka.
 | --- | --- |
 | Alkalmazás kategóriája | `Életmód` (Lifestyle) |
 | Címkék | színház, kultúra, napló, előadás |
-| E-mail | `ottomaior@protonmail.com` |
+| E-mail | `hello@vastaps.app` |
 | Weboldal | `https://vastaps.app/` |
 | Adatvédelmi tájékoztató | `https://vastaps.app/adatvedelem` |
 
