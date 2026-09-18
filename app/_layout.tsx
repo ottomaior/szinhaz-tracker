@@ -90,6 +90,7 @@ function AppShell() {
         <Stack.Screen name="season/[start]" options={{ animation: "slide_from_right" }} />
         <Stack.Screen name="lists" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
         <Stack.Screen name="onboarding" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
+        <Stack.Screen name="first-run" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
         <Stack.Screen name="people" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
         <Stack.Screen name="inbox" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
         <Stack.Screen name="edit-profile" options={{ presentation: "modal", animation: "slide_from_bottom" }} />

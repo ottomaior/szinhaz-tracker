@@ -2,6 +2,7 @@ import { View } from "react-native";
 import { Tabs } from "expo-router/js-tabs";
 import { TabBar } from "@/components/ui/TabBar";
 import { TopBar } from "@/components/ui/TopBar";
+import { FirstRunGate } from "@/components/FirstRunGate";
 import { useAtLeast } from "@/hooks/useBreakpoint";
 import { strings } from "@/i18n/hu";
 
@@ -17,6 +18,7 @@ export default function TabsLayout() {
 
   return (
     <View style={{ flex: 1 }}>
+      <FirstRunGate />
       {wide && <TopBar />}
       <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => (wide ? null : <TabBar {...props} />)}>
         <Tabs.Screen name="index" options={{ title: strings.tabs.feed }} />
