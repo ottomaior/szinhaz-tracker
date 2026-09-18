@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<meta name="color-scheme" content="light">
+<title>{{SUBJECT}}</title>
+</head>
+<body style="margin:0;padding:0;background:#faf5ec;">
+<!-- The playbill palette from theme/themes.ts, inlined because mail clients
+     strip stylesheets: paper #faf5ec, card #f1e8d7, ink #1f1714, dim #574a42,
+     burgundy #7a2433 for the one thing to press. Tables, not flex, for the
+     same reason. -->
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#faf5ec;">
+  <tr>
+    <td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:520px;">
+        <tr>
+          <td style="padding:0 8px 20px;font-family:Georgia,'Times New Roman',serif;font-size:22px;letter-spacing:0.04em;color:#1f1714;">
+            Vastaps
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#f1e8d7;border-radius:12px;padding:28px 28px 24px;font-family:Georgia,'Times New Roman',serif;font-size:17px;line-height:1.5;color:#1f1714;">
+{{BODY}}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:20px 8px 0;font-family:Helvetica,Arial,sans-serif;font-size:13px;line-height:1.5;color:#574a42;">
+            Ezt a levelet a Vastaps küldte, mert valaki ezzel az e-mail-címmel
+            tett valamit az alkalmazásban. Ha nem te voltál, nincs teendőd —
+            a levél magától érvényét veszti.
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>

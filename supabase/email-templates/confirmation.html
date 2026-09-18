@@ -1,0 +1,10 @@
+<p style="margin:0 0 12px;">Szia{{ if .Data.name }} {{ .Data.name }}{{ end }}!</p>
+<p style="margin:0 0 12px;">
+  Ezzel a címmel — <strong>{{ .Email }}</strong> — fiók készült a Vastapsban.
+  Egy kattintás, és be tudsz lépni.
+</p>
+{{BUTTON href="{{ .ConfirmationURL }}" label="Megerősítem a címem"}}
+<p style="margin:18px 0 0;font-family:Helvetica,Arial,sans-serif;font-size:13px;line-height:1.5;color:#574a42;">
+  A link 24 óráig érvényes. Ha nem te hoztad létre a fiókot, hagyd
+  figyelmen kívül: megerősítés nélkül nem lesz aktív.
+</p>

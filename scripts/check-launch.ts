@@ -26,9 +26,12 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { config } from "dotenv";
 
-import appConfig from "../app.config";
+import appConfig, { PRODUCTION_HOST } from "../app.config";
 import { legalDocuments, operator, operatorDetailsComplete } from "../i18n/legal";
+
+config();
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const enforceStores = process.argv.includes("--stores");
@@ -284,13 +287,6 @@ storeCheck(
 // They are reported as reminders rather than failures, so the exit code stays
 // meaningful for the parts that *can* be verified.
 const reminders = [
-  "Supabase → Authentication: 'Confirm email' is off, and stays off for the closed test — " +
-    "decided 2026-09-08, not an oversight. Only the allowlisted testers can install the app, so " +
-    "there is no stranger to impersonate anybody. It has to go back on before the public " +
-    "release, and NOT on its own: the built-in mailer allows a couple of emails an hour on " +
-    "'best-effort' availability, so turning it on without custom SMTP means some sign-ups get " +
-    "no mail and no error. Custom SMTP first, which needs a domain — vastaps.pages.dev is not " +
-    "one — then the toggle.",
   "Have the legal documents read by somebody qualified. They describe this system accurately, " +
     "which is the half that needed someone who had read the code — not the half that needs a lawyer.",
   "Supabase plan: the free tier is 500MB database / 1GB storage / 5GB egress, and the mirrored " +
@@ -341,18 +337,105 @@ function report(title: string, list: Check[], notes: string[]) {
   return outstanding.length;
 }
 
-const failed = report("Web launch", checks, reminders);
-const storeFailed = report("App stores", storeChecks, storeReminders);
+// ------------------------------------------------- what the services say
+//
+// The checks above read this repository. These read the Supabase project the
+// app talks to, because the settings that matter most for a stranger's first
+// hour — where the e-mailed links land, whether the mail is sent at all —
+// live in a console, no commit records a change to them, and they fail by
+// quietly redirecting somewhere else rather than by erroring (T-004 sat
+// broken for a week with every check green; T-022 is this section).
+//
+// It needs the account token, which is not in CI on purpose — it opens every
+// project on the account, not this one — so without it the section is
+// reported as unchecked rather than failed.
+async function checkAuthConfig(): Promise<void> {
+  const token = process.env.SUPABASE_ACCESS_TOKEN;
+  const ref = (process.env.EXPO_PUBLIC_SUPABASE_URL ?? "").match(/^https:\/\/([a-z]{20})\.supabase\.co/)?.[1];
+  if (!token || !ref) {
+    reminders.unshift(
+      "Supabase auth settings were NOT checked: SUPABASE_ACCESS_TOKEN or EXPO_PUBLIC_SUPABASE_URL " +
+        "is missing from .env. Run this where .env is complete before a release."
+    );
+    return;
+  }
 
-console.log(
-  `${checks.length - failed}/${checks.length} web checks passed, ` +
-    `${storeChecks.length - storeFailed}/${storeChecks.length} store checks passed`
-);
+  const res = await fetch(`https://api.supabase.com/v1/projects/${ref}/config/auth`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    check("Supabase auth settings could be read", false, `GET config/auth answered HTTP ${res.status}.`);
+    return;
+  }
+  const auth = (await res.json()) as {
+    site_url?: string;
+    uri_allow_list?: string;
+    mailer_autoconfirm?: boolean;
+    external_email_enabled?: boolean;
+    smtp_host?: string | null;
+    smtp_admin_email?: string | null;
+    rate_limit_email_sent?: number;
+  };
 
-if (!enforceStores && storeFailed > 0) {
-  console.log(
-    "\nThe store checks are reported but not enforced. Pass --stores to make them count."
+  const origin = `https://${PRODUCTION_HOST}`;
+  const allowed = (auth.uri_allow_list ?? "").split(",").map((s) => s.trim());
+
+  check(
+    `Supabase Site URL is ${origin}`,
+    auth.site_url === origin,
+    `It is "${auth.site_url}". Every e-mailed link without a redirect of its own lands here. ` +
+      "Authentication → URL Configuration, or PATCH config/auth {site_url}."
+  );
+  check(
+    "The redirect allow list has the production origin, bare and with /**",
+    allowed.includes(origin) && allowed.includes(`${origin}/**`),
+    "A /** pattern does not match its own bare origin, which is what Linking.createURL('/') " +
+      "produces (T-004). Both forms, or the confirmation link falls back to the Site URL."
+  );
+  check(
+    "The redirect allow list has the app scheme, bare and with /**",
+    allowed.includes("szinhaztracker://") && allowed.includes("szinhaztracker://**"),
+    "On a device the links come back on szinhaztracker://; without it on the list they land on " +
+      "the Site URL in a browser and the app never sees them."
+  );
+  check(
+    "Mail goes out through custom SMTP, from an address on our own domain",
+    Boolean(auth.smtp_host) && Boolean(auth.smtp_admin_email) && auth.external_email_enabled !== false,
+    "The built-in mailer delivers only to the project's own team members, two an hour. " +
+      "Authentication → SMTP settings, with a sender the domain's SPF/DKIM records vouch for (T-005)."
+  );
+  check(
+    "Sign-up requires e-mail confirmation",
+    auth.mailer_autoconfirm === false,
+    "With it off anyone can sign up as anyone (T-005). Turn it on only AFTER custom SMTP is " +
+      "configured — with the built-in mailer every stranger's confirmation is refused and nobody " +
+      "can sign up at all. Authentication → Sign In / Providers → Confirm email."
+  );
+  check(
+    "The mail rate limit is above the 30/hour Supabase sets when SMTP is first configured",
+    (auth.rate_limit_email_sent ?? 0) > 30,
+    "Authentication → Rate Limits → Emails. Thirty an hour is one bad evening."
   );
 }
 
-process.exit(failed > 0 || (enforceStores && storeFailed > 0) ? 1 : 0);
+async function main(): Promise<void> {
+  await checkAuthConfig();
+
+  const failed = report("Web launch", checks, reminders);
+  const storeFailed = report("App stores", storeChecks, storeReminders);
+
+  console.log(
+    `${checks.length - failed}/${checks.length} web checks passed, ` +
+      `${storeChecks.length - storeFailed}/${storeChecks.length} store checks passed`
+  );
+
+  if (!enforceStores && storeFailed > 0) {
+    console.log(
+      "\nThe store checks are reported but not enforced. Pass --stores to make them count."
+    );
+  }
+
+  process.exit(failed > 0 || (enforceStores && storeFailed > 0) ? 1 : 0);
+}
+
+main();

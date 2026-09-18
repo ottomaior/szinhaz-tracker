@@ -25,3 +25,4 @@ expo-env.d.ts
 # @end expo-cli
 # Rendered promo video — regenerate with `npm run promo`, do not commit.
 promo/out/
+supabase/email-templates/out/

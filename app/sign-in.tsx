@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { View, StyleSheet, Pressable, TextInput } from "react-native";
 import { useRouter } from "expo-router";
+import { isAuthApiError } from "@supabase/supabase-js";
 import { colors } from "@/theme/colors";
 import { inputFontSize } from "@/theme/type";
 import { gutter, radius, space } from "@/theme/tokens";
 import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
-import { authErrorMessage, signIn } from "@/services/authService";
+import { authErrorMessage, resendConfirmation, signIn } from "@/services/authService";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { ContentColumn } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
@@ -24,6 +25,14 @@ export default function SignInScreen() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
+  /**
+   * Set when the sign-in failed because the address was never confirmed —
+   * the one failure a person cannot fix by typing more carefully. It puts a
+   * resend link under the error, since the alternative is signing up again,
+   * which fails with "already exists" and sends nothing.
+   */
+  const [unconfirmed, setUnconfirmed] = useState(false);
+  const [resending, setResending] = useState(false);
 
   async function handleSubmit() {
     if (submitting) return;
@@ -36,14 +45,30 @@ export default function SignInScreen() {
       return;
     }
     setError(undefined);
+    setUnconfirmed(false);
     setSubmitting(true);
     try {
       await signIn(email.trim(), password);
       closeModal(router);
     } catch (e) {
       setError(authErrorMessage(e));
+      setUnconfirmed(isAuthApiError(e) && e.code === "email_not_confirmed");
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleResend() {
+    if (resending) return;
+    setResending(true);
+    try {
+      await resendConfirmation(email.trim());
+      setError(strings.auth.resentConfirmation);
+      setUnconfirmed(false);
+    } catch (e) {
+      setError(authErrorMessage(e));
+    } finally {
+      setResending(false);
     }
   }
 
@@ -82,6 +107,13 @@ export default function SignInScreen() {
           <Text accessibilityRole="alert" variant="bodySmall" tone="accent">
             {error}
           </Text>
+        )}
+        {unconfirmed && (
+          <Pressable onPress={handleResend} disabled={resending} accessibilityRole="button">
+            <Text variant="bodySmall" style={{ color: colors.gold }}>
+              {strings.auth.resendConfirmation}
+            </Text>
+          </Pressable>
         )}
 
         {/* The button used to only dim while submitting, so a second tap fired

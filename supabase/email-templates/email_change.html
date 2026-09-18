@@ -1,0 +1,11 @@
+<p style="margin:0 0 12px;">Szia!</p>
+<p style="margin:0 0 12px;">
+  Azt kérted, hogy a fiókod e-mail-címe <strong>{{ .Email }}</strong> helyett
+  <strong>{{ .NewEmail }}</strong> legyen. Erősítsd meg, és a következő
+  belépéstől már az új cím él.
+</p>
+{{BUTTON href="{{ .ConfirmationURL }}" label="Megerősítem az új címet"}}
+<p style="margin:18px 0 0;font-family:Helvetica,Arial,sans-serif;font-size:13px;line-height:1.5;color:#574a42;">
+  Ha nem te kérted a módosítást, ne kattints a gombra — a fiókod a régi
+  címen marad.
+</p>

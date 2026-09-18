@@ -6,7 +6,7 @@ import { inputFontSize } from "@/theme/type";
 import { gutter, radius, space } from "@/theme/tokens";
 import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
-import { PASSWORD_MIN_LENGTH, authErrorMessage, signUp } from "@/services/authService";
+import { PASSWORD_MIN_LENGTH, authErrorMessage, resendConfirmation, signUp } from "@/services/authService";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { ContentColumn } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
@@ -35,6 +35,22 @@ export default function SignUpScreen() {
    * on, leaving people signed out with no idea an e-mail is waiting for them.
    */
   const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
+  /** What the resend link said last: nothing, "sent again", or an error. */
+  const [resendNote, setResendNote] = useState<string>();
+  const [resending, setResending] = useState(false);
+
+  async function handleResend() {
+    if (resending) return;
+    setResending(true);
+    try {
+      await resendConfirmation(email.trim());
+      setResendNote(strings.auth.resentConfirmation);
+    } catch (e) {
+      setResendNote(authErrorMessage(e));
+    } finally {
+      setResending(false);
+    }
+  }
 
   async function handleSubmit() {
     if (submitting) return;
@@ -84,6 +100,18 @@ export default function SignUpScreen() {
             <Text variant="bodySmall" tone="faint">
               {strings.auth.confirmEmailSpam}
             </Text>
+            {resendNote && (
+              <Text accessibilityRole="alert" variant="bodySmall" tone="accent">
+                {resendNote}
+              </Text>
+            )}
+            <Button
+              label={strings.auth.resendConfirmation}
+              variant="outline"
+              onPress={handleResend}
+              loading={resending}
+              disabled={resending}
+            />
             <Button
               label={strings.auth.signInButton}
               variant="outline"
