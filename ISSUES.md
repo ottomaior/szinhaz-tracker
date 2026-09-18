@@ -371,6 +371,32 @@ does for its own subject. Reads only; nothing changes in the data.
 
 **Depends on.** Nothing.
 
+### T-101 · Import a ticket, show it at the door
+type: idea · area: diary · size: L · status: idea · added: 2026-09-18
+
+**The problem.** On the evening itself the ticket is in an e-mail somewhere,
+a PDF in a downloads folder, or a screenshot two hundred photos back. The app
+already knows which evening you are going to; it could be the one place the
+ticket is found when the usher asks for it.
+
+**Roughly.** Import from the ticket PDF or a forwarded confirmation
+(jegy.hu, InterTicket, the theatres' own systems), attach it to the waitlist
+entry for that evening, and show it full-screen with the barcode at maximum
+brightness from the entry — offline, since venue lobbies have no signal.
+Parsing the ticket could also fill in the seat and the price, which today are
+typed by hand. Storage would have to be private to the account from the first
+byte: a private bucket, signed URLs with short lives, or the file kept only on
+the device and never uploaded at all — the on-device version is the one that
+needs no policy paragraph.
+
+**Depends on.** Settling how this squares with T-094: the ticket photo was
+retired on 18 September precisely because a ticket carries a name and a
+booking code. This is the same object with the barcode too, and the only
+difference is where it lives and what it is for — a device-only wallet
+sidesteps the problem, a server-side one reopens it and needs the plumbing
+T-094 declined to build. Also on whether the theatres' ticket formats are
+stable enough to parse, which a survey of a season's worth of PDFs would tell.
+
 ---
 
 ## Open
@@ -3073,4 +3099,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-101**
+Next free id: **T-102**
