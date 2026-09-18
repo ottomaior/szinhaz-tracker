@@ -69,28 +69,6 @@ stops the same idea being re-proposed and re-argued in six months.
 
 Proposals, not plans. Unordered — nothing here is next up until it is chosen.
 
-### T-083 · A first run that actually runs
-type: idea · area: profile · size: M · status: idea · added: 2026-09-18
-
-**The problem.** Sign-up closes its modal and drops the person wherever they
-were. The archive grid in `app/onboarding.tsx` is good and nobody sees it
-unless they open an empty profile and notice the button (`profile.tsx`). A
-new account has no city set, follows nothing, and its inbox will therefore
-never have anything in it — the app's best reason to come back is switched
-off by default.
-
-**Roughly.** Three or four short steps after the first sign-in, each with a
-visible "later": confirm the name and handle (only when a provider sent none,
-see T-082); pick a city (`profiles.city`, which Discover already reads);
-follow the theatres of that city as tappable cards (`subject_follows` exists);
-then the existing "which of these have you seen" grid. One closing screen
-saying what the inbox will now do. Gated on an additive, nullable
-`profiles.onboarded_at`, no backfill, so no existing account sees it. No step
-pre-selects an answer.
-
-**Depends on.** T-082 for the name step. The notification pre-prompt (T-089)
-is what the closing screen should lead into once it exists.
-
 ### T-084 · Sign in with a link from the mail
 type: idea · area: auth · size: S · status: idea · added: 2026-09-18
 
@@ -960,6 +938,38 @@ _Nothing yet._
 ---
 
 ## Done
+
+### T-083 · A first run that actually runs
+type: idea · area: profile · size: M · status: done · added: 2026-09-18
+
+**The problem.** Sign-up closes its modal and drops the person wherever they
+were. The archive grid in `app/onboarding.tsx` is good and nobody sees it
+unless they open an empty profile and notice the button (`profile.tsx`). A
+new account has no city set, follows nothing, and its inbox will therefore
+never have anything in it — the app's best reason to come back is switched
+off by default.
+
+**Roughly.** Three or four short steps after the first sign-in, each with a
+visible "later": confirm the name and handle (only when a provider sent none,
+see T-082); pick a city (`profiles.city`, which Discover now opens on, once);
+follow the theatres of that city as tappable cards (`subject_follows` exists);
+then the existing "which of these have you seen" grid. One closing screen
+saying what the inbox will now do. Gated on an additive, nullable
+`profiles.onboarded_at`, no backfill, so no existing account sees it. No step
+pre-selects an answer.
+
+**Depends on.** T-082 for the name step. The notification pre-prompt (T-089)
+is what the closing screen should lead into once it exists.
+
+**Done, 18 September 2026.** `components/FirstRunGate.tsx` in the tabs
+layout, `app/first-run.tsx`, `0061_the_first_run.sql`, and `app/onboarding.tsx`
+taking `?next=first-run&city=…`. Walked end to end on the dev server with the
+"Otto Google" test account: the gate opened the flow after a Google sign-in,
+the name step was skipped for a real name, city and one theatre were saved,
+the grid opened on Debrecen, one tick became an undated unrated diary row,
+the closing screen led to Discover already set to Debrecen, and a reload did
+not reopen it. The permission pre-prompt (T-089) is still the missing
+closing beat.
 
 ### T-082 · Sign in with Google, and with Apple when there is an account to register it under
 type: idea · area: auth · size: M · status: done · added: 2026-09-18

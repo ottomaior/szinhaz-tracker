@@ -144,6 +144,12 @@ export default function FirstRunScreen() {
     closeModal(router, "/(tabs)/discover");
   }
 
+  // The closing button names its destination, so it goes there rather than
+  // back to whichever tab the gate happened to open over.
+  function goToDiscover() {
+    router.replace("/(tabs)/discover");
+  }
+
   async function saveName() {
     if (saving) return;
     const trimmedName = name.trim();
@@ -215,7 +221,7 @@ export default function FirstRunScreen() {
               <Text variant="body" tone="dim">
                 {strings.firstRun.doneBody}
               </Text>
-              <Button label={strings.firstRun.doneButton} onPress={leave} />
+              <Button label={strings.firstRun.doneButton} onPress={goToDiscover} />
             </View>
           </StepPane>
         </ContentColumn>
