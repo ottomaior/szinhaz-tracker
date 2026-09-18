@@ -311,7 +311,7 @@ vannak kifejtve a megadott azonosítók alatt.
 | **6.4** | **Telepíthető**: a 2. fázis 2.1-e (manifest, ikonok, „add a kezdőképernyőhöz" kártya) · **kész** · plusz hibafigyelés (5.1), ami egy Sentry-projektre és annak DSN-jére vár | S–M | egy Sentry DSN Ottótól |
 | **6.5** | **Értesítések, amik megérkeznek**: a 2. fázis Web Pushja, natív push az Expón át ugyanabba a táblába, fajtánkénti kapcsolók, és az engedélykérés a jó pillanatban — T-089 · **kész** weben; a natív a következő EAS buildre vár | L | — |
 | **6.6** | **A heti levél** a Resenden át — T-090 · **kész**; hétfőnként a szinkronból | M | — |
-| **6.7** | **Bejelentkezés Apple-lel**, OTA-frissítések (T-014), az ikon a valódi méreteiben (T-013), jelszó- és címváltás a Beállításokban (T-092) | M | egy Apple Developer-fiók |
+| **6.7** | **Bejelentkezés Apple-lel**, ~~OTA-frissítések (T-014)~~ **kész**, az ikon a valódi méreteiben (T-013), jelszó- és címváltás a Beállításokban (T-092) | M | egy Apple Developer-fiók |
 
 Szándékosan nincs a listán: fizetős csomag, sorozatok és jelvények, a
 nyilvános átlag (szándékkal került le), animált szöveg, admin alkalmazás. Egy
@@ -428,7 +428,7 @@ Ezen a listán semmi nem mérnöki munka.
 | A mélylinkek nincsenek igazolva | Az alkalmazás felőli igény be van állítva; a `/.well-known/apple-app-site-association`-höz és a `/.well-known/assetlinks.json`-höz kell az Apple Team ID és a Play App Signing ujjlenyomata. A kulcstároló már létezik, tehát az Android fele elérhető, amint van Play Console, ahonnan az aláíró kulcs kiolvasható. A `scripts/write-well-known.ts` megírja mindkettőt. |
 | Az ikonokat bolti méretben nem látta senki | 1024×1024-esek, az iOS-es teljesen átlátszatlan, az Android előtér a 66%-os biztonságos zónán belül — tehát *érvényesek*. Azt viszont senki nem nézte meg, hogy 48 pontosan, más alkalmazások mellett a polcon hogyan festenek. |
 | A megosztókártya csak webes | Canvas-alapú; natívhoz `react-native-view-shot` kell. Most már ellenőrizhető egy valódi eszközre készült buildben, ami korábban nem létezett. |
-| Nincs OTA-frissítés | Az `expo-updates` nincs telepítve. Nem akadály, de egy bolti alkalmazás nélküle minden JavaScript-javításhoz egy teljes felülvizsgálati kört jelent. Érdemes az első beadás *előtt* eldönteni, nem utána. |
+| ~~Nincs OTA-frissítés~~ **kész** | Az `expo-updates` telepítve van, fingerprint futásiverzió-szabállyal és EAS-profilonként egy csatornával (T-014). Egy JavaScript-javítás az `eas update --channel preview` paranccsal megy ki, és a következő indításkor érkezik meg; natív változáshoz továbbra is build kell. |
 | Az iOS-t soha nem fordítottuk le | Az `expo prebuild` Windowsról nem generál Xcode-projektet, így az adatvédelmi manifest és az entitlementek továbbra sincsenek kipróbálva. Az első EAS iOS build az, ahol először tesztelődnek — ahhoz pedig kell az Apple fejlesztői fiók. |
 A fióktörlés és a jogi oldalak **készen vannak** (1. fázis), és mindkét bolt
 követelményét kielégítik, beleértve a Google webről elérhető törlési URL-jét is.
