@@ -69,6 +69,209 @@ stops the same idea being re-proposed and re-argued in six months.
 
 Proposals, not plans. Unordered — nothing here is next up until it is chosen.
 
+### T-083 · A first run that actually runs
+type: idea · area: profile · size: M · status: idea · added: 2026-09-18
+
+**The problem.** Sign-up closes its modal and drops the person wherever they
+were. The archive grid in `app/onboarding.tsx` is good and nobody sees it
+unless they open an empty profile and notice the button (`profile.tsx`). A
+new account has no city set, follows nothing, and its inbox will therefore
+never have anything in it — the app's best reason to come back is switched
+off by default.
+
+**Roughly.** Three or four short steps after the first sign-in, each with a
+visible "later": confirm the name and handle (only when a provider sent none,
+see T-082); pick a city (`profiles.city`, which Discover already reads);
+follow the theatres of that city as tappable cards (`subject_follows` exists);
+then the existing "which of these have you seen" grid. One closing screen
+saying what the inbox will now do. Gated on an additive, nullable
+`profiles.onboarded_at`, no backfill, so no existing account sees it. No step
+pre-selects an answer.
+
+**Depends on.** T-082 for the name step. The notification pre-prompt (T-089)
+is what the closing screen should lead into once it exists.
+
+### T-084 · Sign in with a link from the mail
+type: idea · area: auth · size: S · status: idea · added: 2026-09-18
+
+**The problem.** A password is the one thing about an account people forget,
+and the recovery loop is three screens and a mail. Somebody who signs in twice
+a season should not have to remember anything.
+
+**Roughly.** `signInWithOtp` with `emailRedirectTo`, a "send me a link" text
+button under the password field, and a "check your inbox" state like the
+sign-up one. Custom SMTP and the `magic_link.html` template already exist;
+`consumeAuthLink` already turns the link into a session on a device.
+
+**Depends on.** Nothing. Worth doing after T-082 so the sign-in screen is
+rearranged once, not twice.
+
+### T-085 · A toast, and an undo on it
+type: idea · area: design · size: M · status: idea · added: 2026-09-18
+
+**The problem.** Successes are silent and errors are a line of accent text
+somewhere on the form. Removing a play from the watchlist, deleting an
+evening, saving the profile — none of them answers, and the destructive ones
+have no way back except a confirmation dialog in front (T-078 is what that
+costs when the dialog is missing).
+
+**Roughly.** One `Toast` component mounted once in `app/_layout.tsx`, bottom
+on phones and top-right from the `expanded` breakpoint, driven by a small
+context (`showToast({ message, action })`). Used first for watchlist
+add/remove with undo, entry delete with undo, list-entry removal (T-078),
+copy-link and profile saved. Respects reduced motion like `components/motion/`.
+
+**Depends on.** Nothing.
+
+### T-086 · Haptics on the mask, the bookmark and the save
+type: idea · area: native · size: S · status: idea · added: 2026-09-18
+
+**The problem.** On a phone the app is silent to the hand. Every logging app
+people call "nice" answers a rating tap and a save with a tick you can feel.
+
+**Roughly.** `expo-haptics` behind one `haptic("light" | "selection" |
+"success")` helper that is a no-op on web: light on each mask in the rating
+row, selection on filter chips and the palette picker, success on check-in
+save and on following someone. Ten call sites.
+
+**Depends on.** A native rebuild, since it is a native module — fold it into
+the next EAS build rather than triggering one for it.
+
+### T-087 · An error boundary in the house style
+type: idea · area: web · size: S · status: idea · added: 2026-09-18
+
+**The problem.** A render error anywhere shows expo-router's red default, in
+English, on a page that a minute ago was velvet and gold. T-055 gave unknown
+URLs a proper page; a thrown error still has none.
+
+**Roughly.** `ErrorBoundary` exported from `app/_layout.tsx` (expo-router
+picks it up per route), drawn with `EmptyState`'s vocabulary: what happened
+in one line, a retry, and a link to the contact address. Report the error to
+whatever 5.1 (error monitoring) chooses when that exists.
+
+**Depends on.** Nothing; 5.1 makes it useful rather than merely tidy.
+
+### T-088 · Say when the phone is offline
+type: idea · area: native · size: S · status: idea · added: 2026-09-18
+
+**The problem.** A theatre foyer, a basement stúdió, a train: the app shows a
+blank grid or a spinner that never ends, and nothing says why. That reads as
+broken rather than as offline.
+
+**Roughly.** `@react-native-community/netinfo` (and `navigator.onLine` on
+web) behind one hook, a thin banner under the header while there is no
+connection, and the last loaded Discover lead kept in memory so the screen
+is not empty. Not an offline-first rewrite.
+
+**Depends on.** Nothing.
+
+### T-089 · Ask for notifications at the right moment, and on a phone too
+type: idea · area: notifications · size: L · status: idea · added: 2026-09-18
+
+**The problem.** Phase 2 of the backlog plans Web Push; the native app has no
+push path at all, and neither plan says *when* to ask. An OS permission
+dialog at launch is refused by most people and can never be shown again.
+
+**Roughly.** Delivery: `expo-notifications` and the Expo push service for the
+native app, writing into the same `push_subscriptions` table Phase 2 creates
+with a `platform` column, so one `send-push` function fans out to both. The
+ask: an in-app card, shown once, right after the first watchlist add or at
+the end of the first run (T-083), saying what will arrive — "we tell you the
+evening before" — and only then the OS dialog. `playing_tomorrow` with the
+poster and a deep link to the play is the first and most valuable one; ship
+that, then the rest. Per-kind toggles in Settings.
+
+**Depends on.** Phase 2 (2.3 and 2.4 in particular), a VAPID keypair from
+Ottó, and a development build for native (Expo Go no longer carries push
+from SDK 54).
+
+### T-090 · A weekly letter: this week in your theatres
+type: idea · area: notifications · size: M · status: idea · added: 2026-09-18
+
+**The problem.** Push reaches only the people who allowed it on a device that
+supports it. E-mail reaches everyone from day one, and a well-set weekly mail
+is what most culture products are actually remembered by.
+
+**Roughly.** An Edge Function run after the nightly sync on one weekday,
+reading the week's `notifications` rows per user plus the programme of the
+theatres they follow, rendering one mail in the auth templates' style through
+Resend, with an unsubscribe link that writes a profile flag. Copy from
+`i18n/hu.ts`, never re-typed.
+
+**Depends on.** A sender address and the digest opt-in setting; the same
+`send-push` shape as T-089 so the two never disagree about what was sent.
+
+### T-091 · A widget for the next evening
+type: idea · area: native · size: L · status: idea · added: 2026-09-18
+
+**The problem.** The most glanceable fact the app holds — the next evening
+you have a ticket for, and what is on this week at the houses you follow —
+is three taps deep.
+
+**Roughly.** An iOS home-screen widget and an Android app widget showing the
+next watchlisted performance with its poster, and a Live Activity on show
+day with the curtain time. Needs a native module (`expo-widgets` or a
+config plugin with SwiftUI / Glance code) and a small read endpoint.
+
+**Depends on.** An iOS build existing at all (Part A), and a watchlist that
+knows which night (T-081 raises the same question).
+
+### T-092 · Change the password or the address from Settings
+type: idea · area: profile · size: S · status: idea · added: 2026-09-18
+
+**The problem.** The only way to change a password is to pretend to have
+forgotten it, and there is no way to change the e-mail address at all,
+although the Supabase template for it exists.
+
+**Roughly.** Two rows in `app/settings.tsx` opening small modals:
+`updateUser({ password })` behind a re-typed current password, and
+`updateUser({ email })` with the "confirm on both addresses" flow the project
+already has the template for. Once T-082 ships, the account also needs a
+line saying which providers are linked.
+
+**Depends on.** Nothing.
+
+### T-093 · Every screen that loads shows a skeleton, and pulls to refresh
+type: idea · area: design · size: M · status: idea · added: 2026-09-18
+
+**The problem.** `components/ui/Skeleton` is used on four screens; the feed,
+the watchlist, the profile, play detail and the evening page open on a blank
+or a spinner. None of the four tabs pulls to refresh, so a stale feed stays
+stale until the app is reopened.
+
+**Roughly.** A skeleton per list shape (feed card, programme row, grid tile,
+detail header) and `RefreshControl` on the four tabs; make watchlist and
+follow writes optimistic the way the heart already is (T-901).
+
+**Depends on.** Nothing.
+
+### T-081 · Tell somebody when the evening they are waiting for changes
+type: idea · area: notifications · size: L · status: idea · added: 2026-09-18
+
+**The problem.** Somebody puts *A nagy Gatsby* on their watchlist, perhaps
+with a particular night in mind, and then the theatre moves the date or
+cancels the performance. Today the only way to find out is to open the play
+page again and notice. The notification the app already sends about dates
+(`dates_published`, `playing_tomorrow`) tells people that a run exists; it
+says nothing when the run changes under them, which is the moment they most
+need it.
+
+**Roughly.** Two halves. The data half: the sync has to *see* a change — a
+`performances` row whose `starts_at` moved, or one that disappeared from the
+theatre's programme — and record it as an event rather than silently
+overwriting or deleting the row (a `performance_changes` log, or
+`cancelled_at` / `previous_starts_at` columns). The product half: a
+`watchlist_entries` row is a play, not a night (`play_id, user_id, added_at`),
+so either the watchlist learns to hold an optional chosen `performance_id`, or
+the notification fires for any change to a watchlisted play's upcoming dates.
+Then two more `notifications.kind` values (`performance_moved`,
+`performance_cancelled`), a trigger in the shape of the 0032 ones, and a row
+in the inbox that says what changed, from what, to what.
+
+**Depends on.** The sync being able to tell "cancelled" from "the theatre's
+page failed to load today" — a false cancellation notice is worse than none.
+T-065 is the smaller notification to do first and would settle the pattern.
+
 ### T-065 · Tell somebody when they gain a follower
 type: idea · area: notifications · size: S · status: idea · added: 2026-09-11
 
@@ -283,6 +486,47 @@ show timestamps at all, which is a design change rather than a content one.
 ---
 
 ## Open
+
+### T-078 · One tap on a list entry removes it; editing should be a mode
+type: bug · area: web · priority: high · status: open · added: 2026-09-18
+
+Ottó removed a play from the Debrecen list by accident: on `/list/[id]` the
+owner's *Levesz* control sits inside every row, always live, and a tap meant
+for the row itself hits it. There is no confirmation and no undo, and the
+entry is gone from the database (`removeFromList` in `app/list/[id].tsx`).
+Expected: a list is read-only until its owner enters *Szerkesztés* — the
+page already has an `editing` state for the title and description, and the
+per-row remove control should only appear in that same mode. Only the list's
+author (and the admin) may edit at all; that part holds today via `isOwner`
+and RLS, it is the always-on remove that is wrong. Related: T-070 is about
+the same control's markup.
+
+### T-079 · Signed out, the watchlist and profile tabs show the same page
+type: bug · area: web · priority: med · status: open · added: 2026-09-18
+
+Open the app without a session and switch between the Watchlist and Profile
+tabs: both render `SignedOutState`, the same sign-in pitch with the same
+three bullets, only their order changing with the `lead` prop
+(`components/ui/SignedOutState.tsx`). Tapping a different tab and seeing what
+looks like the same screen reads as the app not responding, and the page
+never says *which* thing needs a sign-in. Each tab should at least say what
+it is (a heading "Várólista" / "Napló") and what the visitor would get here
+specifically, or show a public preview of the thing itself where one exists.
+
+### T-080 · The hero phones on vastaps.app flicker under the mouse
+type: bug · area: web · priority: low · status: open · added: 2026-09-18
+
+On https://vastaps.app/, moving the mouse over the two phone screenshots in
+the hero makes them flicker. The tilt handler in `landing/index.html` writes
+`el.style.transform` on every `pointermove` and clears it on `pointerleave`,
+with a `.15s` transition on `.ph`. A guess at the cause: the tilt moves the
+phone under the cursor, and the two phones overlap (`.ph.a` over `.ph.b`),
+so near an edge the pointer alternately leaves one phone and enters the
+other, each leave snapping the transform back and each move re-applying it.
+A second guess: `base` is the computed `matrix(...)` captured once at load,
+so the rotation is applied on top of a matrix and the transition tweens
+between two differently-shaped transform lists. Reproduce with a mouse on
+desktop; touch is excluded by the handler.
 
 ### T-070 · A list entry's "Levesz" is a button inside a button
 type: bug · area: web · priority: low · status: open · added: 2026-09-11
@@ -711,7 +955,27 @@ where the `.hu` is ours.
 
 ## Doing
 
-_Nothing yet._
+### T-082 · Sign in with Google, and with Apple when there is an account to register it under
+type: idea · area: auth · size: M · status: doing · added: 2026-09-18
+
+**The problem.** The only way in is an e-mail address and a password typed
+twice, then a confirmation mail. On a phone that already holds a Google
+account this is the slow path, and it is the first thing a new person meets.
+
+**Roughly.** One "Folytatás Google-fiókkal" button above the form on both
+auth modals (`components/ui/SocialSignIn.tsx`), `signInWithOAuth` on the web
+and the system auth sheet through `expo-web-browser` on a device, with the
+redirect consumed by the same `consumeAuthLink` the e-mailed links use.
+`0060` teaches the sign-up trigger to read the name a provider sends. Sign in
+with Apple joins the moment an Apple Developer account exists — required on
+iOS by App Review 4.8 the day Google is offered there; web and Android can
+carry Google alone until then. The native Google sheet (`signInWithIdToken`
+with the Google SDK) is a later refinement over the browser flow.
+
+**Depends on.** A Google Cloud OAuth client (Ottó): callback
+`https://<ref>.supabase.co/auth/v1/callback`, then the provider switched on
+in Supabase — `check:launch` now says so. A native rebuild for
+`expo-web-browser`.
 
 ---
 
@@ -2500,4 +2764,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-078**
+Next free id: **T-094**

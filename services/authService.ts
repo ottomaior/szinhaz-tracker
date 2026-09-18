@@ -1,4 +1,6 @@
 import * as Linking from "expo-linking";
+import * as WebBrowser from "expo-web-browser";
+import { Platform } from "react-native";
 import { isAuthApiError } from "@supabase/supabase-js";
 import { supabase } from "@/services/supabase";
 import { authLinkParams } from "@/utils/authLink";
@@ -119,6 +121,51 @@ export async function consumeAuthLink(url: string | null): Promise<boolean> {
     return true;
   }
   return false;
+}
+
+/**
+ * Signs in, or up, with a Google account.
+ *
+ * The account is the same account: Supabase matches the provider's verified
+ * address against existing users, so somebody who registered with a password
+ * and later taps Google lands in their own diary rather than in a second one.
+ * A brand-new address goes through `handle_new_user()` like any other sign-up,
+ * with the display name read from what Google sent (0060) — and no
+ * confirmation mail, because Google has already vouched for the address.
+ *
+ * Two shapes, one flow. On the web `signInWithOAuth` leaves the page for
+ * Google and comes back to `redirectTo` with the session in the fragment,
+ * which `detectSessionInUrl` reads before anything renders — so on web this
+ * never resolves with a value worth reading; the tab is gone. On a device
+ * the same call is asked *not* to open anything (`skipBrowserRedirect`) and
+ * the URL it hands back is opened in the system's auth sheet instead — Safari
+ * View Controller, a Custom Tab — which closes itself when Google redirects
+ * to the app scheme, and the URL it closed on is consumed the way an e-mailed
+ * link is. The redirect is `Linking.createURL("/")` for the reason every
+ * other redirect here is: it is the current origin on web and the app scheme
+ * on a device, and both are on the project's allow list.
+ *
+ * Returns false when the person closed the sheet without finishing. That is
+ * a decision rather than a failure, and the screen shows nothing for it.
+ */
+export async function signInWithGoogle(): Promise<boolean> {
+  const redirectTo = Linking.createURL("/");
+  if (Platform.OS === "web") {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo },
+    });
+    if (error) throw error;
+    return false;
+  }
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo, skipBrowserRedirect: true },
+  });
+  if (error) throw error;
+  const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+  if (result.type !== "success") return false;
+  return consumeAuthLink(result.url);
 }
 
 export async function signIn(email: string, password: string) {

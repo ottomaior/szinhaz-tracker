@@ -195,6 +195,12 @@ const config: ExpoConfig = {
   plugins: [
     "expo-router",
 
+    // Sign in with Google opens the provider in the system's auth sheet rather
+    // than in the app (services/authService.ts). The plugin is what makes a
+    // Custom Tab available on Android; without it the sheet falls back to a
+    // plain browser tab that does not hand the redirect back.
+    "expo-web-browser",
+
     // SDK 54 removed the top-level `splash` key; the same settings live in this
     // plugin now. #120505 is the Velvet Curtain background, and it stays that
     // way whichever theme the reader has chosen: the splash is a native asset

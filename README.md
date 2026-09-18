@@ -1407,9 +1407,16 @@ features:
 - **Leave with its data.** `services/accountService.ts` writes the diary,
   ratings, lists, watchlist and follows out as one JSON file. Web only, and it
   says so, the same way the share card does.
-- **Recover a password.** There is no OAuth provider, no magic link and no
-  second factor here, so a forgotten password ended the account. `forgot-password`
-  and `reset-password` close that. The reset screen reads no token: the emailed
+- **Recover a password.** Until September 2026 there was no OAuth provider,
+  no magic link and no second factor here, so a forgotten password ended the
+  account. `forgot-password` and `reset-password` close that, and Sign in with
+  Google (`signInWithGoogle` in `services/authService.ts`, the button in
+  `components/ui/SocialSignIn.tsx`) is a second door: Supabase matches the
+  provider's verified address, so a password account that taps Google lands
+  in its own diary. On the web the provider redirects straight back; on a
+  device the system auth sheet closes on the app scheme and `consumeAuthLink`
+  reads the URL the same way it reads an e-mailed link. `0060` teaches the
+  sign-up trigger to read the name a provider sends. The reset screen reads no token: the emailed
   link carries one, `detectSessionInUrl` exchanges it for a short-lived session
   before the screen renders, and what remains is an ordinary password change.
 - **Read what it agreed to.** `app/legal/` carries the privacy policy, the

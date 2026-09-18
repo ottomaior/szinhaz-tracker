@@ -1471,9 +1471,17 @@ Még három dolog, amit egy fiók nem tudott — mind előfeltétel, nem funkci�
   JSON-fájlba írja ki a naplót, az értékeléseket, a listákat, a kívánságlistát és
   a követéseket. Csak böngészőben, és ezt ki is mondja, ugyanúgy, ahogy a
   megosztókártya teszi.
-- **Visszaszerezni egy jelszót.** Itt nincs OAuth-szolgáltató, nincs varázslink
-  és nincs második faktor, így egy elfelejtett jelszó megszüntette a fiókot. A
-  `forgot-password` és a `reset-password` ezt zárja le. A jelszóváltó képernyő
+- **Visszaszerezni egy jelszót.** 2026 szeptemberéig itt nem volt
+  OAuth-szolgáltató, varázslink és második faktor sem, így egy elfelejtett
+  jelszó megszüntette a fiókot. A `forgot-password` és a `reset-password` ezt
+  zárja le, a Google-fiókos bejelentkezés (`signInWithGoogle` a
+  `services/authService.ts`-ben, a gomb a `components/ui/SocialSignIn.tsx`-ben)
+  pedig egy második ajtó: a Supabase a szolgáltató által igazolt címet
+  párosítja, így egy jelszavas fiók, amelyik a Google-re koppint, a saját
+  naplójában landol. Weben a szolgáltató egyenesen visszairányít; eszközön a
+  rendszer hitelesítő lapja az app sémáján záródik be, és a `consumeAuthLink`
+  ugyanúgy olvassa az URL-t, ahogy egy e-mailben kapott linket. A `0060`
+  tanítja meg a regisztrációs triggert a szolgáltató küldte név olvasására. A jelszóváltó képernyő
   nem olvas tokent: az e-mailben küldött link hordoz egyet, a
   `detectSessionInUrl` ezt még a képernyő megjelenése előtt rövid életű
   munkamenetre váltja, és ami marad, az egy hétköznapi jelszóváltás.
