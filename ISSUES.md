@@ -904,6 +904,7 @@ the same control's markup.
 > description. Read-only otherwise, for the owner as for everybody else. The
 > markup problem in T-070 (a button inside a button) is unchanged and still
 > open.
+
 ### T-014 · Decide about OTA updates before the first submission, not after
 type: question · area: native · priority: low · status: done · added: 2026-09-09 · done: 2026-09-19
 
