@@ -62,6 +62,17 @@
         "--no-clipboard"
       ],
       "port": 8091
+    },
+    {
+      "name": "expo-web-clear",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "expo",
+        "start",
+        "--web",
+        "--clear"
+      ],
+      "port": 8081
     }
   ]
 }

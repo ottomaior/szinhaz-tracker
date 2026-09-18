@@ -112,7 +112,7 @@ mert minden rajta lévő elem a projekt életének nagy részében befejezetlen.
 
 ---
 
-## 2. fázis — PWA-alapok és Web Push · a weben ez következik
+## 2. fázis — PWA-alapok és Web Push · **kész** (a 6.4 és a 6.5 alatt)
 
 Ma nincs manifest, nincs service worker és nincs PWA-ikonkészlet; ez zöldmezős
 munka. A Web Push az egyetlen működő csatorna egy csak webes bemutatóhoz, iOS-en
@@ -126,7 +126,7 @@ EU-ban a DMA miatt, majd márciusban visszavonta — Magyarországon működnek.
 - **2.4** VAPID kulcspár a Supabase secretsben; `send-push` Edge Function, ami a `pushed_at is null` sorokat olvassa, a magyar szöveget **az `i18n/hu.ts`-ből importálva, nem újra begépelve** rendereli (a `0030` épp azért tárol strukturált `payload` jsonb-t, hogy az alkalmazás hangja egy fájlban éljen), `web-push`-sal küld, `pushed_at`-et bélyegez, és kiszórja a 404/410-et adó feliratkozásokat. A `sync/run.ts` végén hívva, a `generate_notifications()` után.
 - **2.5** Feliratkozó felület a Beállításokban: engedélykérés kifejezett gomb mögött (a Push API megköveteli), kapcsolók a hat meglévő `NotificationKind` értékre, és iOS Safarin egy „tedd ki a kezdőképernyőre" kártya, mert ott a `PushManager` egy sima lapon egyszerűen nincs. A `components/ui/FollowSubjectButton.tsx` ma kiírja, hogy még semmi nem megy ki; ez a szöveg ekkor kerül ki.
 
-> **Ottó nélkül nem fejezhető be:** kell egy VAPID kulcspár — a privát fele a Supabase secretsbe, a publikus fele a Railway build változói közé. A `Dockerfile` build időben süti be az `EXPO_PUBLIC_*` értékeket, így a Railway változónak *a push előtt* léteznie kell, különben a telepítés csendben nélküle megy ki.
+> **Megoldva, 2026. szeptember 18.** A VAPID kulcspár elkészült és a helyére került: a privát fele Supabase function secret, a publikus fele az `app.config.ts` `extra` blokkjában — természeténél fogva publikus, így nem kell hozzá build változó sem a Railwayen, sem az EAS-en. A 2.2–2.5 a 6.5 alatt szállt le, két eltéréssel a tervtől: a migráció `0062`, nem `0038`, és a küldő a natív app `expo` sorait is viszi.
 
 Szándékosan csatorna-formájú: a `notifications` sorok, a dedupe kulcsok és a
 szövegek változatlanul újrahasznosulnak, amikor jön a natív push; csak a küldő
@@ -309,7 +309,7 @@ vannak kifejtve a megadott azonosítók alatt.
 | **6.2** | **Egy első futás, ami tényleg lefut**: név, ha hiányzik, város, a város színházainak követése, az archívumrács, egy záró képernyő; a `profiles.onboarded_at` kapuzza — T-083 · **kész** | M | 6.1 |
 | **6.3** | **A visszajelzési réteg**: toast visszavonással (T-085), haptika (T-086), hibahatár (T-087), offline sáv (T-088), csontváz és lehúzva frissítés (T-093) · **kész**, a napló csontváza és az optimista írások kivételével | M | semmi |
 | **6.4** | **Telepíthető**: a 2. fázis 2.1-e (manifest, ikonok, „add a kezdőképernyőhöz" kártya) · **kész** · plusz hibafigyelés (5.1), ami egy Sentry-projektre és annak DSN-jére vár | S–M | egy Sentry DSN Ottótól |
-| **6.5** | **Értesítések, amik megérkeznek**: a 2. fázis Web Pushja, natív push az Expón át ugyanabba a táblába, fajtánkénti kapcsolók, és az engedélykérés a jó pillanatban; a `playing_tomorrow` az első — T-089 | L | VAPID-kulcsok; egy development build |
+| **6.5** | **Értesítések, amik megérkeznek**: a 2. fázis Web Pushja, natív push az Expón át ugyanabba a táblába, fajtánkénti kapcsolók, és az engedélykérés a jó pillanatban — T-089 · **kész** weben; a natív a következő EAS buildre vár | L | — |
 | **6.6** | **A heti levél** a Resenden át — T-090 | M | a 6.5 küldője |
 | **6.7** | **Bejelentkezés Apple-lel**, OTA-frissítések (T-014), az ikon a valódi méreteiben (T-013), jelszó- és címváltás a Beállításokban (T-092) | M | egy Apple Developer-fiók |
 

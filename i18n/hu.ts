@@ -4,6 +4,7 @@
  * second language (or a copy change) touches this file only.
  */
 import { elapsedSince } from "@/utils/datetime";
+import { notificationLines } from "./notificationCopy";
 
 /** Hungarian number words for the curtains heading on Discover. */
 const CURTAIN_WORDS: Record<number, string> = {
@@ -641,18 +642,10 @@ export const strings = {
     emptyBody:
       "Tegyél előadásokat a kívánságlistádra, vagy kérj értesítést egy alkotótól vagy színháztól — itt szólunk, ha történik velük valami.",
     signInPrompt: "Jelentkezz be az értesítéseidhez",
-    /* One line per kind. The production's title is the row's heading, so these
-       say what happened to it rather than repeating the name. */
-    datesPublished: (through: string, count: number) =>
-      count === 1
-        ? `Új játszási időpont, ${through}-ig.`
-        : `${count} új játszási időpont, ${through}-ig.`,
-    playingTomorrow: (time: string, room?: string) =>
-      room ? `Holnap játsszák, ${time} — ${room}` : `Holnap játsszák, ${time}`,
-    venueNewPlay: (venue: string) => `Új bemutató: ${venue}`,
-    personNewPlay: (person: string) => `${person} új előadásban játszik`,
-    reviewLiked: (person: string) => `${person} kedveli a bejegyzésedet`,
-    reviewCommented: (person: string) => `${person} hozzászólt a bejegyzésedhez`,
+    /* One line per kind. They live in i18n/notificationCopy.ts now, because
+       the push sender renders the same sentences on Deno and cannot reach
+       this file; spread here so `strings.inbox.*` keeps answering. */
+    ...notificationLines,
     unreadBadge: (n: number) => (n > 9 ? "9+" : String(n)),
     openNotifications: "Értesítések",
   },
@@ -820,6 +813,21 @@ export const strings = {
   },
 
   /**
+   * The ask for notification permission, in the app's words, before the OS
+   * dialog (T-089). Shown at the end of the first run and on a watchlist
+   * that holds something.
+   */
+  pushPrimer: {
+    eyebrow: "Értesítések",
+    title: "Szóljunk az este előtt?",
+    body:
+      "Ha egy kívánságlistás előadást holnap játszanak, vagy egy követett színház bemutatót hirdet, küldünk egy értesítést. Csak azt, amit kérsz — a beállításokban bármikor módosíthatod.",
+    accept: "Kérek értesítést",
+    later: "Most nem",
+    done: "Bekapcsolva. Szólunk az este előtt.",
+  },
+
+  /**
    * The feedback layer (T-085 to T-088): the toast that answers an action,
    * the undo on it, the offline banner and the error screen.
    */
@@ -949,10 +957,10 @@ export const strings = {
     followerCount: (n: number) => (n === 1 ? "1 néző követi" : `${n} néző követi`),
     personHint: "Szólunk, ha új előadásban lép színpadra.",
     venueHint: "Szólunk, ha új bemutatót hirdet.",
-    /* Said plainly: nothing sends these yet, and a promise the app cannot keep
-       is worse than a feature that says what it is. */
-    notYetSending:
-      "Az értesítéseket még nem küldjük ki — egyelőre azt jegyezzük fel, mire vagy kíváncsi.",
+    /* Used to say that nothing was sent yet. Since T-089 something is: a
+       device that has push switched on hears about it, and the settings
+       screen is where that is turned on. */
+    notYetSending: "Szólunk, ha új előadást hirdet. Az értesítéseket a beállításokban kapcsolhatod be.",
   },
 
   profile: {
@@ -1023,6 +1031,21 @@ export const strings = {
     installButton: "Telepítés a kezdőképernyőre",
     installIosHint:
       "Safariban: koppints a Megosztás gombra, majd a „Hozzáadás a Főképernyőhöz” sorra.",
+
+    /* Notifications (T-089). The device switch first, then what to be told
+       about; the second list applies to every device the person has. */
+    notifications: "Értesítések",
+    notificationsHint:
+      "Amit itt bekapcsolsz, arról értesítést kapsz erre az eszközre — az esti előadásról, egy követett színház bemutatójáról.",
+    notificationsEnable: "Bekapcsolás ezen az eszközön",
+    notificationsEnabled: "Bekapcsolva ezen az eszközön.",
+    notificationsDisable: "Kikapcsolás",
+    notificationsUnsupported:
+      "Ez a böngésző nem tud értesítést mutatni. iPhone-on előbb tedd az appot a kezdőképernyőre, és onnan nyisd meg.",
+    notificationsDenied:
+      "A böngésző letiltotta az értesítéseket ehhez az oldalhoz. A címsor melletti lakat ikonnál engedélyezheted újra.",
+    notificationsKinds: "Miről szóljunk?",
+    notificationsError: "Nem sikerült bekapcsolni. Próbáld újra.",
 
     /* The account's own two controls. Only shown to somebody signed in —
        there is nothing to export or delete otherwise — which is why they sit

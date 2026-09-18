@@ -23,6 +23,7 @@ import { strings } from "@/i18n/hu";
 import { makeStyles } from "@/theme/styles";
 import { haptic } from "@/utils/haptics";
 import { InstallCard } from "@/components/ui/InstallCard";
+import { NotificationsSection } from "@/components/ui/NotificationsSection";
 
 /**
  * Everything that is a preference rather than a profile.
@@ -111,6 +112,10 @@ export default function SettingsScreen() {
               show a signed-out visitor — and unlike the appearance section
               above, this is not a device preference that has to be reachable
               without one. */}
+          {/* Which devices hear, and about what (T-089). Signed-in only:
+              a subscription is a row on the account. */}
+          {session ? <NotificationsSection /> : null}
+
           {session ? (
             <>
               <View style={{ gap: space.xs }}>
