@@ -465,70 +465,6 @@ is one optional dot in two regular expressions, plus the fixture table in
 `utils/people.test.ts`; the slug index on `play_cast` would need rebuilding
 since the expression changes.
 
-### T-005 · Anyone can sign up with somebody else's email address
-type: bug · area: auth · priority: high · status: open · added: 2026-09-09
-
-Email confirmation was switched off on 6 September 2026 — every account created
-before that date carries a `confirmation_sent_at` and none since does. Nothing
-has turned it back on. While it is off an address can be claimed by whoever
-types it, which also means a real person can arrive to find their own address
-already taken by a stranger. The backlog files this as an open question; it is
-also a defect, and the two readings deserve different urgency.
-
-**Confirmed against the live project, 10 September**, from two directions:
-`GET /auth/v1/settings` answers `"mailer_autoconfirm": true`, and every
-account created since 7 September carries an `email_confirmed_at` with no
-`confirmation_sent_at`. All six existing accounts are confirmed, so turning it
-on strands nobody.
-
-**It is not purely a switch, though, and that is what decides when it can be
-done.** Supabase built-in SMTP delivers only to addresses on the project team
-and is rate-limited to a few messages an hour. Enabling confirmation while that
-is the mail path does not close the hole so much as move it: a stranger still
-cannot claim somebody else’s address, but a real person cannot sign up either,
-because the mail never arrives. So this is two pieces — a custom SMTP provider
-first, then the setting — and doing the second alone would be worse than
-leaving it. Whether custom SMTP is already configured has not been checked;
-that needs dashboard or management-API access.
-
-**Deferred on 10 September, deliberately and with an order.** Ottó is buying a
-domain first and doing the mail on top of it, which is the right sequence: a
-custom SMTP sender needs a domain whose DNS we control, because SPF and DKIM
-are records on it. So this waits on T-030, which waits on T-029. The one thing
-worth deciding separately is the provider — shared-hosting SMTP and a
-transactional service are not the same product, and a confirmation mail that
-lands in spam fails this entry exactly as completely as no mail at all.
-
-**Deferred again on 11 September, this time on the name.** The live config
-was read through the Management API: `smtp_host` null, `rate_limit_email_sent`
-2, `mailer_autoconfirm` true — and Supabase's own docs now say the built-in
-sender delivers only to project-team addresses. A single-sender transactional
-account (Brevo, no domain needed) would have carried the mails through the
-closed test, but Ottó stopped it: until the app's name is decided (T-029) any
-sender address, domain authentication and template branding would be set up
-under one name and redone under another. So this waits, explicitly, on T-029;
-nothing on the mail side is to be started before then. What is already in
-place and will not need redoing: `signUp` returns `needsEmailConfirmation`,
-the sign-up screen has the "Nézd meg a postaládád" panel, the redirect allow
-list is fixed. What is missing and can be prepared any time: a native handler
-for the confirmation link, a "resend" button, Hungarian mail templates.
-
-> **Unblocked, 18 September.** The name is Vastaps (T-029), the domain is
-> `vastaps.app` (T-030), the sender is `no-reply@mail.vastaps.app` through
-> Resend's free tier (3 000 a month, 100 a day, SMTP relay included, first on
-> Supabase's own list). The order is fixed by the mail, not the web: verify
-> `mail.vastaps.app` at Resend → SMTP settings in Supabase → Hungarian
-> templates → test a confirmation and a reset on a phone → only then
-> `mailer_autoconfirm` off. Supabase imposes 30 an hour after custom SMTP
-> is on; raise it. Reply-To goes to a real inbox via Cloudflare Email
-> Routing (free) rather than `no-reply@`. One more thing found while
-> reading the code: `detectSessionInUrl` is web-only and nothing on native
-> handles an auth link, so today neither the confirmation link nor the
-> password-reset link signs anyone in on a device — the native handler is
-> not optional for an app whose priority is the store build.
-
-
-
 ### T-009 · The share card draws nothing in a native build
 type: bug · area: native · priority: med · status: open · added: 2026-09-09
 
@@ -862,6 +798,16 @@ Depends on T-029, because the name decides the domain.
 > 21 files, not the 35 first counted — `render-shots.ts`, `research/*` and
 > `store/listing.hu.md` were missed. Order: `mail.` first (it is what T-005
 > waits on), the root and `web.` whenever.
+>
+> **Root and mail done, 18 September.** `vastaps.app` and `www.` are custom
+> domains on the Pages project, active over HTTPS; `mail.vastaps.app` is
+> verified at Resend and carrying Supabase's mail (T-005). The Cloudflare
+> token in `.env` gained Zone Read, DNS Edit, Zone Settings Edit and Email
+> Routing for this. SSL/TLS was already *Full*. Left: `web.vastaps.app` on
+> Railway (needs a Railway token or the domain added by hand), then the
+> Supabase Site URL / allow list, then the 75-place sweep on its own branch.
+> `hello@vastaps.app` via Email Routing waits on the account-level address
+> permission, which the token still lacks.
 
 ---
 
@@ -872,6 +818,85 @@ _Nothing yet._
 ---
 
 ## Done
+
+### T-005 · Anyone can sign up with somebody else's email address
+type: bug · area: auth · priority: high · status: done · added: 2026-09-09 · done: 2026-09-18
+
+Email confirmation was switched off on 6 September 2026 — every account created
+before that date carries a `confirmation_sent_at` and none since does. Nothing
+has turned it back on. While it is off an address can be claimed by whoever
+types it, which also means a real person can arrive to find their own address
+already taken by a stranger. The backlog files this as an open question; it is
+also a defect, and the two readings deserve different urgency.
+
+**Confirmed against the live project, 10 September**, from two directions:
+`GET /auth/v1/settings` answers `"mailer_autoconfirm": true`, and every
+account created since 7 September carries an `email_confirmed_at` with no
+`confirmation_sent_at`. All six existing accounts are confirmed, so turning it
+on strands nobody.
+
+**It is not purely a switch, though, and that is what decides when it can be
+done.** Supabase built-in SMTP delivers only to addresses on the project team
+and is rate-limited to a few messages an hour. Enabling confirmation while that
+is the mail path does not close the hole so much as move it: a stranger still
+cannot claim somebody else’s address, but a real person cannot sign up either,
+because the mail never arrives. So this is two pieces — a custom SMTP provider
+first, then the setting — and doing the second alone would be worse than
+leaving it. Whether custom SMTP is already configured has not been checked;
+that needs dashboard or management-API access.
+
+**Deferred on 10 September, deliberately and with an order.** Ottó is buying a
+domain first and doing the mail on top of it, which is the right sequence: a
+custom SMTP sender needs a domain whose DNS we control, because SPF and DKIM
+are records on it. So this waits on T-030, which waits on T-029. The one thing
+worth deciding separately is the provider — shared-hosting SMTP and a
+transactional service are not the same product, and a confirmation mail that
+lands in spam fails this entry exactly as completely as no mail at all.
+
+**Deferred again on 11 September, this time on the name.** The live config
+was read through the Management API: `smtp_host` null, `rate_limit_email_sent`
+2, `mailer_autoconfirm` true — and Supabase's own docs now say the built-in
+sender delivers only to project-team addresses. A single-sender transactional
+account (Brevo, no domain needed) would have carried the mails through the
+closed test, but Ottó stopped it: until the app's name is decided (T-029) any
+sender address, domain authentication and template branding would be set up
+under one name and redone under another. So this waits, explicitly, on T-029;
+nothing on the mail side is to be started before then. What is already in
+place and will not need redoing: `signUp` returns `needsEmailConfirmation`,
+the sign-up screen has the "Nézd meg a postaládád" panel, the redirect allow
+list is fixed. What is missing and can be prepared any time: a native handler
+for the confirmation link, a "resend" button, Hungarian mail templates.
+
+> **Unblocked, 18 September.** The name is Vastaps (T-029), the domain is
+> `vastaps.app` (T-030), the sender is `no-reply@mail.vastaps.app` through
+> Resend's free tier (3 000 a month, 100 a day, SMTP relay included, first on
+> Supabase's own list). The order is fixed by the mail, not the web: verify
+> `mail.vastaps.app` at Resend → SMTP settings in Supabase → Hungarian
+> templates → test a confirmation and a reset on a phone → only then
+> `mailer_autoconfirm` off. Supabase imposes 30 an hour after custom SMTP
+> is on; raise it. Reply-To goes to a real inbox via Cloudflare Email
+> Routing (free) rather than `no-reply@`. One more thing found while
+> reading the code: `detectSessionInUrl` is web-only and nothing on native
+> handles an auth link, so today neither the confirmation link nor the
+> password-reset link signs anyone in on a device — the native handler is
+> not optional for an app whose priority is the store build.
+
+> **Done, 18 September.** `mail.vastaps.app` verified at Resend (EU region,
+> DKIM + SPF + return-path CNAME, DMARC `p=none` on the subdomain and the
+> root); Supabase SMTP set to `smtp.resend.com:465` with a sending-only key
+> scoped to that domain, sender `"Vastaps" <no-reply@mail.vastaps.app>`,
+> rate limit raised from 2 to 60 an hour; the six Hungarian templates pushed
+> with `npm run push:mail`; then `mailer_autoconfirm` off. Proven before the
+> switch: a password reset to the operator address went Supabase → Resend →
+> `delivered` under the Hungarian subject. All six existing accounts were
+> already confirmed, so nobody was stranded. `check:launch` now asserts every
+> one of these from the live config, 10/10.
+>
+> Still to be seen with eyes: a sign-up from a fresh address on a phone,
+> clicking the link, landing signed in — the panel and the native handler
+> shipped in `the-mail-arrives` but have only been exercised on web with a
+> stubbed answer. The links still land on the Railway origin until `web.`
+> exists (T-030).
 
 ### T-071 · Every person page was Jánoskúti Márta, or would not load
 type: bug · area: catalogue · priority: high · status: done · added: 2026-09-11 · done: 2026-09-11
