@@ -1,6 +1,7 @@
 import * as Linking from "expo-linking";
 import { isAuthApiError } from "@supabase/supabase-js";
 import { supabase } from "@/services/supabase";
+import { authLinkParams } from "@/utils/authLink";
 import { strings } from "@/i18n/hu";
 
 /**
@@ -61,6 +62,63 @@ export async function signUp(
   });
   if (error) throw error;
   return { needsEmailConfirmation: !data.session };
+}
+
+/**
+ * Sends the confirmation mail again.
+ *
+ * The first one is sent by `signUp`, and the only thing a person can do when
+ * it does not arrive is sign up again — which fails with `user_already_exists`
+ * and sends nothing. The API rate-limits this per address (one a minute), and
+ * `over_email_send_rate_limit` is already translated for the screen.
+ *
+ * Same `emailRedirectTo` as `signUp`, for the same reason: the link has to
+ * land back on whichever origin asked for it.
+ */
+export async function resendConfirmation(email: string) {
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email,
+    options: { emailRedirectTo: Linking.createURL("/") },
+  });
+  if (error) throw error;
+}
+
+/**
+ * Turns the URL an e-mailed link opened the app with into a session.
+ *
+ * On web the client does this itself: `detectSessionInUrl` reads the tokens
+ * Supabase puts in the fragment of the redirect and signs the person in
+ * before anything renders. On a device that option is off — there is no
+ * `window.location` to read — and until this existed nothing took its place,
+ * so a confirmation or password-reset link opened the app and then did
+ * nothing at all (T-005). The app's own scheme is on the redirect allow list;
+ * this is the half that consumes what arrives on it.
+ *
+ * Returns true when a session was set. A link with no tokens on it — the
+ * app opened by a share, a deep link into a play — is not an error and does
+ * nothing. A link whose tokens have expired arrives with `error_code` in
+ * place of the tokens; that is not an error here either, because the
+ * screens already say what an absent session means (`reset-password`), and
+ * the person's next step is the same whatever the reason.
+ */
+export async function consumeAuthLink(url: string | null): Promise<boolean> {
+  if (!url) return false;
+  const params = authLinkParams(url);
+  const accessToken = params.get("access_token");
+  const refreshToken = params.get("refresh_token");
+  if (accessToken && refreshToken) {
+    const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+    if (error) throw error;
+    return true;
+  }
+  const code = params.get("code");
+  if (code) {
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (error) throw error;
+    return true;
+  }
+  return false;
 }
 
 export async function signIn(email: string, password: string) {

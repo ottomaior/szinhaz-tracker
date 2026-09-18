@@ -1,0 +1,8 @@
+{
+  "confirmation": "Erősítsd meg az e-mail-címed",
+  "recovery": "Új jelszó a Vastapshoz",
+  "magic_link": "Belépés a Vastapsba",
+  "email_change": "Erősítsd meg az új e-mail-címed",
+  "invite": "Meghívtak a Vastapsba",
+  "reauthentication": "{{ .Token }} a megerősítő kódod"
+}

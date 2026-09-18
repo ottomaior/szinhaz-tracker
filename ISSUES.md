@@ -513,6 +513,20 @@ the sign-up screen has the "Nézd meg a postaládád" panel, the redirect allow
 list is fixed. What is missing and can be prepared any time: a native handler
 for the confirmation link, a "resend" button, Hungarian mail templates.
 
+> **Unblocked, 18 September.** The name is Vastaps (T-029), the domain is
+> `vastaps.app` (T-030), the sender is `no-reply@mail.vastaps.app` through
+> Resend's free tier (3 000 a month, 100 a day, SMTP relay included, first on
+> Supabase's own list). The order is fixed by the mail, not the web: verify
+> `mail.vastaps.app` at Resend → SMTP settings in Supabase → Hungarian
+> templates → test a confirmation and a reset on a phone → only then
+> `mailer_autoconfirm` off. Supabase imposes 30 an hour after custom SMTP
+> is on; raise it. Reply-To goes to a real inbox via Cloudflare Email
+> Routing (free) rather than `no-reply@`. One more thing found while
+> reading the code: `detectSessionInUrl` is web-only and nothing on native
+> handles an auth link, so today neither the confirmation link nor the
+> password-reset link signs anyone in on a device — the native handler is
+> not optional for an app whose priority is the store build.
+
 
 
 ### T-009 · The share card draws nothing in a native build
@@ -657,7 +671,7 @@ what would have caught all three of these without a spot-check.
 > when those land.
 
 ### T-029 · The name Vastaps already belongs to a Hungarian theatre company
-type: question · area: web · priority: high · status: open · added: 2026-09-10
+type: question · area: web · priority: high · status: open · added: 2026-09-10 · decided: 2026-09-17
 
 `vastaps.hu` resolves, and not to a parking page: it is the site of **VASTAPS
 PRODUKCIÓ SZÍNJÁTSZÓ TÁRSULAT**, an existing Hungarian theatre company, served
@@ -783,6 +797,17 @@ word-of-mouth traffic to somebody else's theatre company. Taking a free name
 costs the attachment to this one. If the two names feel equal, take the one
 where the `.hu` is ours.
 
+> **Decided, 17 September: the name stays Vastaps.** Ottó: "let's say I have
+> no better option than Vastaps." So the app lives beside the Kecskemét
+> company on a suffix that is ours, and the two things this entry was
+> blocking — T-030 (the domain) and, behind it, T-005 (mail confirmation) —
+> are open for work. Re-checked the same day, straight from the registries:
+> `vastaps.com`, `vastaps.app`, `vastaps.net`, `vastaps.dev` are unregistered
+> (RDAP 404); `vastaps.co`, `.io` and `.eu` answer nothing at rdap.org, so
+> they were not confirmed either way; `vastapsapp.hu` and `vastapsnaplo.hu`
+> are free at `whois.nic.hu`. The research on which to buy and how the mail
+> gets built on top of it is under T-030 and T-005.
+
 ### T-030 · Move off pages.dev and railway.app onto a real domain
 type: chore · area: infra · priority: med · status: open · added: 2026-09-10
 
@@ -820,6 +845,23 @@ the way it does now, leave the app on Railway, and treat sending mail as a
 third decision rather than something the hosting throws in — see T-005.
 
 Depends on T-029, because the name decides the domain.
+
+> **Planned, 18 September — one domain, three hostnames.** T-029 is decided,
+> so this is live. Ottó chose `vastaps.app` (Cloudflare Registrar, $14.20 a
+> year at cost; `vastaps.com` was also free, `.eu` was ~$6 at Porkbun and
+> `.hu` variants ~3 000 Ft, all checked on 17 September) laid out as:
+> `vastaps.app` → the landing site on Cloudflare Pages, `web.vastaps.app` →
+> the app on Railway (`web.` rather than `app.`, which would read
+> `app.vastaps.app`), `mail.vastaps.app` → the sender domain for Resend, so
+> the mail reputation is separate from the root. Subdomains cost nothing.
+> Railway needs a CNAME *and* a TXT, the orange cloud on and SSL/TLS set to
+> Full; Supabase's allow list gets both `https://web.vastaps.app` and
+> `https://web.vastaps.app/**`; the Railway origin stays on the list until
+> the move is validated. The old hostnames keep serving beside the new ones,
+> so nothing in the wild breaks in between. The sweep is 75 occurrences in
+> 21 files, not the 35 first counted — `render-shots.ts`, `research/*` and
+> `store/listing.hu.md` were missed. Order: `mail.` first (it is what T-005
+> waits on), the root and `web.` whenever.
 
 ---
 

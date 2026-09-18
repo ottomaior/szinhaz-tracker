@@ -290,6 +290,11 @@ export const strings = {
     confirmEmailBody: (email: string) =>
       `Küldtünk egy megerősítő linket a(z) ${email} címre. Kattints rá, és utána tudsz bejelentkezni.`,
     confirmEmailSpam: "Ha pár percen belül nem érkezik meg, nézd meg a spam mappát is.",
+    /* The one thing to do when the mail does not come. The API allows it
+       once a minute per address, and says so through
+       `over_email_send_rate_limit` above. */
+    resendConfirmation: "Megerősítő levél újraküldése",
+    resentConfirmation: "Elküldtük újra. Nézd meg a postaládád.",
 
     forgotPassword: "Elfelejtetted a jelszavad?",
     forgotTitle: "Új jelszó kérése",
