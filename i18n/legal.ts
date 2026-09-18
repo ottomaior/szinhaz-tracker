@@ -44,7 +44,7 @@ export const operator = {
   /** Registered seat / postal address, as it would appear on official post. */
   address: "4025 Debrecen, Piac utca 1-3.",
   /** The address that reaches a human. Used for privacy requests and reports. */
-  email: "ottomaior@protonmail.com",
+  email: "hello@vastaps.app",
   /**
    * Company registration number, or tax number for a sole trader.
    * Set to null for a private individual publishing in a non-business
