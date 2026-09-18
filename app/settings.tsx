@@ -22,6 +22,7 @@ import {
 import { strings } from "@/i18n/hu";
 import { makeStyles } from "@/theme/styles";
 import { haptic } from "@/utils/haptics";
+import { InstallCard } from "@/components/ui/InstallCard";
 
 /**
  * Everything that is a preference rather than a profile.
@@ -79,6 +80,10 @@ export default function SettingsScreen() {
               }}
             />
           </View>
+
+          {/* Only where installing is possible and not yet done: a section
+              that says "you cannot do this here" is noise (6.4). */}
+          <InstallCard />
 
           <View style={{ gap: space.xs }}>
             <Text variant="heading">{strings.settings.legal}</Text>

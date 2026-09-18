@@ -101,6 +101,21 @@ export default function Root({ children }: PropsWithChildren) {
             wrong last-match for anything reading document.title (T-006). */}
         <meta name="theme-color" content={themes[DEFAULT_DARK].bg} />
 
+        {/* The installable web app (6.4). The manifest and its icons live in
+            public/, which `expo export` copies to the site root; nginx.conf
+            types the manifest, since its extension is not in the default
+            map. `apple-mobile-web-app-*` is what iOS reads instead of the
+            manifest for the Home Screen name and the standalone window, and
+            the touch icon has to be linked because iOS ignores the
+            manifest's icons. Kept to the ground colour on purpose: like the
+            splash, an icon is painted before any preference is known. */}
+        <link rel="manifest" href="/manifest.webmanifest" />
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-title" content="Vastaps" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
         {/* Disables body scrolling on web, so ScrollView works as it does on native. */}
         <ScrollViewStyleReset />
 

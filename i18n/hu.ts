@@ -1014,6 +1014,16 @@ export const strings = {
     blockedUsers: "Letiltott felhasználók",
     blockedUsersHint: "Kit nem látsz, és ki nem lát téged. Bármikor feloldható.",
 
+    /* The installable web app (6.4). Shown only where it applies: a browser
+       that can offer the install, or iOS Safari, where the person does it by
+       hand — and never once the app is already running from the Home Screen. */
+    install: "Telepítés",
+    installHint:
+      "A Vastaps a kezdőképernyőre tehető: saját ikonnal, teljes képernyőn, böngészősáv nélkül nyílik.",
+    installButton: "Telepítés a kezdőképernyőre",
+    installIosHint:
+      "Safariban: koppints a Megosztás gombra, majd a „Hozzáadás a Főképernyőhöz” sorra.",
+
     /* The account's own two controls. Only shown to somebody signed in —
        there is nothing to export or delete otherwise — which is why they sit
        here rather than beside the theme rows. */
