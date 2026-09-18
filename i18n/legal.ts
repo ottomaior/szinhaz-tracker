@@ -26,6 +26,14 @@
  * point. They are collected here rather than typed into the prose so there is
  * exactly one place to fill in.
  *
+ * The seat is deliberately just the city. Ottó does not want his street
+ * address on a public page, and nothing in force requires it while Vastaps
+ * is free and run by a private individual: the GDPR and the DSA are satisfied
+ * by an e-mail address, and the Ektv. only reaches services provided as an
+ * economic activity. If the app ever charges, this stops being true and the
+ * line needs a real postal address — a rented P.O. box or a registered-seat
+ * service, not a home address. See ISSUES.md T-097.
+ *
  * They are also deliberately allowed to stay unfilled for a while. What is not
  * allowed is a document that *renders* with a placeholder in it — a privacy
  * policy naming `TODO_OPERATOR_NAME` as the data controller is worse than
@@ -41,8 +49,8 @@
 export const operator = {
   /** Legal name — a person's full name, or the company's registered name. */
   name: "Maior Ottó",
-  /** Registered seat / postal address, as it would appear on official post. */
-  address: "4025 Debrecen, Piac utca 1-3.",
+  /** Seat, to the city — see the note above on why there is no street. */
+  address: "Debrecen",
   /** The address that reaches a human. Used for privacy requests and reports. */
   email: "hello@vastaps.app",
   /**
@@ -143,7 +151,7 @@ export const privacyPolicy: LegalDocument = {
       heading: "Ki kezeli az adataidat",
       blocks: [
         p(
-          `Az adatkezelő ${operator.name} (székhely: ${operator.address}), a továbbiakban „mi”. Adatkezeléssel kapcsolatos bármely kérdésben a ${operator.email} címen érsz el minket.`
+          `Az adatkezelő ${operator.name} (${operator.address}), a továbbiakban „mi”. Adatkezeléssel kapcsolatos bármely kérdésben a ${operator.email} címen érsz el minket.`
         ),
         p(
           "Adatvédelmi tisztviselőt nem neveztünk ki, mert a szolgáltatás nem végez nagy számban különleges adatok kezelését, és nem jár a felhasználók rendszeres, szisztematikus megfigyelésével."
@@ -410,7 +418,7 @@ export const imprint: LegalDocument = {
       blocks: [
         ul(
           `Név: ${operator.name}`,
-          `Székhely / postacím: ${operator.address}`,
+          `Székhely: ${operator.address}`,
           `E-mail: ${operator.email}`,
           ...(operator.registrationNumber
             ? [`Nyilvántartási / adószám: ${operator.registrationNumber}`]

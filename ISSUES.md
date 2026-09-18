@@ -338,6 +338,21 @@ show timestamps at all, which is a design change rather than a content one.
 
 ## Open
 
+### T-097 · Revisit the impresszum's address before Vastaps charges for anything
+type: chore · area: legal · priority: low · status: open · added: 2026-09-18
+
+Ottó did not want his street address on the public impresszum, so the
+operator's seat in `i18n/legal.ts` is just "Debrecen" (name, city, e-mail).
+That holds while the app is free and run by a private individual: the GDPR
+and the DSA are satisfied by a contact e-mail, and the Ektv. 4. § only reaches
+services provided as an economic activity. The moment Vastaps charges — a
+subscription, a paid tier, ads — it becomes an e-commerce service and the
+impresszum needs a real postal address again. Do it with a rented postafiók or
+a székhelyszolgáltatás, never the home address, and update `operator.address`,
+the `verify-bundle` needle, and re-run `npm run render:legal`. If a company is
+formed for it, `operator.registrationNumber` gets the tax number in the same
+change.
+
 ### T-078 · One tap on a list entry removes it; editing should be a mode
 type: bug · area: web · priority: high · status: open · added: 2026-09-18
 
@@ -2940,4 +2955,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-097**
+Next free id: **T-098**
