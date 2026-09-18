@@ -1046,6 +1046,11 @@ export const strings = {
       "A böngésző letiltotta az értesítéseket ehhez az oldalhoz. A címsor melletti lakat ikonnál engedélyezheted újra.",
     notificationsKinds: "Miről szóljunk?",
     notificationsError: "Nem sikerült bekapcsolni. Próbáld újra.",
+    /* The weekly letter (T-090). Default on; the letter itself carries the
+       way out, and this is the same switch from the other side. */
+    digest: "Heti levél e-mailben",
+    digestHint:
+      "Hetente egyszer: a kívánságlistás előadásaid, amelyeket a héten játszanak, és ami a követett színházaidban megy. Üres hétről nem írunk.",
 
     /* The account's own two controls. Only shown to somebody signed in —
        there is nothing to export or delete otherwise — which is why they sit

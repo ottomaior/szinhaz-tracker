@@ -84,22 +84,6 @@ sign-up one. Custom SMTP and the `magic_link.html` template already exist;
 **Depends on.** Nothing. Worth doing after T-082 so the sign-in screen is
 rearranged once, not twice.
 
-### T-090 · A weekly letter: this week in your theatres
-type: idea · area: notifications · size: M · status: idea · added: 2026-09-18
-
-**The problem.** Push reaches only the people who allowed it on a device that
-supports it. E-mail reaches everyone from day one, and a well-set weekly mail
-is what most culture products are actually remembered by.
-
-**Roughly.** An Edge Function run after the nightly sync on one weekday,
-reading the week's `notifications` rows per user plus the programme of the
-theatres they follow, rendering one mail in the auth templates' style through
-Resend, with an unsubscribe link that writes a profile flag. Copy from
-`i18n/hu.ts`, never re-typed.
-
-**Depends on.** A sender address and the digest opt-in setting; the same
-`send-push` shape as T-089 so the two never disagree about what was sent.
-
 ### T-091 · A widget for the next evening
 type: idea · area: native · size: L · status: idea · added: 2026-09-18
 
@@ -845,6 +829,39 @@ _Nothing yet._
 ---
 
 ## Done
+
+### T-090 · A weekly letter: this week in your theatres
+type: idea · area: notifications · size: M · status: done · added: 2026-09-18
+
+**The problem.** Push reaches only the people who allowed it on a device that
+supports it. E-mail reaches everyone from day one, and a well-set weekly mail
+is what most culture products are actually remembered by.
+
+**Roughly.** An Edge Function run after the nightly sync on one weekday,
+reading the week's `notifications` rows per user plus the programme of the
+theatres they follow, rendering one mail in the auth templates' style through
+Resend, with an unsubscribe link that writes a profile flag. Copy from
+`i18n/hu.ts`, never re-typed.
+
+**Depends on.** A sender address and the digest opt-in setting; the same
+`send-push` shape as T-089 so the two never disagree about what was sent.
+
+**Done, 18 September 2026.** `0063` adds `digest_enabled` and
+`digest_sent_at` to the preferences row and two service-role functions:
+`weekly_digest(for_user, from, to)` assembles one person's week as jsonb
+(watchlisted plays performing in the next seven days, the followed theatres'
+programme, the inbox since the last letter) and `weekly_digest_recipients()`
+says who is due. `supabase/functions/weekly-digest` renders it in the auth
+mail's paper layout, sends through Resend from `no-reply@mail.vastaps.app`
+with `List-Unsubscribe` headers, stamps per person, and skips an empty week
+rather than writing about nothing. Its GET path is the unsubscribe link: an
+HMAC of the uid under the service key, so it works from a mail client with
+no session and cannot be forged for somebody else, which is why `verify_jwt`
+is off on that one function. `sync/run.ts` calls it on Mondays in Budapest
+(`SYNC_FORCE_DIGEST=1` for a rehearsal). Settings has the switch under
+Értesítések. Verified: a dry run over all eight accounts (two with content,
+six skipped), one real letter to Ottó's address, the unsubscribe link
+flipping the row and the page saying so.
 
 ### T-089 · Ask for notifications at the right moment, and on a phone too
 type: idea · area: notifications · size: L · status: done · added: 2026-09-18

@@ -460,6 +460,11 @@ async function checkAuthConfig(): Promise<void> {
     "Supabase function secrets VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY / VAPID_SUBJECT must match app.config.ts's " +
       "public key — check the dashboard (Edge Functions → Secrets); the pair cannot be read back from here."
   );
+  reminders.push(
+    "The weekly letter (weekly-digest) needs RESEND_API_KEY and DIGEST_FROM among the function secrets, and the " +
+      "sender domain verified at Resend. `verify_jwt` is off on that function on purpose: the unsubscribe link opens " +
+      "from a mail client with no session, and the function guards both paths itself."
+  );
 }
 
 async function main(): Promise<void> {

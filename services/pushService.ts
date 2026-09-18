@@ -212,3 +212,31 @@ export async function setNotificationPreferences(kinds: NotificationKind[]): Pro
     .upsert({ user_id: user.id, kinds, updated_at: new Date().toISOString() }, { onConflict: "user_id" });
   if (error) throw error;
 }
+
+// ------------------------------------------------------- the weekly letter
+
+/** Whether the weekly letter goes out to this person. No row means yes. */
+export async function getDigestEnabled(): Promise<boolean> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return true;
+  const { data, error } = await supabase
+    .from("notification_preferences")
+    .select("digest_enabled")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.digest_enabled ?? true;
+}
+
+export async function setDigestEnabled(enabled: boolean): Promise<void> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("not signed in");
+  const { error } = await supabase
+    .from("notification_preferences")
+    .upsert({ user_id: user.id, digest_enabled: enabled, updated_at: new Date().toISOString() }, { onConflict: "user_id" });
+  if (error) throw error;
+}
