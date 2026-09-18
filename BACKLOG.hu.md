@@ -292,6 +292,35 @@ blokk csak összesített pontszámot.
 
 ---
 
+## 6. fázis — Prémium érzet · folyamatban
+
+A 2026. szeptember 18-i kutatás (a terv, amit Ottó jóváhagyott). Semmi nem új
+képesség itt; ez a különbség egy működő és egy késznek ható alkalmazás
+között: az első öt perc súrlódásmentes, semmi nem néz ki elromlottnak, minden
+érintés válaszol, és az app jön az emberhez. Ami már megüti a mércét, és nem
+készül újra: a paletták és a betűk, a `components/motion/`, a profilkép és a
+bemutatkozás, az export és a törlés, a beérkezett üzenetek, az archívumrács, a
+natív build. Minden sor külön ág és pull request; az ötletek az `ISSUES.md`-ben
+vannak kifejtve a megadott azonosítók alatt.
+
+| | Mi | Méret | Mire vár |
+|---|---|---|---|
+| **6.1** | **Bejelentkezés Google-fiókkal** weben és Androidon, egy szolgáltatógomb mindkét űrlap fölött, a regisztrációs trigger a szolgáltató küldte nevet olvassa (`0060`) — T-082 · *folyamatban* | M | egy Google Cloud OAuth-kliens Ottótól |
+| **6.2** | **Egy első futás, ami tényleg lefut**: név, ha hiányzik, város, a város színházainak követése, az archívumrács, egy záró képernyő; a `profiles.onboarded_at` kapuzza — T-083 | M | 6.1 |
+| **6.3** | **A visszajelzési réteg**: toast visszavonással (T-085), haptika (T-086), hibahatár (T-087), offline sáv (T-088), csontváz és lehúzva frissítés mindenhol (T-093) | M | semmi |
+| **6.4** | **Telepíthető**: a 2. fázis 2.1-e (manifest, ikonok, „add a kezdőképernyőhöz" kártya) plusz hibafigyelés (5.1) | S–M | semmi |
+| **6.5** | **Értesítések, amik megérkeznek**: a 2. fázis Web Pushja, natív push az Expón át ugyanabba a táblába, fajtánkénti kapcsolók, és az engedélykérés a jó pillanatban; a `playing_tomorrow` az első — T-089 | L | VAPID-kulcsok; egy development build |
+| **6.6** | **A heti levél** a Resenden át — T-090 | M | a 6.5 küldője |
+| **6.7** | **Bejelentkezés Apple-lel**, OTA-frissítések (T-014), az ikon a valódi méreteiben (T-013), jelszó- és címváltás a Beállításokban (T-092) | M | egy Apple Developer-fiók |
+
+Szándékosan nincs a listán: fizetős csomag, sorozatok és jelvények, a
+nyilvános átlag (szándékkal került le), animált szöveg, admin alkalmazás. Egy
+angol nyelvi kapcsoló az appon belül nagyobb, mint amekkorának látszik — az
+`i18n/hu.ts`-t minden képernyő közvetlenül importálja —, és megvárja, hogy a
+béta kérje.
+
+---
+
 ## A második felvonás — a tervezési kör · **kész**
 
 2026. szeptember 8-án összeolvasztva és kitelepítve, a `cast-alternates` tetején.

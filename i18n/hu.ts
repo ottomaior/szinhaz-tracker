@@ -245,6 +245,13 @@ export const strings = {
     switchToSignIn: "Bejelentkezem",
     signInPrompt: "Jelentkezz be, hogy folytathasd",
 
+    /* One button above the form on both auth modals. "Folytatás" rather than
+       "Bejelentkezés" or "Regisztráció", because with a provider the two are
+       one action: whichever the address turns out to need is what happens. */
+    continueWithGoogle: "Folytatás Google-fiókkal",
+    /* The line between the provider button and the form. */
+    orWithEmail: "vagy e-mail-címmel",
+
     /* Under the sign-up button, in pieces so the two links can be pressed
        separately inside one sentence: "A fiók létrehozásával elfogadod a
        Felhasználási feltételeket, és tudomásul veszed az Adatkezelési

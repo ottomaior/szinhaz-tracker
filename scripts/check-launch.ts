@@ -375,6 +375,8 @@ async function checkAuthConfig(): Promise<void> {
     smtp_host?: string | null;
     smtp_admin_email?: string | null;
     rate_limit_email_sent?: number;
+    external_google_enabled?: boolean;
+    external_google_client_id?: string | null;
   };
 
   const origin = `https://${PRODUCTION_HOST}`;
@@ -415,6 +417,16 @@ async function checkAuthConfig(): Promise<void> {
     "The mail rate limit is above the 30/hour Supabase sets when SMTP is first configured",
     (auth.rate_limit_email_sent ?? 0) > 30,
     "Authentication → Rate Limits → Emails. Thirty an hour is one bad evening."
+  );
+  check(
+    "Sign in with Google is enabled, with a client id",
+    auth.external_google_enabled === true && Boolean(auth.external_google_client_id),
+    "The button is on both auth modals (components/ui/SocialSignIn.tsx) and fails with a " +
+      "provider-disabled error until this is on. Google Cloud → APIs & Services → Credentials → " +
+      "an OAuth client of type Web application, with the project's callback " +
+      `https://${ref}.supabase.co/auth/v1/callback as an authorised redirect URI; then ` +
+      "Authentication → Sign In / Providers → Google, client id and secret, or PATCH config/auth " +
+      "{external_google_enabled, external_google_client_id, external_google_secret}."
   );
 }
 

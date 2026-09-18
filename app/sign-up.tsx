@@ -11,6 +11,7 @@ import { ModalHeader } from "@/components/ui/ModalHeader";
 import { ContentColumn } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { Button } from "@/components/ui/Button";
+import { SocialSignIn } from "@/components/ui/SocialSignIn";
 import { strings } from "@/i18n/hu";
 import { closeModal } from "@/utils/navigation";
 import { makeStyles } from "@/theme/styles";
@@ -120,6 +121,8 @@ export default function SignUpScreen() {
           </>
         ) : (
           <>
+        <SocialSignIn onSignedIn={() => closeModal(router)} onError={setError} />
+
         <TextInput
           value={name}
           onChangeText={setName}
