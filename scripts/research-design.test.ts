@@ -38,12 +38,12 @@ describe("the questionnaire page embeds this design", () => {
 
 describe("validPicks", () => {
   it("accepts three distinct real features on each side, disjoint", () => {
-    expect(validPicks({ best: ["naplo", "musor_ma", "naptar"], worst: ["baratok", "evad_kartya", "listak"] })).toBe(true);
+    expect(validPicks({ best: ["naplo", "musor_ma", "naptar"], worst: ["velemeny_kovetoknek", "evad_kartya", "listak"] })).toBe(true);
   });
   it("rejects the wrong count, a repeat, an unknown id, or an overlap", () => {
-    expect(validPicks({ best: ["naplo", "musor_ma"], worst: ["baratok", "evad_kartya", "listak"] })).toBe(false);
-    expect(validPicks({ best: ["naplo", "naplo", "naptar"], worst: ["baratok", "evad_kartya", "listak"] })).toBe(false);
-    expect(validPicks({ best: ["naplo", "musor_ma", "nope"], worst: ["baratok", "evad_kartya", "listak"] })).toBe(false);
+    expect(validPicks({ best: ["naplo", "musor_ma"], worst: ["velemeny_kovetoknek", "evad_kartya", "listak"] })).toBe(false);
+    expect(validPicks({ best: ["naplo", "naplo", "naptar"], worst: ["velemeny_kovetoknek", "evad_kartya", "listak"] })).toBe(false);
+    expect(validPicks({ best: ["naplo", "musor_ma", "nope"], worst: ["velemeny_kovetoknek", "evad_kartya", "listak"] })).toBe(false);
     expect(validPicks({ best: ["naplo", "musor_ma", "naptar"], worst: ["naplo", "evad_kartya", "listak"] })).toBe(false);
   });
   it("asks for three", () => {
@@ -54,17 +54,17 @@ describe("validPicks", () => {
 describe("scorePicks", () => {
   it("counts top-three and leave-out picks per feature and ranks by net", () => {
     const scores = scorePicks([
-      { best: ["naplo", "musor_ma", "naptar"], worst: ["baratok", "evad_kartya", "listak"] },
-      { best: ["naplo", "kereses", "kovetes"], worst: ["baratok", "hely_ar_jegy", "musor_ma"] },
+      { best: ["naplo", "musor_ma", "naptar"], worst: ["velemeny_kovetoknek", "evad_kartya", "listak"] },
+      { best: ["naplo", "kereses", "kovetes"], worst: ["velemeny_kovetoknek", "hely_ar_jegy", "musor_ma"] },
     ]);
     const by = Object.fromEntries(scores.map((s) => [s.id, s]));
     expect(by.naplo).toMatchObject({ best: 2, worst: 0, net: 2, score: 1 });
     expect(by.naptar).toMatchObject({ best: 1, worst: 0, net: 1, score: 0.5 });
     expect(by.musor_ma).toMatchObject({ best: 1, worst: 1, net: 0, score: 0 });
-    expect(by.baratok).toMatchObject({ best: 0, worst: 2, net: -2, score: -1 });
+    expect(by.velemeny_kovetoknek).toMatchObject({ best: 0, worst: 2, net: -2, score: -1 });
     expect(by.kivansaglista).toMatchObject({ best: 0, worst: 0, net: 0 });
     expect(scores[0].id).toBe("naplo");
-    expect(scores[scores.length - 1].id).toBe("baratok");
+    expect(scores[scores.length - 1].id).toBe("velemeny_kovetoknek");
   });
 
   it("ignores ids outside the design", () => {
