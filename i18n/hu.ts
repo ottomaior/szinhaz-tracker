@@ -1111,6 +1111,22 @@ export const strings = {
     follow: "Követés",
     unfollow: "Követés visszavonása",
     followingLabel: "Követed",
+    /* A follow is a request since 0065 (T-095): the button says so while it
+       waits, and pressing it again withdraws the request. */
+    requested: "Kérelem elküldve",
+    withdrawRequest: "Kérelem visszavonása",
+    requestHint: "Ha elfogadja, látni fogod, mit gondolt az előadásokról.",
+    /* The follower lists behind the two numbers on the profile (T-096). */
+    requestsTitle: "Kérelmek",
+    requestsEmpty: "Nincs függő kérelem.",
+    requestsHint: "Ők szeretnének követni. Aki követ, az látja a véleményeidet.",
+    accept: "Elfogadom",
+    decline: "Elutasítom",
+    removeFollower: "Eltávolítás",
+    pendingRequests: (n: number) => (n === 1 ? "1 követési kérelem" : `${n} követési kérelem`),
+    acceptedToast: (name: string) => `${name} mostantól követ.`,
+    declinedToast: (name: string) => `Elutasítva: ${name}.`,
+    removedToast: (name: string) => `${name} már nem követ.`,
     searchTitle: "Színházbarátok",
     searchPlaceholder: "Keresés név vagy @felhasználónév alapján",
     searchEmpty: "Nincs ilyen felhasználó.",

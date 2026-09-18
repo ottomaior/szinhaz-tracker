@@ -20,6 +20,8 @@ export const NOTIFICATION_KINDS = [
   "person_new_play",
   "review_liked",
   "review_commented",
+  "follow_requested",
+  "follow_accepted",
 ] as const;
 
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
@@ -54,6 +56,8 @@ export const notificationLines = {
   personNewPlay: (person: string) => `${person} új előadásban játszik`,
   reviewLiked: (person: string) => `${person} kedveli a bejegyzésedet`,
   reviewCommented: (person: string) => `${person} hozzászólt a bejegyzésedhez`,
+  followRequested: (person: string) => `${person} követni szeretne`,
+  followAccepted: (person: string) => `${person} elfogadta a követési kérelmedet`,
 };
 
 export function notificationLine(kind: NotificationKind, facts: NotificationFacts): string {
@@ -70,7 +74,16 @@ export function notificationLine(kind: NotificationKind, facts: NotificationFact
       return notificationLines.reviewLiked(facts.person ?? "");
     case "review_commented":
       return notificationLines.reviewCommented(facts.person ?? "");
+    case "follow_requested":
+      return notificationLines.followRequested(facts.person ?? "");
+    case "follow_accepted":
+      return notificationLines.followAccepted(facts.person ?? "");
   }
+}
+
+/** The two kinds that are about a person rather than a production. */
+export function isPersonKind(kind: NotificationKind): boolean {
+  return kind === "follow_requested" || kind === "follow_accepted";
 }
 
 /**
@@ -102,6 +115,14 @@ export const notificationKindLabels: Record<NotificationKind, { label: string; h
     label: "Hozzászólás",
     hint: "Ha valaki hozzászól egy bejegyzésedhez.",
   },
+  follow_requested: {
+    label: "Követési kérelem",
+    hint: "Ha valaki követni szeretne — te döntöd el, hogy láthatja-e a véleményeidet.",
+  },
+  follow_accepted: {
+    label: "Elfogadott kérelem",
+    hint: "Ha valaki, akit követni szeretnél, elfogadta a kérelmedet.",
+  },
 };
 
 /** The order the settings screen lists them in: what matters most, first. */
@@ -112,4 +133,6 @@ export const NOTIFICATION_KINDS_IN_SETTINGS_ORDER: NotificationKind[] = [
   "person_new_play",
   "review_liked",
   "review_commented",
+  "follow_requested",
+  "follow_accepted",
 ];

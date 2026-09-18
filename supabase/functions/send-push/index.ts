@@ -34,7 +34,7 @@ type Row = {
   id: string;
   user_id: string;
   kind: NotificationKind;
-  play_id: string;
+  play_id: string | null;
   review_id: string | null;
   payload: Record<string, any>;
   created_at: string;
@@ -130,9 +130,19 @@ Deno.serve(async (req) => {
     const subs = subsByUser.get(row.user_id) ?? [];
     if (subs.length === 0) continue;
 
-    const title = row.plays?.title ?? "Vastaps";
+    // The two follow kinds are about a person (0065): the heading is their
+    // name and the row leads to them, or to the requests list.
+    const personId = typeof row.payload?.userId === "string" ? row.payload.userId : undefined;
+    const title = row.play_id ? (row.plays?.title ?? "Vastaps") : (row.payload?.person ?? "Vastaps");
     const body = notificationLine(row.kind, factsOf(row));
-    const path = row.review_id ? `/entry/${row.review_id}` : `/play/${row.play_id}`;
+    const path =
+      row.kind === "follow_requested"
+        ? "/followers?tab=requests"
+        : row.kind === "follow_accepted" && personId
+          ? `/user/${personId}`
+          : row.review_id
+            ? `/entry/${row.review_id}`
+            : `/play/${row.play_id}`;
     const target = `${origin}${path}`;
     const payload = JSON.stringify({ title, body, url: target, tag: row.id });
 

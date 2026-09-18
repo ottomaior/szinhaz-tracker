@@ -57,56 +57,149 @@ async function profilesByIds(ids: string[]): Promise<PersonSummary[]> {
   return (data ?? []).map((r) => toPerson(r as ProfileRow));
 }
 
-/** Everyone the given user follows. Defaults to the signed-in user. */
+/**
+ * Where a follow between the signed-in person and somebody else stands.
+ *
+ * Since 0065 a follow is a request until the person followed accepts it
+ * (T-095): `pending` is asked and not yet answered, `accepted` is a follow,
+ * `none` is neither. The row is visible to both parties while pending and to
+ * everyone once accepted, so this reads the same row whichever side asks.
+ */
+export type FollowStatus = "none" | "pending" | "accepted";
+
+/** Everyone the given user follows — accepted follows only. Defaults to the signed-in user. */
 export async function getFollowing(userId?: string): Promise<PersonSummary[]> {
   return profilesByIds(await getFollowingIds(userId));
 }
 
-/** Just the ids, for the feed's filter. Cheaper than fetching whole profiles. */
+/** Just the ids, for the feed's filter. Accepted only: a request opens nothing. */
 export async function getFollowingIds(userId?: string): Promise<string[]> {
   const id = userId ?? (await currentUserId());
   if (!id) return [];
-  const { data, error } = await supabase.from("follows").select("followee_id").eq("follower_id", id);
+  const { data, error } = await supabase
+    .from("follows")
+    .select("followee_id")
+    .eq("follower_id", id)
+    .eq("status", "accepted");
   if (error) throw error;
   return (data ?? []).map((r) => r.followee_id as string);
 }
 
+/** Everyone who follows the given user — accepted only. */
 export async function getFollowers(userId: string): Promise<PersonSummary[]> {
-  const { data, error } = await supabase.from("follows").select("follower_id").eq("followee_id", userId);
+  const { data, error } = await supabase
+    .from("follows")
+    .select("follower_id")
+    .eq("followee_id", userId)
+    .eq("status", "accepted");
   if (error) throw error;
   return profilesByIds((data ?? []).map((r) => r.follower_id as string));
 }
 
-export async function isFollowing(followeeId: string): Promise<boolean> {
+/** The people waiting for the signed-in person's answer, oldest first. */
+export async function getFollowRequests(): Promise<PersonSummary[]> {
   const me = await currentUserId();
-  if (!me) return false;
+  if (!me) return [];
   const { data, error } = await supabase
     .from("follows")
-    .select("followee_id")
+    .select("follower_id, created_at")
+    .eq("followee_id", me)
+    .eq("status", "pending")
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  const ids = (data ?? []).map((r) => r.follower_id as string);
+  const people = await profilesByIds(ids);
+  // `profilesByIds` sorts by name; put them back in the order they asked.
+  const rank = new Map(ids.map((id, i) => [id, i]));
+  return people.sort((a, b) => (rank.get(a.id) ?? 0) - (rank.get(b.id) ?? 0));
+}
+
+export async function countFollowRequests(): Promise<number> {
+  const me = await currentUserId();
+  if (!me) return 0;
+  const { count, error } = await supabase
+    .from("follows")
+    .select("follower_id", { count: "exact", head: true })
+    .eq("followee_id", me)
+    .eq("status", "pending");
+  if (error) throw error;
+  return count ?? 0;
+}
+
+export async function getFollowStatus(followeeId: string): Promise<FollowStatus> {
+  const me = await currentUserId();
+  if (!me) return "none";
+  const { data, error } = await supabase
+    .from("follows")
+    .select("status")
     .eq("follower_id", me)
     .eq("followee_id", followeeId)
     .maybeSingle();
   if (error) throw error;
-  return !!data;
+  return data ? (data.status as FollowStatus) : "none";
 }
 
-export async function followUser(followeeId: string): Promise<void> {
+/** Kept for callers that only need yes or no; a pending request is a no. */
+export async function isFollowing(followeeId: string): Promise<boolean> {
+  return (await getFollowStatus(followeeId)) === "accepted";
+}
+
+/**
+ * Asks to follow. The row goes in as `pending` — the insert policy accepts
+ * nothing else — and the trigger in 0065 tells the other person.
+ *
+ * An upsert rather than an insert so a second press before the first has
+ * come back is a no-op; `ignoreDuplicates` so it never rewrites an accepted
+ * row back to pending.
+ */
+export async function requestFollow(followeeId: string): Promise<void> {
   const me = await currentUserId();
   if (!me) throw new Error("not signed in");
-  // Following twice is a no-op rather than a duplicate-key error: the button
-  // can be pressed again before the first request has come back.
   const { error } = await supabase
     .from("follows")
-    .upsert({ follower_id: me, followee_id: followeeId }, { onConflict: "follower_id,followee_id" });
+    .upsert(
+      { follower_id: me, followee_id: followeeId, status: "pending" },
+      { onConflict: "follower_id,followee_id", ignoreDuplicates: true }
+    );
   if (error) throw error;
 }
 
+/** @deprecated Use `requestFollow`; a follow can no longer be taken. */
+export const followUser = requestFollow;
+
+/** Withdraws a request, or ends a follow — the same row either way. */
 export async function unfollowUser(followeeId: string): Promise<void> {
   const me = await currentUserId();
   if (!me) throw new Error("not signed in");
   const { error } = await supabase.from("follows").delete().eq("follower_id", me).eq("followee_id", followeeId);
   if (error) throw error;
 }
+
+/** The person followed says yes. Only they may; the update policy sees to it. */
+export async function acceptFollowRequest(followerId: string): Promise<void> {
+  const me = await currentUserId();
+  if (!me) throw new Error("not signed in");
+  const { error } = await supabase
+    .from("follows")
+    .update({ status: "accepted" })
+    .eq("follower_id", followerId)
+    .eq("followee_id", me);
+  if (error) throw error;
+}
+
+/**
+ * The person followed says no, or later shows a follower the door. One
+ * operation, because a declined request and a removed follower are the same
+ * absence, and nobody is told either way.
+ */
+export async function removeFollower(followerId: string): Promise<void> {
+  const me = await currentUserId();
+  if (!me) throw new Error("not signed in");
+  const { error } = await supabase.from("follows").delete().eq("follower_id", followerId).eq("followee_id", me);
+  if (error) throw error;
+}
+
+export const declineFollowRequest = removeFollower;
 
 /**
  * People whose name or handle matches, minus the searcher themselves — you

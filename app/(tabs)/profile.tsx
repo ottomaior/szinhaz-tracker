@@ -24,6 +24,7 @@ import { AnimatedList } from "@/components/motion/Reveal";
 import { strings } from "@/i18n/hu";
 import { currentSeasonStart } from "@/utils/season";
 import { makeStyles } from "@/theme/styles";
+import { countFollowRequests } from "@/services/followService";
 
 const TABS = [strings.profile.tabDiary, strings.profile.tabWatchlists, strings.profile.tabReviews] as const;
 
@@ -41,6 +42,8 @@ export default function ProfileScreen() {
   const [diaryLoaded, setDiaryLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>(strings.profile.tabDiary);
   const [confirmingSignOut, setConfirmingSignOut] = useState(false);
+  /** Requests waiting for an answer (T-095); the header says so when there are any. */
+  const [pendingRequests, setPendingRequests] = useState(0);
   const [signOutError, setSignOutError] = useState<string>();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -64,6 +67,11 @@ export default function ProfileScreen() {
       if (!fresh()) return;
       setUser(u);
       if (!u) return;
+      countFollowRequests()
+        .then((n) => {
+          if (fresh()) setPendingRequests(n);
+        })
+        .catch(() => undefined);
       const [entries, wl] = await Promise.all([getDiaryEntriesForUser(u.id), getWatchlist()]);
       if (!fresh()) return;
       const watchlistPlays = wl.map((e) => e.play);
@@ -232,9 +240,35 @@ export default function ProfileScreen() {
               >
                 <Stat value={user.stats.thisSeason} label={strings.profile.thisSeason} delay={120} />
               </Pressable>
-              <Stat value={user.stats.followers} label={strings.profile.followers} delay={240} />
-              <Stat value={user.stats.following} label={strings.profile.following} delay={360} />
+              {/* The two numbers open the lists behind them (T-096). */}
+              <Pressable
+                onPress={() => router.push({ pathname: "/followers", params: { tab: "followers" } })}
+                accessibilityRole="button"
+                accessibilityLabel={strings.profile.followers}
+                style={{ flex: 1 }}
+              >
+                <Stat value={user.stats.followers} label={strings.profile.followers} delay={240} />
+              </Pressable>
+              <Pressable
+                onPress={() => router.push({ pathname: "/followers", params: { tab: "following" } })}
+                accessibilityRole="button"
+                accessibilityLabel={strings.profile.following}
+                style={{ flex: 1 }}
+              >
+                <Stat value={user.stats.following} label={strings.profile.following} delay={360} />
+              </Pressable>
             </View>
+            {pendingRequests > 0 && (
+              <Pressable
+                onPress={() => router.push({ pathname: "/followers", params: { tab: "requests" } })}
+                accessibilityRole="button"
+                style={{ marginTop: space.md }}
+              >
+                <Text variant="label" style={{ color: overlay.onImageAccent }}>
+                  {strings.people.pendingRequests(pendingRequests)} →
+                </Text>
+              </Pressable>
+            )}
           </HoloCard>
 
           {/* Lists are a screen of their own rather than a fourth tab here.

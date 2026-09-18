@@ -9,18 +9,17 @@ import type { Poster } from "@/data/types";
  * role — see 0030. There is no insert path from the app, deliberately, so
  * nothing signed in can post itself or anybody else a notification.
  */
-export type NotificationKind =
-  | "dates_published"
-  | "playing_tomorrow"
-  | "venue_new_play"
-  | "person_new_play"
-  | "review_liked"
-  | "review_commented";
+export type { NotificationKind } from "@/i18n/notificationCopy";
+import type { NotificationKind } from "@/i18n/notificationCopy";
 
 export type AppNotification = {
   id: string;
   kind: NotificationKind;
-  playId: string;
+  /**
+   * The production, for the six kinds that are about one. Absent for the two
+   * follow kinds (0065), which are about a person — see `payload.userId`.
+   */
+  playId?: string;
   /**
    * The diary entry this is about, for the two engagement kinds.
    *
@@ -29,6 +28,7 @@ export type AppNotification = {
    * row leads when it is tapped.
    */
   reviewId?: string;
+  /** The production's title, or the person's name for the follow kinds. */
   playTitle: string;
   poster?: Poster;
   createdAt: string;
@@ -51,15 +51,17 @@ export type AppNotification = {
     room?: string;
     /** `venue_new_play`: the theatre. */
     venue?: string;
-    /** `person_new_play`, `review_liked`, `review_commented`: who it was. */
+    /** `person_new_play`, `review_liked`, `review_commented`, and the two follow kinds: who it was. */
     person?: string;
+    /** The follow kinds: the other person's id, which is where the row leads. */
+    userId?: string;
   };
 };
 
 type NotificationRow = {
   id: string;
   kind: NotificationKind;
-  play_id: string;
+  play_id: string | null;
   review_id: string | null;
   payload: AppNotification["payload"] | null;
   created_at: string;
@@ -76,6 +78,17 @@ const NOTIFICATION_SELECT =
 
 function toNotification(row: NotificationRow): AppNotification | undefined {
   const playRow = Array.isArray(row.plays) ? row.plays[0] : row.plays;
+  // The follow kinds have no production; their heading is the person.
+  if (!row.play_id) {
+    return {
+      id: row.id,
+      kind: row.kind,
+      playTitle: row.payload?.person ?? "",
+      createdAt: row.created_at,
+      readAt: row.read_at ?? undefined,
+      payload: row.payload ?? {},
+    };
+  }
   // A notification whose production has been deleted has nothing to say. The
   // foreign key cascades, so this should be unreachable; it is here because a
   // row that renders as a blank card is worse than a row that is not there.

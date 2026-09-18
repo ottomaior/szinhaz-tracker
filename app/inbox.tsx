@@ -17,6 +17,9 @@ import { strings } from "@/i18n/hu";
 import { formatShortDayForSuffix, formatTime } from "@/utils/datetime";
 import { makeStyles, useColors } from "@/theme/styles";
 import { notificationLine } from "@/i18n/notificationCopy";
+import { isPersonKind } from "@/i18n/notificationCopy";
+import { Avatar } from "@/components/ui/Avatar";
+import { personInitials } from "@/utils/people";
 
 /**
  * What the sync learned that you were waiting to hear.
@@ -88,11 +91,17 @@ export default function InboxScreen() {
                 // A like or a comment is about your evening, so it opens the
                 // evening — the production page would be the wrong end of it,
                 // and the thread the notice is announcing is not on it.
-                onPress={() =>
-                  n.reviewId
-                    ? router.push({ pathname: "/entry/[id]", params: { id: n.reviewId } })
-                    : router.push(`/play/${n.playId}`)
-                }
+                onPress={() => {
+                  // A follow request or acceptance is about a person, and the
+                  // request is answered on your own follower list.
+                  if (isPersonKind(n.kind)) {
+                    if (n.kind === "follow_requested") router.push({ pathname: "/followers", params: { tab: "requests" } });
+                    else if (n.payload.userId) router.push(`/user/${n.payload.userId}`);
+                    return;
+                  }
+                  if (n.reviewId) router.push({ pathname: "/entry/[id]", params: { id: n.reviewId } });
+                  else if (n.playId) router.push(`/play/${n.playId}`);
+                }}
               />
             ))}
 
@@ -126,15 +135,21 @@ function NotificationRow({
       accessibilityRole="button"
       accessibilityLabel={notification.playTitle}
     >
-      <PosterPlaceholder
-        poster={notification.poster}
-        title={notification.playTitle}
-        seed={notification.playId}
-        width={44}
-        height={66}
-        radius={radius.sm}
-        preferThumb
-      />
+      {isPersonKind(notification.kind) ? (
+        <View style={{ width: 44, alignItems: "center", justifyContent: "center" }}>
+          <Avatar initials={personInitials(notification.playTitle)} size={44} />
+        </View>
+      ) : (
+        <PosterPlaceholder
+          poster={notification.poster}
+          title={notification.playTitle}
+          seed={notification.playId ?? notification.id}
+          width={44}
+          height={66}
+          radius={radius.sm}
+          preferThumb
+        />
+      )}
       <View style={{ flex: 1, gap: 3 }}>
         <Text variant="label" numberOfLines={2}>{notification.playTitle}</Text>
         <Text variant="bodySmall" tone="dim" numberOfLines={2}>
