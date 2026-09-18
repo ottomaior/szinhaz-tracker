@@ -29,13 +29,17 @@ import { createClient } from "npm:@supabase/supabase-js@2";
  * diary entries point at those rows, and deleting them would take somebody
  * else's record of their evening with it.
  *
- * The same reasoning decides the third bucket. A user writes to three:
+ * The same reasoning decides the second bucket. A user writes to two:
  *
  * | bucket | path | on deletion |
  * |---|---|---|
  * | `avatars` | `<uid>/…` | deleted — it is a picture of them |
- * | `stubs` | `<uid>/…` | deleted — a ticket photo, usually with their name on it |
  * | `posters` | `user/<uid>/…` | **kept** — it is the cover art of a production that stays |
+ *
+ * There used to be a third, `stubs`, for ticket photos; it was retired on
+ * 18 September 2026 and dropped in 0064, and this sweep stopped naming it the
+ * same day — a bucket that does not exist answers the list call with an
+ * error, and an error here refuses the whole deletion.
  *
  * Deleting the poster too would blank the artwork on a play other people have
  * logged, which is the same mistake as deleting the play.
@@ -43,10 +47,9 @@ import { createClient } from "npm:@supabase/supabase-js@2";
  * ## Why Storage needs code at all
  *
  * Storage objects have no foreign key to `auth.users`, so nothing cascades to
- * them. Left alone they would outlive the account silently — and `stubs` is
- * a public bucket holding photographs of tickets with names and booking codes
- * on them, which is the one category here where "forgot to clean up" is a data
- * breach rather than untidiness.
+ * them. Left alone they would outlive the account silently — an avatar is a
+ * picture of the person, which is exactly the thing a deletion promises to
+ * remove.
  */
 
 const CORS = {
@@ -67,10 +70,9 @@ function json(body: unknown, status = 200): Response {
  *
  * `list` returns a page at a time — 100 by default, and the API caps a request
  * at 1000 — so this pages rather than trusting one call. Somebody who has
- * replaced their avatar a hundred times, or logged three years of evenings
- * with a ticket photo each, is exactly the account whose leftovers matter
- * most, and a single unpaged `list` would delete the first hundred and leave
- * the rest behind reporting success.
+ * replaced their avatar a hundred times is exactly the account whose leftovers
+ * matter most, and a single unpaged `list` would delete the first hundred and
+ * leave the rest behind reporting success.
  */
 async function listFolder(admin: any, bucket: string, folder: string): Promise<string[]> {
   const paths: string[] = [];
@@ -84,10 +86,10 @@ async function listFolder(admin: any, bucket: string, folder: string): Promise<s
     if (!data || data.length === 0) break;
 
     for (const entry of data) {
-      // `list` returns folders as entries with no `id`. Neither bucket nests
-      // below the user's own folder today, so recursing would be speculative —
-      // but silently treating a folder as a file would produce a remove call
-      // that fails for a reason nobody could read.
+      // `list` returns folders as entries with no `id`. The bucket does not
+      // nest below the user's own folder today, so recursing would be
+      // speculative — but silently treating a folder as a file would produce
+      // a remove call that fails for a reason nobody could read.
       if (entry.id === null) continue;
       paths.push(`${folder}/${entry.name}`);
     }
@@ -135,7 +137,7 @@ Deno.serve(async (req: Request) => {
   // the account is gone leaves everything intact and the person can press the
   // button again.
   const removed: Record<string, number> = {};
-  for (const bucket of ["avatars", "stubs"]) {
+  for (const bucket of ["avatars"]) {
     try {
       const paths = await listFolder(admin, bucket, uid);
       if (paths.length > 0) {

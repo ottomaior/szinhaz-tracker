@@ -1221,10 +1221,15 @@ az ember neve és foglalási azonosítója. Előbb a naplózó űrlap hagyta abb
 fotó kérését (983d6ef); 2026. szeptember 18-án Ottó adatvédelmi okból az
 egész funkciót kivette, ahelyett hogy aláírt URL-eket építettünk volna a
 megtartásához. Az adatbázisban egyetlen bejegyzés sem hordozott soha ilyet.
-Az alkalmazás többé nem olvassa, nem írja és nem mutatja a `stub_path`-t; az
-oszlop, az őrző triggere és a bucket nyugdíjba mentek, és egy későbbi
-migrációban kerülnek ki, abban az additív-majd-destruktív sorrendben, amit ez
-a fájl máshol leír.
+Előbb az alkalmazás hagyta abba a `stub_path` olvasását, írását és
+mutatását (PR #38); aztán a `0064_no_more_stubs.sql` ejtette az oszlopot, az
+őrző triggerét, a bucket négy szabályát és az egyetlen árva objektumot, és
+újraalkotta a `reviews_readable` nézetet az oszlop nélkül — abban az
+additív-majd-destruktív sorrendben, amit ez a fájl máshol leír. Egy dolgot az
+a fájl a következő embernek is feljegyez: a Storage SQL-ből visszautasítja a
+`delete from storage.buckets` és `storage.objects` utasítást, ezért az
+objektum és a bucket a Storage API-n át ment ki, a migráció pedig csak azt
+ellenőrzi, hogy már nincsenek meg.
 
 **És egy képernyő, ahol mindez visszaolvasható.** Semmit nem érte volna meg
 leírni, ha soha többé nem mutatja meg neked semmi. Az `entry/[id].tsx` egyetlen

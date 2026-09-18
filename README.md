@@ -1170,9 +1170,14 @@ holding a link, and a ticket carries the person's name and booking code. The
 check-in form stopped asking for the photo first (983d6ef); on 18 September
 2026 Ottó took the feature out entirely, on privacy grounds, rather than
 building signed URLs to keep it. No entry in the database ever carried one.
-The app no longer reads, writes or shows `stub_path`; the column, its guard
-trigger and the bucket are retired and come out in a later migration, in the
-additive-then-destructive order the rest of this file describes.
+The app stopped reading, writing and showing `stub_path` first (PR #38);
+`0064_no_more_stubs.sql` then dropped the column, its guard trigger, the
+bucket's four policies and the one orphan object, and recreated
+`reviews_readable` without the column — the additive-then-destructive order
+the rest of this file describes. One thing that file records for the next
+person: Storage refuses `delete from storage.buckets` and `storage.objects`
+in SQL, so the object and the bucket went through the Storage API and the
+migration only asserts they are gone.
 
 **And a screen to read it back on.** None of this was worth writing while
 nothing would ever show it to you again. `entry/[id].tsx` is one evening: the
