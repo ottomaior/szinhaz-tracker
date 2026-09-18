@@ -190,7 +190,7 @@ export const privacyPolicy: LegalDocument = {
           "Nem végzünk automatizált döntéshozatalt és profilalkotást, nem kereskedünk az adataiddal, és nem adjuk át őket hirdetőknek."
         ),
         p(
-          "Az indulás előtti kérdőív (vastaps.pages.dev/kutatas) válaszait névtelenül tároljuk: nem kérünk nevet, és a válaszokhoz nem tartozik fiók. A böngésződben egy véletlen azonosítót helyezünk el, hogy egy eszközről ne lehessen kétszer beküldeni — ez személyhez nem köthető. Az e-mail-címedet csak akkor tároljuk, ha a kérdőív végén kéred, hogy szóljunk az indulásról; ez hozzájáruláson alapul (6. cikk (1) a) pont), a címet kizárólag erre az egy értesítésre használjuk, és a kérésedre bármikor töröljük."
+          "Az indulás előtti kérdőív (vastaps.app/kutatas) válaszait névtelenül tároljuk: nem kérünk nevet, és a válaszokhoz nem tartozik fiók. A böngésződben egy véletlen azonosítót helyezünk el, hogy egy eszközről ne lehessen kétszer beküldeni — ez személyhez nem köthető. Az e-mail-címedet csak akkor tároljuk, ha a kérdőív végén kéred, hogy szóljunk az indulásról; ez hozzájáruláson alapul (6. cikk (1) a) pont), a címet kizárólag erre az egy értesítésre használjuk, és a kérésedre bármikor töröljük."
         ),
       ],
     },

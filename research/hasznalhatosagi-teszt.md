@@ -4,7 +4,7 @@
 
 ## Beállítás
 
-- **Az ő telefonján**, a böngészőben, `szinhaz-tracker-production.up.railway.app`. Nem a tiéden: a saját eszközén más a méret, a betű, a türelem.
+- **Az ő telefonján**, a böngészőben, `web.vastaps.app`. Nem a tiéden: a saját eszközén más a méret, a betű, a türelem.
 - Kijelentkezve kezdünk. A 2. feladat előtt regisztrál — ez is a teszt része.
 - Te **nem segítesz**. Ha elakad, kérdezd: „Mit keresel most?” és „Mire számítottál?” Ha két perc után sem megy, jegyezd fel, és lépjetek tovább — az elakadás az eredmény.
 - Kérd, hogy **hangosan gondolkodjon**: mondja, mit lát, mit keres, mit vár. Ha elhallgat, „mi jár most a fejedben?”.

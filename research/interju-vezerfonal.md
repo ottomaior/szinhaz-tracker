@@ -51,7 +51,7 @@ Amit *nem* kérdezünk soha: „Fontos lenne neked, hogy…?”, „Fizetnél é
 
 ### 5. Az app (5 perc) — csak most
 
-„Megmutatom, min dolgozom. Nem kell udvariasnak lenned, az nem segít.” Add oda a telefont az élő appal (`szinhaz-tracker-production.up.railway.app`), kijelentkezve, és **ne magyarázz**. Figyeld:
+„Megmutatom, min dolgozom. Nem kell udvariasnak lenned, az nem segít.” Add oda a telefont az élő appal (`web.vastaps.app`), kijelentkezve, és **ne magyarázz**. Figyeld:
 
 - Mit nyit meg elsőre? Mit görget át?
 - Mit mond hangosan, kérdezés nélkül?

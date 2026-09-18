@@ -67,7 +67,7 @@ function page(slug: string, doc: LegalDocument): string {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0a0507">
 <title>${esc(doc.title)} · Vastaps</title>
-<link rel="canonical" href="https://vastaps.pages.dev/${slug}">
+<link rel="canonical" href="https://vastaps.app/${slug}">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">

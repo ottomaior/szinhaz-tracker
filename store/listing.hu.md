@@ -118,8 +118,8 @@ munka.
 | Alkalmazás kategóriája | `Életmód` (Lifestyle) |
 | Címkék | színház, kultúra, napló, előadás |
 | E-mail | `ottomaior@protonmail.com` |
-| Weboldal | `https://vastaps.pages.dev/` |
-| Adatvédelmi tájékoztató | `https://vastaps.pages.dev/adatvedelem` |
+| Weboldal | `https://vastaps.app/` |
+| Adatvédelmi tájékoztató | `https://vastaps.app/adatvedelem` |
 
 > **Kategória.** A „Szórakozás” (Entertainment) is védhető lenne, de az a
 > kategória tele van streaming-alkalmazásokkal, és a Vastaps nem tartalmat
