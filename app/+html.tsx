@@ -87,6 +87,21 @@ const NO_FLASH_SCRIPT = `
 })();
 `.trim();
 
+/**
+ * Cloudflare Web Analytics, the only measurement the web app carries.
+ *
+ * The beacon sets no cookie and keeps no identifier across visits, which is
+ * what lets it run without a consent banner; it reports the page, referrer,
+ * country and Core Web Vitals, and follows expo-router's history navigations
+ * on its own. The site token is not a secret — it is visible in the served
+ * HTML either way — but it is read from the environment rather than written
+ * here so that a local `expo export` or a preview build sends nothing: the
+ * tag is rendered only when the token is set, and Railway sets it for
+ * production alone. `process.env` is resolved at export time, like every
+ * `EXPO_PUBLIC_` value; this file never runs in the browser.
+ */
+const CF_BEACON_TOKEN = process.env.EXPO_PUBLIC_CF_BEACON_TOKEN;
+
 export default function Root({ children }: PropsWithChildren) {
   return (
     <html lang="hu">
@@ -121,6 +136,14 @@ export default function Root({ children }: PropsWithChildren) {
 
         <style dangerouslySetInnerHTML={{ __html: THEME_CSS }} />
         <script dangerouslySetInnerHTML={{ __html: NO_FLASH_SCRIPT }} />
+
+        {CF_BEACON_TOKEN ? (
+          <script
+            defer
+            src="https://static.cloudflareinsights.com/beacon.min.js"
+            data-cf-beacon={JSON.stringify({ token: CF_BEACON_TOKEN })}
+          />
+        ) : null}
       </head>
       <body>{children}</body>
     </html>
