@@ -744,8 +744,18 @@ where the `.hu` is ours.
 > are free at `whois.nic.hu`. The research on which to buy and how the mail
 > gets built on top of it is under T-030 and T-005.
 
+---
+
+## Doing
+
+_Nothing yet._
+
+---
+
+## Done
+
 ### T-030 · Move off pages.dev and railway.app onto a real domain
-type: chore · area: infra · priority: med · status: open · added: 2026-09-10
+type: chore · area: infra · priority: med · status: done · added: 2026-09-10 · done: 2026-09-18
 
 The app answers at `szinhaz-tracker-production.up.railway.app` and the site at
 `vastaps.pages.dev`. Both are generated hostnames belonging to somebody else's
@@ -809,15 +819,30 @@ Depends on T-029, because the name decides the domain.
 > `hello@vastaps.app` via Email Routing waits on the account-level address
 > permission, which the token still lacks.
 
----
-
-## Doing
-
-_Nothing yet._
-
----
-
-## Done
+> **Done, 18 September.** `web.vastaps.app` is a custom domain on the
+> Railway service and answers with a Let's Encrypt certificate; the sweep
+> (`the-app-moves-in`, 31 occurrences in 18 files) is merged; the landing
+> redeployed with `vastaps.app` as canonical; the Supabase Site URL moved to
+> `https://web.vastaps.app`, the old Railway origin left on the allow list
+> so links already in inboxes keep working; `check:launch` 10/10 against
+> the live config; the feed loads signed out at phone width on the new host.
+>
+> Two things worth knowing for the next domain. Railway's GraphQL
+> `customDomainCreate` lists only the CNAME under `dnsRecords`; the TXT its
+> docs call mandatory is in `status.verificationDnsHost` /
+> `verificationToken` (`_railway-verify.web` → `railway-verify=…`), and the
+> certificate sat at *validating ownership* for forty minutes until that
+> record existed. And the `web.` CNAME is DNS-only (grey cloud): with the
+> proxy on, public DNS shows Cloudflare's addresses instead of the CNAME
+> target, and Railway never sees it — its own TLS is fine, and there is
+> nothing Cloudflare's proxy would add for an app that authenticates every
+> request anyway.
+>
+> Not done, deliberately: `hello@vastaps.app` through Cloudflare Email
+> Routing — the token lacks the account-level *Email Routing Addresses*
+> permission, and the destination address needs a click in Ottó's inbox
+> either way. The impresszum's contact is still the ProtonMail address, so
+> nothing depends on it yet.
 
 ### T-005 · Anyone can sign up with somebody else's email address
 type: bug · area: auth · priority: high · status: done · added: 2026-09-09 · done: 2026-09-18
@@ -895,8 +920,9 @@ for the confirmation link, a "resend" button, Hungarian mail templates.
 > Still to be seen with eyes: a sign-up from a fresh address on a phone,
 > clicking the link, landing signed in — the panel and the native handler
 > shipped in `the-mail-arrives` but have only been exercised on web with a
-> stubbed answer. The links still land on the Railway origin until `web.`
-> exists (T-030).
+> stubbed answer. Sign-up from a fresh address was then done by Ottó on
+> web the same day — panel, mail, link, signed in. Native still waits for
+> a device build with `the-mail-arrives` in it.
 
 ### T-071 · Every person page was Jánoskúti Márta, or would not load
 type: bug · area: catalogue · priority: high · status: done · added: 2026-09-11 · done: 2026-09-11
