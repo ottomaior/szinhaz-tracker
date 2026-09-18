@@ -769,6 +769,10 @@ async function main() {
     // And then out the door: whatever the rows above say and nobody has been
     // told yet, to every device that asked (T-089).
     await sendPush();
+    // And once a week, the letter (T-090). Monday's run, so it lands at the
+    // start of the week it describes; the function itself refuses to write to
+    // anybody twice inside six days, so a Monday rerun is harmless.
+    if (isDigestDay()) await sendWeeklyDigest();
   }
 
   if (failures.length) {
@@ -921,6 +925,46 @@ async function sendPush() {
     }
   } catch (e) {
     console.error("[push] delivery failed (rows stay pending for the next run):", errorMessageOf(e));
+  }
+}
+
+/** Monday in Budapest, which is where the week starts for the people reading. */
+function isDigestDay(): boolean {
+  if (process.env.SYNC_FORCE_DIGEST === "1") return true;
+  const weekday = new Date().toLocaleDateString("en-US", { timeZone: "Europe/Budapest", weekday: "short" });
+  return weekday === "Mon";
+}
+
+/**
+ * Asks the `weekly-digest` Edge Function to write to everybody who is due.
+ *
+ * Same shape as `sendPush`: the function holds the Resend key and decides
+ * who gets what; this only rings the bell with the service role. A person
+ * with an empty week is skipped there, not here.
+ */
+async function sendWeeklyDigest() {
+  const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return;
+  try {
+    const res = await fetch(`${url.replace(/\/+$/, "")}/functions/v1/weekly-digest`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, apikey: key, "Content-Type": "application/json" },
+      body: "{}",
+    });
+    const body = (await res.json().catch(() => ({}))) as {
+      ok?: boolean;
+      due?: number;
+      sent?: number;
+      skipped?: number;
+      failures?: { user: string; reason: string }[];
+      error?: string;
+    };
+    if (!res.ok || !body.ok) throw new Error(`HTTP ${res.status} ${body.error ?? ""}`.trim());
+    console.log(`[digest] due ${body.due ?? 0}, sent ${body.sent ?? 0}, skipped ${body.skipped ?? 0}`);
+    for (const f of body.failures ?? []) console.error(`[digest] ${f.user}: ${f.reason}`);
+  } catch (e) {
+    console.error("[digest] failed (nobody is stamped, next Monday tries again):", errorMessageOf(e));
   }
 }
 

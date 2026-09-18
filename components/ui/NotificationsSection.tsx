@@ -3,8 +3,10 @@ import { View } from "react-native";
 import {
   disablePush,
   enablePush,
+  getDigestEnabled,
   getNotificationPreferences,
   getPushStatus,
+  setDigestEnabled,
   setNotificationPreferences,
   type PushStatus,
 } from "@/services/pushService";
@@ -34,6 +36,7 @@ export function NotificationsSection() {
   const toast = useToast();
   const [status, setStatus] = useState<PushStatus>();
   const [kinds, setKinds] = useState<Set<NotificationKind>>();
+  const [digest, setDigest] = useState<boolean>();
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -50,6 +53,11 @@ export function NotificationsSection() {
     getNotificationPreferences()
       .then((prefs) => {
         if (!cancelled) setKinds(new Set(prefs));
+      })
+      .catch(() => undefined);
+    getDigestEnabled()
+      .then((on) => {
+        if (!cancelled) setDigest(on);
       })
       .catch(() => undefined);
     return () => {
@@ -73,6 +81,17 @@ export function NotificationsSection() {
       toast.show({ message: strings.settings.notificationsError });
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function toggleDigest(on: boolean) {
+    const before = digest;
+    setDigest(on);
+    try {
+      await setDigestEnabled(on);
+    } catch {
+      setDigest(before);
+      toast.show({ message: strings.common.loadError });
     }
   }
 
@@ -120,6 +139,18 @@ export function NotificationsSection() {
       )}
       {status === "on" && (
         <Button label={strings.settings.notificationsDisable} variant="text" onPress={toggleDevice} disabled={busy} />
+      )}
+
+      {/* The weekly letter is the one channel that reaches every account,
+          whatever the device, so it sits above the per-kind list rather
+          than among it (T-090). */}
+      {digest !== undefined && (
+        <ToggleRow
+          label={strings.settings.digest}
+          blurb={strings.settings.digestHint}
+          on={digest}
+          onChange={toggleDigest}
+        />
       )}
 
       {kinds && (
