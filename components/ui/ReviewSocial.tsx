@@ -23,6 +23,8 @@ import { ReportSheet } from "@/components/ui/ReportSheet";
 import { Text } from "@/components/ui/Text";
 import { formatTimeAgo, strings } from "@/i18n/hu";
 import { makeStyles } from "@/theme/styles";
+import { useToast } from "@/components/ui/Toast";
+import { haptic } from "@/utils/haptics";
 
 /**
  * The like control and the comment thread for one diary entry.
@@ -56,6 +58,7 @@ export function ReviewSocial({
   const styles = useStyles();
 
   const router = useRouter();
+  const toast = useToast();
   const fontsLoaded = useAppFonts();
   const { session } = useAuth();
 
@@ -126,6 +129,7 @@ export function ReviewSocial({
     const next = !liked;
     setLiked(next);
     setLikes((n) => Math.max(0, n + (next ? 1 : -1)));
+    if (next) haptic("light");
     setBusy(true);
     try {
       if (next) await likeReview(reviewId);
@@ -133,6 +137,9 @@ export function ReviewSocial({
     } catch {
       setLiked(!next);
       setLikes((n) => Math.max(0, n + (next ? -1 : 1)));
+      // The rollback used to be silent, which reads as a heart that will not
+      // stay pressed. Say that the request failed, not the reader.
+      toast.show({ message: strings.common.loadError });
     } finally {
       setBusy(false);
     }

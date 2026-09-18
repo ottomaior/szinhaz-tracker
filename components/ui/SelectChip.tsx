@@ -9,6 +9,7 @@ import { CheckIcon, ChevronDownIcon, CloseIcon, PinIcon } from "@/components/ico
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 import { makeStyles } from "@/theme/styles";
+import { haptic } from "@/utils/haptics";
 
 /**
  * One facet of the filter bar: a chip showing its current value, which opens a
@@ -181,6 +182,7 @@ export function SelectChip({
                   <Pressable
                     key={option.value ?? "__all__"}
                     onPress={() => {
+                      haptic("selection");
                       onChange(option.value);
                       setOpen(false);
                     }}

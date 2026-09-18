@@ -24,6 +24,9 @@ import { strings } from "@/i18n/hu";
 import { formatTime } from "@/utils/datetime";
 import { personSlug } from "@/utils/people";
 import { makeStyles } from "@/theme/styles";
+import { useToast } from "@/components/ui/Toast";
+import { haptic } from "@/utils/haptics";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 /**
  * One evening, read back.
@@ -43,6 +46,7 @@ export default function DiaryEntryScreen() {
 
   const { id, compose } = useLocalSearchParams<{ id?: string; compose?: string }>();
   const router = useRouter();
+  const toast = useToast();
   const { session } = useAuth();
 
   const [entry, setEntry] = useState<{
@@ -103,6 +107,12 @@ export default function DiaryEntryScreen() {
     setDeleting(true);
     try {
       await deleteReview(entry.review.id);
+      haptic("warning");
+      // Said, not undone: putting the row back would mint a new id and drop
+      // its likes and comments on the floor, and the confirmation card above
+      // has already asked. A toast without an undo is still the difference
+      // between "did that work" and knowing.
+      toast.show({ message: strings.feedback.entryDeleted });
       // Straight to the diary, which is the list this row has just left — going
       // "back" would land on whatever opened the screen, possibly a feed still
       // showing the card that no longer exists.
@@ -147,7 +157,26 @@ export default function DiaryEntryScreen() {
     );
   }
 
-  if (!entry) return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
+  if (!entry) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        <ModalHeader title={strings.entry.headerTitle} fallbackRoute="/(tabs)/profile" />
+        <ContentColumn style={{ padding: gutter, gap: space.lg }}>
+          <View style={{ flexDirection: "row", gap: space.md }}>
+            <Skeleton width={96} height={144} radius={radius.md} />
+            <View style={{ flex: 1, gap: space.sm, paddingTop: space.sm }}>
+              <Skeleton width="90%" height={22} />
+              <Skeleton width="60%" height={14} />
+              <Skeleton width="50%" height={14} />
+            </View>
+          </View>
+          <Skeleton width="100%" height={14} />
+          <Skeleton width="85%" height={14} />
+          <Skeleton width="70%" height={14} />
+        </ContentColumn>
+      </View>
+    );
+  }
 
   const { review, play, venue, performance } = entry;
   const isMine = !!session && session.user?.id === review.userId;

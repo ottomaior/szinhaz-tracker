@@ -819,6 +819,31 @@ export const strings = {
     saveError: "Nem sikerült menteni. Próbáld újra.",
   },
 
+  /**
+   * The feedback layer (T-085 to T-088): the toast that answers an action,
+   * the undo on it, the offline banner and the error screen.
+   */
+  feedback: {
+    dismiss: "Bezárás",
+    undo: "Visszavonás",
+    watchlistRemoved: (title: string) => `Levéve a kívánságlistáról: ${title}`,
+    watchlistAdded: (title: string) => `A kívánságlistádon: ${title}`,
+    entryDeleted: "Az este törölve.",
+    entryRestored: "Visszaállítva.",
+    listEntryRemoved: (title: string) => `Levéve a listáról: ${title}`,
+    profileSaved: "A profilod mentve.",
+    entrySaved: "Elmentve a naplódba.",
+    entryUpdated: "A bejegyzés frissítve.",
+    linkCopied: "Link a vágólapon.",
+    followed: (name: string) => `Követed: ${name}`,
+    unfollowed: (name: string) => `Már nem követed: ${name}`,
+    offline: "Nincs kapcsolat. Amit látsz, az utoljára betöltött állapot.",
+    errorTitle: "Ez itt elakadt.",
+    errorBody: "Valami hibázott ezen a képernyőn. Próbáld újra; ha megint megtörténik, írd meg nekünk.",
+    errorRetry: "Újra",
+    errorReport: "Megírom",
+  },
+
   /** Productions gathered under a title — user-made and editorial alike. */
   lists: {
     headerTitle: "Listák",

@@ -84,65 +84,6 @@ sign-up one. Custom SMTP and the `magic_link.html` template already exist;
 **Depends on.** Nothing. Worth doing after T-082 so the sign-in screen is
 rearranged once, not twice.
 
-### T-085 · A toast, and an undo on it
-type: idea · area: design · size: M · status: idea · added: 2026-09-18
-
-**The problem.** Successes are silent and errors are a line of accent text
-somewhere on the form. Removing a play from the watchlist, deleting an
-evening, saving the profile — none of them answers, and the destructive ones
-have no way back except a confirmation dialog in front (T-078 is what that
-costs when the dialog is missing).
-
-**Roughly.** One `Toast` component mounted once in `app/_layout.tsx`, bottom
-on phones and top-right from the `expanded` breakpoint, driven by a small
-context (`showToast({ message, action })`). Used first for watchlist
-add/remove with undo, entry delete with undo, list-entry removal (T-078),
-copy-link and profile saved. Respects reduced motion like `components/motion/`.
-
-**Depends on.** Nothing.
-
-### T-086 · Haptics on the mask, the bookmark and the save
-type: idea · area: native · size: S · status: idea · added: 2026-09-18
-
-**The problem.** On a phone the app is silent to the hand. Every logging app
-people call "nice" answers a rating tap and a save with a tick you can feel.
-
-**Roughly.** `expo-haptics` behind one `haptic("light" | "selection" |
-"success")` helper that is a no-op on web: light on each mask in the rating
-row, selection on filter chips and the palette picker, success on check-in
-save and on following someone. Ten call sites.
-
-**Depends on.** A native rebuild, since it is a native module — fold it into
-the next EAS build rather than triggering one for it.
-
-### T-087 · An error boundary in the house style
-type: idea · area: web · size: S · status: idea · added: 2026-09-18
-
-**The problem.** A render error anywhere shows expo-router's red default, in
-English, on a page that a minute ago was velvet and gold. T-055 gave unknown
-URLs a proper page; a thrown error still has none.
-
-**Roughly.** `ErrorBoundary` exported from `app/_layout.tsx` (expo-router
-picks it up per route), drawn with `EmptyState`'s vocabulary: what happened
-in one line, a retry, and a link to the contact address. Report the error to
-whatever 5.1 (error monitoring) chooses when that exists.
-
-**Depends on.** Nothing; 5.1 makes it useful rather than merely tidy.
-
-### T-088 · Say when the phone is offline
-type: idea · area: native · size: S · status: idea · added: 2026-09-18
-
-**The problem.** A theatre foyer, a basement stúdió, a train: the app shows a
-blank grid or a spinner that never ends, and nothing says why. That reads as
-broken rather than as offline.
-
-**Roughly.** `@react-native-community/netinfo` (and `navigator.onLine` on
-web) behind one hook, a thin banner under the header while there is no
-connection, and the last loaded Discover lead kept in memory so the screen
-is not empty. Not an offline-first rewrite.
-
-**Depends on.** Nothing.
-
 ### T-089 · Ask for notifications at the right moment, and on a phone too
 type: idea · area: notifications · size: L · status: idea · added: 2026-09-18
 
@@ -206,20 +147,6 @@ although the Supabase template for it exists.
 `updateUser({ email })` with the "confirm on both addresses" flow the project
 already has the template for. Once T-082 ships, the account also needs a
 line saying which providers are linked.
-
-**Depends on.** Nothing.
-
-### T-093 · Every screen that loads shows a skeleton, and pulls to refresh
-type: idea · area: design · size: M · status: idea · added: 2026-09-18
-
-**The problem.** `components/ui/Skeleton` is used on four screens; the feed,
-the watchlist, the profile, play detail and the evening page open on a blank
-or a spinner. None of the four tabs pulls to refresh, so a stale feed stays
-stale until the app is reopened.
-
-**Roughly.** A skeleton per list shape (feed card, programme row, grid tile,
-detail header) and `RefreshControl` on the four tabs; make watchlist and
-follow writes optimistic the way the heart already is (T-901).
 
 **Depends on.** Nothing.
 
@@ -938,6 +865,116 @@ _Nothing yet._
 ---
 
 ## Done
+
+### T-093 · Every screen that loads shows a skeleton, and pulls to refresh
+type: idea · area: design · size: M · status: done · added: 2026-09-18
+
+**The problem.** `components/ui/Skeleton` is used on four screens; the feed,
+the watchlist, the profile, play detail and the evening page open on a blank
+or a spinner. None of the four tabs pulls to refresh, so a stale feed stays
+stale until the app is reopened.
+
+**Roughly.** A skeleton per list shape (feed card, programme row, grid tile,
+detail header) and `RefreshControl` on the four tabs; make watchlist and
+follow writes optimistic the way the heart already is (T-901).
+
+**Depends on.** Nothing.
+
+**Done in part, 18 September 2026.** Skeletons on the watchlist, play
+detail and the evening page; pull-to-refresh on the watchlist and the
+profile (the feed already had it), which meant lifting the profile's inline
+focus effect into a `load` with a generation counter. `Skeleton` holds a
+steady tone under reduced motion now. Still open from this entry: a skeleton
+on the profile's diary list, and optimistic watchlist/follow writes (T-901).
+
+### T-088 · Say when the phone is offline
+type: idea · area: native · size: S · status: done · added: 2026-09-18
+
+**The problem.** A theatre foyer, a basement stúdió, a train: the app shows a
+blank grid or a spinner that never ends, and nothing says why. That reads as
+broken rather than as offline.
+
+**Roughly.** `@react-native-community/netinfo` (and `navigator.onLine` on
+web) behind one hook, a thin banner under the header while there is no
+connection, and the last loaded Discover lead kept in memory so the screen
+is not empty. Not an offline-first rewrite.
+
+**Depends on.** Nothing.
+
+**Done, 18 September 2026.** `hooks/useOnline.ts` (NetInfo on a device,
+`navigator.onLine` on the web, as an external store so the static export
+agrees with the first client render) and `components/ui/OfflineBanner.tsx`
+in the flow above the whole stack. Says offline, and that what is on screen
+is the last thing loaded. Checked on the dev server by firing the browser's
+offline and online events. No cached reads yet; the screens keep whatever
+they last fetched.
+
+### T-087 · An error boundary in the house style
+type: idea · area: web · size: S · status: done · added: 2026-09-18
+
+**The problem.** A render error anywhere shows expo-router's red default, in
+English, on a page that a minute ago was velvet and gold. T-055 gave unknown
+URLs a proper page; a thrown error still has none.
+
+**Roughly.** `ErrorBoundary` exported from `app/_layout.tsx` (expo-router
+picks it up per route), drawn with `EmptyState`'s vocabulary: what happened
+in one line, a retry, and a link to the contact address. Report the error to
+whatever 5.1 (error monitoring) chooses when that exists.
+
+**Depends on.** Nothing; 5.1 makes it useful rather than merely tidy.
+
+**Done, 18 September 2026.** `ErrorBoundary` exported from `app/_layout.tsx`
+renders `components/ui/ErrorScreen.tsx`: `EmptyState`'s vocabulary, a retry,
+and a "Megírom" that opens a mail to the impresszum's address with the
+error's name and message in the body. Wire it to whatever 5.1 picks for
+monitoring when that exists.
+
+### T-086 · Haptics on the mask, the bookmark and the save
+type: idea · area: native · size: S · status: done · added: 2026-09-18
+
+**The problem.** On a phone the app is silent to the hand. Every logging app
+people call "nice" answers a rating tap and a save with a tick you can feel.
+
+**Roughly.** `expo-haptics` behind one `haptic("light" | "selection" |
+"success")` helper that is a no-op on web: light on each mask in the rating
+row, selection on filter chips and the palette picker, success on check-in
+save and on following someone. Ten call sites.
+
+**Depends on.** A native rebuild, since it is a native module — fold it into
+the next EAS build rather than triggering one for it.
+
+**Done, 18 September 2026.** `utils/haptics.ts` with four words — light,
+selection, success, warning — a no-op on the web. On the mask rating row,
+chips and the select sheet, the palette rows in Settings, the watchlist
+toggle, the heart, follow buttons, the check-in and profile saves. Needs the
+next native build to be felt.
+
+### T-085 · A toast, and an undo on it
+type: idea · area: design · size: M · status: done · added: 2026-09-18
+
+**The problem.** Successes are silent and errors are a line of accent text
+somewhere on the form. Removing a play from the watchlist, deleting an
+evening, saving the profile — none of them answers, and the destructive ones
+have no way back except a confirmation dialog in front (T-078 is what that
+costs when the dialog is missing).
+
+**Roughly.** One `Toast` component mounted once in `app/_layout.tsx`, bottom
+on phones and top-right from the `expanded` breakpoint, driven by a small
+context (`showToast({ message, action })`). Used first for watchlist
+add/remove with undo, entry delete with undo, list-entry removal (T-078),
+copy-link and profile saved. Respects reduced motion like `components/motion/`.
+
+**Depends on.** Nothing.
+
+**Done, 18 September 2026.** `components/ui/Toast.tsx`: `ToastProvider` in the
+root layout above the stack, `useToast().show({ message, action })`, one at
+a time, bottom on a phone above the dock and top-right from `expanded`. Used
+with an undo on watchlist removal (`app/play/[id].tsx`) and list-entry
+removal (`app/list/[id].tsx`, which puts the note back too), and without one
+on entry delete, profile save, check-in save, and the share button's new
+copy-link path on browsers without a share sheet. Follow and like rollbacks
+now say that the request failed. The diary delete has no undo on purpose: a
+restore would mint a new id and drop the entry's likes and comments.
 
 ### T-083 · A first run that actually runs
 type: idea · area: profile · size: M · status: done · added: 2026-09-18

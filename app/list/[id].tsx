@@ -3,7 +3,7 @@ import { View, ScrollView, StyleSheet, Pressable } from "react-native";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
 import { gutter, radius, space } from "@/theme/tokens";
-import { deleteList, getList, removeFromList, updateList, type ListDetail } from "@/services/listsService";
+import { deleteList, getList, removeFromList, updateList, type ListDetail, addToList } from "@/services/listsService";
 import { getCurrentUser, getVenuesByIds } from "@/services/playsService";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Venue } from "@/data/types";
@@ -17,6 +17,8 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 import { makeStyles } from "@/theme/styles";
+import { useToast } from "@/components/ui/Toast";
+import { haptic } from "@/utils/haptics";
 
 /**
  * One list, and what is on it.
@@ -30,6 +32,7 @@ export default function ListScreen() {
 
   const { id } = useLocalSearchParams<{ id?: string }>();
   const router = useRouter();
+  const toast = useToast();
   const { session } = useAuth();
 
   const [list, setList] = useState<ListDetail>();
@@ -69,13 +72,28 @@ export default function ListScreen() {
     }, [load])
   );
 
-  async function handleRemove(playId: string) {
+  async function handleRemove(playId: string, title: string, note?: string) {
     if (!list || busy) return;
+    const listId = list.id;
     setBusy(true);
     setNotice(undefined);
     try {
-      await removeFromList(list.id, playId);
+      await removeFromList(listId, playId);
       await load();
+      haptic("warning");
+      // A tap meant for the row used to remove the play with no way back
+      // (T-078). The undo puts it back with its note; a ranked list's order
+      // is the one thing that does not survive, and the row lands last.
+      toast.show({
+        message: strings.feedback.listEntryRemoved(title),
+        action: {
+          label: strings.feedback.undo,
+          onPress: async () => {
+            await addToList(listId, playId, note ?? "");
+            await load();
+          },
+        },
+      });
     } catch {
       setNotice(strings.lists.removeError);
     } finally {
@@ -211,7 +229,7 @@ export default function ListScreen() {
                         )}
                         {isOwner && (
                           <Pressable
-                            onPress={() => handleRemove(entry.play.id)}
+                            onPress={() => handleRemove(entry.play.id, entry.play.title, entry.note)}
                             hitSlop={8}
                             disabled={busy}
                             accessibilityRole="button"

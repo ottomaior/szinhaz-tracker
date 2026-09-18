@@ -26,6 +26,8 @@ import { strings } from "@/i18n/hu";
 import { closeModal } from "@/utils/navigation";
 import { profileInitials } from "@/utils/people";
 import { makeStyles } from "@/theme/styles";
+import { useToast } from "@/components/ui/Toast";
+import { haptic } from "@/utils/haptics";
 
 /**
  * The one screen where a profile stops being read-only.
@@ -39,6 +41,7 @@ export default function EditProfileScreen() {
   const styles = useStyles();
 
   const router = useRouter();
+  const toast = useToast();
   const fontsLoaded = useAppFonts();
   const { session, loading } = useAuth();
 
@@ -137,6 +140,8 @@ export default function EditProfileScreen() {
     setSaving(true);
     try {
       await updateProfile({ name, handle: cleanHandle, city, bio, avatarPath });
+      haptic("success");
+      toast.show({ message: strings.feedback.profileSaved });
       closeModal(router, "/(tabs)/profile");
     } catch (e) {
       setError(e instanceof HandleTakenError ? strings.editProfile.errorHandleTaken : strings.auth.genericError);

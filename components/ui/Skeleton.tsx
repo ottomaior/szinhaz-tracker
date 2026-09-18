@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Animated, Easing, View, StyleSheet, type DimensionValue } from "react-native";
 import { useColors } from "@/theme/styles";
 import { radius as radii, space } from "@/theme/tokens";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 /**
  * A placeholder shaped like the content that is coming.
@@ -32,8 +33,15 @@ export function Skeleton({
   // render and immediately thrown away.
   const [pulse] = useState(() => new Animated.Value(0));
   const colors = useColors();
+  const reduced = useReducedMotion();
 
   useEffect(() => {
+    // Reduced motion: hold a steady mid-tone rather than pulse. The shape is
+    // still the shape, which is most of what a skeleton says.
+    if (reduced) {
+      pulse.setValue(0.5);
+      return;
+    }
     const animation = Animated.loop(
       Animated.sequence([
         Animated.timing(pulse, { toValue: 1, duration: 900, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
@@ -42,7 +50,7 @@ export function Skeleton({
     );
     animation.start();
     return () => animation.stop();
-  }, [pulse]);
+  }, [pulse, reduced]);
 
   const opacity = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.45, 0.85] });
 

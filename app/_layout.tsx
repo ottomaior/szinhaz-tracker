@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { View } from "react-native";
 import { Stack } from "expo-router";
 import Head from "expo-router/head";
 import { StatusBar } from "expo-status-bar";
@@ -10,6 +11,9 @@ import { themeScheme } from "@/theme/themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { strings } from "@/i18n/hu";
 import { ThemeProvider, useTheme } from "@/contexts/ThemeContext";
+import { ToastProvider } from "@/components/ui/Toast";
+import { OfflineBanner } from "@/components/ui/OfflineBanner";
+import { ErrorScreen } from "@/components/ui/ErrorScreen";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -21,6 +25,16 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
  * hostage behind the splash.
  */
 const SPLASH_TIMEOUT_MS = 4000;
+
+/**
+ * What a route that throws while rendering shows (T-087). expo-router mounts
+ * the boundary exported from the root layout around every screen. It sits
+ * outside the providers below, which is why `ErrorScreen` reads the static
+ * palette rather than the theme context.
+ */
+export function ErrorBoundary({ error, retry }: { error: Error; retry: () => Promise<void> }) {
+  return <ErrorScreen error={error} retry={retry} />;
+}
 
 export default function RootLayout() {
   return (
@@ -75,6 +89,11 @@ function AppShell() {
           chrome that cannot take a colour from the palette — it takes a side.
           theme/themes.ts records which side each theme sits on. */}
       <StatusBar style={themeScheme[resolved] === "dark" ? "light" : "dark"} />
+      <ToastProvider>
+      <View style={{ flex: 1 }}>
+      {/* In the flow above the whole stack, so it covers modals and detail
+          screens as well as the tabs, and nothing is drawn over. */}
+      <OfflineBanner />
       <Stack
         screenOptions={{
           headerShown: false,
@@ -113,6 +132,8 @@ function AppShell() {
             history behind it. */}
         <Stack.Screen name="reset-password" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
       </Stack>
+      </View>
+      </ToastProvider>
     </SafeAreaProvider>
   );
 }
