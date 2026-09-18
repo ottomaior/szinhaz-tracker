@@ -68,10 +68,10 @@ const checks: Check[] = [
       "in the impresszum.",
   },
   {
-    label: "Operator address",
-    needle: "4025 Debrecen, Piac utca 1-3.",
+    label: "Operator seat",
+    needle: "Székhely: Debrecen",
     want: true,
-    why: "Required in the impresszum by Ektv. 4. §.",
+    why: "The impresszum names the seat to the city; the street stays private (T-097).",
   },
   {
     label: "Contact email",
