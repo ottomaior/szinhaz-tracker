@@ -31,6 +31,7 @@ import { CheckIcon } from "@/components/icons/Icons";
 import { strings } from "@/i18n/hu";
 import { closeModal } from "@/utils/navigation";
 import { makeStyles } from "@/theme/styles";
+import { PushPrimer } from "@/components/ui/PushPrimer";
 
 /**
  * The first run (T-083): what a new account is asked, once, before the app.
@@ -221,6 +222,9 @@ export default function FirstRunScreen() {
               <Text variant="body" tone="dim">
                 {strings.firstRun.doneBody}
               </Text>
+              {/* The closing sentence says what the inbox will do; this is
+                  the one moment to ask whether it may say so out loud. */}
+              <PushPrimer />
               <Button label={strings.firstRun.doneButton} onPress={goToDiscover} />
             </View>
           </StepPane>

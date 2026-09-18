@@ -67,11 +67,14 @@ function markSvg({
   height,
   mark,
   background,
+  fill = GOLD,
 }: {
   width: number;
   height: number;
   mark: number;
   background?: string;
+  /** The mark's colour; gold everywhere but the status-bar icon. */
+  fill?: string;
 }): string {
   // Rounded, because `assets/logo-source.svg` is committed: an unrounded
   // `translate(163.83999999999997 …)` is float noise in a reviewable file, and
@@ -85,7 +88,7 @@ function markSvg({
     `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">`,
     background ? `<rect width="${width}" height="${height}" fill="${background}"/>` : "",
     `<g transform="translate(${x} ${y}) scale(${scale})">`,
-    ...BRAND_PATHS.map((d) => `<path d="${d}" fill="${GOLD}"/>`),
+    ...BRAND_PATHS.map((d) => `<path d="${d}" fill="${fill}"/>`),
     `</g>`,
     `</svg>`,
   ]
@@ -130,6 +133,8 @@ const outputs = [
   { dir: "web", file: "icon-512.png", width: 512, height: 512, mark: 512 * BRAND_INSET.icon, background: GROUND },
   { dir: "web", file: "maskable-512.png", width: 512, height: 512, mark: 512 * BRAND_INSET.adaptive, background: GROUND },
   { dir: "web", file: "apple-touch-icon.png", width: 180, height: 180, mark: 180 * BRAND_INSET.icon, background: GROUND },
+  // Android's status-bar icon: white on transparent, the OS tints it.
+  { file: "notification-icon.png", width: 96, height: 96, mark: 96 * BRAND_INSET.adaptive, background: undefined, fill: "#ffffff" },
 ] as const;
 
 async function main() {

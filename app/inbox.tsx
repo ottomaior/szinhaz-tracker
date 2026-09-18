@@ -16,6 +16,7 @@ import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 import { formatShortDayForSuffix, formatTime } from "@/utils/datetime";
 import { makeStyles, useColors } from "@/theme/styles";
+import { notificationLine } from "@/i18n/notificationCopy";
 
 /**
  * What the sync learned that you were waiting to hear.
@@ -155,28 +156,18 @@ function NotificationRow({
  * place where the app's voice lives, and the one nobody thinks to edit.
  */
 function describe(n: AppNotification): string {
-  switch (n.kind) {
-    case "dates_published":
-      return strings.inbox.datesPublished(
-        // The suffix-safe form: the copy glues "-ig" onto this, and "okt. 28."
-        // plus "-ig" is not how Hungarian writes it.
-        n.payload.through ? formatShortDayForSuffix(n.payload.through) : "",
-        n.payload.count ?? 1
-      );
-    case "playing_tomorrow":
-      return strings.inbox.playingTomorrow(
-        n.payload.startsAt ? formatTime(n.payload.startsAt) : "",
-        n.payload.room
-      );
-    case "venue_new_play":
-      return strings.inbox.venueNewPlay(n.payload.venue ?? "");
-    case "person_new_play":
-      return strings.inbox.personNewPlay(n.payload.person ?? "");
-    case "review_liked":
-      return strings.inbox.reviewLiked(n.payload.person ?? "");
-    case "review_commented":
-      return strings.inbox.reviewCommented(n.payload.person ?? "");
-  }
+  // The same renderer the push sender uses (i18n/notificationCopy.ts); this
+  // screen only formats the two dates first.
+  return notificationLine(n.kind, {
+    // The suffix-safe form: the copy glues "-ig" onto this, and "okt. 28."
+    // plus "-ig" is not how Hungarian writes it.
+    throughLabel: n.payload.through ? formatShortDayForSuffix(n.payload.through) : undefined,
+    count: n.payload.count,
+    timeLabel: n.payload.startsAt ? formatTime(n.payload.startsAt) : undefined,
+    room: n.payload.room,
+    venue: n.payload.venue,
+    person: n.payload.person,
+  });
 }
 
 const useStyles = makeStyles((colors) => StyleSheet.create({

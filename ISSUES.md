@@ -84,26 +84,6 @@ sign-up one. Custom SMTP and the `magic_link.html` template already exist;
 **Depends on.** Nothing. Worth doing after T-082 so the sign-in screen is
 rearranged once, not twice.
 
-### T-089 · Ask for notifications at the right moment, and on a phone too
-type: idea · area: notifications · size: L · status: idea · added: 2026-09-18
-
-**The problem.** Phase 2 of the backlog plans Web Push; the native app has no
-push path at all, and neither plan says *when* to ask. An OS permission
-dialog at launch is refused by most people and can never be shown again.
-
-**Roughly.** Delivery: `expo-notifications` and the Expo push service for the
-native app, writing into the same `push_subscriptions` table Phase 2 creates
-with a `platform` column, so one `send-push` function fans out to both. The
-ask: an in-app card, shown once, right after the first watchlist add or at
-the end of the first run (T-083), saying what will arrive — "we tell you the
-evening before" — and only then the OS dialog. `playing_tomorrow` with the
-poster and a deep link to the play is the first and most valuable one; ship
-that, then the rest. Per-kind toggles in Settings.
-
-**Depends on.** Phase 2 (2.3 and 2.4 in particular), a VAPID keypair from
-Ottó, and a development build for native (Expo Go no longer carries push
-from SDK 54).
-
 ### T-090 · A weekly letter: this week in your theatres
 type: idea · area: notifications · size: M · status: idea · added: 2026-09-18
 
@@ -865,6 +845,44 @@ _Nothing yet._
 ---
 
 ## Done
+
+### T-089 · Ask for notifications at the right moment, and on a phone too
+type: idea · area: notifications · size: L · status: done · added: 2026-09-18
+
+**The problem.** Phase 2 of the backlog plans Web Push; the native app has no
+push path at all, and neither plan says *when* to ask. An OS permission
+dialog at launch is refused by most people and can never be shown again.
+
+**Roughly.** Delivery: `expo-notifications` and the Expo push service for the
+native app, writing into the same `push_subscriptions` table Phase 2 creates
+with a `platform` column, so one `send-push` function fans out to both. The
+ask: an in-app card, shown once, right after the first watchlist add or at
+the end of the first run (T-083), saying what will arrive — "we tell you the
+evening before" — and only then the OS dialog. `playing_tomorrow` with the
+poster and a deep link to the play is the first and most valuable one; ship
+that, then the rest. Per-kind toggles in Settings.
+
+**Depends on.** Phase 2 (2.3 and 2.4 in particular), a VAPID keypair from
+Ottó, and a development build for native (Expo Go no longer carries push
+from SDK 54).
+
+**Done, 18 September 2026.** Two transports on one table. `0062` adds
+`notifications.pushed_at`, `push_subscriptions` (a `web` row with the Push
+API endpoint and keys, or an `expo` row with the Expo token) and
+`notification_preferences`; every existing row was stamped so the first
+send did not replay three weeks of inbox. `supabase/functions/send-push`
+walks the unstamped rows, renders them with `i18n/notificationCopy.ts` (the
+same module the inbox now uses, so the voice stays in one file), sends over
+`web-push` or Expo's service, prunes dead devices, and stamps; `sync/run.ts`
+calls it after `generate_notifications()`. On the client: `public/sw.js`,
+`services/pushService.ts`, a Notifications block in Settings with the device
+switch and six per-kind toggles, and `PushPrimer` — the in-app ask, shown
+once at the end of the first run and on a watchlist that holds something,
+with "Most nem" remembered on the device. Verified end to end: a browser
+subscribed from Settings, a `playing_tomorrow` row was planted and the
+function delivered it to the desktop as "Tóték — Holnap játsszák, 19:00 —
+Nagyszínpad". Native needs the next EAS build (`expo-notifications` is a
+native module) and has not been exercised.
 
 ### T-093 · Every screen that loads shows a skeleton, and pulls to refresh
 type: idea · area: design · size: M · status: done · added: 2026-09-18

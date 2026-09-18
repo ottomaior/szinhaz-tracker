@@ -201,6 +201,11 @@ const config: ExpoConfig = {
     // plain browser tab that does not hand the redirect back.
     "expo-web-browser",
 
+    // Push on a phone (T-089). The icon is the mark in white on transparent,
+    // which is what Android draws in the status bar; the tint is the gold.
+    // Both come out of `npm run icons`.
+    ["expo-notifications", { icon: "./assets/images/notification-icon.png", color: "#e4bf72" }],
+
     // SDK 54 removed the top-level `splash` key; the same settings live in this
     // plugin now. #120505 is the Velvet Curtain background, and it stays that
     // way whichever theme the reader has chosen: the splash is a native asset
@@ -241,6 +246,16 @@ const config: ExpoConfig = {
     eas: {
       projectId: "a9344b1d-53ca-4b15-891b-be9a503cf051",
     },
+    /**
+     * The public half of the Web Push keypair (T-089). Public by nature — it
+     * is what every subscribing browser is handed — so it rides here rather
+     * than in a build variable that Railway and EAS would each have to carry.
+     * The private half is a Supabase function secret (`VAPID_PRIVATE_KEY`)
+     * and lives nowhere in this repository. Rotating the pair means new
+     * values in both places and every existing subscription going quiet
+     * until the person switches it on again.
+     */
+    vapidPublicKey: "BIIAk2RGc2yd3eUFJdrcDNbzZrp6CLrCpscIJlV2bArifsoy19rSPdx-sevAA20Ids4h2V4vSaHk4stRWpujZ5M",
   },
 };
 

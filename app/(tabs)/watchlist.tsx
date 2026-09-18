@@ -21,6 +21,7 @@ import { strings } from "@/i18n/hu";
 import { formatLongDate, formatShowtime } from "@/utils/datetime";
 import { makeStyles } from "@/theme/styles";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { PushPrimer } from "@/components/ui/PushPrimer";
 
 export default function WatchlistScreen() {
   const styles = useStyles();
@@ -118,6 +119,11 @@ export default function WatchlistScreen() {
                 </View>
               </View>
             ))}
+          {/* Above the rows once there are rows: the person has just said
+              which evenings they care about, and this asks whether the app
+              may say when one of them is tomorrow (T-089). */}
+          {!loading && items.length > 0 && <PushPrimer />}
+
           {items.map(({ play }) => (
             <WatchlistRow key={play.id} play={play} onPress={() => router.push(`/play/${play.id}`)} />
           ))}

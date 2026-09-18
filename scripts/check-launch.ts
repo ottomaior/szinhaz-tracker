@@ -430,6 +430,38 @@ async function checkAuthConfig(): Promise<void> {
   );
 }
 
+// ------------------------------------------------- notifications (T-089)
+//
+// Three halves that have to agree and fail silently when they do not: the
+// worker file the browser fetches, the header nginx sends with it, and the
+// public key the app hands to the browser. The private key cannot be seen
+// from here; it is a Supabase function secret, and the reminder says so.
+{
+  const swPath = join(root, "public", "sw.js");
+  check(
+    "public/sw.js exists, so Web Push has a worker to deliver to",
+    existsSync(swPath),
+    "It is emitted at /sw.js by `expo export`; without it every subscription fails to register."
+  );
+  const nginx = readText("nginx.conf") ?? "";
+  check(
+    "nginx serves /sw.js with no-cache and Service-Worker-Allowed",
+    nginx.includes("location = /sw.js") && nginx.includes("Service-Worker-Allowed"),
+    "A cached worker cannot be replaced from the server. The block in nginx.conf must stay."
+  );
+  const appConfig = readText("app.config.ts") ?? "";
+  const keyMatch = appConfig.match(/vapidPublicKey:\s*"([A-Za-z0-9_-]{80,})"/);
+  check(
+    "app.config.ts carries the VAPID public key",
+    Boolean(keyMatch),
+    "extra.vapidPublicKey is what the browser subscribes against; the app reports push as unsupported without it."
+  );
+  reminders.push(
+    "Supabase function secrets VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY / VAPID_SUBJECT must match app.config.ts's " +
+      "public key — check the dashboard (Edge Functions → Secrets); the pair cannot be read back from here."
+  );
+}
+
 async function main(): Promise<void> {
   await checkAuthConfig();
 

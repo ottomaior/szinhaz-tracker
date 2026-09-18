@@ -766,6 +766,9 @@ async function main() {
     // production's dates and whether it is archived both decide whether it is
     // worth telling anybody about.
     await generateNotifications();
+    // And then out the door: whatever the rows above say and nobody has been
+    // told yet, to every device that asked (T-089).
+    await sendPush();
   }
 
   if (failures.length) {
@@ -879,6 +882,45 @@ async function generateNotifications() {
     // Same rule as the two passes above: the catalog is already written and
     // correct, and tomorrow's run generates whatever this one missed.
     console.error("[alerts] generation failed (catalog rows are still up to date):", errorMessageOf(e));
+  }
+}
+
+/**
+ * Asks the `send-push` Edge Function to deliver the unpushed rows.
+ *
+ * The function holds the VAPID keys and talks to the push services; this
+ * script only rings the bell, with the service role key as the bearer, which
+ * is the one caller the function accepts. Failure is logged and not fatal for
+ * the same reason as the pass above: the rows are stamped only on success,
+ * so tomorrow's run picks them up.
+ */
+async function sendPush() {
+  const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return;
+  try {
+    // Loop while the function reports more: it handles two hundred rows a
+    // call, and a night after a downtime can hold more than that.
+    for (let round = 0; round < 10; round++) {
+      const res = await fetch(`${url.replace(/\/+$/, "")}/functions/v1/send-push`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${key}`, apikey: key, "Content-Type": "application/json" },
+        body: "{}",
+      });
+      const body = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        handled?: number;
+        sent?: number;
+        pruned?: number;
+        more?: boolean;
+        error?: string;
+      };
+      if (!res.ok || !body.ok) throw new Error(`HTTP ${res.status} ${body.error ?? ""}`.trim());
+      console.log(`[push] handled ${body.handled ?? 0}, sent ${body.sent ?? 0}, pruned ${body.pruned ?? 0}`);
+      if (!body.more) break;
+    }
+  } catch (e) {
+    console.error("[push] delivery failed (rows stay pending for the next run):", errorMessageOf(e));
   }
 }
 

@@ -106,7 +106,7 @@ life.
 
 ---
 
-## Phase 2 — PWA foundation and Web Push · next for the web
+## Phase 2 — PWA foundation and Web Push · **done** (under 6.4 and 6.5)
 
 There is no manifest, no service worker and no PWA icon set today; this is
 greenfield. Web Push is the only transport that works for a web-only launch,
@@ -120,7 +120,7 @@ announced removing Home Screen web apps in the EU under the DMA in February
 - **2.4** VAPID keypair in Supabase secrets; Edge Function `send-push` reading `notifications` where `pushed_at is null`, rendering the Hungarian **from `i18n/hu.ts` rather than re-typing it** (`0030` stores structured `payload` jsonb precisely so the app's voice lives in one file), sending via `web-push`, stamping `pushed_at`, pruning subscriptions that 404/410. Called at the end of `sync/run.ts`, after `generate_notifications()`.
 - **2.5** Opt-in UI in Settings: permission behind an explicit button (required by the Push API), per-kind toggles for the six existing `NotificationKind` values, and an "add to Home Screen" card for iOS Safari, where `PushManager` is simply absent in a normal tab. `components/ui/FollowSubjectButton.tsx` currently says nothing is sent yet; that copy comes out when this ships.
 
-> **Needs Ottó before it can be finished:** a VAPID keypair — the private half in Supabase secrets, the public half in the Railway build variables. The `Dockerfile` inlines `EXPO_PUBLIC_*` at build time, so the Railway variable has to exist *before* the push or the deploy silently ships without it.
+> **Resolved, 18 September 2026.** The VAPID pair was generated and stored: the private half as a Supabase function secret, the public half in `app.config.ts`'s `extra` — public by nature, so it needs no build variable on Railway or EAS. Items 2.2 to 2.5 shipped under 6.5 with two differences from the plan: the migration is `0062`, not `0038`, and the sender also carries `expo` rows for the native app.
 
 Deliberately transport-shaped: the `notifications` rows, the dedupe keys and the
 copy are reused unchanged when native push arrives; only the sender changes.
@@ -303,7 +303,7 @@ Each row is its own branch and pull request; the ideas are written up in
 | **6.2** | **A first run that runs**: name if missing, city, follow the city's theatres, the archive grid, one closing screen; gated on `profiles.onboarded_at` — T-083 · **done** | M | 6.1 |
 | **6.3** | **The feedback layer**: a toast with undo (T-085), haptics (T-086), an error boundary (T-087), an offline banner (T-088), skeletons and pull-to-refresh (T-093) · **done**, bar a diary-list skeleton and the optimistic writes | M | nothing |
 | **6.4** | **Installable**: Phase 2's 2.1 (manifest, icons, add-to-Home-Screen card) · **done** · plus error monitoring (5.1), which waits on a Sentry project and its DSN | S–M | a Sentry DSN from Ottó |
-| **6.5** | **Notifications that arrive**: Phase 2's Web Push, native push through Expo on the same table, per-kind toggles, and the permission asked at the right moment; `playing_tomorrow` first — T-089 | L | VAPID keys; a development build |
+| **6.5** | **Notifications that arrive**: Phase 2's Web Push, native push through Expo on the same table, per-kind toggles, and the permission asked at the right moment — T-089 · **done** on the web; native waits for the next EAS build | L | — |
 | **6.6** | **The weekly letter** through Resend — T-090 | M | 6.5's sender |
 | **6.7** | **Sign in with Apple**, OTA updates (T-014), the icon at its real sizes (T-013), password and address change in Settings (T-092) | M | an Apple Developer account |
 
