@@ -284,17 +284,6 @@ show timestamps at all, which is a design change rather than a content one.
 
 ## Open
 
-### T-076 · The questionnaire's screenshots still show the pre-redesign app
-type: chore · area: landing · priority: low · status: open · added: 2026-09-13
-
-`landing/kutatas.html` illustrates its questions with `musor.webp`,
-`search.webp`, `list.webp` and `user.webp`. The first three were taken by
-hand before `render-shots.ts` existed and are not in its list, so the
-redesign re-took the landing page's own shots and left the questionnaire's
-showing the underlined tabs and the welded tab bar. Add the listings calendar,
-search and a list to the script (they are signed-out routes), re-take them
-once the redesign is live, and stamp.
-
 ### T-070 · A list entry's "Levesz" is a button inside a button
 type: bug · area: web · priority: low · status: open · added: 2026-09-11
 
@@ -727,6 +716,33 @@ _Nothing yet._
 ---
 
 ## Done
+
+### T-076 · The questionnaire's screenshots still show the pre-redesign app
+type: chore · area: landing · priority: low · status: done · added: 2026-09-13 · done: 2026-09-18
+
+`landing/kutatas.html` illustrates its questions with `musor.webp`,
+`search.webp`, `list.webp` and `user.webp`. The first three were taken by
+hand before `render-shots.ts` existed and are not in its list, so the
+redesign re-took the landing page's own shots and left the questionnaire's
+showing the underlined tabs and the welded tab bar. Add the listings calendar,
+search and a list to the script (they are signed-out routes), re-take them
+once the redesign is live, and stamp.
+
+> **Done, 18 September — and the questionnaire itself caught up.** `musor`,
+> `search` and `list` are in `render-shots.ts` now (the Műsor tab, "Csuja
+> Imre" typed into the field through the DevTools protocol, the editorial
+> "Bodó Viktor Budapesten"), re-taken from `web.vastaps.app`. While at it,
+> Ottó asked for the questions to be reworked: every one of the six "if this
+> were missing at launch" items had shipped since 8 September, and the
+> twelve cards predated follow-gated opinions. Version 3 keeps the
+> instrument and changes what it asks about — the twelve as the app is
+> today (with "A véleményed csak a követőidé" in place of "Amit az
+> ismerőseid gondoltak"), six genuinely open items for the Kano question
+> (more cities, push, the receiving houses, importing old evenings, who is
+> going when, an English UI), Radnóti on the theatre list. Migration 0059
+> widens the version check to (2, 3) and replaces the function; the two
+> version-2 answers stay and the report counts them aloud. The invite
+> button at the end was checked: `mailto:hello@vastaps.app`.
 
 ### T-075 · Hydration mismatch on every static page at desktop width
 type: bug · area: web · priority: medium · status: done · added: 2026-09-13 · done: 2026-09-18

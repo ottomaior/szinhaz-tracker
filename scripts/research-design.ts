@@ -26,9 +26,23 @@ export type Feature = {
 };
 
 /**
+ * The questionnaire's version, as the page submits it and the SQL function
+ * checks it. Version 3 (18 September 2026) is the same instrument asked about
+ * the product as built: the twelve are what the app does today, in the words
+ * the app uses, and the six "missing" items are things that genuinely are
+ * not in it yet. Version 2 asked about six things that have since shipped —
+ * notifications, the cast that night, seat and price, lists, the season
+ * summary, what your circle thought — and "would it bother you if this were
+ * missing at launch" is not a question you can ask about a feature that is
+ * there. The two version-2 answers stay in the table; the report skips them.
+ */
+export const VERSION = 3;
+
+/**
  * Twelve, merged from the app's surface so a seven-minute survey can carry
  * them: "diary" and "rating" are one thing to a respondent, and so are seat,
- * price and the stub photo.
+ * price and the stub photo. Every one of these exists; the question is which
+ * three a reader would open the app for, and which three could go.
  */
 export const FEATURES: Feature[] = [
   {
@@ -57,29 +71,29 @@ export const FEATURES: Feature[] = [
   },
   {
     id: "naplo",
-    label: "Napló és értékelés",
-    detail: "Feljegyzed, mit láttál és mikor, értékeled, írsz róla pár sort.",
-    shot: "user.webp",
+    label: "Napló: mit láttál, mikor, milyen volt",
+    detail: "Három lépés egy este után: melyik nap, hányasra, pár sor — és az este ott marad.",
+    shot: "checkin.webp",
   },
   {
     id: "beugro",
     label: "Ki játszott aznap este",
-    detail: "A bejegyzésben rögzíted a szereposztást — beugróval együtt, mert a színlapot másnap már senki nem őrzi.",
+    detail: "A bejegyzésben megjelölöd, kik voltak színpadon — beugróval együtt, mert a színlapot másnap már senki nem őrzi.",
   },
   {
     id: "hely_ar_jegy",
     label: "Ülőhely, jegyár, jegyfotó",
-    detail: "Hol ültél, mennyibe került, és egy fotó a jegyről vagy a műsorfüzetről.",
+    detail: "Hol ültél, mennyibe került, és egy fotó a jegyről vagy a műsorfüzetről — az évad végén összeadva.",
   },
   {
     id: "kivansaglista",
     label: "Kívánságlista",
-    detail: "Amit meg akarsz nézni — egy helyen, amíg fut.",
+    detail: "Amit meg akarsz nézni — egy helyen, amíg fut, és szólunk, ha holnap megy.",
   },
   {
     id: "listak",
     label: "Listák: szerkesztői és saját",
-    detail: "Válogatások a katalógusból („Shakespeare Budapesten”), és a te listáid.",
+    detail: "Válogatások a katalógusból („Bodó Viktor Budapesten”), és a te listáid.",
     shot: "list.webp",
   },
   {
@@ -89,14 +103,16 @@ export const FEATURES: Feature[] = [
     shot: "person.webp",
   },
   {
-    id: "baratok",
-    label: "Amit az ismerőseid gondoltak",
-    detail: "A darab oldalán látod, kik látták már azok közül, akiket követsz, és hányasra értékelték.",
+    id: "velemeny_kovetoknek",
+    label: "A véleményed csak a követőidé",
+    detail: "Hogy ott voltál, azt bárki látja. Hogy mit gondoltál, csak az, aki követ téged — nem nyilvános kritika, hanem a saját körödnek szól.",
+    shot: "feed.webp",
   },
   {
     id: "evad_kartya",
     label: "Évadösszegzés és megosztható kártya",
-    detail: "Egy évad számokban, és egy este képeslapként, amit elküldhetsz.",
+    detail: "Egy évad számokban — hány este, hol, kik játszottak a legtöbbször —, és egy este képeslapként, amit elküldhetsz.",
+    shot: "user.webp",
   },
 ];
 
@@ -104,52 +120,53 @@ export const FEATURES: Feature[] = [
 export const PICK_COUNT = 3;
 
 /**
- * The six features whose place in the launch set is genuinely open, asked
- * one question each: if this were missing at launch, how would that feel?
- * That is the dysfunctional half of a Kano pair — the half that separates
- * "must have" from "nice to have" — without asking every feature twice.
+ * Six things the app does not do yet, asked one question each: if it were
+ * still missing when you started using it, would you miss it? That is the
+ * dysfunctional half of a Kano pair — the half that separates "must have"
+ * from "nice to have" — without asking every feature twice. Each is a real
+ * open item: more cities is backlog 4.2, push is phase 2, the receiving
+ * houses are ISSUES.md T-036, the rest are proposals nobody has decided on.
  */
 export const MISSING_FEATURES: { id: string; label: string; detail: string }[] = [
   {
-    id: "ertesites",
-    label: "Értesítés a követett színházakról",
-    detail: "Szólunk, ha egy követett színház vagy alkotó új darabot jelent be, vagy közeledik egy előadás a kívánságlistádról.",
+    id: "tobb_varos",
+    label: "Több város",
+    detail: "Szeged, Pécs, Győr, Miskolc, Kaposvár — a két város után a többi kőszínház is a műsorban.",
   },
   {
-    id: "baratok",
-    label: "Az ismerőseid értékelése a darab oldalán",
-    detail: "Látod, kik látták már azok közül, akiket követsz, és mit gondoltak.",
+    id: "push",
+    label: "Értesítés a telefonra",
+    detail: "Nem az appban, hanem a telefon értesítései között: bemutatót jelentett be egy követett színház, vagy holnap megy valami a kívánságlistádról.",
   },
   {
-    id: "beugro",
-    label: "Ki játszott aznap este",
-    detail: "A naplóbejegyzésben rögzíted az aznapi szereposztást, beugróval együtt.",
+    id: "fuggetlen",
+    label: "Független és befogadó helyek",
+    detail: "Trafó, Jurányi, Átrium — ahol nincs repertoár, csak esték, és a társulat mindig vendég.",
   },
   {
-    id: "hely_ar_jegy",
-    label: "Ülőhely, jegyár és jegyfotó a bejegyzésben",
-    detail: "Hol ültél, mennyibe került, és egy fotó a jegyről.",
+    id: "regi_estek",
+    label: "A régi esték betöltése",
+    detail: "A korábbi évek egyszerre — táblázatból, vagy a megőrzött jegyek alapján —, hogy a napló ne üresen induljon.",
   },
   {
-    id: "listak",
-    label: "Szerkesztői listák",
-    detail: "Kézzel válogatott listák a katalógusból, amiket böngészhetsz.",
+    id: "ki_mikor_megy",
+    label: "Ki mikor megy",
+    detail: "Látod, melyik estére van jegye annak, akit követsz, és jelezheted, hogy te is ott leszel.",
   },
   {
-    id: "evad",
-    label: "Évadösszegzés",
-    detail: "Szeptembertől augusztusig: hány este, melyik színházak, mennyi jegy, kik játszottak a legtöbbször.",
+    id: "angol",
+    label: "Angol felület",
+    detail: "Az app angolul is — a nem magyar barátoknak, és a feliratos estékhez.",
   },
 ];
 
-/** The three answers to "if this were missing", in the order the page shows them. */
+/** The three answers to "if this were still missing", in the order the page shows them. */
 export const MISSING_ANSWERS = ["zavarna", "mindegy", "jobb_nelkule"] as const;
 export type MissingAnswer = (typeof MISSING_ANSWERS)[number];
-
 export const MISSING_LABELS: Record<MissingAnswer, string> = {
-  zavarna: "Zavarna",
+  zavarna: "Hiányozna",
   mindegy: "Nem tűnne fel",
-  jobb_nelkule: "Jobb is lenne nélküle",
+  jobb_nelkule: "Jobb is nélküle",
 };
 
 /** One respondent's two pick screens. */
@@ -198,7 +215,7 @@ export function validPicks(p: Picks): boolean {
 
 /** The shape the page submits and the SQL function validates. */
 export type ResearchPayload = {
-  version: 2;
+  version: typeof VERSION;
   client_id: string;
   source: string | null;
   behaviour: Record<string, unknown>;
@@ -211,6 +228,7 @@ export type ResearchPayload = {
 /** What the page embeds, and what the test compares against this module. */
 export function designForPage() {
   return {
+    version: VERSION,
     features: FEATURES,
     pickCount: PICK_COUNT,
     missing: MISSING_FEATURES,

@@ -2,8 +2,8 @@
  * Re-take the phone screenshots the landing page shows, into `landing/shots/`.
  *
  *     npm run shots            # every shot
- *     npm run shots -- feed    # just the named ones (user, discover, play,
- *                              # person, feed, checkin)
+ *     npm run shots -- feed    # just the named ones (user, discover, musor,
+ *                              # search, list, play, person, feed, checkin)
  *
  * `landing/README.md` used to say there was no script for this "because it
  * needs a dev server and a browser binary that only exist on a development
@@ -90,6 +90,18 @@ const ESZTER_EMAIL = "ottomaior94+eszter@gmail.com";
  */
 const UVEGHAZ = "158917e3-7f4f-4423-87fd-e404c3d407a6";
 const PERSON = "fur-aniko";
+
+/**
+ * The questionnaire's three, all signed out (T-076).
+ *
+ * The listings calendar is Discover's Műsor tab; the search is the one
+ * query the original hand-taken shot used, an actor whose name finds both a
+ * person and fifty productions; the list is the editorial "Bodó Viktor
+ * Budapesten", which reads as a list should — a title, a paragraph, rows —
+ * and which the questionnaire's own card names.
+ */
+const SEARCH_QUERY = "Csuja Imre";
+const LIST = "e3f3561f-d0c8-4bbc-b28d-2036393c7f9f";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -355,6 +367,46 @@ async function main() {
     await goto("/discover");
     await settle("Felfedezés");
     await capture("discover.webp");
+  }
+  // The questionnaire's three. They were taken by hand before this script
+  // existed, so the redesign re-took the landing page's own shots and left
+  // these showing the old tabs (T-076).
+  if (wanted("musor")) {
+    await goto("/discover");
+    await settle("Felfedezés");
+    const switched = await clickText("Műsor", '[role="tab"]');
+    if (!switched) {
+      console.error('Could not find the "Műsor" tab on Discover.');
+      process.exit(1);
+    }
+    await sleep(1200);
+    await settle("előadás");
+    await capture("musor.webp");
+  }
+  if (wanted("search")) {
+    await goto("/discover");
+    await settle("Felfedezés");
+    // Typed through the browser rather than assigned to the input, so React
+    // sees the same keystrokes a person's would produce.
+    const focused = await evaluate(`(() => {
+      const el = document.querySelector('input[type="search"], input[placeholder*="Darabok"]');
+      if (!el) return false;
+      el.focus();
+      return true;
+    })()`);
+    if (!focused) {
+      console.error("Could not find the search field on Discover.");
+      process.exit(1);
+    }
+    await send("Input.insertText", { text: SEARCH_QUERY });
+    await sleep(2500);
+    await settle("találat");
+    await capture("search.webp");
+  }
+  if (wanted("list")) {
+    await goto(`/list/${LIST}`);
+    await settle("Bodó Viktor Budapesten");
+    await capture("list.webp");
   }
   if (wanted("play")) {
     await goto(`/play/${UVEGHAZ}`);

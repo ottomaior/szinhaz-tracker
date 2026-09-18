@@ -5,6 +5,7 @@ import {
   MISSING_ANSWERS,
   MISSING_FEATURES,
   MISSING_LABELS,
+  VERSION,
   scorePicks,
   type MissingAnswer,
   type Picks,
@@ -106,10 +107,15 @@ async function main() {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("research_responses")
-    .select("id, submitted_at, source, behaviour, picks, missing, open_answer, email")
+    .select("id, submitted_at, source, behaviour, picks, missing, open_answer, email, version")
     .order("submitted_at", { ascending: true });
   if (error) throw new Error(`reading research_responses: ${error.message}`);
-  const rows = (data ?? []) as Row[];
+  // Only the current version: the feature ids changed in version 3, and a
+  // pick under an old id would count for nothing or for the wrong card.
+  // The older answers are counted aloud so nobody wonders where they went.
+  const all = (data ?? []) as (Row & { version: number })[];
+  const older = all.filter((r) => r.version !== VERSION).length;
+  const rows = all.filter((r) => r.version === VERSION);
   const n = rows.length;
   const enough = n >= 30;
   const today = new Date().toISOString().slice(0, 10);
@@ -119,6 +125,9 @@ async function main() {
   lines.push(`**${n} válasz.** ${enough
     ? "Harminc fölött a rangsor pontszámként is olvasható."
     : "Harminc alatt csak darabszámot írunk: a rangsor teteje és alja mond valamit, a közepe sorrendje zaj."}`);
+  if (older > 0) {
+    lines.push("", `A kérdőív ${VERSION}. változatának válaszai. ${older} korábbi változatú válasz nem szerepel — más kérdésekre felelt.`);
+  }
   if (n > 0) {
     const first = rows[0].submitted_at.slice(0, 10);
     const last = rows[n - 1].submitted_at.slice(0, 10);
