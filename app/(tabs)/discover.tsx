@@ -86,13 +86,13 @@ const SHOW_VENUE_TYPE_FILTER = false;
 /**
  * Whether to offer the genre chip.
  *
- * Off for now, at Ottó's request (T-077): the chip was behaving oddly enough
- * on the redesigned Discover that he would rather it were not there than
- * there and wrong. Same arrangement as the venue-type chip above — the state,
- * the option list and `genre` in every query stay wired up, so turning it
- * back on is this one line once the behaviour has been looked at.
+ * Off between 13 and 18 September (T-077): on the redesigned Discover the
+ * chip appeared to do nothing, because the lead above the grid ignored it —
+ * see the upcoming-evenings effect below. Back on now that everything under
+ * the chip row answers it. Kept as a flag, like the venue-type chip above,
+ * because the last time it had to go it went in one line.
  */
-const SHOW_GENRE_FILTER = false;
+const SHOW_GENRE_FILTER = true;
 
 const FILTER_TO_VENUE_TYPE: Record<string, VenueType | undefined> = {
   [strings.discover.filterAll]: undefined,
@@ -344,10 +344,15 @@ export default function DiscoverScreen() {
   /**
    * The next few evenings — the screen's lead.
    *
-   * Scoped to the city and nothing else. The genre and venue chips narrow the
-   * grid below, but this section answers "what is on near me soon", and a
-   * timeline silently filtered to opera would answer a narrower question
-   * than the heading above it asks.
+   * Scoped to every chip, not only the city. It used to ignore the genre and
+   * venue chips on the argument that "what is on near me soon" is a wider
+   * question than the grid's — and the result was T-077: the chip sits
+   * directly above this section, says "Műfaj: Musical", and the hero and
+   * the evenings under it carry on showing prose, because the part of the
+   * screen the chip does narrow starts a viewport further down. A visible
+   * filter that the visible content ignores reads as broken, whatever the
+   * reasoning. So everything under the chip row now answers the chips, and
+   * the heading means the next evenings *of what you asked for*.
    *
    * Browse only: in Műsor mode the calendar is a better answer to the same
    * question, and running both would be two queries to say one thing twice.
@@ -355,7 +360,7 @@ export default function DiscoverScreen() {
   useEffect(() => {
     if (mode !== "browse") return;
     let active = true;
-    getUpcomingProgram({ city }, { limit: UPCOMING_LIMIT })
+    getUpcomingProgram({ city, venueId, genre }, { limit: UPCOMING_LIMIT })
       .then(({ entries }) => {
         if (!active) return;
         setUpcoming(entries);
@@ -367,18 +372,18 @@ export default function DiscoverScreen() {
     return () => {
       active = false;
     };
-  }, [city, mode]);
+  }, [city, venueId, genre, mode]);
 
   /**
    * The rest of that evening. Tonight when anything is on tonight, otherwise
    * the evening the hero has moved to — the rail and the hero must agree on
-   * which night they are talking about.
+   * which night they are talking about, and on which chips they answer.
    */
   const heroDay = upcoming[0] ? budapestDayKey(upcoming[0].startsAt) : undefined;
   useEffect(() => {
     if (mode !== "browse" || !heroDay) return;
     let active = true;
-    getProgramForDay(heroDay, { city })
+    getProgramForDay(heroDay, { city, venueId, genre })
       .then((entries) => {
         if (active) setCurtains({ day: heroDay, entries });
       })
@@ -388,7 +393,7 @@ export default function DiscoverScreen() {
     return () => {
       active = false;
     };
-  }, [heroDay, city, mode]);
+  }, [heroDay, city, venueId, genre, mode]);
 
   // Scoped to the selected city, so picking Debrecen offers Debrecen's
   // theatres rather than all of them.

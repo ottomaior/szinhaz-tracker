@@ -284,18 +284,6 @@ show timestamps at all, which is a design change rather than a content one.
 
 ## Open
 
-### T-077 · The Műfaj chip on Felfedezés behaves oddly; hidden for now
-type: bug · area: discover · priority: medium · status: open · added: 2026-09-13
-
-Ottó, on the redesigned Discover at desktop width: "the műfaj is acting a
-bit weird, I suggest to hide that filter for now and will work on that
-later." Hidden behind `SHOW_GENRE_FILTER = false` in `app/(tabs)/discover.tsx`,
-the same arrangement as the venue-type chip — the state and `genre` in every
-query stay wired, so it is one line to bring back. What exactly was odd is
-not yet pinned down; candidates are the option list re-scoping under the
-city and venue (`getFilterGenres`) and clearing a chosen genre when the list
-changes, which can make the chip snap back to "Műfaj" on its own.
-
 ### T-076 · The questionnaire's screenshots still show the pre-redesign app
 type: chore · area: landing · priority: low · status: open · added: 2026-09-13
 
@@ -306,20 +294,6 @@ redesign re-took the landing page's own shots and left the questionnaire's
 showing the underlined tabs and the welded tab bar. Add the listings calendar,
 search and a list to the script (they are signed-out routes), re-take them
 once the redesign is live, and stamp.
-
-### T-075 · Hydration mismatch on every static page at desktop width
-type: bug · area: web · priority: medium · status: open · added: 2026-09-13
-
-Any route opened in a browser wider than the `expanded` breakpoint logs
-React error #418 ("Hydration failed because the server rendered HTML didn't
-match the client") and re-renders the tree on the client. `(tabs)/_layout`
-picks the top bar or the dock from `useAtLeast("expanded")`; the static
-export renders with no window, so the HTML carries the phone layout and a
-desktop client disagrees at the first child. Predates the redesign — the
-production build on `main` does it too — and the page recovers, but it costs
-a full re-render on every desktop load and hides any real mismatch behind it.
-Fix is to render the phone layout until after mount (a `mounted` flag in the
-breakpoint hook) or to render neither bar on the server.
 
 ### T-070 · A list entry's "Levesz" is a button inside a button
 type: bug · area: web · priority: low · status: open · added: 2026-09-11
@@ -753,6 +727,59 @@ _Nothing yet._
 ---
 
 ## Done
+
+### T-075 · Hydration mismatch on every static page at desktop width
+type: bug · area: web · priority: medium · status: done · added: 2026-09-13 · done: 2026-09-18
+
+Any route opened in a browser wider than the `expanded` breakpoint logs
+React error #418 ("Hydration failed because the server rendered HTML didn't
+match the client") and re-renders the tree on the client. `(tabs)/_layout`
+picks the top bar or the dock from `useAtLeast("expanded")`; the static
+export renders with no window, so the HTML carries the phone layout and a
+desktop client disagrees at the first child. Predates the redesign — the
+production build on `main` does it too — and the page recovers, but it costs
+a full re-render on every desktop load and hides any real mismatch behind it.
+Fix is to render the phone layout until after mount (a `mounted` flag in the
+breakpoint hook) or to render neither bar on the server.
+
+> **Done, 18 September.** Reproduced on `web.vastaps.app` at 1280px (React
+> #418 on load; the dev server never shows it because it client-renders,
+> `hydrate: undefined`). `useHydrated()` in `hooks/useBreakpoint.ts` uses
+> `useSyncExternalStore` with a server snapshot of `false`, and
+> `useBreakpoint` answers `compact` until it is true — so the first client
+> render is the server's render, then the real breakpoint applies. No
+> effect that sets state, so T-011's count did not move. Verified on a
+> static export served locally: no error at 1280px or 375px, top bar at
+> desktop, dock on the phone. The price is one frame of phone layout on a
+> desktop load, which is what static HTML without media queries costs.
+
+### T-077 · The Műfaj chip on Felfedezés behaves oddly; hidden for now
+type: bug · area: discover · priority: medium · status: done · added: 2026-09-13 · done: 2026-09-18
+
+Ottó, on the redesigned Discover at desktop width: "the műfaj is acting a
+bit weird, I suggest to hide that filter for now and will work on that
+later." Hidden behind `SHOW_GENRE_FILTER = false` in `app/(tabs)/discover.tsx`,
+the same arrangement as the venue-type chip — the state and `genre` in every
+query stay wired, so it is one line to bring back. What exactly was odd is
+not yet pinned down; candidates are the option list re-scoping under the
+city and venue (`getFilterGenres`) and clearing a chosen genre when the list
+changes, which can make the chip snap back to "Műfaj" on its own.
+
+> **Done, 18 September.** Pinned down with the chip switched back on at
+> 1280px: the chip worked, and looked as if it did nothing. The grid it
+> narrows starts a whole viewport below it, while the hero and *A következő
+> esték* directly under the chip row were scoped to the city only — by
+> design, on the argument that "what is on near me soon" is a wider question
+> than the grid's. So "Műfaj: Musical" sat above *János vitéz* and six prose
+> evenings. Fix: the lead's two queries (`getUpcomingProgram`,
+> `getProgramForDay`) now take `venueId` and `genre` too — they always
+> accepted them — so everything under the chip row answers the chips; with
+> Musical on, tonight is *Evita* and the evenings are Gatsby and Chicago.
+> The venue chip had the same gap and gets the same fix. The chosen genre
+> still clears when the scope no longer offers it (picking Centrál drops
+> Musical and hides the chip, since Centrál has one genre) — that is the
+> existing "no chip whose only outcome is an empty screen" rule, kept.
+> `SHOW_GENRE_FILTER` is on again.
 
 ### T-030 · Move off pages.dev and railway.app onto a real domain
 type: chore · area: infra · priority: med · status: done · added: 2026-09-10 · done: 2026-09-18
