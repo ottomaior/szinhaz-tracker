@@ -13,6 +13,8 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
+import { useToast } from "@/components/ui/Toast";
+import { haptic } from "@/utils/haptics";
 
 /**
  * "Tell me when this performer, or this theatre, has something new."
@@ -47,6 +49,7 @@ export function FollowSubjectButton({
   compact?: boolean;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const { session } = useAuth();
   const [following, setFollowing] = useState(false);
   const [followers, setFollowers] = useState(0);
@@ -88,6 +91,7 @@ export function FollowSubjectButton({
     const next = !following;
     setFollowing(next);
     setFollowers((n) => Math.max(0, n + (next ? 1 : -1)));
+    haptic("selection");
     setBusy(true);
     try {
       if (next) await followSubject(type, subjectKey);
@@ -95,6 +99,7 @@ export function FollowSubjectButton({
     } catch {
       setFollowing(!next);
       setFollowers((n) => Math.max(0, n + (next ? -1 : 1)));
+      toast.show({ message: strings.common.loadError });
     } finally {
       setBusy(false);
     }

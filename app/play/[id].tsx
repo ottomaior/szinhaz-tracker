@@ -41,6 +41,10 @@ import { strings } from "@/i18n/hu";
 import { pickOwnRating } from "@/utils/ownRating";
 import { closeModal } from "@/utils/navigation";
 import { makeStyles } from "@/theme/styles";
+import * as Clipboard from "expo-clipboard";
+import { useToast } from "@/components/ui/Toast";
+import { haptic } from "@/utils/haptics";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 /**
  * The hero honours the poster's real proportions, within limits.
@@ -74,6 +78,7 @@ export default function PlayDetailScreen() {
 
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const toast = useToast();
   const insets = useSafeAreaInsets();
   const wide = useAtLeast("expanded");
   const { session } = useAuth();
@@ -209,9 +214,24 @@ export default function PlayDetailScreen() {
       if (inWatchlist) {
         await removeFromWatchlist(play.id);
         setInWatchlist(false);
+        haptic("warning");
+        // The one place an undo is exactly a re-add: nothing but `added_at`
+        // is lost, and a bookmark does not carry a conversation.
+        toast.show({
+          message: strings.feedback.watchlistRemoved(play.title),
+          action: {
+            label: strings.feedback.undo,
+            onPress: async () => {
+              await addToWatchlist(play.id);
+              setInWatchlist(true);
+            },
+          },
+        });
       } else {
         await addToWatchlist(play.id);
         setInWatchlist(true);
+        haptic("success");
+        toast.show({ message: strings.feedback.watchlistAdded(play.title) });
       }
     } catch {
       setNotice(strings.common.loadError);
@@ -247,6 +267,14 @@ export default function PlayDetailScreen() {
     if (!play) return;
     try {
       const url = Platform.OS === "web" ? window.location.href : undefined;
+      // A desktop browser has no share sheet, and `Share.share` there throws
+      // "not supported" — which used to print as a failure. Copying the link
+      // is what a share button on a desktop means anyway.
+      if (url && typeof navigator !== "undefined" && !("share" in navigator)) {
+        await Clipboard.setStringAsync(url);
+        toast.show({ message: strings.feedback.linkCopied });
+        return;
+      }
       await Share.share({ message: url ? `${play.title} — ${url}` : play.title, title: play.title });
     } catch {
       setNotice(strings.playDetail.shareFailed);
@@ -268,7 +296,24 @@ export default function PlayDetailScreen() {
     );
   }
 
-  if (!play) return null;
+  if (!play) {
+    // The poster's shape and the title block, so the page arrives once
+    // rather than snapping from a blank screen to a full one (T-093).
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        <View style={{ width: "100%", aspectRatio: 3 / 4, maxHeight: 420 }}>
+          <Skeleton width="100%" height="100%" radius={0} />
+        </View>
+        <View style={{ padding: gutter, gap: space.md }}>
+          <Skeleton width="70%" height={28} />
+          <Skeleton width="45%" height={14} />
+          <Skeleton width="100%" height={46} radius={radius.md} style={{ marginTop: space.sm }} />
+          <Skeleton width="92%" height={14} style={{ marginTop: space.md }} />
+          <Skeleton width="80%" height={14} />
+        </View>
+      </View>
+    );
+  }
 
   const scheduling = schedulingParts(play);
   const genreLabel = play.genreNormalized ? strings.genres[play.genreNormalized] ?? play.genreNormalized : undefined;

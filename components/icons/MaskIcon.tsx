@@ -4,6 +4,7 @@ import { useColors } from "@/theme/styles";
 import { useSpark } from "@/components/motion/ClickSpark";
 import { strings } from "@/i18n/hu";
 import { fillPaint, paint, strokePaint } from "@/components/icons/svgPaint";
+import { haptic } from "@/utils/haptics";
 import {
   MASK_BODY_PATH,
   MASK_EYES,
@@ -118,6 +119,7 @@ export function MaskRatingRow({
               // Fired at the mask's own centre rather than at the touch point,
               // which needs no measuring and lands the same on both platforms.
               if (spark && rating !== i + 1) sparks.fire(i * (size + gap) + size / 2, size / 2);
+              haptic("light");
               onPressMask(rating === i + 1 ? undefined : i + 1);
             }}
             hitSlop={6}

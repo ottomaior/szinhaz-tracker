@@ -1,5 +1,5 @@
-import { useCallback, useState } from "react";
-import { View, ScrollView, StyleSheet, Pressable } from "react-native";
+import { useCallback, useRef, useState } from "react";
+import { View, ScrollView, StyleSheet, Pressable, RefreshControl } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
@@ -43,45 +43,62 @@ export default function ProfileScreen() {
   const [confirmingSignOut, setConfirmingSignOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string>();
 
+  const [refreshing, setRefreshing] = useState(false);
+  // Which load is the current one. A focus, a pull and a sign-out can all
+  // start a load; only the newest may write, or a slow older answer would
+  // paint over a fresh one.
+  const generation = useRef(0);
+
+  const load = useCallback(async () => {
+    const mine = ++generation.current;
+    const fresh = () => mine === generation.current;
+    if (!session) {
+      setUser(undefined);
+      setDiary([]);
+      setWatchlist([]);
+      setDiaryLoaded(false);
+      return;
+    }
+    try {
+      const u = await getCurrentUser();
+      if (!fresh()) return;
+      setUser(u);
+      if (!u) return;
+      const [entries, wl] = await Promise.all([getDiaryEntriesForUser(u.id), getWatchlist()]);
+      if (!fresh()) return;
+      const watchlistPlays = wl.map((e) => e.play);
+      setDiary(entries);
+      setWatchlist(watchlistPlays);
+      // One lookup for every venue on the screen rather than one per row.
+      const venueMap = await getVenuesByIds([
+        ...entries.map((e) => e.play.venueId),
+        ...watchlistPlays.map((p) => p.venueId),
+      ]);
+      if (fresh()) setVenues(venueMap);
+    } catch {
+      // The tabs below say what an empty list means; a failed load reads as
+      // one until the next focus tries again.
+    } finally {
+      if (fresh()) setDiaryLoaded(true);
+    }
+  }, [session]);
+
   // Refreshed on focus so a performance logged in the check-in modal shows up
   // in the diary as soon as the user lands back here.
   useFocusEffect(
     useCallback(() => {
-      if (!session) {
-        setUser(undefined);
-        setDiary([]);
-        setWatchlist([]);
-        setDiaryLoaded(false);
-        return;
-      }
-      let active = true;
-      getCurrentUser()
-        .then((u) => {
-          if (!active) return;
-          setUser(u);
-          if (!u) return;
-          return Promise.all([getDiaryEntriesForUser(u.id), getWatchlist()]).then(async ([entries, wl]) => {
-            if (!active) return;
-            const watchlistPlays = wl.map((e) => e.play);
-            setDiary(entries);
-            setWatchlist(watchlistPlays);
-            // One lookup for every venue on the screen rather than one per row.
-            const venueMap = await getVenuesByIds([
-              ...entries.map((e) => e.play.venueId),
-              ...watchlistPlays.map((p) => p.venueId),
-            ]);
-            if (active) setVenues(venueMap);
-          });
-        })
-        .catch(() => undefined)
-        .finally(() => {
-          if (active) setDiaryLoaded(true);
-        });
+      load();
       return () => {
-        active = false;
+        generation.current++;
       };
-    }, [session])
+    }, [load])
   );
+
+  async function refresh() {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  }
 
   async function handleSignOut() {
     setSignOutError(undefined);
@@ -119,7 +136,10 @@ export default function ProfileScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Screen>
-      <ScrollView contentContainerStyle={{ paddingBottom: dockInset }}>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: dockInset }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.gold} />}
+      >
         <View style={{ paddingHorizontal: gutter }}>
           {/* No cover band. There was one for a while — 118pt of `surface2`
               holding nothing, with the avatar pulled back up into it — which

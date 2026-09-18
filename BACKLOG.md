@@ -299,9 +299,9 @@ Each row is its own branch and pull request; the ideas are written up in
 
 | | What | Size | Waits on |
 |---|---|---|---|
-| **6.1** | **Sign in with Google** on web and Android, a provider button above both auth forms, the sign-up trigger reading a provider's name (`0060`) — T-082 · *in progress* | M | a Google Cloud OAuth client from Ottó |
-| **6.2** | **A first run that runs**: name if missing, city, follow the city's theatres, the archive grid, one closing screen; gated on `profiles.onboarded_at` — T-083 | M | 6.1 |
-| **6.3** | **The feedback layer**: a toast with undo (T-085), haptics (T-086), an error boundary (T-087), an offline banner (T-088), skeletons and pull-to-refresh everywhere (T-093) | M | nothing |
+| **6.1** | **Sign in with Google** on web and Android, a provider button above both auth forms, the sign-up trigger reading a provider's name (`0060`) — T-082 · **done** (Android needs a rebuild) | M | — |
+| **6.2** | **A first run that runs**: name if missing, city, follow the city's theatres, the archive grid, one closing screen; gated on `profiles.onboarded_at` — T-083 · **done** | M | 6.1 |
+| **6.3** | **The feedback layer**: a toast with undo (T-085), haptics (T-086), an error boundary (T-087), an offline banner (T-088), skeletons and pull-to-refresh (T-093) · **done**, bar a diary-list skeleton and the optimistic writes | M | nothing |
 | **6.4** | **Installable**: Phase 2's 2.1 (manifest, icons, add-to-Home-Screen card) plus error monitoring (5.1) | S–M | nothing |
 | **6.5** | **Notifications that arrive**: Phase 2's Web Push, native push through Expo on the same table, per-kind toggles, and the permission asked at the right moment; `playing_tomorrow` first — T-089 | L | VAPID keys; a development build |
 | **6.6** | **The weekly letter** through Resend — T-090 | M | 6.5's sender |

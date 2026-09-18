@@ -305,9 +305,9 @@ vannak kifejtve a megadott azonosítók alatt.
 
 | | Mi | Méret | Mire vár |
 |---|---|---|---|
-| **6.1** | **Bejelentkezés Google-fiókkal** weben és Androidon, egy szolgáltatógomb mindkét űrlap fölött, a regisztrációs trigger a szolgáltató küldte nevet olvassa (`0060`) — T-082 · *folyamatban* | M | egy Google Cloud OAuth-kliens Ottótól |
-| **6.2** | **Egy első futás, ami tényleg lefut**: név, ha hiányzik, város, a város színházainak követése, az archívumrács, egy záró képernyő; a `profiles.onboarded_at` kapuzza — T-083 | M | 6.1 |
-| **6.3** | **A visszajelzési réteg**: toast visszavonással (T-085), haptika (T-086), hibahatár (T-087), offline sáv (T-088), csontváz és lehúzva frissítés mindenhol (T-093) | M | semmi |
+| **6.1** | **Bejelentkezés Google-fiókkal** weben és Androidon, egy szolgáltatógomb mindkét űrlap fölött, a regisztrációs trigger a szolgáltató küldte nevet olvassa (`0060`) — T-082 · **kész** (Androidhoz újra kell buildelni) | M | — |
+| **6.2** | **Egy első futás, ami tényleg lefut**: név, ha hiányzik, város, a város színházainak követése, az archívumrács, egy záró képernyő; a `profiles.onboarded_at` kapuzza — T-083 · **kész** | M | 6.1 |
+| **6.3** | **A visszajelzési réteg**: toast visszavonással (T-085), haptika (T-086), hibahatár (T-087), offline sáv (T-088), csontváz és lehúzva frissítés (T-093) · **kész**, a napló csontváza és az optimista írások kivételével | M | semmi |
 | **6.4** | **Telepíthető**: a 2. fázis 2.1-e (manifest, ikonok, „add a kezdőképernyőhöz" kártya) plusz hibafigyelés (5.1) | S–M | semmi |
 | **6.5** | **Értesítések, amik megérkeznek**: a 2. fázis Web Pushja, natív push az Expón át ugyanabba a táblába, fajtánkénti kapcsolók, és az engedélykérés a jó pillanatban; a `playing_tomorrow` az első — T-089 | L | VAPID-kulcsok; egy development build |
 | **6.6** | **A heti levél** a Resenden át — T-090 | M | a 6.5 küldője |

@@ -3,6 +3,7 @@ import { colors } from "@/theme/colors";
 import { bodyFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
 import { makeStyles } from "@/theme/styles";
+import { haptic } from "@/utils/haptics";
 
 export function Chip({
   label,
@@ -18,7 +19,14 @@ export function Chip({
   const fontsLoaded = useAppFonts();
   return (
     <Pressable
-      onPress={onPress}
+      onPress={
+        onPress
+          ? () => {
+              haptic("selection");
+              onPress();
+            }
+          : undefined
+      }
       accessibilityRole="button"
       accessibilityLabel={label}
       aria-pressed={active}

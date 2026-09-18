@@ -40,6 +40,8 @@ import { strings } from "@/i18n/hu";
 import { formatTime, todayInBudapest } from "@/utils/datetime";
 import { closeModal } from "@/utils/navigation";
 import { makeStyles } from "@/theme/styles";
+import { useToast } from "@/components/ui/Toast";
+import { haptic } from "@/utils/haptics";
 
 type Step = 1 | 2 | 3;
 
@@ -54,6 +56,7 @@ export default function CheckInScreen() {
   // two drift.
   const { playId, reviewId } = useLocalSearchParams<{ playId?: string; reviewId?: string }>();
   const router = useRouter();
+  const toast = useToast();
   const insets = useSafeAreaInsets();
   const fontsLoaded = useAppFonts();
   const { session, loading } = useAuth();
@@ -432,6 +435,8 @@ export default function CheckInScreen() {
       // this evening and inserting a second is the bug, not the feature.
       if (editingId) await updateReview(editingId, entry);
       else await submitReview({ playId: play.id, ...entry });
+      haptic("success");
+      toast.show({ message: editingId ? strings.feedback.entryUpdated : strings.feedback.entrySaved });
 
       // Back to where the entry lives rather than wherever the modal was opened
       // from: somebody who has just corrected an entry wants to see it, and the

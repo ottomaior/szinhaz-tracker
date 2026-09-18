@@ -21,6 +21,7 @@ import {
 } from "@/services/accountService";
 import { strings } from "@/i18n/hu";
 import { makeStyles } from "@/theme/styles";
+import { haptic } from "@/utils/haptics";
 
 /**
  * Everything that is a preference rather than a profile.
@@ -61,7 +62,10 @@ export default function SettingsScreen() {
                 // so the pre-rendered markup does not claim a choice this
                 // browser may not have made.
                 selected={hydrated && preference === id}
-                onPress={() => setPreference(id)}
+                onPress={() => {
+                  haptic("selection");
+                  setPreference(id);
+                }}
               />
             ))}
             <ThemeRow
@@ -69,7 +73,10 @@ export default function SettingsScreen() {
               label={strings.settings.themeSystem}
               blurb={strings.settings.themeSystemNow(strings.settings.themes[resolved])}
               selected={hydrated && preference === "system"}
-              onPress={() => setPreference("system")}
+              onPress={() => {
+                haptic("selection");
+                setPreference("system");
+              }}
             />
           </View>
 

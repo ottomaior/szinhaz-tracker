@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { View, ScrollView, StyleSheet, Pressable } from "react-native";
+import { View, ScrollView, StyleSheet, Pressable, RefreshControl } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
@@ -20,6 +20,7 @@ import { useDockInset } from "@/components/ui/TabBar";
 import { strings } from "@/i18n/hu";
 import { formatLongDate, formatShowtime } from "@/utils/datetime";
 import { makeStyles } from "@/theme/styles";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 export default function WatchlistScreen() {
   const styles = useStyles();
@@ -36,6 +37,7 @@ export default function WatchlistScreen() {
   const [followed, setFollowed] = useState<FollowedSubject[]>([]);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     setFailed(false);
@@ -53,6 +55,12 @@ export default function WatchlistScreen() {
       setLoading(false);
     }
   }, []);
+
+  async function refresh() {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  }
 
   // Reloading on focus rather than only on mount: adding a play from the
   // detail screen and coming back here used to show a stale list until the
@@ -93,7 +101,23 @@ export default function WatchlistScreen() {
             <SignedOutState lead="watchlist" />
           </ScrollView>
         ) : (
-        <ScrollView contentContainerStyle={[styles.body, { paddingBottom: dockInset }]}>
+        <ScrollView
+          contentContainerStyle={[styles.body, { paddingBottom: dockInset }]}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.gold} />}
+        >
+          {/* The rows' shape while the first load is out, so the tab does
+              not open on a blank body that could equally be "nothing saved"
+              (T-093). */}
+          {loading &&
+            [0, 1, 2].map((i) => (
+              <View key={i} style={{ flexDirection: "row", gap: space.md, alignItems: "center" }}>
+                <Skeleton width={56} height={84} radius={radius.sm} />
+                <View style={{ flex: 1, gap: space.sm }}>
+                  <Skeleton width="75%" height={16} />
+                  <Skeleton width="50%" height={12} />
+                </View>
+              </View>
+            ))}
           {items.map(({ play }) => (
             <WatchlistRow key={play.id} play={play} onPress={() => router.push(`/play/${play.id}`)} />
           ))}
