@@ -861,7 +861,9 @@ is off on that one function. `sync/run.ts` calls it on Mondays in Budapest
 (`SYNC_FORCE_DIGEST=1` for a rehearsal). Settings has the switch under
 Értesítések. Verified: a dry run over all eight accounts (two with content,
 six skipped), one real letter to Ottó's address, the unsubscribe link
-flipping the row and the page saying so.
+flipping the row and the page saying so. The three demo accounts (Tóth
+Eszter, Kovács Bence, Nagy Zsófia) are opted out by a preferences row, at
+Ottó's request: they are screenshot content, not readers.
 
 ### T-089 · Ask for notifications at the right moment, and on a phone too
 type: idea · area: notifications · size: L · status: done · added: 2026-09-18
