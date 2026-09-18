@@ -122,8 +122,8 @@ export async function downloadMyData(): Promise<void> {
  *
  * The work happens in the `delete-account` Edge Function — see the long note
  * in `supabase/functions/delete-account/index.ts` for what cascades, what
- * survives, and why the ticket-stub photographs are the part that genuinely
- * needs code. `invoke` attaches the session's access token, which is the only
+ * survives, and why storage objects (avatars, and the retired ticket photos
+ * while their bucket still exists) are the part that genuinely needs code. `invoke` attaches the session's access token, which is the only
  * thing the function trusts: it never takes a user id from its caller.
  *
  * The local sign-out afterwards is belt and braces. The refresh token is dead

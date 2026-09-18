@@ -356,6 +356,28 @@ show timestamps at all, which is a design change rather than a content one.
 
 ## Open
 
+### T-094 · The ticket-photo feature is retired; drop its column and bucket
+type: chore · area: diary · priority: med · status: open · added: 2026-09-18
+
+Ottó decided on 18 September 2026 that the ticket photo ("jegyfotó") has no
+place in the app: a ticket carries the person's name and a booking code, the
+`stubs` bucket was public, and keeping the feature would have meant signed
+URLs for a photo nobody needs. The app side is done in the same day's PR: no
+screen reads, writes or shows `stub_path`, the strings and the legal copy no
+longer mention it, `uploadStub` is gone. The database still holds the
+remains, and per the migration rules they come out in a later, destructive
+migration once this PR has been live for a while:
+
+- `reviews.stub_path` and the `reviews_guard_stub_path` trigger (0028);
+- the `stubs` storage bucket, its policies, and the one orphan object in it
+  (no `reviews` row ever pointed at it — checked before the PR: zero
+  entries carried a photo, one file in the bucket);
+- the `stubs` branch of `supabase/functions/delete-account`, which cleans a
+  bucket that no longer exists once the above is done.
+
+Deleting the orphan object is the one step that removes something a user
+stored, so it waits for Ottó's word even though nothing references it.
+
 ### T-078 · One tap on a list entry removes it; editing should be a mode
 type: bug · area: web · priority: high · status: open · added: 2026-09-18
 
@@ -2859,4 +2881,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-094**
+Next free id: **T-095**

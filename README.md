@@ -730,7 +730,7 @@ follow you see what you thought.
 
 Public on every entry: who, which production, when, whether it was a rewatch.
 Behind the follow: the four ratings, the review text, the tags, the seat, the
-price, the ticket photo, the cast recorded that night, the like and comment
+price, the cast recorded that night, the like and comment
 counts, and the comment thread.
 
 The split is chosen so the feed still works as the place you find people. A card
@@ -767,11 +767,11 @@ szerint" with no error to explain it. The `0031` season functions are left
 alone, and quietly stop answering for a `viewer` argument that is not the
 caller — a hole nobody had noticed.
 
-**Still open:** the `stubs` bucket is `public: true`. The path is no longer
-published to non-followers, but a link somebody already holds still resolves.
-The privacy notice says so rather than implying otherwise; making the bucket
-private needs signed URLs and an asynchronous `stubUrl()`, and is worth doing
-before launch.
+**Closed another way, 18 September 2026:** the `stubs` bucket was `public:
+true`, and making it private meant signed URLs and an asynchronous
+`stubUrl()`. Instead the ticket-photo feature came out of the app altogether,
+on privacy grounds — see "The stub" below. Nothing is published to a bucket
+that no longer receives anything.
 
 This is not the average coming back by the side door. These are three numbers one
 named person gave one production, shown to that person; the thing that is still
@@ -1161,22 +1161,18 @@ is refused rather than coerced, since this is one of two values the season page
 will eventually add up and a number nobody typed would be invisible in a total.
 The upper bound is not a judgement about ticket prices; it catches a stray digit.
 
-**The stub.** A photo per entry — the ticket, the műsorfüzet, the curtain call.
-The plumbing already existed and pointed elsewhere: `expo-image-picker` is a
-dependency and 0013 gave user uploads a per-folder policy, so this is a second
-bucket rather than new infrastructure. It is public, like `posters` and
-`avatars`, because a diary entry was public when it was built — `reviews_select_all`
-let anyone read the text from 0001 until 0042. **The bucket did not change when
-that did.** 0041 stops publishing `stub_path` to anybody who does not follow the
-author, so the link is no longer discoverable; the file behind a link somebody
-already holds is still fetchable, and the privacy notice says so rather than
-implying the photo became private. Making the bucket itself private is a
-separate job — signed URLs, and `stubUrl()` becomes asynchronous — and worth
-doing before launch. The check-in form no longer asks for a photo at all (see
-983d6ef), so nothing new is arriving in there meanwhile. Ownership is
-enforced in both places, storage RLS on the upload and
-`reviews_guard_stub_path` on the row, for the reason 0027 gives about
-`avatar_path`.
+**The stub — built, and then taken out.** A photo per entry was the fourth
+column 0028 added: the ticket, the műsorfüzet, the curtain call, in a `stubs`
+bucket that was public like `posters` and `avatars` because a diary entry was
+public when it was built. 0041 stopped publishing `stub_path` to anybody who
+does not follow the author, but a public bucket stays fetchable by anybody
+holding a link, and a ticket carries the person's name and booking code. The
+check-in form stopped asking for the photo first (983d6ef); on 18 September
+2026 Ottó took the feature out entirely, on privacy grounds, rather than
+building signed URLs to keep it. No entry in the database ever carried one.
+The app no longer reads, writes or shows `stub_path`; the column, its guard
+trigger and the bucket are retired and come out in a later migration, in the
+additive-then-destructive order the rest of this file describes.
 
 **And a screen to read it back on.** None of this was worth writing while
 nothing would ever show it to you again. `entry/[id].tsx` is one evening: the
@@ -1425,9 +1421,9 @@ features:
   with no session — which is also what Google Play's account-deletion URL
   requirement will need. The privacy policy leads with the thing a template
   would never say: exactly where the line falls between the half of an entry
-  everybody can read and the half only your followers can, and that a ticket
-  stub usually carries your name and booking code into a bucket that stays
-  public even now that the link to it does not.
+  everybody can read and the half only your followers can, and that the app
+  takes no photo of a ticket at all, because a ticket carries your name and
+  booking code.
 
 ## Counting the évad, not the calendar year
 

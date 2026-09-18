@@ -98,7 +98,6 @@ type ReviewRow = {
   tags: string[];
   seat: string | null;
   price_huf: number | null;
-  stub_path: string | null;
   like_count: number;
   comment_count: number;
   /**
@@ -129,11 +128,6 @@ export type PosterColumns = {
 /** Public CDN URL for a path inside the `posters` bucket. */
 export function posterUrl(path: string): string {
   return `${SUPABASE_URL.replace(/\/+$/, "")}/storage/v1/object/public/posters/${path}`;
-}
-
-/** Public CDN URL for a path inside the `stubs` bucket. */
-function stubUrl(path: string): string {
-  return `${SUPABASE_URL.replace(/\/+$/, "")}/storage/v1/object/public/stubs/${path}`;
 }
 
 /**
@@ -229,8 +223,6 @@ function toReview(row: ReviewRow): Review {
     // is a real thing to have recorded, so it must not fall through to "not
     // recorded" the way a falsy check would send it.
     priceHuf: row.price_huf ?? undefined,
-    stubUrl: row.stub_path ? stubUrl(row.stub_path) : undefined,
-    stubPath: row.stub_path ?? undefined,
     castSeen: row.review_cast?.map((c) => ({
       name: c.name,
       role: c.role ?? undefined,
@@ -1186,8 +1178,6 @@ export async function submitReview(input: {
   seat?: string;
   /** Forints. Zero is a real answer, so this is checked for `undefined`, not falsiness. */
   priceHuf?: number;
-  /** Path in the `stubs` bucket, already uploaded by `uploadStub`. */
-  stubPath?: string;
   /**
    * Who was on that night.
    *
@@ -1232,7 +1222,6 @@ export async function submitReview(input: {
       // `?? null` and not `|| null`, so a 0 Ft press ticket is recorded as free
       // rather than as unanswered.
       price_huf: input.priceHuf ?? null,
-      stub_path: input.stubPath ?? null,
     })
     .select("*")
     .single();
@@ -1290,8 +1279,6 @@ export type DiaryEntryInput = {
   seat?: string;
   /** Forints. Zero is a real answer, so this is checked for `undefined`, not falsiness. */
   priceHuf?: number;
-  /** Path in the `stubs` bucket, already uploaded by `uploadStub`. */
-  stubPath?: string;
   /** Who was on that night. */
   castSeen?: SeenCastMember[];
 };
@@ -1330,7 +1317,6 @@ export async function updateReview(reviewId: string, input: DiaryEntryInput): Pr
       tags: input.tags,
       seat: input.seat?.trim() || null,
       price_huf: input.priceHuf ?? null,
-      stub_path: input.stubPath ?? null,
     })
     .eq("id", reviewId)
     // Belt and braces over `reviews_update_own`: an update RLS filters to zero
@@ -1393,37 +1379,6 @@ async function solePerformanceOnForReview(reviewId: string, dayKey: string): Pro
   const { data } = await supabase.from("reviews").select("play_id").eq("id", reviewId).maybeSingle();
   const playId = (data?.play_id as string | undefined) ?? undefined;
   return playId ? solePerformanceOn(playId, dayKey) : undefined;
-}
-
-/**
- * Puts a picked photo in the `stubs` bucket and returns its path.
- *
- * Always `<uid>/<file>`, which is the only shape the storage policy accepts and
- * the only shape `reviews_guard_stub_path` will let into the row.
- *
- * Nothing calls this at the moment: check-in stopped asking for a ticket photo,
- * on the grounds that theatres forbid shooting and a ticket carries a name and
- * a booking code. Kept whole, with the bucket, the policy and the column, so
- * that bringing the question back is a screen and not an infrastructure job —
- * and because entries that already have a stub still show it.
- */
-export async function uploadStub(uri: string): Promise<string> {
-  const {
-    data: { user: authUser },
-  } = await supabase.auth.getUser();
-  if (!authUser) throw new Error("Sign in required");
-
-  const res = await fetch(uri);
-  const blob = await res.blob();
-  const ext = (blob.type.split("/")[1] || "jpg").replace(/[^a-z0-9]/gi, "").toLowerCase();
-  const path = `${authUser.id}/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
-
-  const { error } = await supabase.storage.from("stubs").upload(path, blob, {
-    contentType: blob.type || "image/jpeg",
-    upsert: false,
-  });
-  if (error) throw error;
-  return path;
 }
 
 /**

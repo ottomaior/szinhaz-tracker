@@ -765,7 +765,7 @@ gondoltál róla, csak te látod és azok, akik követnek téged.
 
 Minden bejegyzésen nyilvános: ki, melyik előadás, mikor, és hogy visszatérő
 nézés volt-e. A követés mögött: a négy értékelés, a leírt vélemény, a címkék, az
-ülőhely, a jegyár, a jegyfotó, az aznap esti szereposztás, a kedvelések és a
+ülőhely, a jegyár, az aznap esti szereposztás, a kedvelések és a
 hozzászólások száma, valamint maga a hozzászólás-szál.
 
 A vágás úgy van megválasztva, hogy a hírfolyam továbbra is az a hely maradjon,
@@ -805,11 +805,11 @@ blokkot adnának vissza, hibaüzenet nélkül. A `0031` évadfüggvényeit nem
 piszkáljuk, és így csendben abbahagyják a válaszolást olyan `viewer`
 argumentumra, amely nem a hívó — ezt a rést eddig senki nem vette észre.
 
-**Ami nyitva marad:** a `stubs` bucket `public: true`. Az útvonalat már nem
-adjuk ki annak, aki nem követ, de egy már meglévő hivatkozás továbbra is
-megnyílik. Az adatkezelési tájékoztató ezt ki is mondja, nem sugallja az
-ellenkezőjét; a bucket priváttá tétele aláírt URL-eket és aszinkron
-`stubUrl()`-t igényel, és érdemes megcsinálni indulás előtt.
+**Másképp zárult le, 2026. szeptember 18.:** a `stubs` bucket `public: true`
+volt, és a priváttá tétele aláírt URL-eket és aszinkron `stubUrl()`-t
+igényelt volna. Ehelyett a jegyfotó funkció egészében kikerült az
+alkalmazásból, adatvédelmi okból — lásd lentebb, „A jegy fotója”. Nem
+publikálunk semmit egy olyan tárolóba, amelybe már semmi nem érkezik.
 
 Ez nem az átlag visszatérése a hátsó ajtón. Ezek olyan számok, amelyeket egy
 konkrét ember adott egy konkrét produkcióra, és neki mutatjuk meg őket; ami
@@ -1211,23 +1211,20 @@ a két értéknek, amit az évadösszegző majd összead, és egy szám, amit se
 gépelt be, láthatatlan marad egy végösszegben. A felső korlát nem a jegyárakról
 mond ítéletet: egy elgépelt plusz számjegyet fog meg.
 
-**A jegy fotója.** Bejegyzésenként egy kép — a jegy, a műsorfüzet, a taps. A
-vezetékek már megvoltak, csak máshová mutattak: az `expo-image-picker`
-függőség, a 0013 pedig mappánkénti szabályt adott a felhasználói feltöltéseknek,
-tehát ez egy második bucket, nem új infrastruktúra. Nyilvános, mint a `posters`
-és az `avatars`, mert a napló bejegyzése nyilvános volt, amikor készült — a
-`reviews_select_all` a 0001-től a 0042-ig bárkinek engedte olvasni a szöveget.
-**A bucket nem változott, amikor ez igen.** A 0041 már nem adja ki a
-`stub_path`-t annak, aki nem követi a szerzőt, tehát a hivatkozás nem
-felderíthető; a fájl viszont, ha valakinél már megvan a link, továbbra is
-letölthető, és az adatkezelési tájékoztató ezt ki is mondja ahelyett, hogy a
-kép priváttá válását sugallná. Magának a bucketnek a priváttá tétele külön
-munka — aláírt URL-ek, és a `stubUrl()` aszinkronná válik —, és érdemes
-megcsinálni indulás előtt. A naplózó űrlap közben már egyáltalán nem kér fotót
-(lásd 983d6ef), tehát új kép nem érkezik oda. A tulajdonlást itt is
-két helyen érvényesítjük, a tárhely RLS-ével a feltöltésnél és a
-`reviews_guard_stub_path`-szal a soron — ugyanazzal az érveléssel, amit a 0027
-az `avatar_path`-ról ír.
+**A jegy fotója — megépült, aztán kikerült.** Bejegyzésenként egy kép volt a
+0028 negyedik oszlopa: a jegy, a műsorfüzet, a taps, egy `stubs` bucketben,
+amely nyilvános volt, mint a `posters` és az `avatars`, mert a napló
+bejegyzése nyilvános volt, amikor készült. A 0041 már nem adta ki a
+`stub_path`-t annak, aki nem követi a szerzőt, de egy nyilvános tároló
+továbbra is letölthető annak, akinél megvan a link — és egy jegyen rajta van
+az ember neve és foglalási azonosítója. Előbb a naplózó űrlap hagyta abba a
+fotó kérését (983d6ef); 2026. szeptember 18-án Ottó adatvédelmi okból az
+egész funkciót kivette, ahelyett hogy aláírt URL-eket építettünk volna a
+megtartásához. Az adatbázisban egyetlen bejegyzés sem hordozott soha ilyet.
+Az alkalmazás többé nem olvassa, nem írja és nem mutatja a `stub_path`-t; az
+oszlop, az őrző triggere és a bucket nyugdíjba mentek, és egy későbbi
+migrációban kerülnek ki, abban az additív-majd-destruktív sorrendben, amit ez
+a fájl máshol leír.
 
 **És egy képernyő, ahol mindez visszaolvasható.** Semmit nem érte volna meg
 leírni, ha soha többé nem mutatja meg neked semmi. Az `entry/[id].tsx` egyetlen
@@ -1492,10 +1489,9 @@ Még három dolog, amit egy fiók nem tudott — mind előfeltétel, nem funkci�
   nélkül szolgálja ki — amire a Google Play fióktörlési URL-követelményének is
   szüksége lesz majd. Az adatkezelési tájékoztató azzal kezd, amit egy sablon
   soha nem mondana ki: hogy pontosan hol húzódik a határ a bejegyzés mindenki
-  által olvasható és a csak a követőidnek látszó fele között, és hogy egy
-  jegyfotón általában rajta van a neved és a foglalási azonosítód, egy olyan
-  tárolóban, amely azután is nyilvános marad, hogy a hozzá vezető hivatkozás
-  már nem az.
+  által olvasható és a csak a követőidnek látszó fele között, és hogy az
+  alkalmazás egyáltalán nem készít fotót a jegyről, mert egy jegyen rajta van
+  a neved és a foglalási azonosítód.
 
 ## Az évadot számoljuk, nem a naptári évet
 

@@ -1,6 +1,5 @@
 import { useCallback, useState } from "react";
 import { View, ScrollView, StyleSheet, Pressable } from "react-native";
-import { Image } from "expo-image";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
 import { gutter, radius, space } from "@/theme/tokens";
@@ -344,19 +343,6 @@ export default function DiaryEntryScreen() {
             </View>
           )}
 
-          {!!review.stubUrl && (
-            <View style={{ gap: space.sm }}>
-              <Text variant="label" tone="dim">{strings.entry.stubHeading}</Text>
-              <Image
-                source={{ uri: review.stubUrl }}
-                style={styles.stub}
-                contentFit="cover"
-                transition={200}
-                accessibilityIgnoresInvertColors
-              />
-            </View>
-          )}
-
           {!!review.text.trim() && (
             <View style={{ gap: space.sm }}>
               <Text variant="label" tone="dim">{strings.entry.reviewHeading}</Text>
@@ -542,13 +528,5 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.hairlineSoft,
     paddingTop: space.lg,
-  },
-  stub: {
-    width: "100%",
-    aspectRatio: 3 / 2,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    backgroundColor: colors.surface,
   },
 }));
