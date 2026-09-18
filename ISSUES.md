@@ -141,24 +141,6 @@ in the inbox that says what changed, from what, to what.
 page failed to load today" — a false cancellation notice is worse than none.
 T-065 is the smaller notification to do first and would settle the pattern.
 
-### T-065 · Tell somebody when they gain a follower
-type: idea · area: notifications · size: S · status: idea · added: 2026-09-11
-
-**The problem.** Following Nagy Zsófia from a fresh account wrote a `follows`
-row and nothing else: `notifications.kind` allows `dates_published`,
-`playing_tomorrow`, `venue_new_play`, `person_new_play`, `review_liked` and
-`review_commented`, so the one social event that starts a relationship is
-silent. The person followed only finds out by noticing a number change on
-their own profile. With opinions now gated behind following, "X követ téged"
-is also the prompt to follow back, which is how the Követettek feed stops
-being empty.
-
-**Roughly.** One more `kind`, one more trigger on `follows` in the shape of
-the existing like/comment ones, one more row template in the inbox.
-
-**Depends on.** Nothing; T-005 (unverified e-mail sign-up) is worth closing
-first so a notification cannot be sent in a stranger's name.
-
 ### T-066 · Logging an evening could take it off the watchlist
 type: idea · area: diary · size: S · status: idea · added: 2026-09-11
 
@@ -844,6 +826,69 @@ _Nothing yet._
 ---
 
 ## Done
+
+### T-095 · A follow is granted by the person followed, not taken
+type: bug · area: feed · priority: high · status: done · added: 2026-09-18
+
+Ottó, 18 September 2026: pressing Követés on a profile or in Színházbarátok
+follows the person at once, and from that moment the follower reads the
+opinion half of every entry they have. The privacy model (0041) says that
+half is for the author and *their followers*, which only means something if
+the author chose them. So a follow becomes a request: it starts pending, the
+person followed is told, and only an accepted follow counts for
+`can_see_entry`, for the follower numbers and for the Követettek feed. The
+button shows the pending state with a way to withdraw. Theatre and performer
+follows (`subject_follows`) are subscriptions to a catalogue and stay as
+they are. T-065 (tell somebody when they gain a follower) is folded in: the
+request and the acceptance are the two notifications.
+
+**Done, 18 September 2026.** `0065`: `follows.status` (`pending` /
+`accepted`, every existing row accepted, new rows pending by policy),
+`private.can_see_entry` and both `friends_*` functions count accepted rows
+only, the person followed may accept (update) or decline (delete), either
+party may end it, a pending row is visible only to its two parties. Two
+notification kinds through a trigger, `follow_requested` and
+`follow_accepted`; `notifications.play_id` became nullable for them and
+`0066` teaches the weekly letter the same. The profile button has three
+states; the inbox, the push sender and the letter lead a follow row to the
+person or to the requests list. Verified by eleven assertions impersonating
+real accounts in a rolled-back transaction, then end to end in the browser:
+request → pending button, count unchanged → accepted by the other side →
+inbox row → opinions open. Folds T-065.
+
+### T-096 · Your profile does not show who you follow or who follows you
+type: bug · area: profile · priority: med · status: done · added: 2026-09-18
+
+The two numbers are on the profile header and neither opens anything. Ottó
+wants both lists reachable from there, and, with T-095, the pending requests
+waiting for an answer.
+
+**Done, 18 September 2026.** `app/followers.tsx`, three tabs — Követők,
+Követettek, Kérelmek — reached from the two numbers on the profile and from
+a "N követési kérelem" line that appears under them while anything waits.
+Accept, decline, remove a follower and unfollow from the rows, each answered
+with a toast. The row's person link and its buttons are siblings, not
+nested (the T-070 lesson).
+
+### T-065 · Tell somebody when they gain a follower
+type: idea · area: notifications · size: S · status: done · added: 2026-09-11
+
+**The problem.** Following Nagy Zsófia from a fresh account wrote a `follows`
+row and nothing else: `notifications.kind` allows `dates_published`,
+`playing_tomorrow`, `venue_new_play`, `person_new_play`, `review_liked` and
+`review_commented`, so the one social event that starts a relationship is
+silent. The person followed only finds out by noticing a number change on
+their own profile. With opinions now gated behind following, "X követ téged"
+is also the prompt to follow back, which is how the Követettek feed stops
+being empty.
+
+**Roughly.** One more `kind`, one more trigger on `follows` in the shape of
+the existing like/comment ones, one more row template in the inbox.
+
+**Depends on.** Nothing; T-005 (unverified e-mail sign-up) is worth closing
+first so a notification cannot be sent in a stranger's name.
+
+**Done, 18 September 2026, as part of T-095:** `follow_requested` when somebody asks, `follow_accepted` when the answer is yes.
 
 ### T-094 · The ticket-photo feature is retired; drop its column and bucket
 type: chore · area: diary · priority: med · status: done · added: 2026-09-18

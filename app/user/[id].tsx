@@ -4,7 +4,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
 import { gutter, radius, space } from "@/theme/tokens";
 import { getDiaryEntriesForUser, getUserById, getVenuesByIds, type DiaryEntry } from "@/services/playsService";
-import { followUser, isFollowing, unfollowUser } from "@/services/followService";
+import { getFollowStatus, requestFollow, unfollowUser, type FollowStatus } from "@/services/followService";
 import { blockUser, isBlocked, unblockUser } from "@/services/moderationService";
 import { useAuth } from "@/contexts/AuthContext";
 import type { User, Venue } from "@/data/types";
@@ -38,7 +38,7 @@ export default function UserProfileScreen() {
   const [diary, setDiary] = useState<DiaryEntry[]>([]);
   const [venues, setVenues] = useState<Map<string, Venue>>(new Map());
   const [loaded, setLoaded] = useState(false);
-  const [following, setFollowing] = useState(false);
+  const [follow, setFollow] = useState<FollowStatus>("none");
   const [busy, setBusy] = useState(false);
 
   const [blocked, setBlocked] = useState(false);
@@ -65,8 +65,8 @@ export default function UserProfileScreen() {
         // Signed-out visitors can read a profile; only the follow and block
         // states are meaningless for them.
         session
-          ? isFollowing(id).then((f) => {
-              if (active) setFollowing(f);
+          ? getFollowStatus(id).then((f) => {
+              if (active) setFollow(f);
             })
           : Promise.resolve(),
         session
@@ -91,17 +91,21 @@ export default function UserProfileScreen() {
       router.push("/sign-in");
       return;
     }
-    // Flipped straight away and rolled back on failure: a follow button that
-    // waits for a round trip before changing gets pressed twice.
-    const next = !following;
-    setFollowing(next);
+    // Three states, one button. "none" asks; "pending" withdraws the ask;
+    // "accepted" unfollows. Flipped straight away and rolled back on failure,
+    // like every other toggle in the app: one that waits for a round trip
+    // gets pressed twice. A follow is a request since 0065 (T-095), so
+    // pressing it never opens anything by itself — the other person does.
+    const before = follow;
+    const next: FollowStatus = follow === "none" ? "pending" : "none";
+    setFollow(next);
     setBusy(true);
     try {
-      if (next) await followUser(id);
+      if (next === "pending") await requestFollow(id);
       else await unfollowUser(id);
       setUser(await getUserById(id));
     } catch {
-      setFollowing(!next);
+      setFollow(before);
     } finally {
       setBusy(false);
     }
@@ -132,7 +136,7 @@ export default function UserProfileScreen() {
         setBlocked(true);
         // The trigger in 0037 drops the follow in both directions, so the
         // button beside this one is now wrong until it is told.
-        setFollowing(false);
+        setFollow("none");
       }
       setConfirmingBlock(false);
       setDiary(await getDiaryEntriesForUser(id));
@@ -178,18 +182,30 @@ export default function UserProfileScreen() {
               and offering to re-create one that the insert policy now refuses
               is a button whose only outcome is an error. */}
           {!blocked && (
-            <Button
-              label={
-                !session
-                  ? strings.people.signInToFollow
-                  : following
-                    ? strings.people.followingLabel
-                    : strings.people.follow
-              }
-              variant={following ? "outline" : "primary"}
-              disabled={busy}
-              onPress={toggleFollow}
-            />
+            <View style={{ gap: space.xs }}>
+              <Button
+                label={
+                  !session
+                    ? strings.people.signInToFollow
+                    : follow === "accepted"
+                      ? strings.people.followingLabel
+                      : follow === "pending"
+                        ? strings.people.requested
+                        : strings.people.follow
+                }
+                variant={follow === "none" ? "primary" : "outline"}
+                disabled={busy}
+                onPress={toggleFollow}
+                accessibilityLabel={
+                  follow === "pending" ? strings.people.withdrawRequest : follow === "accepted" ? strings.people.unfollow : undefined
+                }
+              />
+              {!!session && follow !== "accepted" && (
+                <Text variant="caption" tone="faint">
+                  {follow === "pending" ? strings.people.withdrawRequest : strings.people.requestHint}
+                </Text>
+              )}
+            </View>
           )}
 
           {blocked && (

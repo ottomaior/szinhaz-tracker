@@ -993,8 +993,8 @@ async function statsForUser(userId: string) {
         .eq("user_id", userId)
         .gte("seen_at", seasonFrom)
         .lte("seen_at", seasonTo),
-      supabase.from("follows").select("follower_id", { count: "exact", head: true }).eq("followee_id", userId),
-      supabase.from("follows").select("followee_id", { count: "exact", head: true }).eq("follower_id", userId),
+      supabase.from("follows").select("follower_id", { count: "exact", head: true }).eq("followee_id", userId).eq("status", "accepted"),
+      supabase.from("follows").select("followee_id", { count: "exact", head: true }).eq("follower_id", userId).eq("status", "accepted"),
     ]);
   return {
     playsSeen: playsSeen ?? 0,

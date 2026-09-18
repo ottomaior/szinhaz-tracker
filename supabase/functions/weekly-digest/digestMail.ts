@@ -15,7 +15,7 @@ export type DigestData = {
   city: string | null;
   watchlist: { play_id: string; title: string; venue: string; starts_at: string; room: string | null }[];
   followed: { play_id: string; title: string; venue: string; first_starts_at: string; nights: number }[];
-  inbox: { kind: string; play_id: string; review_id: string | null; title: string; payload: Record<string, unknown>; created_at: string }[];
+  inbox: { kind: string; play_id: string | null; review_id: string | null; title: string; payload: Record<string, unknown>; created_at: string }[];
 };
 
 type Options = {
@@ -128,7 +128,17 @@ export const renderDigest = {
         "Az elmúlt hétről",
         week.inbox
           .map((i) => {
-            const path = i.review_id ? `/entry/${i.review_id}` : `/play/${i.play_id}`;
+            // The follow kinds are about a person; the title is their name
+            // (the SQL puts it there) and the row leads to them.
+            const personId = typeof i.payload.userId === "string" ? i.payload.userId : undefined;
+            const path =
+              i.kind === "follow_requested"
+                ? "/followers?tab=requests"
+                : i.kind === "follow_accepted" && personId
+                  ? `/user/${personId}`
+                  : i.review_id
+                    ? `/entry/${i.review_id}`
+                    : `/play/${i.play_id}`;
             return row(`${o.origin}${path}`, i.title, o.inboxLine(i.kind, i.payload));
           })
           .join("")

@@ -165,7 +165,7 @@ export const privacyPolicy: LegalDocument = {
           "A Vastaps félig nyilvános napló, és érdemes tudni, hol húzódik a határ. Az, hogy egy előadást láttál és mikor, bárki számára olvasható, aki megnyitja az alkalmazást, akkor is, ha nincs fiókja. Ez a szolgáltatás lényege: így lehet egyáltalán megtalálni azokat, akiket érdemes követni."
         ),
         p(
-          "Amit viszont az előadásról gondoltál, azt csak te látod, és azok, akik követnek téged. Ide tartozik az értékelésed, a leírt véleményed, a címkéid, az ülőhelyed, a jegy ára, az aznap esti szereposztás, valamint a bejegyzésed kedvelései és hozzászólásai. Aki nem követ, annak a bejegyzésed annyit mond: itt jártál."
+          "Amit viszont az előadásról gondoltál, azt csak te látod, és azok, akik követnek téged — követni pedig csak az tud, akinek a követési kérelmét elfogadtad. Ide tartozik az értékelésed, a leírt véleményed, a címkéid, az ülőhelyed, a jegy ára, az aznap esti szereposztás, valamint a bejegyzésed kedvelései és hozzászólásai. Aki nem követ, annak a bejegyzésed annyit mond: itt jártál."
         ),
         p(
           "Egy dolog következik ebből, amit érdemes elolvasni, mielőtt beírsz valamit. A naplód együtt olvasva elárulja, mikor nem vagy otthon, még akkor is, ha az értékelések rejtve maradnak: a dátumok maguk nyilvánosak. Ez ugyanaz a megfontolás, mint bármelyik közösségi oldalon. Jegyről készült fotót az alkalmazás nem kér és nem tárol — egy jegyen rajta van a neved és a foglalási azonosítód, és ennek nincs helye egy naplóban."
