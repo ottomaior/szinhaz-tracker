@@ -892,6 +892,33 @@ _Nothing yet._
 
 ## Done
 
+### T-111 · The questionnaire, version 5: nothing is left out
+type: chore · area: landing · priority: med · status: done · added: 2026-09-20 · done: 2026-09-20
+
+Ottó filled in version 4 and stopped at "és a maradékból melyik három
+maradhat ki": there are features that matter less, not features that
+should go, and the forced discard produced an answer he did not mean. The
+same held for the rest of the instrument — six missing items when the
+backlog has more, and no way to say "Trakt" under "használsz naplóappot",
+because no option and no text field fitted.
+
+Version 5 (`scripts/research-design.ts`, `landing/kutatas.html`, `0073`):
+every one of seventeen features the app has today is rated on one
+four-point scale (ezért nyitnám meg · jó, hogy van · nem tűnne fel · nem
+használnám), in two screens grouped by area, then one screen asks which
+three the reader would open the app for; nothing is discarded. The missing
+list grows to ten from BACKLOG.md and the ideas here (planning an evening
+T-109, being told about a change T-081, the theatre page T-017, the ticket
+wallet T-101, the widget T-091, plus cities, receiving houses, bulk import,
+English), with a free "mi más hiányzik" field. Every multiple-choice
+question has an "Egyéb" option that reveals a text field; the "about you"
+block asks who they go with, whether they hold a bérlet, and an optional
+age band; the analog-app list names Trakt and Moly. The report, the
+dashboard's Kérdőív section and the design tests follow the same module.
+The three version-2 and -3 rows — all Ottó's own tests — were deleted at
+his word, so the table holds version 5 only. The page's storage keys carry
+the version, so a browser that answered version 4 can answer version 5.
+
 ### T-099 · Usage numbers straight from the database
 type: idea · area: data · size: S · status: done · added: 2026-09-18 · done: 2026-09-19
 
@@ -3421,4 +3448,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-111**
+Next free id: **T-112**

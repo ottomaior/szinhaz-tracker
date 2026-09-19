@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0a0507">
 <title>Vastaps — kérdőív színházba járóknak</title>
-<meta name="description" content="Öt perc, névtelenül: mi kell egy magyar színházi naplóba, és mi nem. Nem osztályozni kell, hanem választani.">
+<meta name="description" content="Öt perc, névtelenül: mi ér valamit egy magyar színházi naplóban, és mi hiányzik még belőle.">
 <!-- A questionnaire is not a page to be found from a search result. -->
 <meta name="robots" content="noindex">
 <link rel="canonical" href="https://vastaps.app/kutatas">
@@ -17,8 +17,8 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Vastaps">
 <meta property="og:url" content="https://vastaps.app/kutatas">
-<meta property="og:title" content="Mi kell egy színházi naplóba? — pár perc, névtelenül">
-<meta property="og:description" content="Egy magyar színházi app készül. Mielőtt elindul, szeretnénk tudni, mi kell bele és mi nem. Nem osztályozni kell, hanem választani.">
+<meta property="og:title" content="Mi ér valamit egy színházi naplóban? — öt perc, névtelenül">
+<meta property="og:description" content="Egy magyar színházi app készül. Mielőtt mindenkihez eljut, szeretnénk tudni, mi számít benne — és mi hiányzik még.">
 <meta property="og:image" content="https://vastaps.app/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -140,6 +140,12 @@ textarea.text { min-height: 120px; resize: vertical; line-height: 1.5; }
 .miss .chip { min-height: 38px; padding: 0.3rem 0.8rem; font-size: 0.9rem; }
 .miss .chip:has(input:checked) { background: var(--surface-3); border-color: var(--gold-edge); color: var(--text); font-weight: 600; }
 .miss .chip:has(input[value="zavarna"]:checked) { background: var(--gold); border-color: var(--gold); color: var(--on-gold); }
+.miss .chip:has(input[value="ezert"]:checked) { background: var(--gold); border-color: var(--gold); color: var(--on-gold); }
+.miss .chip:has(input[value="nem"]:checked), .miss .chip:has(input[value="jobb_nelkule"]:checked) { border-color: var(--claret-edge); background: var(--claret-tint); color: var(--text); }
+.miss--rate + .miss--rate { margin-top: 0.6rem; }
+.group { font-family: var(--sans); font-size: var(--step--1); letter-spacing: 0.18em; text-transform: uppercase; color: var(--faint); font-weight: 500; margin: 1.6rem 0 0.7rem; }
+.group:first-of-type { margin-top: 0.4rem; }
+.linkish { background: none; border: 0; padding: 0 0 0 0.35rem; font: inherit; font-size: var(--step--1); font-weight: 500; color: var(--gold); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 
 /* ── Buttons ────────────────────────────────────────────────────────────── */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: 46px; padding: 0.7rem 1.35rem; border-radius: 999px; font-size: 0.95rem; font-weight: 600; text-decoration: none; cursor: pointer; border: 1px solid transparent; transition: transform 0.16s, background 0.2s, border-color 0.2s, box-shadow 0.2s; }
@@ -218,7 +224,7 @@ dialog button { position: absolute; top: -14px; right: -14px; width: 40px; heigh
 <!-- The design is generated from scripts/research-design.ts; the test in
      scripts/research-design.test.ts fails if this block and that module
      ever disagree. Do not edit it here. -->
-<script id="research-design" type="application/json">{"version":4,"features":[{"id":"musor_ma","label":"Ami ma este megy","detail":"A következő esték műsora Budapest és Debrecen színházaiból, egy képernyőn — plakáttal, kezdési idővel.","shot":"discover.webp"},{"id":"naptar","label":"Műsornaptár napra","detail":"Kiválasztasz egy napot, és látod, mi megy aznap, színházanként.","shot":"musor.webp"},{"id":"kereses","label":"Kereső, ami alkotót is talál","detail":"Darabra, szerzőre, színházra és színészre — ékezet nélkül és elgépelve is.","shot":"search.webp"},{"id":"idopontok_jegy","label":"Minden időpont, és a jegyvásárlás linkje","detail":"A darab oldalán az összes jövőbeli előadás, teremmel, és egy gomb a színház jegyoldalára.","shot":"play.webp"},{"id":"naplo","label":"Napló: mit láttál, mikor, milyen volt","detail":"Három lépés egy este után: melyik nap, hányasra, pár sor — és az este ott marad.","shot":"checkin.webp"},{"id":"beugro","label":"Ki játszott aznap este","detail":"A bejegyzésben megjelölöd, kik voltak színpadon — beugróval együtt, mert a színlapot másnap már senki nem őrzi."},{"id":"kivansaglista","label":"Kívánságlista","detail":"Amit meg akarsz nézni — egy helyen, amíg fut, és szólunk, ha holnap megy."},{"id":"listak","label":"Listák: szerkesztői és saját","detail":"Válogatások a katalógusból („Bodó Viktor Budapesten”), és a te listáid.","shot":"list.webp"},{"id":"kovetes","label":"Színházak és alkotók követése","detail":"Egy színész vagy rendező oldala mindennel, amiben játszik — és értesítés, ha új darabja jön.","shot":"person.webp"},{"id":"velemeny_kovetoknek","label":"A véleményed csak a követőidé","detail":"Hogy ott voltál, azt bárki látja. Hogy mit gondoltál, csak az, aki követ téged — nem nyilvános kritika, hanem a saját körödnek szól.","shot":"feed.webp"},{"id":"evad_kartya","label":"Évadösszegzés és megosztható kártya","detail":"Egy évad számokban — hány este, hol, kik játszottak a legtöbbször —, és egy este képeslapként, amit elküldhetsz.","shot":"user.webp"}],"pickCount":3,"missing":[{"id":"tobb_varos","label":"Több város","detail":"Szeged, Pécs, Győr, Miskolc, Kaposvár — a két város után a többi kőszínház is a műsorban."},{"id":"push","label":"Értesítés a telefonra","detail":"Nem az appban, hanem a telefon értesítései között: bemutatót jelentett be egy követett színház, vagy holnap megy valami a kívánságlistádról."},{"id":"fuggetlen","label":"Független és befogadó helyek","detail":"Trafó, Jurányi, Átrium — ahol nincs repertoár, csak esték, és a társulat mindig vendég."},{"id":"regi_estek","label":"A régi esték betöltése","detail":"A korábbi évek egyszerre — táblázatból, vagy a megőrzött jegyek alapján —, hogy a napló ne üresen induljon."},{"id":"ki_mikor_megy","label":"Ki mikor megy","detail":"Látod, melyik estére van jegye annak, akit követsz, és jelezheted, hogy te is ott leszel."},{"id":"angol","label":"Angol felület","detail":"Az app angolul is — a nem magyar barátoknak, és a feliratos estékhez."}],"missingAnswers":["zavarna","mindegy","jobb_nelkule"],"missingLabels":{"zavarna":"Hiányozna","mindegy":"Nem tűnne fel","jobb_nelkule":"Jobb is nélküle"}}</script>
+<script id="research-design" type="application/json">{"version":5,"areas":[{"id":"musor","label":"Műsor"},{"id":"naplo","label":"Napló"},{"id":"kor","label":"A köröd"},{"id":"raadas","label":"Ráadás"}],"features":[{"id":"musor_ma","area":"musor","label":"Ami ma este megy","detail":"A következő esték műsora Budapest és Debrecen színházaiból, egy képernyőn — plakáttal, kezdési idővel.","shot":"discover.webp"},{"id":"naptar","area":"musor","label":"Műsornaptár napra","detail":"Kiválasztasz egy napot, és látod, mi megy aznap, színházanként.","shot":"musor.webp"},{"id":"kereses","area":"musor","label":"Kereső, ami alkotót is talál","detail":"Darabra, szerzőre, színházra és színészre — ékezet nélkül és elgépelve is.","shot":"search.webp"},{"id":"szurok","area":"musor","label":"Szűrés városra, színházra, műfajra","detail":"Csak a próza, csak a Katona, csak Debrecen — és külön az, ami most megy, meg az, ami már lement."},{"id":"idopontok_jegy","area":"musor","label":"Minden időpont, és a jegyvásárlás linkje","detail":"A darab oldalán az összes jövőbeli előadás, teremmel, és egy gomb a színház jegyoldalára.","shot":"play.webp"},{"id":"naplo","area":"naplo","label":"Napló: mit láttál, mikor, milyen volt","detail":"Három lépés egy este után: melyik nap, hányasra, pár sor — és az este ott marad.","shot":"checkin.webp"},{"id":"szempontok","area":"naplo","label":"Négy szempont, nem egy szám","detail":"Összbenyomás mellett külön a színészek, a rendezés és a látvány — ha akarod. Ha nem, egy osztályzat is elég."},{"id":"beugro","area":"naplo","label":"Ki játszott aznap este","detail":"A bejegyzésben megjelölöd, kik voltak színpadon — beugróval együtt, mert a színlapot másnap már senki nem őrzi."},{"id":"archivum","area":"naplo","label":"A régi esték gyors bejelölése","detail":"Az induláskor végiglapozod a színházak archívumát, és bejelölöd, mit láttál — dátum nélkül is, hogy a napló ne üresen kezdődjön."},{"id":"kivansaglista","area":"naplo","label":"Kívánságlista, és szólunk, ha holnap megy","detail":"Amit meg akarsz nézni — egy helyen, amíg fut. Ha holnap játsszák, értesítést kapsz."},{"id":"velemeny_kovetoknek","area":"kor","label":"A véleményed csak a követőidé","detail":"Hogy ott voltál, azt bárki látja. Hogy mit gondoltál, csak az, aki követ téged — nem nyilvános kritika, hanem a saját körödnek szól.","shot":"feed.webp"},{"id":"ismerosok","area":"kor","label":"Ismerősök követése, kedvelés, hozzászólás","detail":"Egy hírfolyam azokról, akiket követsz: mit láttak, mit gondoltak — és rá lehet írni."},{"id":"kovetes","area":"kor","label":"Színházak és alkotók követése","detail":"Egy színész vagy rendező oldala mindennel, amiben játszik — és értesítés, ha új darabja jön.","shot":"person.webp"},{"id":"listak","area":"kor","label":"Listák: szerkesztői és saját","detail":"Válogatások a katalógusból („Bodó Viktor Budapesten”), és a te listáid.","shot":"list.webp"},{"id":"ertesitesek","area":"raadas","label":"Értesítés a telefonra, és egy heti levél","detail":"Bemutatót jelentett be egy követett színház, holnap megy valami a kívánságlistádról — a telefon értesítései között. Hétfőnként egy levél a hetedről."},{"id":"evad_kartya","area":"raadas","label":"Évadösszegzés és megosztható kártya","detail":"Egy évad számokban — hány este, hol, kik játszottak a legtöbbször —, és egy este képeslapként, amit elküldhetsz.","shot":"user.webp"},{"id":"appkent","area":"raadas","label":"Appként a telefonon, a te színvilágoddal","detail":"Kezdőképernyőre tehető, ikonnal, teljes képernyőn; Androidon a Play-ből. Öt színvilág, világos és sötét."}],"ratingAnswers":["ezert","jo","mindegy","nem"],"ratingLabels":{"ezert":"Ezért nyitnám meg","jo":"Jó, hogy van","mindegy":"Nem tűnne fel","nem":"Nem használnám"},"pickCount":3,"missing":[{"id":"tobb_varos","label":"Több város","detail":"Szeged, Pécs, Győr, Miskolc, Kaposvár — a két város után a többi kőszínház is a műsorban."},{"id":"fuggetlen","label":"Független és befogadó helyek","detail":"Trafó, Jurányi, Átrium — ahol nincs repertoár, csak esték, és a társulat mindig vendég."},{"id":"regi_estek","label":"A régi esték betöltése egyben","detail":"A korábbi évek egyszerre — táblázatból, vagy a megőrzött jegyek alapján —, nem egyesével bejelölve."},{"id":"tervezes","label":"Este tervezése, emlékeztetővel","detail":"Bejelölöd, hogy mész; aznap szólunk; másnap megkérdezzük, milyen volt — és egy koppintással bejegyzés lesz belőle."},{"id":"valtozas","label":"Szólunk, ha módosul vagy elmarad","detail":"A kívánságlistás vagy tervezett estéd új időpontra kerül, más terembe, vagy elmarad — értesítést kapsz."},{"id":"ki_mikor_megy","label":"Ki mikor megy","detail":"Látod, melyik estére van jegye annak, akit követsz, és jelezheted, hogy te is ott leszel."},{"id":"szinhaz_oldal","label":"A színház saját oldala","detail":"Egy oldal minden színháznak: a műsora, a bemutatói, a társulata, és hogy mit láttál ott."},{"id":"jegytarca","label":"Jegytárca: a jegy az appban","detail":"Beimportálod a jegyet a levélből vagy a PDF-ből, és az este oldalán ott van a bejáratnál — nem a letöltések között kell keresni."},{"id":"widget","label":"Kezdőképernyő-widget: a mai este","detail":"A telefon kezdőképernyőjén egy kis kártya: mi megy ma, mikor, hol — az app megnyitása nélkül."},{"id":"angol","label":"Angol felület","detail":"Az app angolul is — a nem magyar barátoknak, és a feliratos estékhez."}],"missingAnswers":["zavarna","mindegy","jobb_nelkule"],"missingLabels":{"zavarna":"Hiányozna","mindegy":"Nem tűnne fel","jobb_nelkule":"Jobb is nélküle"},"missingOtherMax":300,"behaviour":[{"key":"gyakorisag","screen":1,"title":"Hányszor voltál színházban az elmúlt egy évben?","multi":false,"required":true,"options":{"0":"Egyszer sem","1-2":"1–2","3-5":"3–5","6-10":"6–10","10+":"Több mint 10"}},{"key":"varos","screen":1,"title":"Hol jársz színházba?","hint":"Több is lehet.","multi":true,"required":true,"options":{"budapest":"Budapest","debrecen":"Debrecen","egyeb":"Máshol"},"other":"egyeb","otherPrompt":"Hol máshol?"},{"key":"szinhazak","screen":1,"title":"Melyik színházakban jártál az elmúlt egy évben?","hint":"Amelyikben voltál. Ha egyikben sem, hagyd üresen.","multi":true,"required":false,"options":{"orkeny":"Örkény","katona":"Katona","nemzeti":"Nemzeti","central":"Centrál","madach":"Madách","vig":"Vígszínház","radnoti":"Radnóti","trafo":"Trafó","csokonai":"Csokonai (Debrecen)","vojtina":"Vojtina (Debrecen)","egyeb":"Más színház"},"other":"egyeb","otherPrompt":"Melyik?"},{"key":"kivel","screen":1,"title":"Kivel jársz általában?","hint":"Több is lehet.","multi":true,"required":true,"options":{"egyedul":"Egyedül","parral":"A párommal","baratokkal":"Barátokkal","csaladdal":"Családdal","egyeb":"Mással"},"other":"egyeb","otherPrompt":"Kivel?"},{"key":"berlet","screen":1,"title":"Van bérleted?","multi":false,"required":true,"options":{"van":"Van","volt":"Volt, most nincs","nincs":"Sosem volt"}},{"key":"forras","screen":2,"title":"Honnan tudod meg, mi megy?","hint":"Amit tényleg használsz — több is lehet.","multi":true,"required":true,"options":{"szinhaz_honlap":"A színház honlapja","jegyiroda":"jegy.hu, jegyiroda","facebook":"Facebook, Instagram","portalok":"port.hu, szinhaz.hu, kritikák","ismerosok":"Ismerősök","hirlevel":"Hírlevél, bérlet","plakat":"Plakát, az utcán","egyeb":"Egyéb"},"other":"egyeb","otherPrompt":"Honnan?"},{"key":"dontes","screen":2,"title":"Mi dönti el, mit nézel meg?","hint":"A két-három legfontosabb.","multi":true,"required":true,"options":{"darab":"A darab vagy a szerző","szinesz":"Egy színész","rendezo":"A rendező","szinhaz":"A színház maga","ajanlas":"Valaki ajánlotta","kritika":"Kritika, értékelés","ar":"Az ár","datum":"Amikor ráérek","egyeb":"Egyéb"},"other":"egyeb","otherPrompt":"Mi?"},{"key":"nyilvantartas","screen":2,"title":"Hogyan tartod számon, mit láttál?","hint":"Több is lehet.","multi":true,"required":true,"options":{"fejben":"Fejben","jegyek_fuzetek":"Megőrzöm a jegyeket, műsorfüzeteket","jegyzet":"Jegyzetappban","tablazat":"Táblázatban","kozossegi":"Posztolok róla","masik_app":"Egy másik appban","semmi":"Sehogy"},"other":"masik_app","otherPrompt":"Melyik appban?"},{"key":"analog_app","screen":2,"title":"Használsz naplóappot filmre, sorozatra, könyvre?","hint":"Több is lehet.","multi":true,"required":true,"options":{"letterboxd":"Letterboxd","trakt":"Trakt","imdb":"IMDb","goodreads":"Goodreads","moly":"Moly","egyeb":"Másikat","egyik_sem":"Egyiket sem"},"other":"egyeb","otherPrompt":"Melyiket?"},{"key":"kor","screen":3,"title":"Hány éves vagy?","hint":"Nem kötelező. Csak ahhoz kell, hogy a többi választ el tudjuk helyezni.","multi":false,"required":false,"options":{"-18":"18 alatt","18-24":"18–24","25-34":"25–34","35-44":"35–44","45-54":"45–54","55+":"55 fölött"}}]}</script>
 
 <script>
 (function () {
@@ -234,15 +240,19 @@ dialog button { position: absolute; top: -14px; right: -14px; width: 40px; heigh
 
   var DESIGN = JSON.parse(document.getElementById("research-design").textContent);
   var FEATURES = DESIGN.features;
+  var AREAS = DESIGN.areas;
+  var RATING_ANSWERS = DESIGN.ratingAnswers;
+  var RATING_LABELS = DESIGN.ratingLabels;
   var PICK = DESIGN.pickCount;
   var MISSING = DESIGN.missing;
   var MISSING_LABELS = DESIGN.missingLabels;
+  var MISSING_OTHER_MAX = DESIGN.missingOtherMax;
+  var BEHAVIOUR = DESIGN.behaviour;
   // Open beta since 18 September 2026: the thanks screen sends people to the
   // app itself. The footer keeps the mail address for those who want to talk.
   var APP = "https://web.vastaps.app/";
   var PRIVACY = "/adatvedelem";
   var CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>';
-  var CROSS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg>';
 
   var root = document.getElementById("root");
   var progress = document.getElementById("progress");
@@ -250,9 +260,12 @@ dialog button { position: absolute; top: -14px; right: -14px; width: 40px; heigh
   var progressFill = document.getElementById("progress-fill");
 
   // ── Storage ────────────────────────────────────────────────────────────
-  var K_DRAFT = "vastaps-kutatas-draft-v3";
-  var K_DONE = "vastaps-kutatas-done";
-  var K_CLIENT = "vastaps-kutatas-client";
+  // Both keys carry the version: a draft of the old instrument cannot be
+  // resumed into this one, and a browser that answered version 4 is welcome
+  // to answer version 5 — it is a different questionnaire.
+  var K_DRAFT = "vastaps-kutatas-draft-v5";
+  var K_DONE = "vastaps-kutatas-done-v5";
+  var K_CLIENT = "vastaps-kutatas-client-v5";
 
   function load(k) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
   function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
@@ -278,12 +291,16 @@ dialog button { position: absolute; top: -14px; right: -14px; width: 40px; heigh
 
   var state = load(K_DRAFT) || {
     step: 0,
-    // The eleven in a fresh order for each respondent, so the top of the
-    // list cannot masquerade as the top of the ranking.
+    // The seventeen in a fresh order for the "which three" screen, so the
+    // top of the list cannot masquerade as the top of the ranking. The
+    // rating screens keep the design's order: there the grouping by area
+    // is what makes seventeen rows readable.
     order: shuffled(FEATURES.map(function (_, i) { return i; })),
     behaviour: {},
-    picks: { best: [], worst: [] },
+    ratings: {},
+    picks: { best: [] },
     missing: {},
+    missing_other: "",
     open_answer: "",
     optin: false,
     email: "",
@@ -292,7 +309,17 @@ dialog button { position: absolute; top: -14px; right: -14px; width: 40px; heigh
   if (source && !state.source) state.source = source;
 
   // ── Steps ──────────────────────────────────────────────────────────────
-  var steps = [{ kind: "intro" }, { kind: "rolad1" }, { kind: "rolad2" }, { kind: "best" }, { kind: "worst" }, { kind: "missing" }, { kind: "zaras" }];
+  var steps = [
+    { kind: "intro" },
+    { kind: "rolad", screen: 1 },
+    { kind: "rolad", screen: 2 },
+    { kind: "rolad", screen: 3 },
+    { kind: "rate", areas: ["musor", "naplo"], index: 1 },
+    { kind: "rate", areas: ["kor", "raadas"], index: 2 },
+    { kind: "best" },
+    { kind: "missing" },
+    { kind: "zaras" }
+  ];
   var TOTAL = steps.length - 1; // the intro is not a step
 
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
@@ -304,100 +331,90 @@ dialog button { position: absolute; top: -14px; right: -14px; width: 40px; heigh
     }).join("") + "</div>";
   }
 
+  function nav(back, next, submit) {
+    return '<div class="err" id="err"></div><div class="actions">' +
+      (back ? '<button class="btn btn--text" type="button" data-back>Vissza</button>' : "<span></span>") +
+      (submit ? '<button class="btn btn--gold" type="button" data-submit>Beküldöm</button>'
+              : '<button class="btn btn--gold" type="button" data-next>' + (next || "Tovább") + "</button>") +
+      "</div>";
+  }
+
   function renderIntro() {
     return '<div class="step">' +
       '<div class="step__head"><p class="eyebrow">Kérdőív · színházba járóknak</p>' +
-      '<h1>Mi kell egy színházi naplóba, és mi nem?</h1>' +
-      '<p class="lede">A Vastaps egy magyar színházi app: műsor Budapest és Debrecen színházaiból, és egy napló arról, mit láttál. Elkészült; mielőtt mindenkihez eljut, szeretnénk tudni, mi számít valójában — neked.</p></div>' +
-      '<div class="facts"><div class="fact"><b>Pár perc</b><span>Először rólad, aztán a funkciókról.</span></div>' +
+      '<h1>Mi ér valamit egy színházi naplóban — és mi hiányzik még?</h1>' +
+      '<p class="lede">A Vastaps egy magyar színházi app: műsor Budapest és Debrecen színházaiból, és egy napló arról, mit láttál. Használható; mielőtt mindenkihez eljut, szeretnénk tudni, mi számít valójában — neked.</p></div>' +
+      '<div class="facts"><div class="fact"><b>Öt perc</b><span>Először rólad, aztán arról, amit az app tud, végül arról, amit még nem.</span></div>' +
       '<div class="fact"><b>Névtelen</b><span>Nem kérünk nevet, és nem kell fiók.</span></div>' +
-      '<div class="fact"><b>Nem osztályzat</b><span>Választani kell — mi ér a legtöbbet, és mi hiányozna.</span></div></div>' +
-      '<p class="dim">Nincs jó válasz. Ha valamit nem használnál, az pont olyan hasznos, mint ha igen — sőt.</p>' +
+      '<div class="fact"><b>Nincs jó válasz</b><span>Ha valamit nem használnál, az pont olyan hasznos, mint ha igen — sőt.</span></div></div>' +
       '<p class="consent">A válaszokat névtelenül tároljuk. E-mail-címet csak akkor, ha a végén kéred, hogy szóljunk az indulásról, és csak arra használjuk. <a href="' + PRIVACY + '" target="_blank" rel="noopener">Adatkezelési tájékoztató</a></p>' +
       '<div class="actions"><span></span><button class="btn btn--gold" type="button" data-next>Kezdjük</button></div></div>';
   }
 
-  function renderRolad1() {
+  // One "about you" screen, built from the design: every question on that
+  // screen, and a text field after any question whose `other` option is on.
+  var ROLAD_HEADS = {
+    1: "Hogyan jársz színházba?",
+    2: "Hogyan választasz, és mire emlékszel?",
+    3: "És még egy, ha szívesen válaszolsz."
+  };
+  function renderRolad(screen) {
     var b = state.behaviour;
-    return '<div class="step"><div class="step__head"><p class="eyebrow">1. Rólad</p><h2>Hogyan jársz színházba?</h2></div>' +
-      '<div class="q"><p class="q__title">Hányszor voltál színházban az elmúlt egy évben?</p>' +
-      chips("gyakorisag", [{ id: "0", label: "Egyszer sem" }, { id: "1-2", label: "1–2" }, { id: "3-5", label: "3–5" }, { id: "6-10", label: "6–10" }, { id: "10+", label: "Több mint 10" }], b.gyakorisag, false) + "</div>" +
-      '<div class="q"><p class="q__title">Hol jársz színházba?</p><p class="q__hint">Több is lehet.</p>' +
-      chips("varos", [{ id: "budapest", label: "Budapest" }, { id: "debrecen", label: "Debrecen" }, { id: "mas", label: "Máshol" }], b.varos, true) +
-      '<input class="text text--sm" type="text" name="varos_mas" maxlength="80" placeholder="Hol máshol?" value="' + esc(b.varos_mas || "") + '"' + ((b.varos || []).indexOf("mas") >= 0 ? "" : " hidden") + "></div>" +
-      '<div class="q"><p class="q__title">Melyik színházakban jártál az elmúlt egy évben?</p><p class="q__hint">Amelyikben voltál. Ha egyikben sem, hagyd üresen.</p>' +
-      chips("szinhazak", [
-        { id: "orkeny", label: "Örkény" }, { id: "katona", label: "Katona" }, { id: "nemzeti", label: "Nemzeti" }, { id: "central", label: "Centrál" },
-        { id: "madach", label: "Madách" }, { id: "vig", label: "Vígszínház" }, { id: "radnoti", label: "Radnóti" }, { id: "csokonai", label: "Csokonai (Debrecen)" }, { id: "vojtina", label: "Vojtina (Debrecen)" }, { id: "mas", label: "Más színház" }
-      ], b.szinhazak, true) +
-      '<input class="text text--sm" type="text" name="szinhazak_mas" maxlength="120" placeholder="Melyik?" value="' + esc(b.szinhazak_mas || "") + '"' + ((b.szinhazak || []).indexOf("mas") >= 0 ? "" : " hidden") + "></div>" +
-      '<div class="err" id="err"></div>' +
-      '<div class="actions"><button class="btn btn--text" type="button" data-back>Vissza</button><button class="btn btn--gold" type="button" data-next>Tovább</button></div></div>';
+    var qs = BEHAVIOUR.filter(function (q) { return q.screen === screen; });
+    var html = qs.map(function (q) {
+      var opts = Object.keys(q.options).map(function (id) { return { id: id, label: q.options[id] }; });
+      var chosen = b[q.key];
+      var on = q.other ? (q.multi ? (chosen || []).indexOf(q.other) >= 0 : chosen === q.other) : false;
+      return '<div class="q"><p class="q__title">' + esc(q.title) + "</p>" +
+        (q.hint ? '<p class="q__hint">' + esc(q.hint) + "</p>" : "") +
+        chips(q.key, opts, chosen, q.multi) +
+        (q.other ? '<input class="text text--sm" type="text" name="' + esc(q.key) + '_mas" maxlength="120" placeholder="' + esc(q.otherPrompt || "Mi?") + '" value="' + esc(b[q.key + "_mas"] || "") + '"' + (on ? "" : " hidden") + ">" : "") +
+        "</div>";
+    }).join("");
+    return '<div class="step"><div class="step__head"><p class="eyebrow">1. Rólad · ' + screen + " / 3</p><h2>" + esc(ROLAD_HEADS[screen]) + "</h2></div>" + html + nav(true);
   }
 
-  function renderRolad2() {
-    var b = state.behaviour;
-    return '<div class="step"><div class="step__head"><p class="eyebrow">1. Rólad</p><h2>Hogyan választasz, és mire emlékszel?</h2></div>' +
-      '<div class="q"><p class="q__title">Honnan tudod meg, mi megy?</p><p class="q__hint">Amit tényleg használsz — több is lehet.</p>' +
-      chips("forras", [
-        { id: "szinhaz_honlap", label: "A színház honlapja" }, { id: "jegyiroda", label: "jegy.hu, jegyiroda" }, { id: "facebook", label: "Facebook, Instagram" },
-        { id: "portalok", label: "port.hu, szinhaz.hu, kritikák" }, { id: "ismerosok", label: "Ismerősök" }, { id: "hirlevel", label: "Hírlevél, bérlet" },
-        { id: "plakat", label: "Plakát, az utcán" }, { id: "egyeb", label: "Egyéb" }
-      ], b.forras, true) + "</div>" +
-      '<div class="q"><p class="q__title">Mi dönti el, mit nézel meg?</p><p class="q__hint">A két-három legfontosabb.</p>' +
-      chips("dontes", [
-        { id: "darab", label: "A darab vagy a szerző" }, { id: "szinesz", label: "Egy színész" }, { id: "rendezo", label: "A rendező" }, { id: "szinhaz", label: "A színház maga" },
-        { id: "ajanlas", label: "Valaki ajánlotta" }, { id: "kritika", label: "Kritika, értékelés" }, { id: "ar", label: "Az ár" }, { id: "datum", label: "Amikor ráérek" }
-      ], b.dontes, true) + "</div>" +
-      '<div class="q"><p class="q__title">Hogyan tartod számon, mit láttál?</p>' +
-      chips("nyilvantartas", [
-        { id: "fejben", label: "Fejben" }, { id: "jegyek_fuzetek", label: "Megőrzöm a jegyeket, műsorfüzeteket" }, { id: "jegyzet", label: "Jegyzetappban" },
-        { id: "tablazat", label: "Táblázatban" }, { id: "kozossegi", label: "Posztolok róla" }, { id: "masik_app", label: "Egy másik appban" }, { id: "semmi", label: "Sehogy" }
-      ], b.nyilvantartas, true) +
-      '<input class="text text--sm" type="text" name="nyilvantartas_mas" maxlength="80" placeholder="Melyik appban?" value="' + esc(b.nyilvantartas_mas || "") + '"' + ((b.nyilvantartas || []).indexOf("masik_app") >= 0 ? "" : " hidden") + "></div>" +
-      '<div class="q"><p class="q__title">Használsz naplóappot filmre vagy könyvre?</p>' +
-      chips("analog_app", [{ id: "letterboxd", label: "Letterboxd" }, { id: "goodreads", label: "Goodreads, Moly" }, { id: "imdb", label: "IMDb" }, { id: "egyik_sem", label: "Egyiket sem" }], b.analog_app, true) + "</div>" +
-      '<div class="err" id="err"></div>' +
-      '<div class="actions"><button class="btn btn--text" type="button" data-back>Vissza</button><button class="btn btn--gold" type="button" data-next>Tovább</button></div></div>';
+  // A rating row: the feature, and the four answers.
+  function rateRow(f) {
+    var opts = RATING_ANSWERS.map(function (id) { return { id: id, label: RATING_LABELS[id] }; });
+    var shot = f.shot ? ' <button type="button" class="linkish" data-shot="shots/' + esc(f.shot) + '">kép</button>' : "";
+    return '<div class="miss miss--rate" data-rate="' + esc(f.id) + '"><div><div class="miss__label">' + esc(f.label) + shot + '</div><div class="miss__detail">' + esc(f.detail) + "</div></div>" +
+      chips("r:" + f.id, opts, state.ratings[f.id], false) + "</div>";
   }
 
-  function card(f, kind, checked, disabled) {
+  function renderRate(step) {
+    var groups = step.areas.map(function (areaId) {
+      var area = AREAS.filter(function (a) { return a.id === areaId; })[0];
+      var rows = FEATURES.filter(function (f) { return f.area === areaId; }).map(rateRow).join("");
+      return '<h3 class="group">' + esc(area.label) + "</h3>" + rows;
+    }).join("");
+    return '<div class="step"><div class="step__head"><p class="eyebrow">2. Amit az app tud · ' + step.index + " / 2</p>" +
+      "<h2>" + (step.index === 1 ? "Mennyit érnek neked ezek?" : "És ezek?") + "</h2>" +
+      '<p class="dim">' + (step.index === 1
+        ? "Egy válasz mindegyikhez. „Ezért nyitnám meg”: ez az, amiért elővennéd az appot. „Nem használnám”: nem baj, ha ott van, de te nem nyúlnál hozzá."
+        : "Ugyanígy. A képre koppintva látod, hogy néz ki az appban.") + "</p></div>" +
+      groups + nav(true);
+  }
+
+  function card(f, checked, disabled) {
     var thumb = f.shot
       ? '<span class="card__thumb"><img src="shots/' + esc(f.shot) + '" alt="" loading="lazy" width="44" height="60"></span>'
       : '<span class="card__thumb card__thumb--none" aria-hidden="true"></span>';
-    return '<label class="card card--' + kind + '"><input type="checkbox" name="' + kind + '" value="' + esc(f.id) + '"' + (checked ? " checked" : "") + (disabled ? " disabled" : "") + ' aria-label="' + esc(f.label) + '">' +
+    return '<label class="card card--best"><input type="checkbox" name="best" value="' + esc(f.id) + '"' + (checked ? " checked" : "") + (disabled ? " disabled" : "") + ' aria-label="' + esc(f.label) + '">' +
       thumb + '<span class="card__text"><span class="card__label">' + esc(f.label) + '</span><span class="card__detail">' + esc(f.detail) + '</span></span>' +
-      '<span class="card__mark" aria-hidden="true">' + (kind === "best" ? CHECK : CROSS) + "</span></label>";
+      '<span class="card__mark" aria-hidden="true">' + CHECK + "</span></label>";
   }
 
-  function shotButtons(list) {
-    var withShot = list.filter(function (f) { return f.shot; });
-    if (!withShot.length) return "";
-    return '<div class="shots"><span>Nagyban:</span>' + withShot.map(function (f) {
-      return '<button type="button" data-shot="shots/' + esc(f.shot) + '">' + esc(f.label) + "</button>";
-    }).join("") + "</div>";
-  }
-
-  function renderPick(kind) {
-    var chosen = state.picks[kind] || [];
+  function renderBest() {
+    var chosen = state.picks.best || [];
     var full = chosen.length >= PICK;
     var list = state.order.map(function (i) { return FEATURES[i]; });
-    if (kind === "worst") list = list.filter(function (f) { return state.picks.best.indexOf(f.id) < 0; });
-    var cards = list.map(function (f) {
-      var on = chosen.indexOf(f.id) >= 0;
-      return card(f, kind, on, full && !on);
-    }).join("");
-    var best = kind === "best";
-    return '<div class="step"><div class="step__head"><p class="eyebrow">2. Funkciók · ' + (best ? "1 / 2" : "2 / 2") + '</p>' +
-      '<h2>' + (best ? "Melyik három ér neked a legtöbbet?" : "És a maradékból melyik három maradhat ki?") + '</h2>' +
-      '<p class="dim">' + (best
-        ? "Tizenegy dolog, amit az app ma tud. Válaszd ki azt a hármat, amiért a leginkább elővennéd — a képeken az látszik, hogy néz ki."
-        : "Ami maradt, abból válaszd ki azt a hármat, amit észre sem vennél, ha nem lenne benne.") + "</p></div>" +
-      '<div class="tally' + (best ? "" : " tally--worst") + '" aria-live="polite"><span>' + (best ? "Legértékesebb" : "Kimaradhat") + '</span><span><b id="tally-n">' + chosen.length + "</b> / " + PICK + "</span></div>" +
-      '<div class="cards">' + cards + "</div>" +
-      (best ? shotButtons(list) : "") +
-      '<div class="err" id="err"></div>' +
-      '<div class="actions"><button class="btn btn--text" type="button" data-back>Vissza</button><button class="btn btn--gold" type="button" data-next>Tovább</button></div></div>';
+    var cards = list.map(function (f) { return card(f, chosen.indexOf(f.id) >= 0, full && chosen.indexOf(f.id) < 0); }).join("");
+    return '<div class="step"><div class="step__head"><p class="eyebrow">2. Amit az app tud · a három</p>' +
+      "<h2>Melyik háromért vennéd elő leginkább?</h2>" +
+      '<p class="dim">Mind a tizenhét jó lehet — most azt kérdezzük, melyik három az, amiért tényleg megnyitnád. Pontosan három.</p></div>' +
+      '<div class="tally" aria-live="polite"><span>Ezért nyitnám meg</span><span><b id="tally-n">' + chosen.length + "</b> / " + PICK + "</span></div>" +
+      '<div class="cards">' + cards + "</div>" + nav(true);
   }
 
   function renderMissing() {
@@ -406,10 +423,12 @@ dialog button { position: absolute; top: -14px; right: -14px; width: 40px; heigh
       return '<div class="miss" data-miss="' + esc(f.id) + '"><div><div class="miss__label">' + esc(f.label) + '</div><div class="miss__detail">' + esc(f.detail) + '</div></div>' +
         chips("m:" + f.id, opts, state.missing[f.id], false) + "</div>";
     }).join("");
-    return '<div class="step"><div class="step__head"><p class="eyebrow">3. Ami még nincs</p><h2>Hat dolog, ami még nincs benne. Melyik hiányozna?</h2>' +
+    return '<div class="step"><div class="step__head"><p class="eyebrow">3. Ami még nincs</p><h2>Tíz dolog, ami még nincs benne. Melyik hiányozna?</h2>' +
       '<p class="dim">Egy válasz mindegyikhez. A „hiányozna” a fontos: az mondja meg, mi jöjjön a következő.</p></div>' +
-      cards + '<div class="err" id="err"></div>' +
-      '<div class="actions"><button class="btn btn--text" type="button" data-back>Vissza</button><button class="btn btn--gold" type="button" data-next>Tovább</button></div></div>';
+      cards +
+      '<div class="q"><p class="q__title">Mi más hiányzik?</p><p class="q__hint">Ami nincs a listán, de te elvárnád. Nem kötelező.</p>' +
+      '<input class="text" type="text" name="missing_other" maxlength="' + MISSING_OTHER_MAX + '" placeholder="Egy-két szó is elég…" value="' + esc(state.missing_other || "") + '"></div>' +
+      nav(true);
   }
 
   function renderZaras() {
@@ -419,8 +438,7 @@ dialog button { position: absolute; top: -14px; right: -14px; width: 40px; heigh
       '<div class="q"><label class="check"><input type="checkbox" name="optin"' + (state.optin ? " checked" : "") + '><span>Szóljatok, amikor elindul. <span class="faint">Egy e-mail, az indulásról, és semmi más.</span></span></label>' +
       '<input class="text text--sm" type="email" name="email" maxlength="254" autocomplete="email" placeholder="e-mail-cím" value="' + esc(state.email || "") + '"' + (state.optin ? "" : " hidden") + "></div>" +
       '<div class="hp" aria-hidden="true"><label>Weboldal <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>' +
-      '<div class="err" id="err"></div>' +
-      '<div class="actions"><button class="btn btn--text" type="button" data-back>Vissza</button><button class="btn btn--gold" type="button" data-submit>Beküldöm</button></div></div>';
+      nav(true, null, true);
   }
 
   function renderThanks(already) {
@@ -439,9 +457,9 @@ dialog button { position: absolute; top: -14px; right: -14px; width: 40px; heigh
     var step = steps[state.step];
     var html;
     if (step.kind === "intro") html = renderIntro();
-    else if (step.kind === "rolad1") html = renderRolad1();
-    else if (step.kind === "rolad2") html = renderRolad2();
-    else if (step.kind === "best" || step.kind === "worst") html = renderPick(step.kind);
+    else if (step.kind === "rolad") html = renderRolad(step.screen);
+    else if (step.kind === "rate") html = renderRate(step);
+    else if (step.kind === "best") html = renderBest();
     else if (step.kind === "missing") html = renderMissing();
     else html = renderZaras();
     root.innerHTML = html;
@@ -464,39 +482,45 @@ dialog button { position: absolute; top: -14px; right: -14px; width: 40px; heigh
   // ── Reading answers back ───────────────────────────────────────────────
   function readBehaviour() {
     var b = state.behaviour;
-    root.querySelectorAll("input[type=radio][name], input[type=checkbox][name]").forEach(function (i) {
-      if (i.name === "optin" || i.name.indexOf(":") >= 0 || i.name === "best" || i.name === "worst") return;
-      if (i.type === "radio") { if (i.checked) b[i.name] = i.value; }
-      else {
-        var list = b[i.name] = (b[i.name] || []).filter(function (v) { return v !== i.value; });
-        if (i.checked) list.push(i.value);
+    BEHAVIOUR.forEach(function (q) {
+      var inputs = root.querySelectorAll('input[name="' + q.key + '"]');
+      if (!inputs.length) return; // not on this screen
+      if (q.multi) {
+        var list = [];
+        inputs.forEach(function (i) { if (i.checked) list.push(i.value); });
+        b[q.key] = list;
+      } else {
+        var picked = null;
+        inputs.forEach(function (i) { if (i.checked) picked = i.value; });
+        if (picked !== null) b[q.key] = picked; else delete b[q.key];
       }
-    });
-    root.querySelectorAll("input[type=text][name]").forEach(function (i) {
-      if (i.name === "website") return;
-      b[i.name] = i.value.trim().slice(0, 120);
-    });
-    // Free-text fields follow their "other" chip.
-    var pairs = { varos_mas: ["varos", "mas"], szinhazak_mas: ["szinhazak", "mas"], nyilvantartas_mas: ["nyilvantartas", "masik_app"] };
-    Object.keys(pairs).forEach(function (k) {
-      var el = root.querySelector('input[name="' + k + '"]');
-      if (!el) return;
-      var on = (b[pairs[k][0]] || []).indexOf(pairs[k][1]) >= 0;
-      el.hidden = !on;
-      if (!on) { el.value = ""; delete b[k]; }
+      if (q.other) {
+        var el = root.querySelector('input[name="' + q.key + '_mas"]');
+        var on = q.multi ? (b[q.key] || []).indexOf(q.other) >= 0 : b[q.key] === q.other;
+        if (el) {
+          el.hidden = !on;
+          if (on) b[q.key + "_mas"] = el.value.trim().slice(0, 120);
+          else { el.value = ""; delete b[q.key + "_mas"]; }
+        }
+      }
     });
     save(K_DRAFT, state);
   }
 
-  function readPick(kind) {
+  function readRatings() {
+    FEATURES.forEach(function (f) {
+      var a = root.querySelector('input[name="r:' + f.id + '"]:checked');
+      if (a) state.ratings[f.id] = a.value;
+    });
+    save(K_DRAFT, state);
+  }
+
+  function readBest() {
     var chosen = [];
-    root.querySelectorAll('input[name="' + kind + '"]:checked').forEach(function (i) { chosen.push(i.value); });
-    state.picks[kind] = chosen;
-    // Choosing the top three again invalidates a leave-out list that may
-    // now contain one of them.
-    if (kind === "best") state.picks.worst = (state.picks.worst || []).filter(function (id) { return chosen.indexOf(id) < 0; });
+    root.querySelectorAll('input[name="best"]:checked').forEach(function (i) { chosen.push(i.value); });
+    state.picks.best = chosen;
     var full = chosen.length >= PICK;
-    root.querySelectorAll('input[name="' + kind + '"]').forEach(function (i) { i.disabled = full && !i.checked; });
+    root.querySelectorAll('input[name="best"]').forEach(function (i) { i.disabled = full && !i.checked; });
     var n = document.getElementById("tally-n");
     if (n) n.textContent = chosen.length;
     save(K_DRAFT, state);
@@ -507,6 +531,8 @@ dialog button { position: absolute; top: -14px; right: -14px; width: 40px; heigh
       var a = root.querySelector('input[name="m:' + f.id + '"]:checked');
       state.missing[f.id] = a ? a.value : null;
     });
+    var o = root.querySelector('input[name="missing_other"]');
+    state.missing_other = o ? o.value.trim().slice(0, MISSING_OTHER_MAX) : "";
     save(K_DRAFT, state);
   }
 
@@ -524,22 +550,29 @@ dialog button { position: absolute; top: -14px; right: -14px; width: 40px; heigh
   // ── Validation per step ────────────────────────────────────────────────
   function validate(step) {
     var b = state.behaviour;
-    if (step.kind === "rolad1") {
-      if (!b.gyakorisag) return "Válaszd ki, hányszor voltál színházban.";
-      if (!(b.varos || []).length) return "Jelöld meg, hol jársz színházba.";
+    if (step.kind === "rolad") {
+      var qs = BEHAVIOUR.filter(function (q) { return q.screen === step.screen && q.required; });
+      for (var i = 0; i < qs.length; i++) {
+        var q = qs[i];
+        var v = b[q.key];
+        if (q.multi ? !(v || []).length : !v) return "Válaszolj erre is: „" + q.title + "”";
+      }
     }
-    if (step.kind === "rolad2") {
-      if (!(b.forras || []).length) return "Jelöld meg, honnan tudod meg, mi megy.";
-      if (!(b.dontes || []).length) return "Jelöld meg, mi dönti el, mit nézel meg.";
-      if (!(b.nyilvantartas || []).length) return "Jelöld meg, hogyan tartod számon, mit láttál.";
+    if (step.kind === "rate") {
+      var missingRow = null;
+      FEATURES.forEach(function (f) {
+        if (missingRow) return;
+        if (step.areas.indexOf(f.area) >= 0 && !state.ratings[f.id]) missingRow = f;
+      });
+      if (missingRow) return "Mindegyikhez válassz egyet — „" + missingRow.label + "” még hiányzik.";
     }
-    if (step.kind === "best" || step.kind === "worst") {
-      var n = (state.picks[step.kind] || []).length;
+    if (step.kind === "best") {
+      var n = (state.picks.best || []).length;
       if (n !== PICK) return "Pontosan hármat válassz — most " + n + " van kijelölve.";
     }
     if (step.kind === "missing") {
-      for (var i = 0; i < MISSING.length; i++) {
-        if (!state.missing[MISSING[i].id]) return "Mind a hatnál válaszolj — „" + MISSING[i].label + "” még hiányzik.";
+      for (var j = 0; j < MISSING.length; j++) {
+        if (!state.missing[MISSING[j].id]) return "Mind a tíznél válaszolj — „" + MISSING[j].label + "” még hiányzik.";
       }
     }
     if (step.kind === "zaras") {
@@ -556,8 +589,10 @@ dialog button { position: absolute; top: -14px; right: -14px; width: 40px; heigh
       client_id: clientId,
       source: state.source || null,
       behaviour: state.behaviour,
-      picks: { best: state.picks.best, worst: state.picks.worst },
+      ratings: state.ratings,
+      picks: { best: state.picks.best },
       missing: state.missing,
+      missing_other: state.missing_other || null,
       open_answer: state.open_answer || null,
       email: state.optin ? state.email : null,
       website: hp ? hp.value : ""
@@ -596,29 +631,32 @@ dialog button { position: absolute; top: -14px; right: -14px; width: 40px; heigh
   }
 
   // ── Events ─────────────────────────────────────────────────────────────
-  root.addEventListener("change", function () {
+  function readCurrent() {
     var step = steps[state.step];
-    if (step.kind === "rolad1" || step.kind === "rolad2") readBehaviour();
-    else if (step.kind === "best" || step.kind === "worst") readPick(step.kind);
+    if (step.kind === "rolad") readBehaviour();
+    else if (step.kind === "rate") readRatings();
+    else if (step.kind === "best") readBest();
     else if (step.kind === "missing") readMissing();
     else if (step.kind === "zaras") readZaras();
-  });
+  }
+  root.addEventListener("change", readCurrent);
   root.addEventListener("input", function (e) {
-    if (e.target && (e.target.name === "open_answer" || e.target.name === "email")) readZaras();
-    if (e.target && e.target.type === "text") readBehaviour();
+    if (!e.target) return;
+    if (e.target.name === "open_answer" || e.target.name === "email" || e.target.name === "missing_other" || e.target.type === "text") readCurrent();
   });
   root.addEventListener("click", function (e) {
     var t = e.target.closest("button, a");
     if (!t) return;
     if (t.hasAttribute("data-next")) {
+      readCurrent();
       var step = steps[state.step];
-      if (step.kind === "zaras") readZaras();
       var problem = validate(step);
       if (problem) { showErr(problem); return; }
       state.step = Math.min(state.step + 1, steps.length - 1);
       save(K_DRAFT, state);
       render();
     } else if (t.hasAttribute("data-back")) {
+      readCurrent();
       state.step = Math.max(state.step - 1, 0);
       save(K_DRAFT, state);
       render();
@@ -628,13 +666,14 @@ dialog button { position: absolute; top: -14px; right: -14px; width: 40px; heigh
       if (p) { showErr(p); return; }
       submit(t);
     } else if (t.hasAttribute("data-shot")) {
+      e.preventDefault();
       var d = document.getElementById("shot");
       document.getElementById("shot-img").src = t.getAttribute("data-shot");
       if (d.showModal) d.showModal(); else window.open(t.getAttribute("data-shot"), "_blank");
     } else if (t.hasAttribute("data-share")) {
       var url = t.getAttribute("data-url");
       var note = document.getElementById("share-note");
-      var text = "Egy magyar színházi app készül — pár perc, névtelenül: mi kell bele, és mi nem?";
+      var text = "Egy magyar színházi app készül — öt perc, névtelenül: mi ér valamit benne, és mi hiányzik még?";
       if (navigator.share) {
         navigator.share({ title: "Vastaps kérdőív", text: text, url: url }).catch(function () {});
       } else if (navigator.clipboard) {
