@@ -906,6 +906,49 @@ _Nothing yet._
 
 ## Done
 
+### T-110 · vastaps.app is not in Google: nothing has told Google it exists
+type: chore · area: landing · priority: high · status: done · added: 2026-09-19 · done: 2026-09-19
+
+A search for `vastaps.app` on 19 September returned Vastaps Produkció's
+Facebook page and an AI overview saying no such app exists. The domain split
+(`vastaps.app` for the site, `web.vastaps.app` for the app) went live on 18
+September, so the main cause is age: Google had no reason to have crawled it
+yet. Checked rather than assumed: no Search Console property, no sitemap and
+no robots.txt (both URLs returned the landing page with a 200), no inbound
+link from any indexed page, `www.vastaps.app` answered 200 instead of
+redirecting to the apex, and every route on `web.vastaps.app` carries the
+title "Vastaps" with no description. The on-page markup itself (title,
+description, canonical, Open Graph, JSON-LD, real text) was already fine.
+
+The pass: `landing/robots.txt` and `landing/sitemap.xml` with cache rules in
+`_headers`; a Search Console domain property for `vastaps.app` verified by a
+DNS TXT record in Cloudflare, so the apex, `www` and `web.` are one property;
+the sitemap submitted and indexing requested for the front page; a Cloudflare
+redirect rule sending `www` to the apex; and a link from the GitHub repository
+description, which is the first indexed page that points here. Per-route
+titles and descriptions in the web app, and pre-rendered play and person
+pages with real content, are the larger follow-up and are not part of this.
+The name-collision analysis under T-029 still holds: the bare word is not
+winnable, the qualified phrases are.
+
+**Done on 19 September, all but one step.** `robots.txt` and `sitemap.xml`
+are live on `vastaps.app`; a URL-prefix property for `https://vastaps.app/`
+is verified in Search Console by the meta tag in `landing/index.html` (the
+`google…html` file beside it is a spare — Pages answers it with a 308 to the
+clean URL, so the tag is the one that counts); the sitemap is submitted and
+indexing was requested for the front page, which Search Console already
+listed as "discovered via sitemap"; a Cloudflare redirect rule sends
+`www.vastaps.app/*` to the apex with a 301, query string kept; and the
+GitHub repository's description and homepage carry the URL. The GitHub
+repo description, being on an indexed page, is the first inbound link.
+
+**Left for Ottó:** the *domain* property (`vastaps.app`, covering `web.`
+too) is added but unverified. It needs one TXT record on the apex in
+Cloudflare DNS, content `google-site-verification=f4sa5tZdWVeHVP9VNFS67xoaGIg6qRGrk48adDTTVKs`,
+then "Verify" on the property in Search Console. The URL-prefix property
+is enough for the landing page; the domain property is what will show
+`web.vastaps.app` in the same reports.
+
 ### T-107 · Notifications cannot be switched on in the Play build: no Firebase configuration
 type: bug · area: native · priority: high · status: done · added: 2026-09-19 · done: 2026-09-19
 
@@ -3338,4 +3381,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-110**
+Next free id: **T-111**

@@ -1,0 +1,7 @@
+# vastaps.app — the landing site. Everything here is meant to be found;
+# /kutatas carries its own noindex because a questionnaire is not a page
+# anyone should land on from a search result.
+User-agent: *
+Allow: /
+
+Sitemap: https://vastaps.app/sitemap.xml
