@@ -1033,6 +1033,11 @@ export const strings = {
       "A böngésző letiltotta az értesítéseket ehhez az oldalhoz. A címsor melletti lakat ikonnál engedélyezheted újra.",
     notificationsKinds: "Miről szóljunk?",
     notificationsError: "Nem sikerült bekapcsolni. Próbáld újra.",
+    /* The Play build cannot register for push until it ships with Firebase
+       configuration (T-107); until then this is the honest answer, not
+       "try again". */
+    notificationsUnavailable:
+      "Ezen a verzión az értesítés még nem kapcsolható be — a következő alkalmazásfrissítés hozza.",
     /* The weekly letter (T-090). Default on; the letter itself carries the
        way out, and this is the same switch from the other side. */
     digest: "Heti levél e-mailben",
@@ -1126,7 +1131,7 @@ export const strings = {
     declinedToast: (name: string) => `Elutasítva: ${name}.`,
     removedToast: (name: string) => `${name} már nem követ.`,
     searchTitle: "Színházbarátok",
-    searchPlaceholder: "Keresés név vagy @felhasználónév alapján",
+    searchPlaceholder: "Név vagy @felhasználónév",
     searchEmpty: "Nincs ilyen felhasználó.",
     followersTitle: "Követők",
     followingTitle: "Követettek",

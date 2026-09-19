@@ -120,21 +120,26 @@ export function ProgramView({ filters, header }: { filters: ProgramFilters; head
     );
   }
 
+  // The two short states used to return the header as a bare sibling of
+  // the empty state. A ScrollView carries flexGrow: 1 of its own, so the
+  // horizontal chip row grew to fill the column and every chip stretched
+  // with it (T-105). Inside a vertical ScrollView, as in the full state, it
+  // keeps its intrinsic height.
   if (failed) {
     return (
-      <>
+      <ScrollView contentContainerStyle={{ paddingBottom: dockInset }}>
         {header}
         <EmptyState title={strings.common.loadError} actionLabel={strings.common.retry} onAction={loadDays} />
-      </>
+      </ScrollView>
     );
   }
 
   if (days.length === 0) {
     return (
-      <>
+      <ScrollView contentContainerStyle={{ paddingBottom: dockInset }}>
         {header}
         <EmptyState eyebrow={strings.program.modeProgram} title={strings.program.emptyTitle} body={strings.program.emptyBody} />
-      </>
+      </ScrollView>
     );
   }
 

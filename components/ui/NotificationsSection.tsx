@@ -77,8 +77,9 @@ export function NotificationsSection() {
         setStatus(next);
         if (next === "on") haptic("success");
       }
-    } catch {
-      toast.show({ message: strings.settings.notificationsError });
+    } catch (e) {
+      const unavailable = (e as { code?: string } | null)?.code === "push_unavailable";
+      toast.show({ message: unavailable ? strings.settings.notificationsUnavailable : strings.settings.notificationsError });
     } finally {
       setBusy(false);
     }

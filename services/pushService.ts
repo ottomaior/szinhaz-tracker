@@ -153,7 +153,16 @@ export async function enablePush(): Promise<PushStatus> {
     });
   }
   const projectId = Constants.expoConfig?.extra?.eas?.projectId as string | undefined;
-  const { data: token } = await Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined);
+  // On Android this needs Firebase initialised in the binary, which the
+  // September 19 Play build does not have (T-107). Until a build ships with
+  // google-services.json the call throws, and the screens should say what
+  // is going on rather than "try again".
+  let token: string;
+  try {
+    ({ data: token } = await Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined));
+  } catch (cause) {
+    throw Object.assign(new Error("push registration unavailable on this build"), { code: "push_unavailable", cause });
+  }
   const { error } = await supabase.from("push_subscriptions").upsert(
     {
       user_id: user.id,

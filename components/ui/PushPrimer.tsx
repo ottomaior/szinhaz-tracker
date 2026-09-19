@@ -68,8 +68,9 @@ export function PushPrimer() {
       } else if (next === "denied") {
         toast.show({ message: strings.settings.notificationsDenied });
       }
-    } catch {
-      toast.show({ message: strings.settings.notificationsError });
+    } catch (e) {
+      const unavailable = (e as { code?: string } | null)?.code === "push_unavailable";
+      toast.show({ message: unavailable ? strings.settings.notificationsUnavailable : strings.settings.notificationsError });
     } finally {
       setBusy(false);
     }
