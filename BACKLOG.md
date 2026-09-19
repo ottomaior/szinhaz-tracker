@@ -417,7 +417,7 @@ Nothing on this list is engineering.
 |---|---|
 | Deep links: Android done, iOS waits | `assetlinks.json` is published with Play’s app-signing SHA-256 (19 September 2026, once the closed-test release cleared review), so https://web.vastaps.app links open the Play build. `/.well-known/apple-app-site-association` still needs the Apple Team ID; `scripts/write-well-known.ts --team-id` writes it. |
 | Icons never seen at store sizes | 1024×1024, the iOS one fully opaque, the Android foreground inside the 66% safe zone — so they are *valid*. Nobody has looked at them at 48pt on a shelf next to other apps. |
-| Share card is web-only | Canvas-based; native needs `react-native-view-shot`. Now checkable against a real device build, which did not exist when this line was written. |
+| ~~Share card is web-only~~ **done** | `react-native-view-shot` and `expo-sharing` are in, the card is laid out as native views from the same spec the canvas reads, and it comes in two formats — square and 9:16 story (T-009, T-108). Both are native modules, so the phones get it with the next production build, not over the air. |
 | ~~No OTA updates~~ **done** | `expo-updates` is installed with the fingerprint runtime policy and a channel per EAS profile (T-014). A JavaScript fix ships with `eas update --channel preview` and lands at the next launch; a native change still needs a build. |
 | iOS never compiled | `expo prebuild` will not generate an Xcode project from Windows, so the privacy manifest and the entitlements are still unexercised. The first EAS iOS build is where they are first tested — and it needs the Apple Developer account. |
 

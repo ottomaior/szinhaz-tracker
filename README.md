@@ -182,8 +182,11 @@ services/notificationService.ts  the inbox — read-only from the app; rows are
 services/socialService.ts likes and comments on a diary entry; never writes a
                           counter, since triggers maintain both
 services/friendsService.ts what the people you follow made of a production
-services/shareCardService.ts an evening drawn onto a canvas as a PNG — web
-                          only, and it says so rather than degrading quietly
+services/shareCardSpec.ts the share card as numbers: both formats, the
+                          faces, the gaps — what both renderers below read
+services/shareCardService.ts an evening drawn onto a canvas as a PNG — the
+                          web renderer; a phone captures the same card from
+                          components/share/ShareCardView.tsx with view-shot
 services/authService.ts   sign up / sign in / sign out
 
 supabase/migrations/      schema, RLS policies, triggers, and RPCs (run
@@ -1273,11 +1276,35 @@ title straight through the wordmark — and "Ugyanaz másként - Kortársunk, R�
 bottom edge and letting the title grow upwards into space the poster gives back
 means the card cannot overlap itself whatever the title does.
 
-It is web-only, and says so. Rendering a view to an image on native needs a
-native module and a rebuild, and the deployed product is the static web export —
-so `isShareCardSupported()` gates the control rather than letting it degrade
-silently into a link share, which would be the same lie as a counter that never
-moves.
+It was web-only until 19 September 2026, and said so: rendering a view to an
+image on native needs a native module and a rebuild, and until the closed test
+there was no native build to put one in. Now there is, and the card has **two
+renderers and one spec**. `services/shareCardSpec.ts` holds every number — the
+two formats, the type sizes, the gaps, the safe zones — and the canvas on the
+web and `components/share/ShareCardView.tsx` on a phone both read it, so a
+change to the card is a change to one file. The phone's copy is an ordinary
+column of `Text`, an `expo-image` and a few SVGs, mounted for a few hundred
+milliseconds far off the left edge of the screen by
+`components/share/ShareCardProvider.native.tsx`, captured at the card's true
+size by `react-native-view-shot` once the poster has loaded, and handed to the
+system share sheet by `expo-sharing`. Screens see neither: `useShareCard()`
+answers the same two questions on both platforms — is a card possible here, and
+make one — and Metro picks the file for the platform, which is also what keeps
+view-shot's `html2canvas` web shim out of the static export.
+
+**Two formats, one switch.** The square (1080 × 1080) goes anywhere; the story
+(1080 × 1920) is the shape a phone lobby actually posts in, with the top and
+bottom bands that Instagram draws its own chrome over left clear of type, and
+the production still running edge to edge into a fade so the words sit on
+velvet rather than on a hard edge of the photograph. Both are offered from a
+sheet on the diary entry rather than from a header button, because there is now
+a question as well as a choice: whether the review, the tags and the cast go on
+the card. That switch is off every time the sheet opens and is shown only on
+the author's own entry — a follower who can read the words cannot post them.
+The attendance is public anyway; the opinion is the author's to publish, one
+card at a time, by their own hand. A square with the opinion on drops the
+poster and becomes a quote card, since it has room for a picture or for words
+and not both; a story has the height for both.
 
 ## Two counters that were never true
 
@@ -1950,7 +1977,9 @@ splash has no way of knowing which theme the reader chose.
   repository.
 - **The two verification files**, which need the credentials above.
 - **The share card**, which draws an evening onto a canvas and so does nothing at
-  all in a native build.
+  all in a native build. *(Since 19 September 2026 the phone has its own
+  renderer — see the share card section above — and the card is the one thing
+  on this list the repository can now check on a device.)*
 
 And the parts no repository can check: an Apple Developer Program membership
 ($99/yr, days to verify), a Play Console account ($25 once), the choice between

@@ -749,6 +749,28 @@ export const strings = {
   },
 
   /**
+   * The share sheet on a diary entry, and the card it makes (T-108). Two
+   * formats: the square that goes anywhere, and the 9:16 story that Instagram
+   * takes as a full screen. The opinion — the review text, the tags, the cast —
+   * is a switch that is off by default and is only offered on your own entry:
+   * a story travels further than the feed, and the app puts nobody's opinion
+   * on a card but their own, by their own hand.
+   */
+  shareCard: {
+    sheetTitle: "Megosztás képként",
+    lead: "Készítünk egy képet erről az estéről, amit bárhova elküldhetsz.",
+    square: "Négyzet",
+    squareBlurb: "Feed, üzenet, bármelyik alkalmazás",
+    story: "Story",
+    storyBlurb: "Álló, 9:16 — Instagram és a többiek storyjához",
+    withOpinion: "A véleményem is legyen rajta",
+    withOpinionBlurb: "A szöveg, a címkék és a szereplők, akiket láttál",
+    preparing: "Kép készítése…",
+    /** Before the names on the card: "Láttam: Ónodi Eszter, Fekete Ernő". */
+    castPrefix: "Láttam: ",
+  },
+
+  /**
    * The first-run flow: tick what you have already seen, so the diary does not
    * start empty. Entries created here carry no date and no rating — see
    * 0026_seen_without_a_date.sql for why inventing either would be worse than

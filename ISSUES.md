@@ -647,14 +647,6 @@ is one optional dot in two regular expressions, plus the fixture table in
 `utils/people.test.ts`; the slug index on `play_cast` would need rebuilding
 since the expression changes.
 
-### T-009 · The share card draws nothing in a native build
-type: bug · area: native · priority: med · status: open · added: 2026-09-09
-
-It is canvas-based, so on iOS and Android it produces no image at all. Known
-since the store track began and listed under the README's *What is still
-missing*; the fix is `react-native-view-shot`. Actually testable now, which it
-was not when the line was first written — an installable Android build exists.
-
 ### T-010 · Four local branches duplicate what is already shipped, and one holds work that is not
 type: chore · area: infra · priority: low · status: open · added: 2026-09-09
 
@@ -928,6 +920,87 @@ _Nothing yet._
 ---
 
 ## Done
+
+### T-009 · The share card draws nothing in a native build
+type: bug · area: native · priority: med · status: done · added: 2026-09-09 · done: 2026-09-19
+
+It is canvas-based, so on iOS and Android it produces no image at all. Known
+since the store track began and listed under the README's *What is still
+missing*; the fix is `react-native-view-shot`. Actually testable now, which it
+was not when the line was first written — an installable Android build exists.
+
+> **Done 19 September, together with T-108.** `react-native-view-shot` and
+> `expo-sharing` are in. The card is laid out as native views
+> (`components/share/ShareCardView.tsx`) from the same spec the canvas reads,
+> mounted off the left edge of the screen by
+> `components/share/ShareCardProvider.native.tsx` for the few hundred
+> milliseconds a capture takes, captured at the card's true size once the
+> poster has loaded (or after six seconds without it), and handed to the
+> system share sheet. `useShareCard()` is the one door on both platforms;
+> Metro's `.native.tsx` split is what keeps view-shot's `html2canvas` web
+> shim out of the static export — checked in the exported bundles: the
+> Android one carries `RNViewShot`, the web ones carry no `html2canvas`.
+>
+> **Not yet seen on a phone.** Both packages are native modules, so the
+> fingerprint runtime changes and no over-the-air update reaches build 5;
+> the card arrives with production build 6, once build 5 has cleared review
+> and this has been built and uploaded. That is where the two things written
+> from the book rather than from a device get their test: that Android
+> renders a view parked at `left: -10000` in full (it should — `View.draw()`
+> does not clip to the window), and that a story's `onLayout`-measured
+> velvet lines up with the fade. The web output is the reference to compare
+> against. Closes for good when a phone on build 6 shares a story.
+
+### T-108 · Share the evening as a story
+type: idea · area: diary · size: M · status: done · added: 2026-09-19 · done: 2026-09-19
+
+**The problem.** The night of a performance is when people post: the outfit
+in the lobby, the curtain, the programme in hand. The app has the one card
+that could sit in that sequence — *this is what I saw, this is what I
+thought* — and today it cannot get there. The share card
+(`services/shareCardService.ts`) is a 1080 × 1080 square, carries the title,
+venue, date, rating and poster but not the review, and draws nothing at all in
+the native build (T-009), which is the one build that is in a lobby.
+
+**Roughly.** A second format of the same card, 1080 × 1920 with Instagram's
+top and bottom safe zones left clear, drawn in the same faces and the same
+Velvet Curtain palette so it reads as the app. Offered from the entry screen
+next to the existing share, so the flow is: log the evening, tap *Megosztás
+storyként*, land in the share sheet with the image — Instagram, Messenger and
+the camera roll all take a 9:16 PNG from there, so no Instagram SDK is needed
+(Android's `ADD_TO_STORY` intent and iOS's `instagram-stories://` scheme would
+open Stories directly, and are a later refinement, not a requirement). The
+card carries the attendance facts and the mask rating by default; the review
+text, tags and cast are a toggle the person switches on for that one share,
+because a story is the same audience as the public feed and more. Native
+rendering is the same dependency T-009 needs — `react-native-view-shot` or
+Skia — so this idea and that bug are one piece of work.
+
+**Depends on.** T-009: a story card that only works on the web is a story card
+nobody posts. Also on the poster question — the card may draw a poster only
+when it is mirrored and ours to redraw, which is the existing rule and would
+have to hold here, since a story travels further than a diary entry. And on
+the privacy line: the app does not publish an opinion on a person's behalf,
+but a person choosing to post their own is exactly what a share is; the
+default-off review text keeps the two apart.
+
+> **Done the same day, with T-009 — one piece of work, as the entry said.**
+> The card has two formats now, both from one spec: `services/shareCardSpec.ts`
+> holds the dimensions, the faces, the gaps and the story's safe zones, and
+> the web canvas and the native view both read it. The story is 1080 × 1920,
+> the type kept out of the 250-pixel band at the top and the 320-pixel one at
+> the bottom that Instagram draws over, the production still edge to edge
+> with a fade into the velvet where the title begins. Offered from a sheet on
+> the diary entry (`components/share/ShareSheet.tsx`) beside the square, with
+> the review, the tags and the cast behind a switch that is off on every
+> opening and shown only on the author's own entry — a follower who can read
+> the words cannot post them. A square with the opinion on drops the poster
+> and becomes a quote card; a story keeps both. The share sheet takes a PNG,
+> so Instagram, Messenger and the camera roll all appear without an SDK; the
+> `ADD_TO_STORY` intent stays the later refinement the entry called it.
+> Verified on the web against a real entry with a mirrored still, in both
+> formats, with and without the opinion; on a phone it ships with the next
+> production build (see T-009).
 
 ### T-104 · The people search's placeholder wraps and is clipped on Android
 type: bug · area: native · priority: med · status: done · added: 2026-09-19 · done: 2026-09-19
@@ -3225,4 +3298,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-108**
+Next free id: **T-109**

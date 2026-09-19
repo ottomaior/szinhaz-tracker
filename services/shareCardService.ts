@@ -8,14 +8,22 @@ import {
   MASK_STROKE_WIDTH,
   MASK_VIEWBOX,
 } from "@/components/icons/maskGeometry";
-import { themes } from "@/theme/themes";
+import {
+  SHARE_CARD,
+  SHARE_CARD_FORMATS,
+  cardPalette as card,
+  formatReviewText,
+  formatTagsLine,
+  showsPoster,
+  withAlpha,
+  type ShareCardInput,
+} from "@/services/shareCardSpec";
 import { fonts } from "@/theme/typography";
 
-/** Pinned, not the reader's chosen theme — see the note below. */
-const card = themes.velvetDark;
+export type { ShareCardFormat, ShareCardInput, ShareCardOpinion } from "@/services/shareCardSpec";
 
 /**
- * An evening, as an image worth posting.
+ * An evening, as an image worth posting — the web renderer.
  *
  * `handleShare()` on Play Detail shares a link, which spreads nothing: a link
  * to an app nobody has looks like a link to an app nobody has. What spreads a
@@ -31,7 +39,9 @@ const card = themes.velvetDark;
  *
  * The mask itself comes from `maskGeometry`, and the wordmark's brand mark
  * from `brandGeometry` — the same constants `MaskIcon` and `BrandMark` draw.
- * The version that leaves the app has to be the version inside it.
+ * The version that leaves the app has to be the version inside it. Every
+ * number — the two formats, the faces, the gaps — comes from
+ * `shareCardSpec.ts`, which the native renderer reads too.
  *
  * The card is painted in the Velvet Curtain palette whatever theme the reader
  * has chosen, for two reasons. The practical one: these are canvas fill and
@@ -41,26 +51,11 @@ const card = themes.velvetDark;
  * The better one: this is the artefact that leaves the app, and it should
  * look like the app rather than like one reader's display preference.
  *
- * Web only. Rendering a view to an image on native needs `react-native-view-shot`
- * or an equivalent, which is a native module and a rebuild; the deployed product
- * is the static web export. `isShareCardSupported()` says so, and callers keep
- * the plain link share as the fallback rather than offering a button that does
- * nothing — which is the mistake the feed's dead counters were.
+ * Web only. On a phone the same card is laid out as native views and captured
+ * by `react-native-view-shot` — see `components/share/ShareCardProvider.native.tsx`,
+ * which is what `useShareCard()` resolves to there. Callers go through that
+ * hook rather than this module, so the platform split is made once.
  */
-
-export type ShareCardInput = {
-  title: string;
-  venue?: string;
-  /** `YYYY-MM-DD`, already formatted for display by the caller. */
-  dateLabel?: string;
-  /** 0–5. Omitted for a "seen it, not rating it" entry. */
-  rating?: number;
-  /** The production's cover art, when there is one and it is ours to draw. */
-  posterUrl?: string;
-};
-
-const WIDTH = 1080;
-const HEIGHT = 1080;
 
 export function isShareCardSupported(): boolean {
   return Platform.OS === "web" && typeof document !== "undefined";
@@ -119,6 +114,7 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, max
   const words = text.split(/\s+/).filter(Boolean);
   const lines: string[] = [];
   let line = "";
+  let cut = false;
   for (const word of words) {
     const next = line ? `${line} ${word}` : word;
     if (ctx.measureText(next).width <= maxWidth || !line) {
@@ -126,17 +122,22 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, max
     } else {
       lines.push(line);
       line = word;
-      if (lines.length === maxLines) break;
+      if (lines.length === maxLines) {
+        cut = true;
+        break;
+      }
     }
   }
   if (lines.length < maxLines && line) lines.push(line);
   // A title cut mid-word with no sign of it reads as a bug rather than as a
-  // long title.
-  if (lines.length === maxLines) {
-    const last = lines[maxLines - 1];
-    if (ctx.measureText(text).width > maxWidth * maxLines) {
-      lines[maxLines - 1] = `${last.replace(/[\s.,;:]+$/, "")}…`;
+  // long title. The ellipsis has to fit too, so the last line gives up words
+  // until it does.
+  if (cut) {
+    let last = lines[maxLines - 1].replace(/[\s.,;:]+$/, "");
+    while (last.includes(" ") && ctx.measureText(`${last}…`).width > maxWidth) {
+      last = last.slice(0, last.lastIndexOf(" ")).replace(/[\s.,;:]+$/, "");
     }
+    lines[maxLines - 1] = `${last}…`;
   }
   return lines;
 }
@@ -155,6 +156,28 @@ function loadImage(url: string): Promise<HTMLImageElement | undefined> {
   });
 }
 
+/** Cover-crops `img` into the box, from the centre, like the poster component. */
+function drawCover(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  x: number,
+  y: number,
+  w: number,
+  h: number
+) {
+  // Letterboxing a production still inside a card leaves two grey bars where
+  // the photograph should be.
+  const scale = Math.max(w / img.naturalWidth, h / img.naturalHeight);
+  const drawW = img.naturalWidth * scale;
+  const drawH = img.naturalHeight * scale;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x, y, w, h);
+  ctx.clip();
+  ctx.drawImage(img, x + (w - drawW) / 2, y + (h - drawH) / 2, drawW, drawH);
+  ctx.restore();
+}
+
 /**
  * Renders the card and hands back a PNG blob.
  *
@@ -165,92 +188,154 @@ function loadImage(url: string): Promise<HTMLImageElement | undefined> {
 export async function renderShareCard(input: ShareCardInput): Promise<Blob | undefined> {
   if (!isShareCardSupported()) return undefined;
 
+  const format = SHARE_CARD_FORMATS[input.format];
+  const { width: WIDTH, height: HEIGHT } = format;
+  const { margin, gap } = SHARE_CARD;
+
   const canvas = document.createElement("canvas");
   canvas.width = WIDTH;
   canvas.height = HEIGHT;
   const ctx = canvas.getContext("2d");
   if (!ctx) return undefined;
 
-  // Velvet, warmed towards the top where the poster sits.
-  const bg = ctx.createLinearGradient(0, 0, 0, HEIGHT);
-  bg.addColorStop(0, card.surface);
-  bg.addColorStop(1, card.bg);
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-  const margin = 84;
   const contentWidth = WIDTH - margin * 2;
   ctx.textBaseline = "top";
 
-  // Laid out from the bottom up.
-  //
-  // Stacking downwards from the poster was the obvious way and it was wrong: a
-  // three-line title pushed the rating row straight through the wordmark, and
-  // "Ugyanaz másként - Kortársunk, Rómeó és Júlia" is a real title in this
-  // catalogue. Anchoring the fixed furniture to the bottom edge and letting the
-  // title grow upwards into the space the poster gives back means the card
-  // cannot overlap itself whatever the title does.
-  const wordmarkTop = HEIGHT - margin - 30;
-  const maskSize = 72;
-  const maskGap = 18;
+  const displayFont = (size: number) => `600 ${size}px "${fonts.displaySemibold}", Georgia, serif`;
+  const bodyFont = (size: number, weight = 400) =>
+    `${weight} ${size}px "${weight >= 600 ? fonts.bodySemibold : fonts.body}", system-ui, sans-serif`;
+
+  // Measured first, laid out from the bottom up — see shareCardSpec.ts for
+  // why. Each block's top edge is computed from the one below it.
+  const wordmarkTop = HEIGHT - format.bottom - SHARE_CARD.wordmark.lineHeight;
+  let cursor = wordmarkTop - gap.opinionToWordmark;
+
+  const opinion = input.opinion;
+  ctx.font = bodyFont(SHARE_CARD.cast.size);
+  const castLines =
+    opinion?.cast?.length
+      ? wrap(ctx, `${strings.shareCard.castPrefix}${opinion.cast.join(", ")}`, contentWidth, SHARE_CARD.cast.lines)
+      : [];
+  ctx.font = bodyFont(SHARE_CARD.tags.size, 600);
+  const tagsLines = opinion?.tags?.length ? wrap(ctx, formatTagsLine(opinion.tags), contentWidth, 1) : [];
+  ctx.font = bodyFont(SHARE_CARD.review.size);
+  const reviewLines = opinion?.text?.trim()
+    ? wrap(ctx, formatReviewText(opinion.text), contentWidth, format.reviewLines)
+    : [];
+
+  let castTop: number | undefined;
+  if (castLines.length) {
+    castTop = cursor - castLines.length * SHARE_CARD.cast.lineHeight;
+    cursor = castTop - gap.tagsToCast;
+  }
+  let tagsTop: number | undefined;
+  if (tagsLines.length) {
+    tagsTop = cursor - SHARE_CARD.tags.lineHeight;
+    cursor = tagsTop - gap.reviewToTags;
+  }
+  let reviewTop: number | undefined;
+  if (reviewLines.length) {
+    reviewTop = cursor - reviewLines.length * SHARE_CARD.review.lineHeight;
+    cursor = reviewTop;
+  }
+  if (castTop !== undefined || tagsTop !== undefined || reviewTop !== undefined) {
+    cursor -= gap.masksToOpinion;
+  }
+
   const hasRating = input.rating !== undefined;
-  const maskTop = wordmarkTop - 56 - maskSize;
+  let maskTop: number | undefined;
+  if (hasRating) {
+    maskTop = cursor - SHARE_CARD.mask.size;
+    cursor = maskTop - gap.subtitleToMasks;
+  }
 
   const subtitle = [input.venue, input.dateLabel].filter(Boolean).join(" · ");
-  const subtitleTop = (hasRating ? maskTop : wordmarkTop - 40) - 56;
+  let subtitleTop: number | undefined;
+  if (subtitle) {
+    subtitleTop = cursor - SHARE_CARD.subtitle.lineHeight;
+    cursor = subtitleTop - gap.titleToSubtitle;
+  }
 
-  ctx.font = `600 76px "${fonts.displaySemibold}", Georgia, serif`;
-  const titleLines = wrap(ctx, input.title, contentWidth, 3);
-  const lineHeight = 92;
-  const titleTop = (subtitle ? subtitleTop : subtitleTop + 56) - titleLines.length * lineHeight - 12;
+  ctx.font = displayFont(SHARE_CARD.title.size);
+  const titleLines = wrap(ctx, input.title, contentWidth, format.titleLines);
+  const titleTop = cursor - titleLines.length * SHARE_CARD.title.lineHeight;
 
-  if (input.posterUrl) {
-    const img = await loadImage(input.posterUrl);
-    // Whatever room the title left. A short title gets a tall photograph and a
-    // long one gets a band; both are better than a fixed box that either crops
-    // the picture to nothing or leaves a gap above the text.
-    const boxH = titleTop - margin - 56;
-    if (img && img.naturalWidth > 0 && boxH > 160) {
-      // Cover-cropped from the centre, like the poster component does: letter-
-      // boxing a production still inside a card leaves two grey bars where the
-      // photograph should be.
-      const scale = Math.max(contentWidth / img.naturalWidth, boxH / img.naturalHeight);
-      const drawW = img.naturalWidth * scale;
-      const drawH = img.naturalHeight * scale;
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(margin, margin, contentWidth, boxH);
-      ctx.clip();
-      ctx.drawImage(
-        img,
-        margin + (contentWidth - drawW) / 2,
-        margin + (boxH - drawH) / 2,
-        drawW,
-        drawH
-      );
-      ctx.restore();
-    }
+  // Whatever room the title left. A short title gets a tall photograph and a
+  // long one gets a band; both are better than a fixed box that either crops
+  // the picture to nothing or leaves a gap above the text.
+  const posterTop = format.posterBleed ? 0 : format.top;
+  const posterBottom = titleTop - gap.posterToTitle;
+  const img = showsPoster(input) ? await loadImage(input.posterUrl as string) : undefined;
+  const hasPoster = !!img && img.naturalWidth > 0 && posterBottom - posterTop > 160;
+
+  // Velvet, warmed towards the top where the poster sits.
+  const velvet = (from: number, to: number) => {
+    const g = ctx.createLinearGradient(0, from, 0, to);
+    g.addColorStop(0, card.surface);
+    g.addColorStop(1, card.bg);
+    return g;
+  };
+
+  if (format.posterBleed && hasPoster) {
+    // A story's photograph runs edge to edge and dissolves into the curtain
+    // where the type begins, so the words sit on velvet rather than on a hard
+    // edge of somebody's production still.
+    ctx.fillStyle = card.surface;
+    ctx.fillRect(0, 0, WIDTH, posterBottom);
+    drawCover(ctx, img, 0, 0, WIDTH, posterBottom);
+    const fade = ctx.createLinearGradient(0, posterBottom - SHARE_CARD.posterFade, 0, posterBottom);
+    fade.addColorStop(0, withAlpha(card.surface, 0));
+    fade.addColorStop(1, card.surface);
+    ctx.fillStyle = fade;
+    ctx.fillRect(0, posterBottom - SHARE_CARD.posterFade, WIDTH, SHARE_CARD.posterFade);
+    ctx.fillStyle = velvet(posterBottom, HEIGHT);
+    ctx.fillRect(0, posterBottom, WIDTH, HEIGHT - posterBottom);
+  } else {
+    ctx.fillStyle = velvet(0, HEIGHT);
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+    if (hasPoster) drawCover(ctx, img, margin, posterTop, contentWidth, posterBottom - posterTop);
   }
 
   // The title, in the app's own display face — available because this is canvas
   // text in the same document, not an isolated SVG.
   ctx.fillStyle = card.text;
-  ctx.font = `600 76px "${fonts.displaySemibold}", Georgia, serif`;
+  ctx.font = displayFont(SHARE_CARD.title.size);
   titleLines.forEach((line, i) => {
-    ctx.fillText(line, margin, titleTop + i * lineHeight);
+    ctx.fillText(line, margin, titleTop + i * SHARE_CARD.title.lineHeight);
   });
 
-  if (subtitle) {
+  if (subtitleTop !== undefined) {
     ctx.fillStyle = card.textDim;
-    ctx.font = `400 34px "${fonts.body}", system-ui, sans-serif`;
+    ctx.font = bodyFont(SHARE_CARD.subtitle.size);
     ctx.fillText(subtitle, margin, subtitleTop);
   }
 
-  if (hasRating) {
+  if (maskTop !== undefined) {
     const filled = Math.round(input.rating as number);
+    const { size, gap: maskGap } = SHARE_CARD.mask;
     for (let i = 0; i < 5; i++) {
-      drawMask(ctx, margin + i * (maskSize + maskGap), maskTop, maskSize, i < filled);
+      drawMask(ctx, margin + i * (size + maskGap), maskTop, size, i < filled);
     }
+  }
+
+  if (reviewTop !== undefined) {
+    ctx.fillStyle = card.text;
+    ctx.font = bodyFont(SHARE_CARD.review.size);
+    reviewLines.forEach((line, i) => {
+      ctx.fillText(line, margin, (reviewTop as number) + i * SHARE_CARD.review.lineHeight);
+    });
+  }
+  if (tagsTop !== undefined) {
+    ctx.fillStyle = card.gold;
+    ctx.font = bodyFont(SHARE_CARD.tags.size, 600);
+    ctx.fillText(tagsLines[0], margin, tagsTop);
+  }
+  if (castTop !== undefined) {
+    ctx.fillStyle = card.textDim;
+    ctx.font = bodyFont(SHARE_CARD.cast.size);
+    castLines.forEach((line, i) => {
+      ctx.fillText(line, margin, (castTop as number) + i * SHARE_CARD.cast.lineHeight);
+    });
   }
 
   // The wordmark, bottom left, small. This is a card about an evening, not an
@@ -260,11 +345,11 @@ export async function renderShareCard(input: ShareCardInput): Promise<Blob | und
   // `textBaseline` is "top" for the whole card, so the wordmark's 30 points of
   // type start at `wordmarkTop` and the mark has to be centred against that
   // band rather than sat on a baseline.
-  const wordmarkMark = 34;
-  drawBrandMark(ctx, margin, wordmarkTop - 2, wordmarkMark);
+  const { mark, size: wordmarkSize } = SHARE_CARD.wordmark;
+  drawBrandMark(ctx, margin, wordmarkTop - 2, mark);
   ctx.fillStyle = card.gold;
-  ctx.font = `600 30px "${fonts.bodySemibold}", system-ui, sans-serif`;
-  ctx.fillText(strings.appName, margin + wordmarkMark + 14, wordmarkTop);
+  ctx.font = bodyFont(wordmarkSize, 600);
+  ctx.fillText(strings.appName, margin + mark + 14, wordmarkTop);
 
   return new Promise((resolve) => canvas.toBlob((blob) => resolve(blob ?? undefined), "image/png"));
 }
@@ -275,10 +360,11 @@ export async function renderShareCard(input: ShareCardInput): Promise<Blob | und
  *
  * Returns false when it managed neither, so the caller can share a link instead.
  */
-export async function shareCard(input: ShareCardInput, fileName = "vastaps.png"): Promise<boolean> {
+export async function shareCard(input: ShareCardInput): Promise<boolean> {
   const blob = await renderShareCard(input);
   if (!blob) return false;
 
+  const fileName = SHARE_CARD_FORMATS[input.format].fileName;
   const file = new File([blob], fileName, { type: "image/png" });
   const nav = navigator as Navigator & {
     canShare?: (data: { files?: File[] }) => boolean;

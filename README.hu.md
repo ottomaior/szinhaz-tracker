@@ -192,8 +192,12 @@ services/notificationService.ts  az értesítések — az appból csak olvashat�
 services/socialService.ts tetszések és hozzászólások egy naplóbejegyzésen;
                           számlálót soha nem ír, azt triggerek tartják karban
 services/friendsService.ts mit gondoltak a követettek egy produkcióról
-services/shareCardService.ts egy este canvasra rajzolva, PNG-ként — csak
-                          weben, és ezt ki is mondja, nem csendben degradálódik
+services/shareCardSpec.ts a megosztókártya számokban: mindkét formátum, a
+                          betűk, a távolságok — ebből olvas mindkét alábbi rajzoló
+services/shareCardService.ts egy este canvasra rajzolva, PNG-ként — a webes
+                          rajzoló; a telefon ugyanezt a kártyát a
+                          components/share/ShareCardView.tsx-ből fényképezi le
+                          view-shottal
 services/authService.ts   regisztráció / belépés / kilépés
 
 supabase/migrations/      séma, RLS szabályok, triggerek és RPC-k (kézzel kell
@@ -1329,11 +1333,37 @@ Júlia" pedig valódi cím ebben a katalógusban. Ha a rögzített elemeket az a
 élhez horgonyozzuk, és a cím felfelé nő bele abba a helybe, amit a plakát
 visszaad, a kártya nem tud átfedésbe kerülni magával, bármit is csinál a cím.
 
-Csak weben működik, és ezt ki is mondja. Egy nézet képpé alakításához nativ
-oldalon nativ modul és újrafordítás kell, a kiszállított termék pedig a statikus
-webes export — így az `isShareCardSupported()` kapuzza a vezérlőt ahelyett, hogy
-csendben visszaesne linkmegosztásra, ami ugyanaz a hazugság lenne, mint egy
-számláló, ami sosem mozdul.
+2026. szeptember 19-ig csak weben működött, és ezt ki is mondta: egy nézet
+képpé alakításához natív oldalon natív modul és újrafordítás kell, a zárt
+tesztig pedig nem volt natív build, amibe ezt bele lehetett volna tenni. Most
+van, és a kártyának **két rajzolója és egy specifikációja** lett. A
+`services/shareCardSpec.ts` tartja az összes számot — a két formátumot, a
+betűméreteket, a távolságokat, a biztonságos sávokat —, és ebből olvas a webes
+canvas és a telefonon a `components/share/ShareCardView.tsx` is, így a kártya
+módosítása egyetlen fájl módosítása. A telefonos példány egy közönséges
+oszlop `Text`-ekből, egy `expo-image`-ből és néhány SVG-ből, amit a
+`components/share/ShareCardProvider.native.tsx` néhány száz ezredmásodpercre a
+képernyő bal széle mögé csatol, a plakát betöltése után a kártya valódi
+méretében lefényképez a `react-native-view-shot`-tal, és az `expo-sharing`-gel
+átad a rendszer megosztólapjának. A képernyők egyikből sem látnak semmit: a
+`useShareCard()` mindkét platformon ugyanarra a két kérdésre felel — lehet-e itt
+kártyát készíteni, és készíts egyet —, a platformnak megfelelő fájlt pedig a
+Metro választja ki; ez tartja távol a view-shot `html2canvas`-os webes
+helyettesítőjét is a statikus exporttól.
+
+**Két formátum, egy kapcsoló.** A négyzet (1080 × 1080) bárhova megy; a story
+(1080 × 1920) az a forma, amiben egy előcsarnokból valóban posztolnak — a felső
+és alsó sáv, amire az Instagram a saját elemeit rajzolja, szövegtől szabadon
+marad, az előadásfotó pedig széltől szélig fut és elhalványul, hogy a szavak
+bársonyon üljenek, ne a fénykép éles szélén. Mindkettőt egy lap kínálja a
+naplóbejegyzésen, nem egy fejlécgomb, mert a választás mellé kérdés is került:
+rákerüljön-e a kártyára a vélemény, a címkék és a szereplők. Ez a kapcsoló a lap
+minden megnyitásakor ki van kapcsolva, és csak a szerző saját bejegyzésén
+látszik — egy követő, aki olvashatja a szavakat, nem posztolhatja őket. A
+részvétel amúgy is nyilvános; a vélemény a szerzőé, ő teszi közzé, kártyánként,
+a saját kezével. A véleménnyel ellátott négyzet elhagyja a plakátot és
+idézetkártya lesz, mert képnek vagy szavaknak van helye, mindkettőnek nincs; a
+storynak van magassága mindkettőhöz.
 
 ## Két számláló, ami sosem volt igaz
 
@@ -2035,7 +2065,9 @@ Az `npm run check:launch -- --stores` a lista, és amit tud, azt ki is kényszer
   lehet a repóból megtenni.
 - **A két igazoló fájl**, amikhez a fenti hitelesítők kellenek.
 - **A megosztókártya**, ami egy estét rajzol canvasra, és így natív buildben
-  egyáltalán nem csinál semmit.
+  egyáltalán nem csinál semmit. *(2026. szeptember 19. óta a telefonnak saját
+  rajzolója van — lásd fent a megosztókártya részt —, és ezen a listán ez az
+  egyetlen tétel, amit a repó már eszközön is ellenőrizni tud.)*
 
 És a részek, amiket semmilyen repó nem tud ellenőrizni: egy Apple Developer
 Program tagság (99 USD/év, napokig tartó ellenőrzéssel), egy Play Console fiók

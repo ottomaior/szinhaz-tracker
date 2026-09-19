@@ -12,6 +12,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { strings } from "@/i18n/hu";
 import { ThemeProvider, useTheme } from "@/contexts/ThemeContext";
 import { ToastProvider } from "@/components/ui/Toast";
+import { ShareCardProvider } from "@/components/share/ShareCardProvider";
 import { OfflineBanner } from "@/components/ui/OfflineBanner";
 import { ErrorScreen } from "@/components/ui/ErrorScreen";
 
@@ -90,6 +91,10 @@ function AppShell() {
           theme/themes.ts records which side each theme sits on. */}
       <StatusBar style={themeScheme[resolved] === "dark" ? "light" : "dark"} />
       <ToastProvider>
+      {/* The off-screen stage the share card is captured from on a phone;
+          a pass-through on the web. Inside the toast so the sheet a share
+          opens sits under any toast, like every other modal. */}
+      <ShareCardProvider>
       <View style={{ flex: 1 }}>
       {/* In the flow above the whole stack, so it covers modals and detail
           screens as well as the tabs, and nothing is drawn over. */}
@@ -134,6 +139,7 @@ function AppShell() {
         <Stack.Screen name="reset-password" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
       </Stack>
       </View>
+      </ShareCardProvider>
       </ToastProvider>
     </SafeAreaProvider>
   );
