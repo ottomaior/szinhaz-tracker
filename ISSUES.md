@@ -69,6 +69,39 @@ stops the same idea being re-proposed and re-argued in six months.
 
 Proposals, not plans. Unordered — nothing here is next up until it is chosen.
 
+### T-108 · Share the evening as a story
+type: idea · area: diary · size: M · status: idea · added: 2026-09-19
+
+**The problem.** The night of a performance is when people post: the outfit
+in the lobby, the curtain, the programme in hand. The app has the one card
+that could sit in that sequence — *this is what I saw, this is what I
+thought* — and today it cannot get there. The share card
+(`services/shareCardService.ts`) is a 1080 × 1080 square, carries the title,
+venue, date, rating and poster but not the review, and draws nothing at all in
+the native build (T-009), which is the one build that is in a lobby.
+
+**Roughly.** A second format of the same card, 1080 × 1920 with Instagram's
+top and bottom safe zones left clear, drawn in the same faces and the same
+Velvet Curtain palette so it reads as the app. Offered from the entry screen
+next to the existing share, so the flow is: log the evening, tap *Megosztás
+storyként*, land in the share sheet with the image — Instagram, Messenger and
+the camera roll all take a 9:16 PNG from there, so no Instagram SDK is needed
+(Android's `ADD_TO_STORY` intent and iOS's `instagram-stories://` scheme would
+open Stories directly, and are a later refinement, not a requirement). The
+card carries the attendance facts and the mask rating by default; the review
+text, tags and cast are a toggle the person switches on for that one share,
+because a story is the same audience as the public feed and more. Native
+rendering is the same dependency T-009 needs — `react-native-view-shot` or
+Skia — so this idea and that bug are one piece of work.
+
+**Depends on.** T-009: a story card that only works on the web is a story card
+nobody posts. Also on the poster question — the card may draw a poster only
+when it is mirrored and ours to redraw, which is the existing rule and would
+have to hold here, since a story travels further than a diary entry. And on
+the privacy line: the app does not publish an opinion on a person's behalf,
+but a person choosing to post their own is exactly what a share is; the
+default-off review text keeps the two apart.
+
 ### T-084 · Sign in with a link from the mail
 type: idea · area: auth · size: S · status: idea · added: 2026-09-18
 
@@ -3225,4 +3258,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-108**
+Next free id: **T-109**
