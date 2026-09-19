@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { Link, useRouter, type Href } from "expo-router";
 import { colors } from "@/theme/colors";
@@ -19,6 +19,7 @@ import {
   downloadMyData,
   isDataExportSupported,
 } from "@/services/accountService";
+import { isOperator } from "@/services/statsService";
 import { strings } from "@/i18n/hu";
 import { makeStyles } from "@/theme/styles";
 import { haptic } from "@/utils/haptics";
@@ -131,6 +132,11 @@ export default function SettingsScreen() {
             </>
           ) : null}
 
+          {/* The operator's numbers (T-099). Asked of the server once per
+              signed-in visit and shown to one account; everyone else never
+              learns the section exists. */}
+          {session ? <OperationsSection /> : null}
+
           {/* Nothing to export and nothing to delete without an account, so the
               whole section is absent rather than present-and-disabled. */}
           {session ? <AccountSection /> : null}
@@ -229,6 +235,40 @@ function LinkRow({
         <ChevronRightIcon />
       </Pressable>
     </Link>
+  );
+}
+
+/**
+ * One row, for one person: the way to the usage dashboard.
+ *
+ * `is_operator()` is the same check `usage_stats()` makes at the door, so
+ * the row cannot appear for an account the page would then refuse. Rendered
+ * as nothing until the answer is in, and as nothing when the answer is no.
+ */
+function OperationsSection() {
+  const [operator, setOperator] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    isOperator().then((yes) => {
+      if (!cancelled) setOperator(yes);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (!operator) return null;
+
+  return (
+    <>
+      <View style={{ gap: space.xs }}>
+        <Text variant="heading">{strings.settings.operations}</Text>
+      </View>
+      <View style={{ gap: space.sm }}>
+        <LinkRow href="/stats" label={strings.settings.stats} blurb={strings.settings.statsHint} />
+      </View>
+    </>
   );
 }
 

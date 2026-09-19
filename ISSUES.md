@@ -357,20 +357,6 @@ carry an opinion's text or anything else the privacy direction keeps private.
 **Depends on.** Having enough users that behaviour is a question worth asking;
 T-100 having named a processor once already; the second one is a sentence.
 
-### T-099 · Usage numbers straight from the database
-type: idea · area: data · size: S · status: idea · added: 2026-09-18
-
-**The problem.** Page views measure curiosity; signups, check-ins and returning
-users measure whether the product works. Those numbers are already in
-Supabase and nobody is looking at them.
-
-**Roughly.** A view or a `scripts/` report — signups per week, entries per day,
-accounts active in the last seven and thirty days, follows requested and
-accepted — printed as a table, the way `scripts/research-report.ts` already
-does for its own subject. Reads only; nothing changes in the data.
-
-**Depends on.** Nothing.
-
 ### T-101 · Import a ticket, show it at the door
 type: idea · area: diary · size: L · status: idea · added: 2026-09-18
 
@@ -905,6 +891,38 @@ _Nothing yet._
 ---
 
 ## Done
+
+### T-099 · Usage numbers straight from the database
+type: idea · area: data · size: S · status: done · added: 2026-09-18 · done: 2026-09-19
+
+**The problem.** Page views measure curiosity; signups, check-ins and returning
+users measure whether the product works. Those numbers are already in
+Supabase and nobody is looking at them.
+
+**Roughly.** A view or a `scripts/` report — signups per week, entries per day,
+accounts active in the last seven and thirty days, follows requested and
+accepted — printed as a table, the way `scripts/research-report.ts` already
+does for its own subject. Reads only; nothing changes in the data.
+
+**Depends on.** Nothing.
+
+**Built on 19 September, as a page rather than a script.** `0069` adds
+`is_operator()` and `usage_stats()`, both `security definer`, both refusing
+anyone but the account signed in as the operator; the second returns one
+JSON document — accounts (total, confirmed, onboarded, new in 7/30 days,
+active in 1/7/30 days), sign-ups and entries per day for fourteen days,
+entries (rated, with text, authors), follows, likes, comments, wishlist,
+lists, push subscriptions by platform (which is the closest thing to "how
+many on the Android app" versus "web or PWA"), the weekly letter, the
+questionnaire, the twelve newest accounts with last-seen, and the catalogue
+with the last sync. The three demo accounts and the operator are excluded
+and the exclusion is printed. `app/stats.tsx` renders it at
+`web.vastaps.app/stats`, `noindex`, and Settings shows the row only to the
+operator. "Active" is a proxy: the greatest of the last sign-in, the last
+thing the account wrote, and the last launch that touched a push
+subscription; a person who only reads, on a device without push, is not
+counted as active. Page views stay in Cloudflare Web Analytics and installs
+in the Play Console; this is the third number.
 
 ### T-110 · vastaps.app is not in Google: nothing has told Google it exists
 type: chore · area: landing · priority: high · status: done · added: 2026-09-19 · done: 2026-09-19
