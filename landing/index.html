@@ -104,7 +104,7 @@ h1,h2,h3,p{margin:0}
 .brand{display:flex;align-items:center;gap:9px;font-family:var(--display);font-size:20px;font-weight:600;padding-right:10px;text-decoration:none}
 .brand svg{width:26px;height:26px;fill:var(--gold)}
 .links{position:relative;display:flex;gap:2px}
-.links a{position:relative;z-index:1;padding:0 13px;height:36px;display:inline-flex;align-items:center;font-size:13px;font-weight:600;color:var(--dim);text-decoration:none;border-radius:999px;transition:color .25s}
+.links a{position:relative;z-index:1;padding:0 13px;height:36px;display:inline-flex;white-space:nowrap;align-items:center;font-size:13px;font-weight:600;color:var(--dim);text-decoration:none;border-radius:999px;transition:color .25s}
 .links a:hover,.links a.on{color:var(--text)}
 .links .ind{position:absolute;top:0;height:36px;border-radius:999px;background:var(--neutral-bg);transition:left .35s cubic-bezier(.3,1.3,.4,1),width .35s cubic-bezier(.3,1.3,.4,1),opacity .2s;opacity:0}
 .lang{display:flex;gap:2px;margin-left:2px}
@@ -201,6 +201,23 @@ section{padding:96px 0}
 .state.on{border-color:var(--gold-border);background:var(--gold-bg);color:var(--gold)}.state.on i{background:var(--gold);box-shadow:0 0 8px var(--glow)}
 .state.pre i{background:var(--dim)}.state.off i{background:transparent;border:1px solid var(--faint)}
 
+/* three ways in */
+#hasznalat{padding-top:72px}
+.ways{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.way{position:relative;display:flex;flex-direction:column;gap:12px;padding:26px 26px 24px;border-radius:22px;background:var(--surface);border:1px solid var(--hair-soft)}
+.way .badge{align-self:flex-start;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:999px;font-size:11.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;border:1px solid var(--hair);color:var(--dim)}
+.way .badge i{width:7px;height:7px;border-radius:50%;background:var(--faint)}
+.way .badge.live{border-color:var(--gold-border);background:var(--gold-bg);color:var(--gold)}.way .badge.live i{background:var(--gold);box-shadow:0 0 8px var(--glow)}
+.way .badge.soon i{background:transparent;border:1px solid var(--faint)}
+.way h3{font-family:var(--display);font-weight:600;font-size:24px;line-height:1.15}
+.way p,.way li{color:var(--dim);font-size:14.5px;line-height:1.55}
+.way p b,.way li b{color:var(--text);font-weight:600}
+.way ol{margin:0;padding-left:20px;display:grid;gap:6px}
+.way li::marker{color:var(--gold);font-weight:700}
+.way small{color:var(--faint);font-size:12.5px;line-height:1.5}
+.way .btn{margin-top:auto;align-self:flex-start}
+@media (max-width:900px){.ways{grid-template-columns:1fr}.way .btn{align-self:stretch}}
+
 /* magic bento */
 .bento{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}
 .tile{--mx:50%;--my:50%;position:relative;grid-column:span 2;padding:26px 26px 24px;border-radius:22px;background:var(--surface);border:1px solid var(--hair-soft);overflow:hidden;min-height:220px;display:flex;flex-direction:column;justify-content:flex-end;gap:8px;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
@@ -276,7 +293,7 @@ footer a{color:var(--faint);text-decoration:none}footer a:hover{color:var(--text
 <header class="nav">
   <div class="pill">
     <a class="brand" href="#top" aria-label="Vastaps"><svg viewBox="0 0 64 64"><path d="M4 9H60V14Q46 23 32 15Q18 23 4 14Z"/><path d="M6 15H23C20 27 20 41 22 51Q14 56 6 52Z"/><path d="M58 15H41C44 27 44 41 42 51Q50 56 58 52Z"/><path d="M32 26.5l2.06 5.67 6.02.2-4.75 3.71 1.67 5.8L32 38.5l-5 3.38 1.67-5.8-4.75-3.71 6.02-.2z"/></svg><span>Vastaps</span></a>
-    <nav class="links" id="links" data-t-label="navLabel" aria-label="Fő navigáció"><span class="ind"></span><a href="#felfedezes" data-t="navDiscover">Felfedezés</a><a href="#naplo" data-t="navDiary">Napló</a><a href="#alkotok" data-t="navPeople">Alkotók</a><a href="#gyik" data-t="navFaq">GYIK</a><a href="/kutatas" data-t="navResearch">Kérdőív</a><a href="mailto:hello@vastaps.app?subject=Vastaps" data-t="navContact">Kapcsolat</a></nav>
+    <nav class="links" id="links" data-t-label="navLabel" aria-label="Fő navigáció"><span class="ind"></span><a href="#hasznalat" data-t="navWays">Használat</a><a href="#felfedezes" data-t="navDiscover">Felfedezés</a><a href="#naplo" data-t="navDiary">Napló</a><a href="#alkotok" data-t="navPeople">Alkotók</a><a href="#gyik" data-t="navFaq">GYIK</a><a href="/kutatas" data-t="navResearch">Kérdőív</a><a href="mailto:hello@vastaps.app?subject=Vastaps" data-t="navContact">Kapcsolat</a></nav>
     <div class="lang" role="group" data-t-label="langLabel" aria-label="Nyelv">
       <button class="lang__btn" type="button" data-lang="hu" aria-pressed="true">HU</button>
       <button class="lang__btn" type="button" data-lang="en" aria-pressed="false">EN</button>
@@ -296,7 +313,7 @@ footer a{color:var(--faint);text-decoration:none}footer a:hover{color:var(--text
       <p class="lede" id="lede" data-t="heroLede">Nézd meg, mi megy ma este Budapesten és Debrecenben. Jegyezd fel, amit láttál, értékeld — és évek múlva is tudni fogod, melyik este volt az.</p>
       <div class="ctas">
         <span class="star"><a class="btn" data-magnet href="https://web.vastaps.app/"><span class="shiny" data-t="ctaInvite">Kipróbálom</span></a></span>
-        <a class="btn ghost" data-magnet href="#felfedezes" data-t="ctaHow">Hogyan működik ↓</a>
+        <a class="btn ghost" data-magnet href="#hasznalat" data-t="ctaHow">Hogyan használod ↓</a>
       </div>
       <!-- Cities, not a theatre count: "8 színház" reads as a small product and
            invites the reader to check whether theirs is on the list. The full
@@ -326,6 +343,38 @@ footer a{color:var(--faint);text-decoration:none}footer a:hover{color:var(--text
   </div>
   <small data-t="loopNote">Több színház és több város jön — oda megyünk legközelebb, ahonnan kérik.</small>
 </div>
+
+<!-- The three ways in, directly under the fold. It is the first question
+     anyone asks after "what is it": where do I open it. Web is live, Android
+     is a closed test on Google Play that one asks into, iOS is the home-screen
+     web app until there is a store build. No price is promised anywhere here. -->
+<section id="hasznalat">
+  <div class="wrap">
+    <div class="sec-head fc"><span class="eyebrow" data-t="waysEyebrow">Három út befelé</span><h2 class="display" data-t="waysTitle">Így használod ma.</h2><p class="lede" data-t="waysLede">Böngészőben már most, Androidon zárt tesztben, iPhone-on a kezdőképernyőről. Mindhárom ugyanahhoz a naplóhoz vezet.</p></div>
+    <div class="ways">
+      <article class="way fc">
+        <span class="badge live"><i></i><span data-t="way1Badge">Böngésző · elérhető</span></span>
+        <h3 data-t="way1T">A webes app</h3>
+        <p data-t="way1B">Nyisd meg a <b>web.vastaps.app</b> címet telefonon vagy gépen — nincs mit telepíteni. Böngészni fiók nélkül lehet; naplózáshoz e-mail-címmel vagy Google-fiókkal lépsz be.</p>
+        <a class="btn" data-magnet href="https://web.vastaps.app/" data-t="way1Cta">Megnyitom</a>
+      </article>
+      <article class="way fc">
+        <span class="badge"><i></i><span data-t="way2Badge">Android · zárt teszt</span></span>
+        <h3 data-t="way2T">Google Play</h3>
+        <p data-t="way2B">A Play Áruházas változat zárt tesztben fut: meghívóval telepíted, a frissítéseket pedig a Play hozza, mint bármelyik appnál. Ha részt vennél, írj egy sort, és küldöm a linket.</p>
+        <a class="btn ghost" data-magnet href="mailto:hello@vastaps.app?subject=Vastaps%20Android%20teszt" data-t="way2Cta">Meghívót kérek</a>
+      </article>
+      <article class="way fc">
+        <span class="badge soon"><i></i><span data-t="way3Badge">iPhone · később</span></span>
+        <h3 data-t="way3T">App Store — addig a kezdőképernyő</h3>
+        <p data-t="way3B">Az App Store-os változat később jön. Addig a webes app ikonként a kezdőképernyődre tehető, és onnan úgy nyílik, mint egy alkalmazás:</p>
+        <ol data-t="way3Steps"><li>Nyisd meg a <b>web.vastaps.app</b> címet Safariban.</li><li>Koppints a <b>Megosztás</b> gombra — a négyzet, felfelé mutató nyíllal.</li><li>Válaszd a <b>Hozzáadás a kezdőképernyőhöz</b> pontot.</li></ol>
+        <small data-t="way3Note">Androidon ugyanez Chrome-ban megy: a menüből „Hozzáadás a kezdőképernyőhöz”.</small>
+        <a class="btn ghost" data-magnet href="https://web.vastaps.app/" data-t="way3Cta">Megnyitom Safariban</a>
+      </article>
+    </div>
+  </div>
+</section>
 
 <section id="felfedezes">
   <div class="wrap">
@@ -392,7 +441,7 @@ footer a{color:var(--faint);text-decoration:none}footer a:hover{color:var(--text
       <div class="tc fc" data-spot><b data-t="tc3K">Színházanként egy beolvasó</b><p data-t="tc3B">Minden éjjel újraolvassa a színházak saját oldalait. Jegyirodai közvetítő nélkül.</p></div>
       <div class="tc fc" data-spot><b>WCAG AA</b><p data-t="tc4B">Mind az öt témában minden szövegszín 4,5:1 kontraszt fölött van — kártyán is.</p></div>
       <div class="tc fc" data-spot><b>expo-router</b><p data-t="tc5B">Minden képernyőnek saját, megosztható URL-je van — a darabtól az alkotóig.</p></div>
-      <div class="tc fc" data-spot><b data-t="tc6K">Ami még nincs kész</b><p data-t="tc6B">Az iOS- és Android-build készül. A webes verzió most is működik telefonon, és a kezdőképernyőre tehető.</p></div>
+      <div class="tc fc" data-spot><b data-t="tc6K">Ami még nincs kész</b><p data-t="tc6B">Az Android-build zárt tesztben fut a Google Playen, az iOS-build készül. A webes verzió most is működik telefonon, és a kezdőképernyőre tehető.</p></div>
     </div>
   </div>
 </section>
@@ -406,7 +455,7 @@ footer a{color:var(--faint);text-decoration:none}footer a:hover{color:var(--text
       <details><summary><span data-t="faq3Q">Honnan jönnek az adatok?</span><span class="pm">+</span></summary><p data-t="faq3A">Közvetlenül a színházak saját oldalairól, minden éjjel újraolvasva — van, ahol a színház nyilvános API-jából, van, ahol a műsoroldalról. Minden új színház egy-egy külön beolvasót jelent, ezért nem egyszerre jönnek. Jegyirodai aggregátorokat szándékosan nem használ.</p></details>
       <details><summary><span data-t="faq4Q">Melyik színházak vannak benne?</span><span class="pm">+</span></summary><p data-t="faq4A">Budapesten az Örkény, a Katona, a Nemzeti, a Centrál, a Madách, a Radnóti és a Vígszínház; Debrecenben a Csokonai Nemzeti Színház és a Vojtina Bábszínház. Hogy melyik város és ház jön ezután, azon múlik, honnan kérik — ha a tiéd hiányzik, írj.</p></details>
       <details><summary><span data-t="faq5Q">Kell hozzá fiók?</span><span class="pm">+</span></summary><p data-t="faq5A">A böngészéshez nem: a műsor, a darabok, az alkotók és a listák fiók nélkül is megnyithatók. Naplózáshoz, értékeléshez és kívánságlistához kell egy e-mail-cím és egy jelszó.</p></details>
-      <details><summary><span data-t="faq6Q">Van belőle telefonos alkalmazás?</span><span class="pm">+</span></summary><p data-t="faq6A">A webes verzió most is telefonra van tervezve, és a böngésződből a kezdőképernyőre tehető. Az App Store-ba és a Google Play-be szánt változat készül — a natív projekt és a mélylinkek már megvannak hozzá.</p></details>
+      <details><summary><span data-t="faq6Q">Van belőle telefonos alkalmazás?</span><span class="pm">+</span></summary><p data-t="faq6A">Androidra van, zárt tesztben a Google Playen — egy meghívóval telepíthető, kérd a hello@vastaps.app címen. iPhone-ra az App Store-os változat később jön; addig a webes app Safariból a kezdőképernyőre tehető, és onnan úgy nyílik, mint egy alkalmazás. A három utat <a href="#hasznalat">fent</a> lépésről lépésre leírtuk.</p></details>
     </div>
   </div>
 </section>
@@ -445,14 +494,20 @@ setTheme(theme); $('#tog').onclick=()=>setTheme(theme==='dark'?'light':'dark');
    localStorage under "vastaps-lang", the same key the previous page used. */
 const EN={
   navLabel:"Main navigation",
-  navDiscover:"Discover",navDiary:"Diary",navPeople:"People",navFaq:"FAQ",navResearch:"Questionnaire",navContact:"Contact",
+  navWays:"Get it",navDiscover:"Discover",navDiary:"Diary",navPeople:"People",navFaq:"FAQ",navResearch:"Questionnaire",navContact:"Contact",
   noticeLabel:"Questionnaire",noticeText:"<b>In the making.</b> Help decide what goes in — seven minutes, anonymous.",noticeLink:"Take the questionnaire →",
   langLabel:"Language",togLabel:"Switch theme",
   ctaInviteShort:"Open the app",
   heroAlpha:"Open beta · Budapest and Debrecen",
   heroTitle:"Hungarian theatre, <em>in one diary</em>.",
   heroLede:"See what is on tonight in Budapest and Debrecen. Note down what you saw, rate it — and years from now still know which night it was.",
-  ctaInvite:"Try it",ctaHow:"How it works ↓",
+  ctaInvite:"Try it",ctaHow:"How to use it ↓",
+  waysEyebrow:"Three ways in",waysTitle:"How you use it today.",waysLede:"In a browser right now, on Android in a closed test, on iPhone from the home screen. All three lead to the same diary.",
+  way1Badge:"Browser · available",way1T:"The web app",way1B:"Open <b>web.vastaps.app</b> on a phone or a computer — there is nothing to install. Browsing needs no account; to log an evening you sign in with an e-mail address or a Google account.",way1Cta:"Open it",
+  way2Badge:"Android · closed test",way2T:"Google Play",way2B:"The Play Store build runs as a closed test: you install it through an invitation, and updates arrive through Play like any other app. If you would like to take part, drop a line and I will send the link.",way2Cta:"Request an invitation",
+  way3Badge:"iPhone · later",way3T:"App Store — the home screen until then",way3B:"The App Store build comes later. Until then the web app can sit on your home screen as an icon, and open from there like an app:",
+  way3Steps:"<li>Open <b>web.vastaps.app</b> in Safari.</li><li>Tap the <b>Share</b> button — the square with the arrow pointing up.</li><li>Choose <b>Add to Home Screen</b>.</li>",
+  way3Note:"On Android the same works in Chrome: “Add to Home screen” from the menu.",way3Cta:"Open in Safari",
   fact1:"<b>1,241</b> productions",fact2:"<b>Budapest</b> and <b>Debrecen</b>",fact3:"Synced <b>nightly</b>",fact4:"<b>No</b> advertising",
   loopLabel:"Theatres in Vastaps",
   loopNote:"More theatres and more cities are coming — wherever people ask for them next.",
@@ -491,14 +546,14 @@ const EN={
   tc3K:"One reader per theatre",tc3B:"Re-reads the theatres’ own sites every night. No ticket-agency middleman.",
   tc4B:"Every text colour clears 4.5:1 in all five themes — on cards as well.",
   tc5B:"Every screen has its own shareable URL — from a production to a performer.",
-  tc6K:"What is not finished",tc6B:"The iOS and Android builds are in progress. The web version already works on a phone and can be added to the home screen.",
+  tc6K:"What is not finished",tc6B:"The Android build is in a closed test on Google Play; the iOS build is in progress. The web version already works on a phone and can be added to the home screen.",
   faqEyebrow:"Frequently asked",faqTitle:"What people tend to ask.",
   faq1Q:"Who can use it now?",faq1A:"Anyone: Vastaps is in open beta at <a href=\"https://web.vastaps.app/\">web.vastaps.app</a>. Built, but not finished — there are still bugs and missing pieces, which is exactly why using it now helps. Whatever you miss or find broken, write to hello@vastaps.app or fill in the questionnaire.",
   faq2Q:"Does it cost anything?",faq2A:"Not today. Browsing, logging and rating cost nothing, and there is no advertising. How it supports itself longer term is still an open question; partnerships with theatres, for instance, are one possibility. If that changes, you will hear about it in advance, and it will not apply retroactively.",
   faq3Q:"Where does the data come from?",faq3A:"Straight from the theatres’ own websites, re-read every night — some through a theatre’s public API, some from its listings pages. Every new theatre means its own reader, which is why they arrive one at a time. Ticket aggregators are deliberately not used.",
   faq4Q:"Which theatres are included?",faq4A:"In Budapest: Örkény, Katona, the National Theatre, Centrál, Madách, Radnóti and Vígszínház; in Debrecen: the Csokonai National Theatre and the Vojtina Puppet Theatre. Which city and which house comes next depends on where people ask from — if yours is missing, write in.",
   faq5Q:"Do I need an account?",faq5A:"Not to browse: the listings, the productions, the performers and the lists all open without one. Logging, rating and the watchlist need an email address and a password.",
-  faq6Q:"Is there a phone app?",faq6A:"The web version is already built for a phone and can be added to your home screen from the browser. App Store and Play Store builds are in progress — the native project and the deep links are already in place.",
+  faq6Q:"Is there a phone app?",faq6A:"On Android, yes — in a closed test on Google Play, installed through an invitation you can ask for at hello@vastaps.app. On iPhone the App Store build comes later; until then the web app can be added to the home screen from Safari and opens from there like an app. The three ways are laid out step by step <a href=\"#hasznalat\">above</a>.",
   act5Eyebrow:"Act V · Contact",contactTitle:"Write, if this interests you.",
   contactLede:"It runs in open beta, and the notes of the people using it are shaping it. If something is missing or broken, one email is enough — all I ask is that you say so. Do you work at a theatre? Same address, in Hungarian or in English.",
   ctaInvite2:"Open the app",ctaResearch:"Help shape it — a 7-minute questionnaire",
