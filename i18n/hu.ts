@@ -1179,7 +1179,6 @@ export const strings = {
     lastSync: (when: string, errors: number) =>
       errors > 0 ? `Utolsó szinkron ${when}, ${errors} hiba 24 órán belül` : `Utolsó szinkron ${when}`,
     noSync: "Még nem futott szinkron",
-    research: (n: number, withEmail: number) => `${n} kérdőív (${withEmail} e-mail-címmel)`,
 
     barsLabel: (total: number) => `Napi oszlopok, összesen ${total}`,
     barsTotal: (total: number) => `összesen ${total}`,
@@ -1188,6 +1187,36 @@ export const strings = {
     elapsedHours: (h: number) => `${h} órája`,
     elapsedYesterday: "tegnap",
     elapsedDays: (d: number) => `${d} napja`,
+
+    /* A kérdőív. Ugyanazok a számok, mint a scripts/research-report.ts
+       jelentésében, csak élőben; a címkék a kérdőív tervéből jönnek. */
+    research: "Kérdőív",
+    researchHint: (version: number) =>
+      `A ${version}. változat válaszai. Harminc alatt csak darabszám: a rangsor teteje és alja mond valamit, a közepe zaj.`,
+    researchAnswers: "válasz",
+    researchOlder: "korábbi változat",
+    researchEmails: "e-mail az indulásról",
+    researchRange: (first: string, last: string) => (first === last ? `Beérkezett: ${first}` : `Beérkezett ${first} és ${last} között`),
+    researchSources: (list: string) => `Forrás szerint: ${list}`,
+    researchNoSource: "(nincs)",
+    researchEmpty: "Ehhez a változathoz még nincs válasz.",
+    researchPicks: "Melyik funkció ér a legtöbbet",
+    researchPicksHint: "Top 3-ban · kimaradhat · nettó. A legfelső és a legalsó sorok megbízhatók.",
+    researchPickCells: (best: number, worst: number, net: number) =>
+      `${best} · ${worst} · ${net > 0 ? "+" : ""}${net}`,
+    researchMissing: "Ha kimaradna az indulásból",
+    researchMissingHint: "Hiányozna · nem tűnne fel · jobb is nélküle.",
+    researchVerdict: {
+      base: "alap",
+      wanted: "kellene",
+      later: "későbbre",
+      no: "inkább ne",
+      none: "nincs válasz",
+    },
+    researchBehaviour: "Hogyan járnak színházba ma",
+    researchOther: "máshol:",
+    researchOpen: "„Mitől használnád minden színházi este után?”",
+    researchOpenEmpty: "Még nincs szöveges válasz.",
   },
 
   editProfile: {
