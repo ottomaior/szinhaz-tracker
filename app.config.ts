@@ -171,6 +171,16 @@ const config: ExpoConfig = {
 
   android: {
     package: "hu.szinhaztracker.app",
+
+    // Push on Android goes through Firebase Cloud Messaging, and the binary
+    // has to carry the Firebase project's configuration for the device to
+    // register at all (T-107: the first Play build shipped without it, and
+    // every attempt to switch notifications on failed). The file is not a
+    // secret by Google's definition but it names the project, so it lives in
+    // an EAS file environment variable rather than in the repository; EAS
+    // writes it to a temporary path and hands that path over here. A local
+    // copy at the project root serves `expo prebuild` on a developer machine.
+    googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? "./google-services.json",
     adaptiveIcon: {
       foregroundImage: "./assets/images/adaptive-icon.png",
       backgroundColor: "#120505",
