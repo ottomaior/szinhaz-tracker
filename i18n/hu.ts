@@ -1200,12 +1200,16 @@ export const strings = {
     researchSources: (list: string) => `Forrás szerint: ${list}`,
     researchNoSource: "(nincs)",
     researchEmpty: "Ehhez a változathoz még nincs válasz.",
-    researchPicks: "Melyik funkció ér a legtöbbet",
-    researchPicksHint: "Top 3-ban · kimaradhat · nettó. A legfelső és a legalsó sorok megbízhatók.",
-    researchPickCells: (best: number, worst: number, net: number) =>
-      `${best} · ${worst} · ${net > 0 ? "+" : ""}${net}`,
+    researchRatings: "Mennyit érnek a funkciók",
+    researchRatingsHint:
+      "Ezért nyitnám meg · jó, hogy van · nem tűnne fel · nem használnám. A nettó: „ezért” kétszer, „jó” egyszer, „nem” mínusz egy.",
+    researchRatingCells: (ezert: number, jo: number, mindegy: number, nem: number) => `${ezert} · ${jo} · ${mindegy} · ${nem}`,
+    researchNet: (net: number) => `${net > 0 ? "+" : ""}${net}`,
+    researchPicks: "Melyik háromért vennék elő",
+    researchPicksHint: "Hányan tették a három közé. Ez a szűkebb rangsor: nem az, mi jó, hanem az, mi az ok.",
     researchMissing: "Ha kimaradna az indulásból",
     researchMissingHint: "Hiányozna · nem tűnne fel · jobb is nélküle.",
+    researchMissingOther: "Mi más hiányzik — a saját szavaikkal",
     researchVerdict: {
       base: "alap",
       wanted: "kellene",

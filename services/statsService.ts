@@ -180,11 +180,16 @@ export type ResearchStats = {
   withEmail: number;
   /** Respondents per `source` value; the empty key is "no source". */
   sources: Record<string, number>;
-  /** How many put each feature in their top three / their leave-out three. */
+  /** Per feature, how many gave each of the four rating answers (version 5 on). */
+  ratings: Record<string, Record<string, number>>;
+  /** How many put each feature in their "which three" list. */
   best: Record<string, number>;
+  /** Versions 2–4 only; empty since version 5. */
   worst: Record<string, number>;
   /** Per missing feature, how many gave each of the three answers. */
   missing: Record<string, Record<string, number>>;
+  /** What respondents typed under the missing list. */
+  missingOther: string[];
   /** Per behaviour question, how many chose each option. */
   behaviour: Record<string, Record<string, number>>;
   /** The free-text "other" fields, per `<question>_mas` key. */
@@ -212,9 +217,11 @@ export async function getResearchStats(version: number): Promise<ResearchStats |
     last_at: string | null;
     with_email: number;
     sources: Record<string, number> | null;
+    ratings: Record<string, Record<string, number>> | null;
     best: Record<string, number> | null;
     worst: Record<string, number> | null;
     missing: Record<string, Record<string, number>> | null;
+    missing_other: string[] | null;
     behaviour: Record<string, Record<string, number>> | null;
     behaviour_other: Record<string, string[]> | null;
     open_answers: string[] | null;
@@ -228,9 +235,11 @@ export async function getResearchStats(version: number): Promise<ResearchStats |
     lastAt: r.last_at,
     withEmail: r.with_email,
     sources: r.sources ?? {},
+    ratings: r.ratings ?? {},
     best: r.best ?? {},
     worst: r.worst ?? {},
     missing: r.missing ?? {},
+    missingOther: r.missing_other ?? [],
     behaviour: r.behaviour ?? {},
     behaviourOther: r.behaviour_other ?? {},
     openAnswers: r.open_answers ?? [],

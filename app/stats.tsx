@@ -21,7 +21,9 @@ import {
   MISSING_FEATURES,
   VERSION as RESEARCH_VERSION,
   scorePicks,
+  scoreRatings,
   type MissingAnswer,
+  type RatingAnswer,
 } from "@/scripts/research-design";
 import { makeStyles, useColors } from "@/theme/styles";
 import { gutter, radius, space } from "@/theme/tokens";
@@ -270,12 +272,14 @@ function Questionnaire({ research }: { research: ResearchStats }) {
   const t = strings.stats;
   const n = research.current;
 
-  // scorePicks() wants one Picks per respondent; the server sends counts.
-  // Expand the counts into the same shape rather than re-implementing the
-  // ranking here, so the order is the report's order, ties and all.
-  const expanded = expandPicks(research.best, research.worst);
-  const scores = scorePicks(expanded);
-  const mostNet = Math.max(...scores.map((s) => Math.abs(s.net)), 1);
+  // The server sends counts; the ranking is the report's, from the shared
+  // design module, so the order is the same in both places, ties and all.
+  const ratings = scoreRatings(research.ratings as Record<string, Partial<Record<RatingAnswer, number>>>);
+  const mostNet = Math.max(...ratings.map((s) => Math.abs(s.net)), 1);
+  // scorePicks() wants one Picks per respondent; expand the counts rather
+  // than re-implement the sort.
+  const picks = scorePicks(expandPicks(research.best));
+  const mostBest = Math.max(...picks.map((s) => s.best), 1);
 
   const sources = Object.entries(research.sources)
     .map(([s, c]) => `${s || t.researchNoSource} ${c}`)
@@ -303,12 +307,12 @@ function Questionnaire({ research }: { research: ResearchStats }) {
         </View>
       ) : (
         <>
-          <Text variant="subheading">{t.researchPicks}</Text>
+          <Text variant="subheading">{t.researchRatings}</Text>
           <Text variant="caption" tone="faint">
-            {t.researchPicksHint}
+            {t.researchRatingsHint}
           </Text>
           <View style={styles.card}>
-            {scores.map((s, i) => (
+            {ratings.map((s, i) => (
               <View key={s.id} style={[styles.rankRow, i > 0 && styles.personRowBorder]}>
                 <Text variant="caption" tone="faint" style={styles.rankIndex}>
                   {i + 1}
@@ -318,7 +322,7 @@ function Questionnaire({ research }: { research: ResearchStats }) {
                     {s.label}
                   </Text>
                   {/* One track, zero in the middle: net to the right is
-                      wanted, to the left is expendable. */}
+                      wanted, to the left is unused. */}
                   <View style={styles.netTrack}>
                     <View style={styles.netHalf}>
                       {s.net < 0 ? (
@@ -329,9 +333,38 @@ function Questionnaire({ research }: { research: ResearchStats }) {
                       {s.net > 0 ? <View style={[styles.netFillRight, { width: `${(s.net / mostNet) * 100}%` }]} /> : null}
                     </View>
                   </View>
+                  <Text variant="caption" tone="faint">
+                    {t.researchRatingCells(s.counts.ezert, s.counts.jo, s.counts.mindegy, s.counts.nem)}
+                  </Text>
                 </View>
                 <Text variant="caption" tone={s.net > 0 ? "accent" : "faint"} style={styles.rankCells}>
-                  {t.researchPickCells(s.best, s.worst, s.net)}
+                  {t.researchNet(s.net)}
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          <Text variant="subheading">{t.researchPicks}</Text>
+          <Text variant="caption" tone="faint">
+            {t.researchPicksHint}
+          </Text>
+          <View style={styles.card}>
+            {picks.map((s, i) => (
+              <View key={s.id} style={[styles.rankRow, i > 0 && styles.personRowBorder]}>
+                <Text variant="caption" tone="faint" style={styles.rankIndex}>
+                  {i + 1}
+                </Text>
+                <View style={{ flex: 1, gap: 4 }}>
+                  <Text variant="bodySmall" numberOfLines={2}>
+                    {s.label}
+                  </Text>
+                  <View style={styles.optionTrack}>
+                    <View style={[styles.optionFill, { width: `${(s.best / mostBest) * 100}%` }]} />
+                  </View>
+                </View>
+                <Text variant="caption" tone={s.best > 0 ? "accent" : "faint"} style={styles.rankCells}>
+                  {s.best}
+                  {n > 0 ? ` · ${Math.round((100 * s.best) / n)}%` : ""}
                 </Text>
               </View>
             ))}
@@ -363,6 +396,19 @@ function Questionnaire({ research }: { research: ResearchStats }) {
               );
             })}
           </View>
+
+          {research.missingOther.length > 0 ? (
+            <View style={styles.card}>
+              <Text variant="caption" tone="faint">
+                {t.researchMissingOther}
+              </Text>
+              {research.missingOther.map((o, i) => (
+                <Text key={i} variant="bodySmall" style={styles.quote}>
+                  {o}
+                </Text>
+              ))}
+            </View>
+          ) : null}
 
           <Text variant="subheading">{t.researchBehaviour}</Text>
           <View style={{ gap: space.sm }}>
@@ -423,10 +469,9 @@ function Questionnaire({ research }: { research: ResearchStats }) {
 }
 
 /** Counts back into per-respondent picks, so scorePicks() can rank them. */
-function expandPicks(best: Record<string, number>, worst: Record<string, number>) {
-  const out: { best: string[]; worst: string[] }[] = [];
-  for (const [id, c] of Object.entries(best)) for (let i = 0; i < c; i++) out.push({ best: [id], worst: [] });
-  for (const [id, c] of Object.entries(worst)) for (let i = 0; i < c; i++) out.push({ best: [], worst: [id] });
+function expandPicks(best: Record<string, number>) {
+  const out: { best: string[] }[] = [];
+  for (const [id, c] of Object.entries(best)) for (let i = 0; i < c; i++) out.push({ best: [id] });
   return out;
 }
 
