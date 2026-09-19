@@ -42,7 +42,7 @@ Az első körben barátok és ismerősök válaszolnak, ez 15–30 kitöltés. E
 - A jelentés 30 válasz alatt **darabszámot** ír, nem tizedes pontszámot. „Kilencen tették a top 3-ba, egy hagyná ki” — ez őszinte; „0,73” azt sugallná, hogy pontos.
 - A rangsor **teteje és alja** használható: ami a lista elején van, azt valóban értékelik; ami az alján, azt nem. A középső hat sorrendje zaj.
 - A „ha kimaradna” kérdésnél az *alap* akkor mondható ki, ha a válaszolók **legalább fele** azt mondta, zavarná. 30 százalék fölött „kellene, de nem indulási”; alatta későbbre való.
-- A viselkedési kérdések már 15 válasznál is mondanak valamit — de a válaszolók színházrajongók, mert azok vállalnak egy hétperces kérdőívet. A „hányszor jársz” eloszlás tehát felfelé torzít.
+- A viselkedési kérdések már 15 válasznál is mondanak valamit — de a válaszolók színházrajongók, mert azok vállalnak egy pár perces kérdőívet. A „hányszor jársz” eloszlás tehát felfelé torzít.
 - Az interjúk és a tesztek erre nem érzékenyek: ott öt–tíz ember is elég, mert nem számolunk, hanem megfigyelünk.
 
 A kérdőív nyitva marad. Ha később Facebook-csoportokba is kikerül, ugyanaz az eszköz 50–100 válasznál már rangsorként is olvasható, és a jelentés magától átvált pontszámra.

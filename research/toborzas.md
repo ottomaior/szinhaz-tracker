@@ -6,7 +6,7 @@
 
 ### Kérdőív (üzenetben, egyenként — nem csoportosan, mert arra senki nem válaszol)
 
-> Szia! Egy színházi appot csinálok — egy napló arról, mit láttál, meg egy műsor, mi megy ma este Budapesten és Debrecenben. Mielőtt elindul, szeretném tudni, mi kell bele és mi nem. Ez egy hétperces kérdőív, nincs benne jó válasz, csak az, amit te gondolsz:
+> Szia! Egy színházi appot csinálok — egy napló arról, mit láttál, meg egy műsor, mi megy ma este Budapesten és Debrecenben. Mielőtt elindul, szeretném tudni, mi kell bele és mi nem. Ez egy rövid kérdőív, pár perc, nincs benne jó válasz, csak az, amit te gondolsz:
 >
 > https://vastaps.app/kutatas
 >
@@ -22,7 +22,7 @@
 
 ### Emlékeztető (a 11. nap körül, annak, aki nem töltötte ki)
 
-> Szia, csak egy emlékeztető a kérdőívről — még pár napig nyitva van, és tényleg hét perc: https://vastaps.app/kutatas Köszi!
+> Szia, csak egy emlékeztető a kérdőívről — még pár napig nyitva van, és tényleg csak pár perc: https://vastaps.app/kutatas Köszi!
 
 ## 2. Facebook- és Reddit-csoportoknak — később
 
@@ -36,7 +36,7 @@ Csoportok, ahol érdemes megpróbálni (a csoportszabályokat előbb elolvasva):
 
 ### A poszt
 
-> **Ki jár színházba, és segítene hét percet?**
+> **Ki jár színházba, és segítene pár percet?**
 >
 > Egy magyar színházi appot építek egyedül — napló arról, mit láttál (mikor, ki játszott, hol ültél), és egy műsor, ami minden este a színházak saját oldaláról frissül. Most Budapest és Debrecen, aztán oda, ahonnan kérik.
 >

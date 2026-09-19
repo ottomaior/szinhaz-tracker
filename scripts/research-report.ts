@@ -178,7 +178,7 @@ async function main() {
 
   // ── Behaviour ────────────────────────────────────────────────────────────
   lines.push("", "## Hogyan járnak színházba ma", "");
-  lines.push("A válaszolók színházrajongók — azok vállalnak egy ötperces kérdőívet —, ezért a gyakoriság felfelé torzít.", "");
+  lines.push("A válaszolók színházrajongók — azok vállalnak egy pár perces kérdőívet —, ezért a gyakoriság felfelé torzít.", "");
   for (const q of BEHAVIOUR) {
     lines.push(`**${q.title}**`, "");
     for (const [label, c] of tally(rows, q.key, q.options)) lines.push(`- ${label}: ${c} (${pct(c, n)})`);
