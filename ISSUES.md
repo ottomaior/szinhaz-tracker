@@ -401,53 +401,6 @@ stable enough to parse, which a survey of a season's worth of PDFs would tell.
 
 ## Open
 
-### T-107 · Notifications cannot be switched on in the Play build: no Firebase configuration
-type: bug · area: native · priority: high · status: open · added: 2026-09-19
-
-Ottó installed 0.1.0 (4) from the closed test and tapped *Kérek értesítést*
-on the watchlist primer and *Bekapcsolás ezen az eszközön* in Settings: both
-answered "Nem sikerült bekapcsolni. Próbáld újra." Reproduces on any Android
-install of that build; the web push on the same account works (two `web`
-rows in `push_subscriptions`, no `expo` row).
-
-Cause, from the code rather than a device log: `enablePush` calls
-`getExpoPushTokenAsync`, which on Android registers with Firebase Cloud
-Messaging, and the binary carries no Firebase configuration — there is no
-`android.googleServicesFile` in `app.config.ts` and no
-`google-services.json` anywhere in the project. Without it the native call
-throws before any row is written, and both screens showed the generic error.
-The permission dialog itself appears, which is why it looked as if the switch
-almost worked.
-
-What it takes, and none of it is an over-the-air fix:
-
-1. A Firebase project under Ottó's Google account, an Android app in it with
-   package `hu.szinhaztracker.app`, and its `google-services.json`. The
-   file is not secret by Google's definition but should not sit in the repo;
-   an EAS file environment variable (`GOOGLE_SERVICES_JSON`) read by
-   `app.config.ts` into `android.googleServicesFile` is the pattern.
-2. The same project's FCM V1 service-account key uploaded to EAS
-   (`eas credentials` → Android → Push Notifications), so Expo's push
-   service may deliver to the tokens.
-3. A new production build, uploaded to the closed track, through review.
-
-Done the same day on the JavaScript side: the native registration failure
-is a typed error (`code: "push_unavailable"`), and both screens say the
-honest thing — that this version cannot switch notifications on and the
-next app update brings it — instead of asking the person to try again.
-Shipped over the air to both channels.
-
-> **All three done the same evening, 19 September; waiting on review.**
-> Firebase project `vastaps-fc45c` with the Android app registered
-> (Analytics and Gemini off); its `google-services.json` is the EAS file
-> variable `GOOGLE_SERVICES_JSON` in the production and preview
-> environments, read by `app.config.ts`; the FCM V1 service-account key is
-> on EAS under the Android credentials. Build 0.1.0 (5) carries the Firebase
-> identifiers — checked in the bundle's resources, absent from build 4 —
-> and is on the closed track as "0.1.0 (5) — zárt teszt, értesítések",
-> submitted for review at 19:05. Closes when a phone on build 5 switches
-> notifications on and an `expo` row appears in `push_subscriptions`.
-
 ### T-073 · One sync request out of eleven was refused with "JWT issued at future"
 type: bug · area: data · priority: low · status: open · added: 2026-09-12
 
@@ -921,6 +874,58 @@ _Nothing yet._
 
 ## Done
 
+### T-107 · Notifications cannot be switched on in the Play build: no Firebase configuration
+type: bug · area: native · priority: high · status: done · added: 2026-09-19 · done: 2026-09-19
+
+Ottó installed 0.1.0 (4) from the closed test and tapped *Kérek értesítést*
+on the watchlist primer and *Bekapcsolás ezen az eszközön* in Settings: both
+answered "Nem sikerült bekapcsolni. Próbáld újra." Reproduces on any Android
+install of that build; the web push on the same account works (two `web`
+rows in `push_subscriptions`, no `expo` row).
+
+Cause, from the code rather than a device log: `enablePush` calls
+`getExpoPushTokenAsync`, which on Android registers with Firebase Cloud
+Messaging, and the binary carries no Firebase configuration — there is no
+`android.googleServicesFile` in `app.config.ts` and no
+`google-services.json` anywhere in the project. Without it the native call
+throws before any row is written, and both screens showed the generic error.
+The permission dialog itself appears, which is why it looked as if the switch
+almost worked.
+
+What it takes, and none of it is an over-the-air fix:
+
+1. A Firebase project under Ottó's Google account, an Android app in it with
+   package `hu.szinhaztracker.app`, and its `google-services.json`. The
+   file is not secret by Google's definition but should not sit in the repo;
+   an EAS file environment variable (`GOOGLE_SERVICES_JSON`) read by
+   `app.config.ts` into `android.googleServicesFile` is the pattern.
+2. The same project's FCM V1 service-account key uploaded to EAS
+   (`eas credentials` → Android → Push Notifications), so Expo's push
+   service may deliver to the tokens.
+3. A new production build, uploaded to the closed track, through review.
+
+Done the same day on the JavaScript side: the native registration failure
+is a typed error (`code: "push_unavailable"`), and both screens say the
+honest thing — that this version cannot switch notifications on and the
+next app update brings it — instead of asking the person to try again.
+Shipped over the air to both channels.
+
+> **All three done the same evening, 19 September; waiting on review.**
+> Firebase project `vastaps-fc45c` with the Android app registered
+> (Analytics and Gemini off); its `google-services.json` is the EAS file
+> variable `GOOGLE_SERVICES_JSON` in the production and preview
+> environments, read by `app.config.ts`; the FCM V1 service-account key is
+> on EAS under the Android credentials. Build 0.1.0 (5) carries the Firebase
+> identifiers — checked in the bundle's resources, absent from build 4 —
+> and is on the closed track as "0.1.0 (5) — zárt teszt, értesítések",
+> submitted for review at 19:05. Closes when a phone on build 5 switches
+> notifications on and an `expo` row appears in `push_subscriptions`.
+
+> **Closed, 19 September, later the same evening.** Build 5 cleared review
+> and is on the closed track; `push_subscriptions` now holds one `expo` row
+> beside the two `web` ones, which is a phone on build 5 having switched
+> notifications on through Firebase. What the entry asked for, it has.
+
 ### T-009 · The share card draws nothing in a native build
 type: bug · area: native · priority: med · status: done · added: 2026-09-09 · done: 2026-09-19
 
@@ -943,8 +948,10 @@ was not when the line was first written — an installable Android build exists.
 >
 > **Not yet seen on a phone.** Both packages are native modules, so the
 > fingerprint runtime changes and no over-the-air update reaches build 5;
-> the card arrives with production build 6, once build 5 has cleared review
-> and this has been built and uploaded. That is where the two things written
+> the card arrives with production build 6. Build 5 cleared review the same
+> evening; 0.1.0 (6) was built on EAS at 22:14 from the merge commit
+> (`74ce2f9`, build `9a01a926`) and waits for its upload to the closed track
+> and Google's review. That is where the two things written
 > from the book rather than from a device get their test: that Android
 > renders a view parked at `left: -10000` in full (it should — `View.draw()`
 > does not clip to the window), and that a story's `onLayout`-measured
