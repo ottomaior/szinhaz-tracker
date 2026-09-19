@@ -110,7 +110,7 @@ export const strings = {
     eyebrow: "Vastaps",
     title: "A színházi naplód, ami emlékszik helyetted.",
     diaryTitle: "Napló",
-    diaryBody: "Minden este, amit láttál: darab, dátum, szereposztás, értékelés.",
+    diaryBody: "Minden este, amit láttál: darab, dátum, értékelés, és amit meg akarsz belőle jegyezni.",
     watchlistTitle: "Kívánságlista",
     watchlistBody: "Amit meg akarsz nézni, a következő időponttal.",
     peopleTitle: "Színházbarátok",
@@ -603,8 +603,6 @@ export const strings = {
       priced === total
         ? "Minden bejegyzésnél megadtad a jegyárat."
         : `${total} bejegyzésből ${priced} tartalmaz jegyárat.`,
-    spendEmpty:
-      "Naplózáskor megadhatod a jegyárat — akkor itt összesítjük, mibe került az évad.",
     genresHeading: "Mit néztél",
     peopleHeading: "Kiket láttad a legtöbbször",
     peopleNights: (n: number) => (n === 1 ? "1 este" : `${n} este`),

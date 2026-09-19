@@ -38,7 +38,7 @@ Csoportok, ahol érdemes megpróbálni (a csoportszabályokat előbb elolvasva):
 
 > **Ki jár színházba, és segítene pár percet?**
 >
-> Egy magyar színházi appot építek egyedül — napló arról, mit láttál (mikor, ki játszott, hol ültél), és egy műsor, ami minden este a színházak saját oldaláról frissül. Most Budapest és Debrecen, aztán oda, ahonnan kérik.
+> Egy magyar színházi appot építek egyedül — napló arról, mit láttál (mikor, és mennyire tetszett), és egy műsor, ami minden este a színházak saját oldaláról frissül. Most Budapest és Debrecen, aztán oda, ahonnan kérik.
 >
 > Mielőtt elindul, szeretném tudni, mi kell bele valójában — ezért egy rövid kérdőív, ahol nem osztályozni kell, hanem választani: https://vastaps.app/kutatas
 >

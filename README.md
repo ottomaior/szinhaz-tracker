@@ -114,7 +114,8 @@ app/                     expo-router screens (file-based routing)
   play/[id].tsx           Play Detail
   person/[slug].tsx       One performer or director, and everything they are on
   list/[id].tsx           One list and what is on it
-  entry/[id].tsx          One evening: who was on, where you sat, what it cost
+  entry/[id].tsx          One evening: the night, the ratings, the note (older
+                          entries may still carry a seat, a price and a cast)
   season/[start].tsx      One évad in review, September to August
   lists.tsx               Editorial lists, and yours (modal; the same body,
                           components/ui/ListsBody, is Discover's Listák tab)

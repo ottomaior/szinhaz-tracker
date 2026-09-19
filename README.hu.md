@@ -119,7 +119,8 @@ app/                     expo-router képernyők (fájlalapú útvonalak)
   play/[id].tsx           Előadás részletei
   person/[slug].tsx       Egy alkotó, és minden, amiben szerepel
   list/[id].tsx           Egy lista és a tartalma
-  entry/[id].tsx          Egy este: kiket láttál, hol ültél, mennyibe került
+  entry/[id].tsx          Egy este: a dátum, az értékelés, a vélemény (régebbi
+                          bejegyzésen még lehet hely, jegyár és szereposztás)
   season/[start].tsx      Egy évad összegzése, szeptembertől augusztusig
   lists.tsx               Szerkesztői listák és a sajátjaid (modál; ugyanaz a
                           törzs, a components/ui/ListsBody, a Felfedezés

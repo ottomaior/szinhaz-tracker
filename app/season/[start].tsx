@@ -217,9 +217,14 @@ export default function SeasonScreen() {
                     </View>
                   )}
 
+                  {/* The check-in no longer asks for a seat or a price, so the
+                      block only appears for a season whose entries still carry
+                      them; an empty state here would promise a field that is
+                      not on the form. */}
+                  {(stats.pricedEntries > 0 || stats.seatedEntries > 0) && (
                   <View style={{ gap: space.sm }}>
                     <Text variant="label" tone="dim">{strings.season.spendHeading}</Text>
-                    {stats.pricedEntries > 0 ? (
+                    {stats.pricedEntries > 0 && (
                       <>
                         <Text variant="heading">{strings.season.spendTotal(stats.spendHuf)}</Text>
                         <Text variant="bodySmall" tone="dim">
@@ -235,8 +240,6 @@ export default function SeasonScreen() {
                           {strings.season.spendCoverage(stats.pricedEntries, stats.entries)}
                         </Text>
                       </>
-                    ) : (
-                      <Text variant="bodySmall" tone="faint">{strings.season.spendEmpty}</Text>
                     )}
                     {stats.seatedEntries > 0 && (
                       <Text variant="caption" tone="faint">
@@ -244,6 +247,7 @@ export default function SeasonScreen() {
                       </Text>
                     )}
                   </View>
+                  )}
 
                   {genres.length > 0 && (
                     <View style={{ gap: space.sm }}>
