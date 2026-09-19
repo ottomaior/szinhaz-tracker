@@ -1274,7 +1274,9 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   },
   searchRow: { marginTop: space.lg },
   tabs: { marginTop: space.md, marginBottom: space.md },
-  chipRow: { gap: space.sm, paddingHorizontal: gutter, paddingVertical: space.md },
+  // `alignItems: "center"`: a chip keeps its own height even if the row is
+  // ever given more than it needs (T-105).
+  chipRow: { gap: space.sm, paddingHorizontal: gutter, paddingVertical: space.md, alignItems: "center" },
   rowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   scrollBody: {},
 

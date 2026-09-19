@@ -401,6 +401,42 @@ stable enough to parse, which a survey of a season's worth of PDFs would tell.
 
 ## Open
 
+### T-107 · Notifications cannot be switched on in the Play build: no Firebase configuration
+type: bug · area: native · priority: high · status: open · added: 2026-09-19
+
+Ottó installed 0.1.0 (4) from the closed test and tapped *Kérek értesítést*
+on the watchlist primer and *Bekapcsolás ezen az eszközön* in Settings: both
+answered "Nem sikerült bekapcsolni. Próbáld újra." Reproduces on any Android
+install of that build; the web push on the same account works (two `web`
+rows in `push_subscriptions`, no `expo` row).
+
+Cause, from the code rather than a device log: `enablePush` calls
+`getExpoPushTokenAsync`, which on Android registers with Firebase Cloud
+Messaging, and the binary carries no Firebase configuration — there is no
+`android.googleServicesFile` in `app.config.ts` and no
+`google-services.json` anywhere in the project. Without it the native call
+throws before any row is written, and both screens showed the generic error.
+The permission dialog itself appears, which is why it looked as if the switch
+almost worked.
+
+What it takes, and none of it is an over-the-air fix:
+
+1. A Firebase project under Ottó's Google account, an Android app in it with
+   package `hu.szinhaztracker.app`, and its `google-services.json`. The
+   file is not secret by Google's definition but should not sit in the repo;
+   an EAS file environment variable (`GOOGLE_SERVICES_JSON`) read by
+   `app.config.ts` into `android.googleServicesFile` is the pattern.
+2. The same project's FCM V1 service-account key uploaded to EAS
+   (`eas credentials` → Android → Push Notifications), so Expo's push
+   service may deliver to the tokens.
+3. A new production build, uploaded to the closed track, through review.
+
+Done the same day on the JavaScript side: the native registration failure
+is a typed error (`code: "push_unavailable"`), and both screens say the
+honest thing — that this version cannot switch notifications on and the
+next app update brings it — instead of asking the person to try again.
+Shipped over the air to both channels.
+
 ### T-073 · One sync request out of eleven was refused with "JWT issued at future"
 type: bug · area: data · priority: low · status: open · added: 2026-09-12
 
@@ -881,6 +917,37 @@ _Nothing yet._
 ---
 
 ## Done
+
+### T-104 · The people search's placeholder wraps and is clipped on Android
+type: bug · area: native · priority: med · status: done · added: 2026-09-19 · done: 2026-09-19
+
+Seen on the Play build: on *Színházbarátok* the hint "Keresés név vagy
+@felhasználónév alapján" broke onto a second line inside the fixed-height
+field and the second line was cut in half. Android wraps a long hint where
+iOS and the web truncate it. Fixed the same day: the hint is "Név vagy
+@felhasználónév", and the shared `SearchField` asks for one line.
+
+### T-105 · The filter chips stretch to the full screen height when the programme is empty
+type: bug · area: web · priority: med · status: done · added: 2026-09-19 · done: 2026-09-19
+
+Seen on the Play build with Debrecen and *Tánc* selected in the *Műsor* tab:
+no dates, and the two chips drawn as pillars the height of the viewport.
+`ProgramView` returned the chip row as a bare sibling of the empty state,
+and a ScrollView carries `flexGrow: 1` of its own, so the horizontal row
+filled the column and its children stretched with it. The full state never
+showed this because there the row sits inside a vertical ScrollView. Fixed
+the same day: the empty and error states scroll like the full one, and the
+chip row centres its children so a chip keeps its own height whatever it is
+given.
+
+### T-106 · The Kívánságlista tab label breaks into two lines in the dock
+type: bug · area: native · priority: med · status: done · added: 2026-09-19 · done: 2026-09-19
+
+Seen on the Play build: "Kívánságlis / ta" under the bookmark icon, the
+label pushed against the icon. The dock item is a fifth of the width and the
+phone's system font is larger than default. Fixed the same day: the label is
+one line, shrinks to three quarters before it would wrap, and follows the
+system font only up to a modest multiplier.
 
 ### T-103 · The bento tiles' icons sit on top of the heading on a phone
 type: bug · area: web · priority: med · status: done · added: 2026-09-19 · done: 2026-09-19
@@ -3147,4 +3214,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-104**
+Next free id: **T-108**

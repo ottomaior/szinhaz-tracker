@@ -110,6 +110,9 @@ export function SearchField({
         returnKeyType="search"
         placeholder={placeholder}
         placeholderTextColor={colors.textFaint}
+        // Android wraps a long hint onto a second line inside a fixed-height
+        // field and clips it (T-104); one line, always.
+        numberOfLines={1}
         accessibilityLabel={accessibilityLabel ?? placeholder}
         style={[styles.input, { fontFamily: bodyFont(fontsLoaded) }]}
       />

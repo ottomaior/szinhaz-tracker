@@ -121,7 +121,18 @@ function DockItem({
     >
       <Animated.View style={[styles.tabInner, { transform: [{ scale }] }]}>
         {icon?.(color)}
-        <Text variant="caption" style={{ color, fontSize: 10, lineHeight: 13 }}>
+        {/* "Kívánságlista" is the longest label and the dock item is a
+            fifth of the width: on a phone with a larger system font it broke
+            into two lines (T-106). One line, shrinking a little before it
+            would wrap, and never growing past a modest multiplier. */}
+        <Text
+          variant="caption"
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.75}
+          maxFontSizeMultiplier={1.15}
+          style={{ color, fontSize: 10, lineHeight: 13 }}
+        >
           {label}
         </Text>
         <View style={[styles.dot, focused && styles.dotOn]} />

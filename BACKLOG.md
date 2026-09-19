@@ -303,7 +303,7 @@ Each row is its own branch and pull request; the ideas are written up in
 | **6.2** | **A first run that runs**: name if missing, city, follow the city's theatres, the archive grid, one closing screen; gated on `profiles.onboarded_at` — T-083 · **done** | M | 6.1 |
 | **6.3** | **The feedback layer**: a toast with undo (T-085), haptics (T-086), an error boundary (T-087), an offline banner (T-088), skeletons and pull-to-refresh (T-093) · **done**, bar a diary-list skeleton and the optimistic writes | M | nothing |
 | **6.4** | **Installable**: Phase 2's 2.1 (manifest, icons, add-to-Home-Screen card) · **done** · plus error monitoring (5.1), which waits on a Sentry project and its DSN | S–M | a Sentry DSN from Ottó |
-| **6.5** | **Notifications that arrive**: Phase 2's Web Push, native push through Expo on the same table, per-kind toggles, and the permission asked at the right moment — T-089 · **done** on the web; native waits for the next EAS build | L | — |
+| **6.5** | **Notifications that arrive**: Phase 2's Web Push, native push through Expo on the same table, per-kind toggles, and the permission asked at the right moment — T-089 · **done** on the web; native waits on Firebase credentials and a new build (T-107) | L | — |
 | **6.6** | **The weekly letter** through Resend — T-090 · **done**; Mondays from the sync | M | — |
 | **6.7** | **Sign in with Apple**, ~~OTA updates (T-014)~~ **done**, the icon at its real sizes (T-013), password and address change in Settings (T-092) | M | an Apple Developer account |
 
