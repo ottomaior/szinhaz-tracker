@@ -24,6 +24,68 @@
 
 > Szia, csak egy emlékeztető a kérdőívről — még pár napig nyitva van, és tényleg csak pár perc: https://vastaps.app/kutatas Köszi!
 
+## 1b. Meghívó a tesztbe — Messengerben, egyenként
+
+> Tester invitations, written on 19 September 2026 when the closed test on
+> Google Play cleared review. Four drafts: normal and short, for Android and
+> for iPhone or laptop. The normal one is for people you would write a
+> paragraph to anyway; the short one is for the second wave, and for anyone
+> who answers "mi ez?" to the long one. Three rules they follow, from the
+> same day: describe only what the diary records today (the night, the five
+> masks, the note — no seat, no price, no cast to tick); say that only
+> Budapest and Debrecen are covered, not merely that they are; and say "pár
+> perc" for the questionnaire, never a number. Both Play links are live only
+> because the release passed review; the Group link puts a person on the
+> tester list, the opt-in link shows them the install page.
+
+### Android — normál
+
+> Szia! Csináltam egy appot, Vastaps a neve: egy színházi napló. Feljegyzed, melyik este mit láttál, értékeled öt maszkkal, és leírod, amit meg akarsz belőle jegyezni. Mellette ott a műsor, hogy mi megy ma este. Egyelőre csak Budapest és Debrecen színházai vannak benne, a többi város később jön. Itt tudsz róla többet olvasni: https://vastaps.app
+>
+> Most indul a zárt teszt, és jó lenne, ha te is benne lennél. Két lépés Androidon:
+>
+> 1️⃣ Lépj be a tesztelői csoportba: https://groups.google.com/g/vastaps-teszt
+> 2️⃣ Utána nyisd meg ezt, nyomj a „Tesztelő leszek” gombra, és telepítsd a Play Áruházból: https://play.google.com/apps/testing/hu.szinhaztracker.app
+>
+> Fontos: ugyanazzal a Google-fiókkal lépj be, ami a telefonodon a Play Áruházhoz van. És ha lehet, maradj benne pár hétig, a Google csak akkor engedi kiadni az appot, ha egy ideig aktív tesztelői vannak.
+>
+> Ha van pár perced, ezt a kérdőívet is töltsd ki, ebből derül ki, mi kell az appba és mi nem: https://vastaps.app/kutatas
+>
+> Nem téged tesztelünk, hanem az appot, úgyhogy ami zavar, nem érthető, vagy hiányzik, azt írd meg nyugodtan, ide vagy a hello@vastaps.app címre. Köszönöm! 🎭
+
+### Android — rövid
+
+> Szia! Csináltam egy színházi napló appot, Vastaps a neve, most indul a zárt tesztje Androidon. Kipróbálnád? Két lépés:
+>
+> 1️⃣ Csoport: https://groups.google.com/g/vastaps-teszt
+> 2️⃣ Telepítés: https://play.google.com/apps/testing/hu.szinhaztracker.app
+>
+> Egyelőre Budapest és Debrecen van benne. Ami zavar vagy hiányzik, írd meg nyugodtan. Köszi! 🎭
+
+### iPhone vagy laptop — normál
+
+> Szia! Csináltam egy appot, Vastaps a neve: egy színházi napló. Feljegyzed, melyik este mit láttál, értékeled öt maszkkal, és leírod, amit meg akarsz belőle jegyezni. Mellette ott a műsor, hogy mi megy ma este. Egyelőre csak Budapest és Debrecen színházai vannak benne, a többi város később jön. Itt tudsz róla többet olvasni: https://vastaps.app
+>
+> Most indul a zárt teszt, és jó lenne, ha te is kipróbálnád. iPhone-ra még nincs bolti verzió, de böngészőből ugyanaz az app megy: https://web.vastaps.app
+>
+> Ha Safariban a „Megosztás” menüből hozzáadod a kezdőképernyőhöz, úgy viselkedik, mint egy rendes app.
+>
+> Ha van pár perced, ezt a kérdőívet is töltsd ki, ebből derül ki, mi kell az appba és mi nem: https://vastaps.app/kutatas
+>
+> Nem téged tesztelünk, hanem az appot, úgyhogy ami zavar, nem érthető, vagy hiányzik, azt írd meg nyugodtan, ide vagy a hello@vastaps.app címre. Köszönöm! 🎭
+
+### iPhone vagy laptop — rövid
+
+> Szia! Csináltam egy színházi napló appot, Vastaps a neve, most indul a tesztje. Kipróbálnád? Böngészőből megy: https://web.vastaps.app (Safariban „Megosztás” → „Hozzáadás a kezdőképernyőhöz”, és app lesz belőle.)
+>
+> Egyelőre Budapest és Debrecen van benne. Ami zavar vagy hiányzik, írd meg nyugodtan. Köszi! 🎭
+
+### Ha valaki azt mondja, belépett, de a Play nem mutat semmit
+
+> The one support answer worth having ready.
+
+Szinte mindig az az oka, hogy a telefonon a Play Áruházba más Google-fiókkal van belépve, mint amelyikkel a csoportba lépett. Vagy azzal a fiókkal lépjen be a csoportba is, vagy a Play Áruházban váltson arra, amelyikkel csatlakozott, és nyissa meg újra a telepítési linket.
+
 ## 2. Facebook- és Reddit-csoportoknak — később
 
 > Post for theatregoer and ticket-exchange groups. Read the group rules first: most ban self-promotion but allow research posts if they are honest about who is asking and why. Post from Ottó's own account, not a page.
