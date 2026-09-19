@@ -220,7 +220,7 @@ section{padding:96px 0}
 
 /* magic bento */
 .bento{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}
-.tile{--mx:50%;--my:50%;position:relative;grid-column:span 2;padding:26px 26px 24px;border-radius:22px;background:var(--surface);border:1px solid var(--hair-soft);overflow:hidden;min-height:220px;display:flex;flex-direction:column;justify-content:flex-end;gap:8px;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+.tile{--mx:50%;--my:50%;position:relative;grid-column:span 2;padding:22px 26px 24px;border-radius:22px;background:var(--surface);border:1px solid var(--hair-soft);overflow:hidden;min-height:220px;display:flex;flex-direction:column;justify-content:flex-end;gap:8px;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
 .tile.wide{grid-column:span 3}
 .tile::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1px;pointer-events:none;opacity:0;transition:opacity .3s;
   background:radial-gradient(280px circle at var(--mx) var(--my),var(--gold),transparent 60%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
@@ -229,9 +229,12 @@ section{padding:96px 0}
 .tile:hover{transform:translateY(-3px)}
 .tile h3{font-family:var(--display);font-weight:600;font-size:24px;line-height:1.15}
 .tile p{color:var(--dim);font-size:14.5px;line-height:1.55}
-.tile .ic{position:absolute;top:22px;left:24px;width:34px;height:34px;color:var(--gold)}
+/* The icon and the swatches sit in the flow, pushed up by an auto margin, rather
+   than absolutely in the corner: on a phone the text grows tall enough to rise
+   into a corner-pinned icon (T-103). */
+.tile .ic{width:34px;height:34px;margin-bottom:auto;color:var(--gold)}
 .tile .ic svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
-.tile .themes{display:flex;gap:6px;position:absolute;top:24px;right:24px}
+.tile .themes{display:flex;gap:6px;align-self:flex-end;margin-bottom:auto}
 .tile .themes i{width:22px;height:22px;border-radius:50%;border:1px solid var(--hair)}
 .tile .sp{position:absolute;width:3px;height:3px;border-radius:50%;background:var(--gold);pointer-events:none;animation:spf 1.1s ease-out forwards}
 @keyframes spf{to{transform:translate(var(--dx),var(--dy));opacity:0}}
