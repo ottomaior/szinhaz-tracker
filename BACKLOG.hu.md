@@ -278,7 +278,7 @@ blokk csak összesített pontszámot.
   mappa a módszer és az eszközök: nyolc-tíz feltáró interjú arról, hogyan járnak
   az emberek *ma* színházba, öt hangosan gondolkodós ülés az élő appon, és egy
   kérdőív a `vastaps.pages.dev/kutatas` címen, amely választásra kényszerít —
-  nem 1–5-ös osztályzatot kér, amire mindenki négyest-ötöst ad: a tizenkét
+  nem 1–5-ös osztályzatot kér, amire mindenki négyest-ötöst ad: a tizenegy
   funkcióból a három legértékesebb, a maradékból a három, ami kimaradhat, és hat
   bizonytalanról az, hogy zavarna-e a hiánya az induláskor. (Az első változat
   tankönyvi, kilencképernyős MaxDiff volt; telefonon ugyanannak a kérdésnek

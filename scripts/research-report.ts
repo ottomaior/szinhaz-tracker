@@ -141,7 +141,7 @@ async function main() {
 
   // ── Picks ────────────────────────────────────────────────────────────────
   lines.push("", "## Melyik funkció ér a legtöbbet", "");
-  lines.push("Minden válaszoló a tizenkettőből kiválasztotta a három legértékesebbet, majd a maradék kilencből azt a hármat, ami kimaradhat. A nettó a kettő különbsége.", "");
+  lines.push("Minden válaszoló a tizenegyből kiválasztotta a három legértékesebbet, majd a maradék nyolcból azt a hármat, ami kimaradhat. A nettó a kettő különbsége.", "");
   const scores = scorePicks(rows.map((r) => r.picks ?? { best: [], worst: [] }));
   lines.push(
     enough ? "| # | Funkció | Top 3-ban | Kimaradhat | Pontszám |" : "| # | Funkció | Top 3-ban | Kimaradhat | Nettó |",

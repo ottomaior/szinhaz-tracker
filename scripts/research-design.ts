@@ -35,20 +35,22 @@ export type Feature = {
  * summary, what your circle thought — and "would it bother you if this were
  * missing at launch" is not a question you can ask about a feature that is
  * there. The two version-2 answers stay in the table; the report skips them.
+ *
+ * Version 4 (19 September 2026) drops one card. "Ülőhely és jegyár" asked
+ * people to rank a feature the check-in no longer offers — seat and price came
+ * off the form in September, and the ticket photo is retired outright (T-094)
+ * — and a questionnaire must not keep proposing what the product has decided
+ * against. Eleven cards now: three of eleven, then three of the remaining
+ * eight. The one version-3 answer stays in the table beside the two
+ * version-2 ones; the report reads version 4 and counts the older rows aloud.
  */
-export const VERSION = 3;
+export const VERSION = 4;
 
 /**
- * Twelve, merged from the app's surface so a short survey can carry them:
- * "diary" and "rating" are one thing to a respondent, and so are seat and
- * price. The question is which three a reader would open the app for, and
- * which three could go.
- *
- * The ticket photo came off the `hely_ar_jegy` card on 19 September 2026: the
- * feature is retired on privacy grounds (T-094) and a questionnaire must not
- * keep proposing it. The id and the version stay, because the SQL function
- * checks ids rather than labels and the two version-3 answers in hand ranked
- * the same card; only the words changed.
+ * Eleven, merged from the app's surface so a short survey can carry them:
+ * "diary" and "rating" are one thing to a respondent. Every one of these is
+ * in the app today; the question is which three a reader would open the app
+ * for, and which three could go.
  */
 export const FEATURES: Feature[] = [
   {
@@ -85,11 +87,6 @@ export const FEATURES: Feature[] = [
     id: "beugro",
     label: "Ki játszott aznap este",
     detail: "A bejegyzésben megjelölöd, kik voltak színpadon — beugróval együtt, mert a színlapot másnap már senki nem őrzi.",
-  },
-  {
-    id: "hely_ar_jegy",
-    label: "Ülőhely és jegyár",
-    detail: "Hol ültél, mennyibe került — az évad végén összeadva.",
   },
   {
     id: "kivansaglista",

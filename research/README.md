@@ -27,7 +27,7 @@ Ezért három forrásból dolgozunk, és a súlyuk nem egyforma:
 
 > The questionnaire uses two trade-off methods instead of ratings. The first version was a textbook MaxDiff — nine screens of four features, best and worst — which on a phone reads as the same question nine times over; version 2 asks each feature at most twice.
 
-**Három a tizenkettőből, aztán három a kilencből.** Az első képernyőn a válaszoló a tizenkét funkcióból kiválasztja azt a hármat, amiért a leginkább elővenné az appot; a másodikon a maradék kilencből azt a hármat, amit észre sem venne, ha az indulásból kimaradna. Kényszerű választás, nem osztályzat: nem lehet mindent fontosnak mondani. Ebből rangsor lesz — a top 3-ba kerülések és a kimaradhat-jelölések különbsége.
+**Három a tizenegyből, aztán három a nyolcból.** Az első képernyőn a válaszoló a tizenegy funkcióból kiválasztja azt a hármat, amiért a leginkább elővenné az appot; a másodikon a maradék nyolcból azt a hármat, amit észre sem venne, ha az indulásból kimaradna. Kényszerű választás, nem osztályzat: nem lehet mindent fontosnak mondani. Ebből rangsor lesz — a top 3-ba kerülések és a kimaradhat-jelölések különbsége.
 
 **„Ha kimaradna.”** Hat bizonytalan funkcióról egy-egy kérdés: ha az induláskor még nem lenne benne, *zavarna*, *nem tűnne fel*, vagy *jobb is lenne nélküle*? Ez a Kano-módszer „ha nem lenne” fele — az, amelyik az *alap* funkciót (hiánya bosszant) elválasztja a *szép* funkciótól (hiánya nem fáj) —, a „ha lenne” fele nélkül, mert az mindent kétszer kérdezne.
 
