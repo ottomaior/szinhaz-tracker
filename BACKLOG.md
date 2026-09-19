@@ -415,7 +415,7 @@ Nothing on this list is engineering.
 
 | Blocker | Notes |
 |---|---|
-| Deep links unverified | The app-side claim is configured; `/.well-known/apple-app-site-association` and `/.well-known/assetlinks.json` need the Apple Team ID and the Play App Signing fingerprint. The keystore now exists, so the Android half is available as soon as there is a Play Console to read the signing key from. `scripts/write-well-known.ts` writes both. |
+| Deep links: Android done, iOS waits | `assetlinks.json` is published with Play’s app-signing SHA-256 (19 September 2026, once the closed-test release cleared review), so https://web.vastaps.app links open the Play build. `/.well-known/apple-app-site-association` still needs the Apple Team ID; `scripts/write-well-known.ts --team-id` writes it. |
 | Icons never seen at store sizes | 1024×1024, the iOS one fully opaque, the Android foreground inside the 66% safe zone — so they are *valid*. Nobody has looked at them at 48pt on a shelf next to other apps. |
 | Share card is web-only | Canvas-based; native needs `react-native-view-shot`. Now checkable against a real device build, which did not exist when this line was written. |
 | ~~No OTA updates~~ **done** | `expo-updates` is installed with the fingerprint runtime policy and a channel per EAS profile (T-014). A JavaScript fix ships with `eas update --channel preview` and lands at the next launch; a native change still needs a build. |

@@ -425,7 +425,7 @@ Ezen a listán semmi nem mérnöki munka.
 
 | Akadály | Megjegyzés |
 |---|---|
-| A mélylinkek nincsenek igazolva | Az alkalmazás felőli igény be van állítva; a `/.well-known/apple-app-site-association`-höz és a `/.well-known/assetlinks.json`-höz kell az Apple Team ID és a Play App Signing ujjlenyomata. A kulcstároló már létezik, tehát az Android fele elérhető, amint van Play Console, ahonnan az aláíró kulcs kiolvasható. A `scripts/write-well-known.ts` megírja mindkettőt. |
+| Mélylinkek: Android kész, iOS vár | Az `assetlinks.json` a Play alkalmazás-aláíró kulcsának SHA-256-ával publikálva (2026. szeptember 19., miután a zárt tesztes kiadás átment a felülvizsgálaton), így a https://web.vastaps.app linkek a Play-es buildet nyitják. Az `/.well-known/apple-app-site-association`-höz még kell az Apple Team ID; a `scripts/write-well-known.ts --team-id` írja meg. |
 | Az ikonokat bolti méretben nem látta senki | 1024×1024-esek, az iOS-es teljesen átlátszatlan, az Android előtér a 66%-os biztonságos zónán belül — tehát *érvényesek*. Azt viszont senki nem nézte meg, hogy 48 pontosan, más alkalmazások mellett a polcon hogyan festenek. |
 | A megosztókártya csak webes | Canvas-alapú; natívhoz `react-native-view-shot` kell. Most már ellenőrizhető egy valódi eszközre készült buildben, ami korábban nem létezett. |
 | ~~Nincs OTA-frissítés~~ **kész** | Az `expo-updates` telepítve van, fingerprint futásiverzió-szabállyal és EAS-profilonként egy csatornával (T-014). Egy JavaScript-javítás az `eas update --channel preview` paranccsal megy ki, és a következő indításkor érkezik meg; natív változáshoz továbbra is build kell. |
