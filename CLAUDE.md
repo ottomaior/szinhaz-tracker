@@ -43,8 +43,9 @@ and a merge to `main` changes nothing on those phones by itself.
 
 - **JavaScript changes reach phones only when pushed.** After a merge to
   `main` that is worth having on the phones, run
-  `npx eas-cli update --channel production --message "<what changed>"`.
-  It lands at the next launch. The `preview` channel is the sideloadable APK
+  `npx eas-cli update --channel production --environment production --platform android --message "<what changed>"`.
+  The `--environment` flag is what lets it run non-interactively, and it
+  must match the channel. It lands at the next launch. The `preview` channel is the sideloadable APK
   and normally has nobody on it.
 - **A native change needs a build**, not an update: a new Expo module, a
   config-plugin change, a new permission, an SDK bump. The fingerprint
