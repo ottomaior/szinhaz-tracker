@@ -82,9 +82,27 @@
 
 ### Ha valaki azt mondja, belépett, de a Play nem mutat semmit
 
-> The one support answer worth having ready.
+> The two support answers worth having ready. The second one is from Ottó’s
+> own install on 19 September 2026: his Google account is registered in
+> Romania, the track was Hungary-only, and Play said "This item isn’t
+> available in your country" on a Hungarian SIM and a Hungarian IP. The
+> track now targets Hungary and Romania; any other country is one checkbox
+> in the Console (Closed testing → Countries/regions), and it clears
+> review in minutes. After a track change the phone’s Play Store can keep
+> showing the old answer until its cache is cleared.
 
-Szinte mindig az az oka, hogy a telefonon a Play Áruházba más Google-fiókkal van belépve, mint amelyikkel a csoportba lépett. Vagy azzal a fiókkal lépjen be a csoportba is, vagy a Play Áruházban váltson arra, amelyikkel csatlakozott, és nyissa meg újra a telepítési linket.
+**„Can’t download” vagy semmi telepítés-gomb.** Szinte mindig az az oka,
+hogy a telefonon a Play Áruházba más Google-fiókkal van belépve, mint
+amelyikkel a csoportba lépett. Vagy azzal a fiókkal lépjen be a csoportba is,
+vagy a Play Áruházban váltson arra, amelyikkel csatlakozott, és nyissa meg
+újra a telepítési linket.
+
+**„This item isn’t available in your country.”** Nem a SIM és nem a hálózat
+számít, hanem az, hogy a Google-fiók melyik országban van regisztrálva. A
+teszt most Magyarországra és Romániára van nyitva; ha valaki máshol
+regisztrált fiókkal jön, egy üzenet, és felvesszük az országát. Utána a
+telefonon: Beállítások → Alkalmazások → Google Play Áruház → Tárhely →
+Gyorsítótár törlése (nem az adatokat!), és a telepítési link újra.
 
 ## 2. Facebook- és Reddit-csoportoknak — később
 
