@@ -166,3 +166,73 @@ function fromRow(r: RawStats): UsageStats {
     },
   };
 }
+
+// ── The questionnaire ──────────────────────────────────────────────────────
+
+/** Raw tallies for one version of the questionnaire, keyed by the page's ids. */
+export type ResearchStats = {
+  version: number;
+  total: number;
+  current: number;
+  older: number;
+  firstAt: string | null;
+  lastAt: string | null;
+  withEmail: number;
+  /** Respondents per `source` value; the empty key is "no source". */
+  sources: Record<string, number>;
+  /** How many put each feature in their top three / their leave-out three. */
+  best: Record<string, number>;
+  worst: Record<string, number>;
+  /** Per missing feature, how many gave each of the three answers. */
+  missing: Record<string, Record<string, number>>;
+  /** Per behaviour question, how many chose each option. */
+  behaviour: Record<string, Record<string, number>>;
+  /** The free-text "other" fields, per `<question>_mas` key. */
+  behaviourOther: Record<string, string[]>;
+  openAnswers: string[];
+};
+
+/**
+ * The questionnaire counted on the server for `version`, or `null` for
+ * anyone but the operator. Labels and ranking are the client's business:
+ * `scripts/research-design.ts` knows what each id means.
+ */
+export async function getResearchStats(version: number): Promise<ResearchStats | null> {
+  const { data, error } = await supabase.rpc("research_stats", { v: version });
+  if (error) {
+    if (error.code === "42501") return null;
+    throw error;
+  }
+  const r = data as {
+    version: number;
+    total: number;
+    current: number;
+    older: number;
+    first_at: string | null;
+    last_at: string | null;
+    with_email: number;
+    sources: Record<string, number> | null;
+    best: Record<string, number> | null;
+    worst: Record<string, number> | null;
+    missing: Record<string, Record<string, number>> | null;
+    behaviour: Record<string, Record<string, number>> | null;
+    behaviour_other: Record<string, string[]> | null;
+    open_answers: string[] | null;
+  };
+  return {
+    version: r.version,
+    total: r.total,
+    current: r.current,
+    older: r.older,
+    firstAt: r.first_at,
+    lastAt: r.last_at,
+    withEmail: r.with_email,
+    sources: r.sources ?? {},
+    best: r.best ?? {},
+    worst: r.worst ?? {},
+    missing: r.missing ?? {},
+    behaviour: r.behaviour ?? {},
+    behaviourOther: r.behaviour_other ?? {},
+    openAnswers: r.open_answers ?? [],
+  };
+}

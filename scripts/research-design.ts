@@ -163,6 +163,63 @@ export const MISSING_FEATURES: { id: string; label: string; detail: string }[] =
   },
 ];
 
+/**
+ * The behaviour questions, with the option labels the page used.
+ *
+ * Here rather than in the report so the dashboard (`app/stats.tsx`) can name
+ * the same options; the page itself carries them in its own markup.
+ */
+export const BEHAVIOUR: { key: string; title: string; options: Record<string, string> }[] = [
+  {
+    key: "gyakorisag",
+    title: "Hányszor voltál színházban az elmúlt egy évben?",
+    options: { "0": "egyszer sem", "1-2": "1–2", "3-5": "3–5", "6-10": "6–10", "10+": "több mint 10" },
+  },
+  {
+    key: "varos",
+    title: "Hol jársz színházba?",
+    options: { budapest: "Budapest", debrecen: "Debrecen", mas: "máshol" },
+  },
+  {
+    key: "szinhazak",
+    title: "Melyik színházakban jártál az elmúlt egy évben?",
+    options: {
+      orkeny: "Örkény", katona: "Katona", nemzeti: "Nemzeti", central: "Centrál", madach: "Madách",
+      vig: "Vígszínház", csokonai: "Csokonai", vojtina: "Vojtina", mas: "más színház",
+    },
+  },
+  {
+    key: "forras",
+    title: "Honnan tudod meg, mi megy?",
+    options: {
+      szinhaz_honlap: "a színház honlapja", jegyiroda: "jegy.hu / jegyiroda", facebook: "Facebook, Instagram",
+      portalok: "port.hu, szinhaz.hu, kritikák", ismerosok: "ismerősök", hirlevel: "hírlevél, bérlet",
+      plakat: "plakát, az utcán", egyeb: "egyéb",
+    },
+  },
+  {
+    key: "dontes",
+    title: "Mi dönti el, mit nézel meg?",
+    options: {
+      darab: "a darab vagy a szerző", szinesz: "egy színész", rendezo: "a rendező", szinhaz: "a színház maga",
+      ajanlas: "valaki ajánlotta", kritika: "kritika, értékelés", ar: "az ár", datum: "amikor ráérek",
+    },
+  },
+  {
+    key: "nyilvantartas",
+    title: "Hogyan tartod számon, mit láttál?",
+    options: {
+      fejben: "fejben", jegyek_fuzetek: "megőrzöm a jegyeket, műsorfüzeteket", jegyzet: "jegyzetappban",
+      tablazat: "táblázatban", kozossegi: "posztolok róla", masik_app: "egy másik appban", semmi: "sehogy",
+    },
+  },
+  {
+    key: "analog_app",
+    title: "Használsz naplóappot filmre vagy könyvre?",
+    options: { letterboxd: "Letterboxd", goodreads: "Goodreads / Moly", imdb: "IMDb", egyik_sem: "egyiket sem" },
+  },
+];
+
 /** The three answers to "if this were still missing", in the order the page shows them. */
 export const MISSING_ANSWERS = ["zavarna", "mindegy", "jobb_nelkule"] as const;
 export type MissingAnswer = (typeof MISSING_ANSWERS)[number];

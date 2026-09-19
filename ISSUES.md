@@ -938,6 +938,15 @@ feed. `0071` moves the excluded handles into `excluded_handles()` and adds
 `playreview`; the wishlist row (one play, added 19 September 23:44) was
 deleted by hand at Ottó's word.
 
+**20 September, the questionnaire:** `0072` adds `research_stats(v)`, the
+same tallies `scripts/research-report.ts` prints but live and operator-only;
+`/stats` gets a "Kérdőív" section with the pick ranking, the missing-feature
+verdicts, the behaviour questions and the open answers. The behaviour
+question list moved from the report into `scripts/research-design.ts` so
+the page and the report name the options identically. The page reads the
+current version only, as the report does, and says how many older answers
+it is not showing.
+
 ### T-110 · vastaps.app is not in Google: nothing has told Google it exists
 type: chore · area: landing · priority: high · status: done · added: 2026-09-19 · done: 2026-09-19
 

@@ -2,6 +2,7 @@ import "dotenv/config";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { getSupabaseAdmin } from "../sync/lib/supabaseAdmin";
 import {
+  BEHAVIOUR,
   MISSING_ANSWERS,
   MISSING_FEATURES,
   MISSING_LABELS,
@@ -34,58 +35,6 @@ type Row = {
   open_answer: string | null;
   email: string | null;
 };
-
-/** The behaviour questions, with the option labels the page used. */
-const BEHAVIOUR: { key: string; title: string; options: Record<string, string> }[] = [
-  {
-    key: "gyakorisag",
-    title: "Hányszor voltál színházban az elmúlt egy évben?",
-    options: { "0": "egyszer sem", "1-2": "1–2", "3-5": "3–5", "6-10": "6–10", "10+": "több mint 10" },
-  },
-  {
-    key: "varos",
-    title: "Hol jársz színházba?",
-    options: { budapest: "Budapest", debrecen: "Debrecen", mas: "máshol" },
-  },
-  {
-    key: "szinhazak",
-    title: "Melyik színházakban jártál az elmúlt egy évben?",
-    options: {
-      orkeny: "Örkény", katona: "Katona", nemzeti: "Nemzeti", central: "Centrál", madach: "Madách",
-      vig: "Vígszínház", csokonai: "Csokonai", vojtina: "Vojtina", mas: "más színház",
-    },
-  },
-  {
-    key: "forras",
-    title: "Honnan tudod meg, mi megy?",
-    options: {
-      szinhaz_honlap: "a színház honlapja", jegyiroda: "jegy.hu / jegyiroda", facebook: "Facebook, Instagram",
-      portalok: "port.hu, szinhaz.hu, kritikák", ismerosok: "ismerősök", hirlevel: "hírlevél, bérlet",
-      plakat: "plakát, az utcán", egyeb: "egyéb",
-    },
-  },
-  {
-    key: "dontes",
-    title: "Mi dönti el, mit nézel meg?",
-    options: {
-      darab: "a darab vagy a szerző", szinesz: "egy színész", rendezo: "a rendező", szinhaz: "a színház maga",
-      ajanlas: "valaki ajánlotta", kritika: "kritika, értékelés", ar: "az ár", datum: "amikor ráérek",
-    },
-  },
-  {
-    key: "nyilvantartas",
-    title: "Hogyan tartod számon, mit láttál?",
-    options: {
-      fejben: "fejben", jegyek_fuzetek: "megőrzöm a jegyeket, műsorfüzeteket", jegyzet: "jegyzetappban",
-      tablazat: "táblázatban", kozossegi: "posztolok róla", masik_app: "egy másik appban", semmi: "sehogy",
-    },
-  },
-  {
-    key: "analog_app",
-    title: "Használsz naplóappot filmre vagy könyvre?",
-    options: { letterboxd: "Letterboxd", goodreads: "Goodreads / Moly", imdb: "IMDb", egyik_sem: "egyiket sem" },
-  },
-];
 
 function tally(rows: Row[], key: string, options: Record<string, string>): [string, number][] {
   const counts = new Map<string, number>();

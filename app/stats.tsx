@@ -8,7 +8,21 @@ import { ContentColumn } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { useAuth } from "@/contexts/AuthContext";
 import { strings } from "@/i18n/hu";
-import { getUsageStats, type DayCount, type UsageStats } from "@/services/statsService";
+import {
+  getResearchStats,
+  getUsageStats,
+  type DayCount,
+  type ResearchStats,
+  type UsageStats,
+} from "@/services/statsService";
+import {
+  BEHAVIOUR,
+  MISSING_ANSWERS,
+  MISSING_FEATURES,
+  VERSION as RESEARCH_VERSION,
+  scorePicks,
+  type MissingAnswer,
+} from "@/scripts/research-design";
 import { makeStyles, useColors } from "@/theme/styles";
 import { gutter, radius, space } from "@/theme/tokens";
 import { elapsedSince, formatShortDate, formatShortDayForSuffix, formatTime } from "@/utils/datetime";
@@ -33,16 +47,23 @@ export default function StatsScreen() {
   const router = useRouter();
   const { session, loading } = useAuth();
   const [stats, setStats] = useState<UsageStats | null>(null);
+  const [research, setResearch] = useState<ResearchStats | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
 
   const load = useCallback(async () => {
     setFailed(false);
     try {
-      setStats(await getUsageStats());
+      // Two documents, one screen. The questionnaire is fetched alongside
+      // rather than folded into usage_stats(): it is a different subject,
+      // answers a different question, and has a version the client owns.
+      const [usage, questionnaire] = await Promise.all([getUsageStats(), getResearchStats(RESEARCH_VERSION)]);
+      setStats(usage);
+      setResearch(questionnaire);
     } catch {
       setFailed(true);
       setStats(null);
+      setResearch(null);
     } finally {
       setLoaded(true);
     }
@@ -52,6 +73,7 @@ export default function StatsScreen() {
     useCallback(() => {
       if (!session) {
         setStats(null);
+        setResearch(null);
         setLoaded(true);
         return;
       }
@@ -95,6 +117,7 @@ export default function StatsScreen() {
           )}
 
           {stats && <Dashboard stats={stats} onReload={load} />}
+          {stats && research && <Questionnaire research={research} />}
         </ContentColumn>
       </ScrollView>
     </View>
@@ -104,7 +127,7 @@ export default function StatsScreen() {
 function Dashboard({ stats, onReload }: { stats: UsageStats; onReload: () => void }) {
   const styles = useStyles();
   const t = strings.stats;
-  const { accounts, entries, social, devices, research, catalogue } = stats;
+  const { accounts, entries, social, devices, catalogue } = stats;
 
   return (
     <>
@@ -226,12 +249,199 @@ function Dashboard({ stats, onReload }: { stats: UsageStats; onReload: () => voi
           {catalogue.lastSyncFinishedAt
             ? t.lastSync(elapsedLabel(catalogue.lastSyncFinishedAt), catalogue.syncErrors24h)
             : t.noSync}
-          {" · "}
-          {t.research(research.responses, research.withEmail)}
         </Text>
       </Section>
     </>
   );
+}
+
+/**
+ * The questionnaire, as the report prints it.
+ *
+ * The server hands back tallies by id; the ranking, the labels and the
+ * verdicts come from `scripts/research-design.ts`, the same module the
+ * Markdown report uses, so a card is called the same thing in both places
+ * and the "alap / későbbre" thresholds cannot drift between them. Below
+ * thirty answers only counts are shown, for the reason the report gives:
+ * a two-decimal score over three answers claims a precision it does not have.
+ */
+function Questionnaire({ research }: { research: ResearchStats }) {
+  const styles = useStyles();
+  const t = strings.stats;
+  const n = research.current;
+
+  // scorePicks() wants one Picks per respondent; the server sends counts.
+  // Expand the counts into the same shape rather than re-implementing the
+  // ranking here, so the order is the report's order, ties and all.
+  const expanded = expandPicks(research.best, research.worst);
+  const scores = scorePicks(expanded);
+  const mostNet = Math.max(...scores.map((s) => Math.abs(s.net)), 1);
+
+  const sources = Object.entries(research.sources)
+    .map(([s, c]) => `${s || t.researchNoSource} ${c}`)
+    .join(" · ");
+
+  return (
+    <Section title={t.research} hint={t.researchHint(research.version)}>
+      <View style={styles.tiles}>
+        <Tile value={n} label={t.researchAnswers} gold />
+        <Tile value={research.older} label={t.researchOlder} />
+        <Tile value={research.withEmail} label={t.researchEmails} />
+      </View>
+      {n > 0 && research.firstAt && research.lastAt ? (
+        <Text variant="caption" tone="faint">
+          {t.researchRange(formatShortDate(research.firstAt), formatShortDate(research.lastAt))}
+          {sources ? ` · ${t.researchSources(sources)}` : ""}
+        </Text>
+      ) : null}
+
+      {n === 0 ? (
+        <View style={styles.card}>
+          <Text variant="bodySmall" tone="faint">
+            {t.researchEmpty}
+          </Text>
+        </View>
+      ) : (
+        <>
+          <Text variant="subheading">{t.researchPicks}</Text>
+          <Text variant="caption" tone="faint">
+            {t.researchPicksHint}
+          </Text>
+          <View style={styles.card}>
+            {scores.map((s, i) => (
+              <View key={s.id} style={[styles.rankRow, i > 0 && styles.personRowBorder]}>
+                <Text variant="caption" tone="faint" style={styles.rankIndex}>
+                  {i + 1}
+                </Text>
+                <View style={{ flex: 1, gap: 4 }}>
+                  <Text variant="bodySmall" numberOfLines={2}>
+                    {s.label}
+                  </Text>
+                  {/* One track, zero in the middle: net to the right is
+                      wanted, to the left is expendable. */}
+                  <View style={styles.netTrack}>
+                    <View style={styles.netHalf}>
+                      {s.net < 0 ? (
+                        <View style={[styles.netFillLeft, { width: `${(Math.abs(s.net) / mostNet) * 100}%` }]} />
+                      ) : null}
+                    </View>
+                    <View style={styles.netHalf}>
+                      {s.net > 0 ? <View style={[styles.netFillRight, { width: `${(s.net / mostNet) * 100}%` }]} /> : null}
+                    </View>
+                  </View>
+                </View>
+                <Text variant="caption" tone={s.net > 0 ? "accent" : "faint"} style={styles.rankCells}>
+                  {t.researchPickCells(s.best, s.worst, s.net)}
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          <Text variant="subheading">{t.researchMissing}</Text>
+          <Text variant="caption" tone="faint">
+            {t.researchMissingHint}
+          </Text>
+          <View style={styles.card}>
+            {MISSING_FEATURES.map((f, i) => {
+              const counts = research.missing[f.id] ?? {};
+              const c = (k: MissingAnswer) => counts[k] ?? 0;
+              const answered = MISSING_ANSWERS.reduce((sum, k) => sum + c(k), 0);
+              return (
+                <View key={f.id} style={[styles.rankRow, i > 0 && styles.personRowBorder]}>
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text variant="bodySmall" numberOfLines={2}>
+                      {f.label}
+                    </Text>
+                    <Text variant="caption" tone="faint">
+                      {`${c("zavarna")} · ${c("mindegy")} · ${c("jobb_nelkule")}`}
+                    </Text>
+                  </View>
+                  <Text variant="caption" tone={verdictTone(c("zavarna"), c("jobb_nelkule"), answered)}>
+                    {verdictLabel(c("zavarna"), c("jobb_nelkule"), answered)}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+
+          <Text variant="subheading">{t.researchBehaviour}</Text>
+          <View style={{ gap: space.sm }}>
+            {BEHAVIOUR.map((q) => {
+              const counts = research.behaviour[q.key] ?? {};
+              const other = research.behaviourOther[`${q.key}_mas`] ?? [];
+              const most = Math.max(...Object.values(counts), 1);
+              return (
+                <View key={q.key} style={styles.card}>
+                  <Text variant="bodySmall">{q.title}</Text>
+                  {Object.entries(q.options).map(([id, label]) => {
+                    const c = counts[id] ?? 0;
+                    return (
+                      <View key={id} style={{ gap: 3 }}>
+                        <View style={styles.optionRow}>
+                          <Text variant="caption" tone={c > 0 ? "default" : "faint"} numberOfLines={1} style={{ flex: 1 }}>
+                            {label}
+                          </Text>
+                          <Text variant="caption" tone="faint">
+                            {c}
+                            {n > 0 ? ` · ${Math.round((100 * c) / n)}%` : ""}
+                          </Text>
+                        </View>
+                        <View style={styles.optionTrack}>
+                          <View style={[styles.optionFill, { width: `${(c / most) * 100}%` }]} />
+                        </View>
+                      </View>
+                    );
+                  })}
+                  {other.length > 0 ? (
+                    <Text variant="caption" tone="faint">
+                      {`${t.researchOther} ${other.map((x) => `„${x.trim()}”`).join(", ")}`}
+                    </Text>
+                  ) : null}
+                </View>
+              );
+            })}
+          </View>
+
+          <Text variant="subheading">{t.researchOpen}</Text>
+          <View style={styles.card}>
+            {research.openAnswers.length === 0 ? (
+              <Text variant="bodySmall" tone="faint">
+                {t.researchOpenEmpty}
+              </Text>
+            ) : (
+              research.openAnswers.map((o, i) => (
+                <Text key={i} variant="bodySmall" style={styles.quote}>
+                  {o.replace(/\n+/g, " ")}
+                </Text>
+              ))
+            )}
+          </View>
+        </>
+      )}
+    </Section>
+  );
+}
+
+/** Counts back into per-respondent picks, so scorePicks() can rank them. */
+function expandPicks(best: Record<string, number>, worst: Record<string, number>) {
+  const out: { best: string[]; worst: string[] }[] = [];
+  for (const [id, c] of Object.entries(best)) for (let i = 0; i < c; i++) out.push({ best: [id], worst: [] });
+  for (const [id, c] of Object.entries(worst)) for (let i = 0; i < c; i++) out.push({ best: [], worst: [id] });
+  return out;
+}
+
+/** The report's thresholds, verbatim: 50% "zavarna" is a launch feature. */
+function verdictLabel(zavarna: number, jobb: number, answered: number): string {
+  const v = strings.stats.researchVerdict;
+  if (answered === 0) return v.none;
+  const z = zavarna / answered;
+  const j = jobb / answered;
+  return z >= 0.5 ? v.base : j >= 0.5 ? v.no : z >= 0.3 ? v.wanted : v.later;
+}
+
+function verdictTone(zavarna: number, jobb: number, answered: number): "accent" | "default" | "faint" {
+  if (answered === 0) return "faint";
+  return zavarna / answered >= 0.5 ? "accent" : "default";
 }
 
 function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
@@ -346,5 +556,16 @@ const useStyles = makeStyles((colors) =>
     barsAxis: { flexDirection: "row", justifyContent: "space-between" },
     personRow: { flexDirection: "row", alignItems: "center", gap: space.md, paddingVertical: space.sm },
     personRowBorder: { borderTopWidth: 1, borderTopColor: colors.hairlineSoft },
+    rankRow: { flexDirection: "row", alignItems: "center", gap: space.sm, paddingVertical: space.sm },
+    rankIndex: { width: 18, textAlign: "right" },
+    rankCells: { minWidth: 72, textAlign: "right" },
+    netTrack: { flexDirection: "row", height: 4 },
+    netHalf: { flex: 1, height: "100%", justifyContent: "center" },
+    netFillLeft: { alignSelf: "flex-end", height: "100%", borderRadius: 2, backgroundColor: colors.textFaint },
+    netFillRight: { alignSelf: "flex-start", height: "100%", borderRadius: 2, backgroundColor: colors.gold },
+    optionRow: { flexDirection: "row", justifyContent: "space-between", gap: space.sm },
+    optionTrack: { height: 4, borderRadius: 2, backgroundColor: colors.hairlineSoft, overflow: "hidden" },
+    optionFill: { height: "100%", borderRadius: 2, backgroundColor: colors.gold },
+    quote: { borderLeftWidth: 2, borderLeftColor: colors.gold, paddingLeft: space.sm },
   })
 );
