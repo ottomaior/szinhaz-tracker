@@ -942,12 +942,11 @@ listed as "discovered via sitemap"; a Cloudflare redirect rule sends
 GitHub repository's description and homepage carry the URL. The GitHub
 repo description, being on an indexed page, is the first inbound link.
 
-**Left for Ottó:** the *domain* property (`vastaps.app`, covering `web.`
-too) is added but unverified. It needs one TXT record on the apex in
-Cloudflare DNS, content `google-site-verification=f4sa5tZdWVeHVP9VNFS67xoaGIg6qRGrk48adDTTVKs`,
-then "Verify" on the property in Search Console. The URL-prefix property
-is enough for the landing page; the domain property is what will show
-`web.vastaps.app` in the same reports.
+**The domain property followed the same evening.** Ottó added the TXT
+record, "Finish verification" passed, and the sitemap submitted under
+`sc-domain:vastaps.app` was read at once: status Success, five pages
+discovered. Both properties now exist; the domain one is the one to read,
+because it also covers `web.vastaps.app`.
 
 ### T-107 · Notifications cannot be switched on in the Play build: no Firebase configuration
 type: bug · area: native · priority: high · status: done · added: 2026-09-19 · done: 2026-09-19
