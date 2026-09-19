@@ -106,6 +106,19 @@ that Chrome on Android does the same. The hero's secondary button and the
 first nav link both point here, and the "is there a phone app" FAQ entry
 sends the reader back up. Nothing in the section says the app is free.
 
+## The mail links are drafts, not addresses
+
+Every `mailto:` on the page carries a subject and a body, so the person who
+taps it lands in their mail app with a message already written and only has
+to press send. The Android card's *Meghívót kérek* asks for the link to the
+closed test in three lines; the contact links (nav, footer, the address in
+the contact section) open a general note with a parenthetical prompt for the
+two things people most often leave out of a bug report — which screen, what
+happened instead — and for the name of a missing theatre. The bodies are
+percent-encoded UTF-8 built by a script rather than typed into the markup,
+and each link has a `data-t-href` twin so the draft follows the language
+switch.
+
 ## Deploying it
 
 To **Cloudflare Pages**, from this directory, with `npm run deploy:landing`.

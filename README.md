@@ -17,6 +17,29 @@ navigation.
 > remaining phase involves. This README explains *why* each existing piece
 > works the way it does; the backlog is what to pick up next.
 
+## Three ways to use it
+
+As of September 2026 the app can be reached three ways, and the landing page
+says so directly under its hero (`landing/index.html`, `#hasznalat`):
+
+- **The web app**, at https://web.vastaps.app. Live, nothing to install,
+  browsing without an account, sign-in by e-mail or Google to log an evening.
+  Every merge to `main` deploys here within minutes.
+- **Android through Google Play**, in a closed test. Testers join a Google
+  Group (`vastaps-teszt@googlegroups.com`, anyone with the link can join)
+  and then opt in at https://play.google.com/apps/testing/hu.szinhaztracker.app;
+  the landing asks for an invitation by mail rather than printing the two
+  links, because they only work once Google has reviewed the release. Google
+  requires 12 testers for 14 consecutive days on this track before a personal
+  developer account may publish to production. JavaScript fixes reach these
+  phones through `eas update --channel production`; native changes need a
+  new build and a Play review. `CLAUDE.md` has the rules that follow from
+  this.
+- **iPhone**, as the web app on the home screen. There is no App Store build
+  yet (it waits on an Apple Developer account); Safari's *Share → Add to Home
+  Screen* installs the web app as an icon, and the landing gives those three
+  steps. Chrome on Android offers the same from its menu.
+
 ## Setup
 
 ```bash
