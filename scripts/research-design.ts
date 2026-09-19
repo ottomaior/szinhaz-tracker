@@ -41,8 +41,8 @@ export type Feature = {
  * off the form in September, and the ticket photo is retired outright (T-094)
  * — and a questionnaire must not keep proposing what the product has decided
  * against. Eleven cards now: three of eleven, then three of the remaining
- * eight. The two version-3 answers stay in the table beside the version-2
- * ones; the report reads version 4 and counts the older rows aloud.
+ * eight. The one version-3 answer stays in the table beside the two
+ * version-2 ones; the report reads version 4 and counts the older rows aloud.
  */
 export const VERSION = 4;
 
