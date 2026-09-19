@@ -924,6 +924,10 @@ subscription; a person who only reads, on a device without push, is not
 counted as active. Page views stay in Cloudflare Web Analytics and installs
 in the Play Console; this is the third number.
 
+**20 September:** a second operator account (ottomaior@protonmail.com).
+`0070` moves the address list into `operator_emails()` so the gate and the
+exclusion read the same list; adding the next one is a one-line change there.
+
 ### T-110 · vastaps.app is not in Google: nothing has told Google it exists
 type: chore · area: landing · priority: high · status: done · added: 2026-09-19 · done: 2026-09-19
 
