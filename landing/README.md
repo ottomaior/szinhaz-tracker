@@ -91,6 +91,21 @@ renders. `deploy:landing` regenerates them first; `npm run render:legal` does
 it by hand. Until the operator details in `i18n/legal.ts` are filled in they
 carry the same “still being drafted” notice the app’s own routes show.
 
+## The three ways in
+
+Since 19 September 2026 a section directly under the fold (`#hasznalat`,
+"Három út befelé") answers the question that follows "what is it": where do I
+open it. Three cards, in the order people can actually act on them today.
+The **web app** is live and needs nothing installed. **Android** is a closed
+test on Google Play, and the card asks for an invitation over `mailto:`
+rather than printing the Google Group and opt-in links, because the Play
+listing is not public yet and the pair of links only works once Google has
+reviewed the release. **iPhone** has no store build, so the card gives the
+three Safari steps that put the web app on the home screen, with a footnote
+that Chrome on Android does the same. The hero's secondary button and the
+first nav link both point here, and the "is there a phone app" FAQ entry
+sends the reader back up. Nothing in the section says the app is free.
+
 ## Deploying it
 
 To **Cloudflare Pages**, from this directory, with `npm run deploy:landing`.
