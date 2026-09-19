@@ -928,6 +928,16 @@ in the Play Console; this is the third number.
 `0070` moves the address list into `operator_emails()` so the gate and the
 exclusion read the same list; adding the next one is a one-line change there.
 
+**20 September, the reviewer:** Ottó asked whether the `Play Review`
+account (`ottomaior+playreview@protonmail.com`) could go. It cannot: it is
+the App access login in the Play Console (store/listing.hu.md), build 6 is
+in review against it, and every later build and policy re-review needs it.
+It stays. It was, though, being counted as a real account on /stats and its
+one wishlist row put a "Play Review szeretné megnézni" card in the public
+feed. `0071` moves the excluded handles into `excluded_handles()` and adds
+`playreview`; the wishlist row (one play, added 19 September 23:44) was
+deleted by hand at Ottó's word.
+
 ### T-110 · vastaps.app is not in Google: nothing has told Google it exists
 type: chore · area: landing · priority: high · status: done · added: 2026-09-19 · done: 2026-09-19
 
