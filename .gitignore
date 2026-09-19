@@ -23,6 +23,9 @@ web-build/
 
 expo-env.d.ts
 # @end expo-cli
+# Firebase configuration for Android push (T-107). Held as an EAS file
+# environment variable; a local copy is for prebuild only.
+google-services.json
 # Rendered promo video — regenerate with `npm run promo`, do not commit.
 promo/out/
 supabase/email-templates/out/
