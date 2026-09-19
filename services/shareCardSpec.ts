@@ -129,7 +129,20 @@ export const SHARE_CARD = {
   review: { size: 36, lineHeight: 50 },
   tags: { size: 28, lineHeight: 38 },
   cast: { size: 28, lineHeight: 38, lines: 2 },
-  wordmark: { mark: 34, size: 30, lineHeight: 34 },
+  /**
+   * The footer: a hairline, then the mark with the domain in gold on the
+   * left and the tagline in the dim tone on the right. It used to be the
+   * mark and the word "Vastaps" alone, at tab-bar size — a signature, which
+   * told a first-time viewer nothing they could act on. The card is the one
+   * thing that leaves the app, so the line under the evening now says where
+   * to find it (`vastaps.app`, the domain a person can type from a story) and
+   * what it is (the landing page's own subtitle). Still one line, still
+   * quieter than the title: a card about an evening with a colophon, not an
+   * advertisement with an evening on it.
+   */
+  wordmark: { mark: 44, size: 38, lineHeight: 44 },
+  tagline: { size: 28, lineHeight: 44 },
+  rule: 1,
 
   /** Vertical gaps, each named for what sits above it. */
   gap: {
@@ -139,7 +152,8 @@ export const SHARE_CARD = {
     masksToOpinion: 48,
     reviewToTags: 24,
     tagsToCast: 16,
-    opinionToWordmark: 56,
+    opinionToRule: 56,
+    ruleToWordmark: 24,
   },
 
   /** On a story, how far above the poster's bottom edge the fade starts. */

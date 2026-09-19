@@ -208,7 +208,8 @@ export async function renderShareCard(input: ShareCardInput): Promise<Blob | und
   // Measured first, laid out from the bottom up — see shareCardSpec.ts for
   // why. Each block's top edge is computed from the one below it.
   const wordmarkTop = HEIGHT - format.bottom - SHARE_CARD.wordmark.lineHeight;
-  let cursor = wordmarkTop - gap.opinionToWordmark;
+  const ruleTop = wordmarkTop - gap.ruleToWordmark - SHARE_CARD.rule;
+  let cursor = ruleTop - gap.opinionToRule;
 
   const opinion = input.opinion;
   ctx.font = bodyFont(SHARE_CARD.cast.size);
@@ -338,18 +339,28 @@ export async function renderShareCard(input: ShareCardInput): Promise<Blob | und
     });
   }
 
-  // The wordmark, bottom left, small. This is a card about an evening, not an
-  // advertisement with an evening on it. The mark leads it, at the size it
-  // would be on a tab bar: on a shared image the glyph is what gets recognised
-  // a second time, and the words are what explain it the first time.
-  // `textBaseline` is "top" for the whole card, so the wordmark's 30 points of
-  // type start at `wordmarkTop` and the mark has to be centred against that
-  // band rather than sat on a baseline.
-  const { mark, size: wordmarkSize } = SHARE_CARD.wordmark;
-  drawBrandMark(ctx, margin, wordmarkTop - 2, mark);
+  // The footer — see `SHARE_CARD.wordmark` in the spec for why it says what
+  // it says. A hairline first, so the colophon reads as the card's edge and
+  // not as one more line of the entry. `textBaseline` is "top" for the whole
+  // card, so the type starts at `wordmarkTop` and the mark is centred against
+  // that band rather than sat on a baseline.
+  ctx.fillStyle = card.hairline;
+  ctx.fillRect(margin, ruleTop, contentWidth, SHARE_CARD.rule);
+  const { mark, size: wordmarkSize, lineHeight: wordmarkLine } = SHARE_CARD.wordmark;
+  drawBrandMark(ctx, margin, wordmarkTop + (wordmarkLine - mark) / 2, mark);
   ctx.fillStyle = card.gold;
   ctx.font = bodyFont(wordmarkSize, 600);
-  ctx.fillText(strings.appName, margin + mark + 14, wordmarkTop);
+  ctx.fillText(strings.shareCard.domain, margin + mark + 16, wordmarkTop + (wordmarkLine - wordmarkSize) / 2);
+  // The tagline, right-aligned on the same line, in the tone the venue is in.
+  ctx.fillStyle = card.textDim;
+  ctx.font = bodyFont(SHARE_CARD.tagline.size);
+  ctx.textAlign = "right";
+  ctx.fillText(
+    strings.shareCard.tagline,
+    WIDTH - margin,
+    wordmarkTop + (SHARE_CARD.tagline.lineHeight - SHARE_CARD.tagline.size) / 2
+  );
+  ctx.textAlign = "left";
 
   return new Promise((resolve) => canvas.toBlob((blob) => resolve(blob ?? undefined), "image/png"));
 }

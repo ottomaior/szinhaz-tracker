@@ -250,14 +250,22 @@ export function ShareCardView({
           </View>
         )}
 
-        {/* The wordmark, bottom left, small: a card about an evening, not an
-            advertisement with an evening on it. */}
+        {/* The footer — see `SHARE_CARD.wordmark` in the spec for why it
+            says what it says. A hairline, then the domain left and the
+            tagline right on one line. */}
+        <View
+          style={{
+            marginTop: s(gap.opinionToRule),
+            height: s(SHARE_CARD.rule),
+            backgroundColor: card.hairline,
+          }}
+        />
         <View
           style={{
             flexDirection: "row",
             alignItems: "center",
-            gap: s(14),
-            marginTop: s(gap.opinionToWordmark),
+            gap: s(16),
+            marginTop: s(gap.ruleToWordmark),
             height: s(SHARE_CARD.wordmark.lineHeight),
           }}
         >
@@ -270,7 +278,15 @@ export function ShareCardView({
               <Path key={d} d={d} {...fillPaint(card.gold)} />
             ))}
           </Svg>
-          <Text style={type(bodySemibold, SHARE_CARD.wordmark, card.gold)}>{strings.appName}</Text>
+          <Text style={type(bodySemibold, SHARE_CARD.wordmark, card.gold)}>
+            {strings.shareCard.domain}
+          </Text>
+          <Text
+            numberOfLines={1}
+            style={type(body, SHARE_CARD.tagline, card.textDim, { flex: 1, textAlign: "right" })}
+          >
+            {strings.shareCard.tagline}
+          </Text>
         </View>
       </View>
     </View>

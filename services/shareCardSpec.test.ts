@@ -19,7 +19,7 @@ import {
 function tallestStack(format: ShareCardFormat, withOpinion: boolean): number {
   const f = SHARE_CARD_FORMATS[format];
   const { gap } = SHARE_CARD;
-  let h = SHARE_CARD.wordmark.lineHeight + gap.opinionToWordmark;
+  let h = SHARE_CARD.wordmark.lineHeight + gap.ruleToWordmark + SHARE_CARD.rule + gap.opinionToRule;
   if (withOpinion) {
     h += SHARE_CARD.cast.lines * SHARE_CARD.cast.lineHeight + gap.tagsToCast;
     h += SHARE_CARD.tags.lineHeight + gap.reviewToTags;
