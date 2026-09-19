@@ -19,6 +19,29 @@ láttál. Expo + React Native + TypeScript alapon, a navigáció fájlalapú,
 > jelent a hátralévő fázisok mindegyike. Ez a README azt magyarázza, *miért* úgy
 > működik minden meglévő darab, ahogy; a backlog azt, hogy mit kell folytatni.
 
+## Három út az apphoz
+
+2026 szeptemberében háromféleképpen érhető el az app, és a landing oldal ezt a
+hero alatt rögtön el is mondja (`landing/index.html`, `#hasznalat`):
+
+- **A webes app**, a https://web.vastaps.app címen. Él, nincs mit telepíteni,
+  böngészni fiók nélkül lehet, naplózáshoz e-maillel vagy Google-fiókkal kell
+  belépni. Minden `main`-re érkező merge percek alatt ide kerül ki.
+- **Android a Google Playen**, zárt tesztben. A tesztelők egy Google-csoportba
+  lépnek be (`vastaps-teszt@googlegroups.com`, a linkkel bárki csatlakozhat),
+  majd a https://play.google.com/apps/testing/hu.szinhaztracker.app címen
+  jelentkeznek tesztelőnek; a landing e-mailben kér meghívót ahelyett, hogy
+  kiírná a két linket, mert azok csak a Google felülvizsgálata után működnek.
+  A Google 12 tesztelőt vár 14 egymást követő napon ezen a sávon, mielőtt egy
+  személyes fejlesztői fiók éles kiadást kérhetne. A JavaScript-javítások az
+  `eas update --channel production` paranccsal érnek el ezekre a telefonokra;
+  natív változáshoz új build és Play-felülvizsgálat kell. Az ebből következő
+  szabályok a `CLAUDE.md`-ben vannak.
+- **iPhone**, a kezdőképernyőre tett webes appként. App Store-os build még
+  nincs (Apple Developer-fiókra vár); a Safari *Megosztás → Hozzáadás a
+  kezdőképernyőhöz* menüje ikonként telepíti a webes appot, és a landing ezt a
+  három lépést adja meg. Androidon a Chrome menüje ugyanezt kínálja.
+
 ## Beállítás
 
 ```bash
