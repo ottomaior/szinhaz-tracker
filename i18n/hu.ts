@@ -768,6 +768,14 @@ export const strings = {
     preparing: "Kép készítése…",
     /** Before the names on the card: "Láttam: Ónodi Eszter, Fekete Ernő". */
     castPrefix: "Láttam: ",
+    /**
+     * The card's colophon. The domain is what a person can type after seeing
+     * a story; the landing page's subtitle says what they would find. Both
+     * are printed, never localised into the app's name alone — see
+     * `SHARE_CARD.wordmark` in services/shareCardSpec.ts.
+     */
+    domain: "vastaps.app",
+    tagline: "magyar színházi napló",
   },
 
   /**

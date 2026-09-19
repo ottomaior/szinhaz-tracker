@@ -1306,6 +1306,16 @@ card at a time, by their own hand. A square with the opinion on drops the
 poster and becomes a quote card, since it has room for a picture or for words
 and not both; a story has the height for both.
 
+**The colophon says where.** The card used to sign off with the mark and the
+word *Vastaps* at tab-bar size — a signature, which told a first-time viewer
+nothing they could act on. Now a hairline closes the evening and under it the
+mark leads `vastaps.app` in gold, with the landing page's own subtitle, *magyar
+színházi napló*, right-aligned in the dim tone. The domain is what a person can
+type after seeing a story; the subtitle says what they would find. It stays one
+line and quieter than the title — a card about an evening with a colophon, not
+an advertisement with an evening on it — and it is not a watermark over the
+photograph, which reads as stock-image cheapness and would fight the still.
+
 ## Two counters that were never true
 
 `reviews.like_count` and `comment_count` have existed since `0001_init.sql` and

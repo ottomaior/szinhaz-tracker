@@ -1365,6 +1365,16 @@ a saját kezével. A véleménnyel ellátott négyzet elhagyja a plakátot és
 idézetkártya lesz, mert képnek vagy szavaknak van helye, mindkettőnek nincs; a
 storynak van magassága mindkettőhöz.
 
+**A kolofon megmondja, hol.** A kártya korábban a jellel és a *Vastaps* szóval
+zárult, tabsáv-méretben — aláírás volt, amiből az először látó semmit nem
+tudott kezdeni. Most egy hajszálvonal zárja le az estét, alatta a jel vezeti a
+`vastaps.app`-ot aranyban, jobbra igazítva pedig a landing oldal saját
+alcíme, *magyar színházi napló*, a halvány tónusban. A domain az, amit egy
+story után be lehet gépelni; az alcím megmondja, mit talál ott. Egy sor
+marad, és halkabb a címnél — egy este kártyája kolofonnal, nem egy hirdetés
+estével —, és nem vízjel a fényképen, ami olcsó stockfotó-hatást keltene és
+verekedne a felvétellel.
+
 ## Két számláló, ami sosem volt igaz
 
 A `reviews.like_count` és a `comment_count` a `0001_init.sql` óta létezik, és
