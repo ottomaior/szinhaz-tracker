@@ -273,7 +273,7 @@ overall figure.
   people go to the theatre *today*, five think-aloud sessions on the live app,
   and a questionnaire at `vastaps.pages.dev/kutatas` that forces choices rather
   than asking for 1–5 ratings, which everybody answers with 4s and 5s: the three
-  features you value most out of twelve, the three you would leave out of the
+  features you value most out of eleven, the three you would leave out of the
   rest, and for six uncertain ones whether their absence at launch would bother
   you. (The first cut was a textbook nine-screen MaxDiff; on a phone it read as
   the same question nine times, and 0040 replaced it.) Answers land in
