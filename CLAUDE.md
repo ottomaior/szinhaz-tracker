@@ -34,6 +34,31 @@ from an idea to `main` without becoming something that cannot be taken back.
   `main`, so "the state before the redesign" has a name rather than a SHA
   somebody has to hunt for. Not every merge needs one; one per milestone does.
 
+## The installed app is a second client
+
+Since 19 September 2026 there are phones in the field: the closed test on
+Google Play runs the production build from `eas.json`, on the `production`
+update channel. That build reads the same Supabase project the web app does,
+and a merge to `main` changes nothing on those phones by itself.
+
+- **JavaScript changes reach phones only when pushed.** After a merge to
+  `main` that is worth having on the phones, run
+  `npx eas-cli update --channel production --message "<what changed>"`.
+  It lands at the next launch. The `preview` channel is the sideloadable APK
+  and normally has nobody on it.
+- **A native change needs a build**, not an update: a new Expo module, a
+  config-plugin change, a new permission, an SDK bump. The fingerprint
+  runtime policy in `app.config.ts` makes sure such a change is never
+  offered to an old binary; it simply reaches nobody until
+  `eas build --profile production --platform android` is uploaded to the
+  closed track in the Play Console and clears review.
+- **The oldest installed build has to keep working against the database.**
+  The migration rules below used to protect the deploy; now they protect
+  people. Before a migration ask which build is on the phones and whether it
+  still runs against the new shape. If not, ship the app side over the air
+  first and let it settle before the destructive half. The 7 September build
+  broke exactly this way: `0064` dropped a column it still wrote.
+
 ## Migrations
 
 `supabase/migrations/` is applied in order, by number. Git can revert the file;
