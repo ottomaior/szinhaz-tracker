@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "hu.szinhaztracker.app",
+      "sha256_cert_fingerprints": [
+        "2F:84:32:0D:6E:A1:96:01:2D:A5:F8:3C:B0:67:36:12:38:7D:B1:26:4F:98:7F:22:30:BA:A9:47:FF:16:62:EC"
+      ]
+    }
+  }
+]
