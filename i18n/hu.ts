@@ -1104,6 +1104,90 @@ export const strings = {
     deleteConfirm: "Végleges törlés",
     deleteWorking: "Törlés…",
     deleteError: "Nem sikerült törölni a fiókot. Próbáld újra, vagy írj nekünk.",
+
+    /* Üzemeltetés: a számok. Csak az üzemeltető fiókja látja — a sor maga
+       is csak neki jelenik meg (T-099). */
+    operations: "Üzemeltetés",
+    stats: "Használati számok",
+    statsHint: "Regisztrációk, bejegyzések, ki jött vissza, melyik eszköz figyel.",
+  },
+
+  /**
+   * Az üzemeltető műszerfala (T-099). A címkék rövidek, mert csempéken
+   * állnak; a magyarázat a szakasz alcímében van.
+   */
+  stats: {
+    headerTitle: "Használati számok",
+    signInPrompt: "Jelentkezz be a számokhoz",
+    notForYou: "Itt nincs semmi",
+    notForYouBody: "Ez az oldal az üzemeltetőé.",
+    loading: "Számolás…",
+    reload: "Frissítés",
+    generatedAt: (day: string, time: string) => `Állapot: ${day} ${time}`,
+    excluded: (n: number) => `${n} fiók nincs beleszámolva (demó és üzemeltető).`,
+
+    today: "Ma",
+    active1d: "aktív az elmúlt 24 órában",
+    new7d: "új fiók 7 nap alatt",
+    entries7d: "bejegyzés 7 nap alatt",
+
+    signups: "Regisztrációk",
+    signupsHint: "Az elmúlt 14 nap, naponta. „Aktív”: bejelentkezett vagy csinált valamit.",
+    accountsTotal: "fiók összesen",
+    accountsConfirmed: "megerősített e-mail",
+    accountsOnboarded: "látta a bemutatkozást",
+    new30d: "új fiók 30 nap alatt",
+    active7d: "aktív 7 napon belül",
+    active30d: "aktív 30 napon belül",
+
+    entries: "Bejegyzések",
+    entriesHint: "Naplóbejegyzések az elmúlt 14 napban, és összesen.",
+    entriesTotal: "bejegyzés összesen",
+    entriesRated: "értékeléssel",
+    entriesWithText: "szöveggel",
+    entries30d: "bejegyzés 30 nap alatt",
+    authors30d: "író 30 nap alatt",
+    watchlist: "kívánságlistán",
+
+    social: "Kapcsolatok",
+    followsAccepted: "elfogadott követés",
+    followsPending: "függő kérés",
+    subjectFollows: "követett színház / alkotó",
+    likes: "kedvelés",
+    comments: "hozzászólás",
+    lists: "lista",
+
+    devices: "Eszközök",
+    devicesHint: "Hány fiók kapcsolt be értesítést: a Play-alkalmazásból, illetve böngészőből vagy a kezdőképernyőről.",
+    pushExpo: "Android app",
+    pushWeb: "web / PWA",
+    digestEnabled: "heti levelet kér",
+
+    recent: "Legutóbbi fiókok",
+    recentHint: "A tizenkét legfrissebb regisztráció. A szám a bejegyzéseik.",
+    recentEmpty: "Még senki.",
+    noName: "(név nélkül)",
+    joinedOn: (day: string) => `csatlakozott ${day}`,
+    lastSeen: (when: string) => `utoljára ${when}`,
+    neverSeen: "még nem lépett be",
+    unconfirmed: "e-mail nincs megerősítve",
+
+    catalogue: "Katalógus",
+    plays: "előadás",
+    venues: "színház",
+    upcoming: "közelgő időpont",
+    lastSync: (when: string, errors: number) =>
+      errors > 0 ? `Utolsó szinkron ${when}, ${errors} hiba 24 órán belül` : `Utolsó szinkron ${when}`,
+    noSync: "Még nem futott szinkron",
+    research: (n: number, withEmail: number) => `${n} kérdőív (${withEmail} e-mail-címmel)`,
+
+    barsLabel: (total: number) => `Napi oszlopok, összesen ${total}`,
+    barsTotal: (total: number) => `összesen ${total}`,
+
+    elapsedNow: "az imént",
+    elapsedHours: (h: number) => `${h} órája`,
+    elapsedYesterday: "tegnap",
+    elapsedDays: (d: number) => `${d} napja`,
   },
 
   editProfile: {
