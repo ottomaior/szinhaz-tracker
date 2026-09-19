@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The pages a search result may point at. /kutatas is left out on purpose:
+     it is noindex. Keep lastmod honest — bump it when a page changes. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://vastaps.app/</loc><lastmod>2026-09-19</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://vastaps.app/adatvedelem</loc><lastmod>2026-09-18</lastmod><changefreq>monthly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://vastaps.app/feltetelek</loc><lastmod>2026-09-18</lastmod><changefreq>monthly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://vastaps.app/impresszum</loc><lastmod>2026-09-18</lastmod><changefreq>monthly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://vastaps.app/fiok-torlese</loc><lastmod>2026-09-18</lastmod><changefreq>monthly</changefreq><priority>0.2</priority></url>
+</urlset>

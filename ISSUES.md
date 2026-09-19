@@ -900,7 +900,30 @@ where the `.hu` is ours.
 
 ## Doing
 
-_Nothing yet._
+### T-110 · vastaps.app is not in Google: nothing has told Google it exists
+type: chore · area: landing · priority: high · status: doing · added: 2026-09-19
+
+A search for `vastaps.app` on 19 September returned Vastaps Produkció's
+Facebook page and an AI overview saying no such app exists. The domain split
+(`vastaps.app` for the site, `web.vastaps.app` for the app) went live on 18
+September, so the main cause is age: Google had no reason to have crawled it
+yet. Checked rather than assumed: no Search Console property, no sitemap and
+no robots.txt (both URLs returned the landing page with a 200), no inbound
+link from any indexed page, `www.vastaps.app` answered 200 instead of
+redirecting to the apex, and every route on `web.vastaps.app` carries the
+title "Vastaps" with no description. The on-page markup itself (title,
+description, canonical, Open Graph, JSON-LD, real text) was already fine.
+
+The pass: `landing/robots.txt` and `landing/sitemap.xml` with cache rules in
+`_headers`; a Search Console domain property for `vastaps.app` verified by a
+DNS TXT record in Cloudflare, so the apex, `www` and `web.` are one property;
+the sitemap submitted and indexing requested for the front page; a Cloudflare
+redirect rule sending `www` to the apex; and a link from the GitHub repository
+description, which is the first indexed page that points here. Per-route
+titles and descriptions in the web app, and pre-rendered play and person
+pages with real content, are the larger follow-up and are not part of this.
+The name-collision analysis under T-029 still holds: the bare word is not
+winnable, the qualified phrases are.
 
 ---
 
@@ -3338,4 +3361,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-110**
+Next free id: **T-111**
