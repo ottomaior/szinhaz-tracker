@@ -882,6 +882,18 @@ _Nothing yet._
 
 ## Done
 
+### T-103 · The bento tiles' icons sit on top of the heading on a phone
+type: bug · area: web · priority: med · status: done · added: 2026-09-19 · done: 2026-09-19
+
+Seen by Ottó on vastaps.app in Android Chrome: on the *Jegyet nem itt veszel*
+tile the ticket icon is drawn across the first letters of the heading. The
+icon was `position:absolute` in the tile's top-left corner and the text was
+bottom-aligned in a flex column; on a wide tile that leaves a clear band
+between them, on a phone-width tile the text is tall enough to rise into the
+corner. Fixed the same day: the icon and the theme swatches are ordinary flex
+children with `margin-bottom:auto`, which reproduces the corner placement
+when there is room and pushes the heading down when there is not.
+
 ### T-078 · One tap on a list entry removes it; editing should be a mode
 type: bug · area: web · priority: high · status: done · added: 2026-09-18 · done: 2026-09-19
 
@@ -3135,4 +3147,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-103**
+Next free id: **T-104**
