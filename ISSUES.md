@@ -950,8 +950,9 @@ was not when the line was first written — an installable Android build exists.
 > fingerprint runtime changes and no over-the-air update reaches build 5;
 > the card arrives with production build 6. Build 5 cleared review the same
 > evening; 0.1.0 (6) was built on EAS at 22:14 from the merge commit
-> (`74ce2f9`, build `9a01a926`) and waits for its upload to the closed track
-> and Google's review. That is where the two things written
+> (`74ce2f9`, build `9a01a926`), uploaded to the closed track as "0.1.0 (6)
+> — zárt teszt, megosztókártya" and sent for review at 22:50. That is where
+> the two things written
 > from the book rather than from a device get their test: that Android
 > renders a view parked at `left: -10000` in full (it should — `View.draw()`
 > does not clip to the window), and that a story's `onLayout`-measured
