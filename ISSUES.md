@@ -397,6 +397,38 @@ sidesteps the problem, a server-side one reopens it and needs the plumbing
 T-094 declined to build. Also on whether the theatres' ticket formats are
 stable enough to parse, which a survey of a season's worth of PDFs would tell.
 
+### T-109 · Plan an evening, be reminded of it, and be asked how it was
+type: idea · area: notifications · size: L · status: idea · added: 2026-09-19
+
+**The problem.** Somebody looks up *A nagy Gatsby*, sees there is a
+performance on 11 October, buys the tickets at the box office and would like
+the app to know that is the night they are going. Today the watchlist holds
+the play, not the night, so the plan lives in their head. And when the
+evening is over, nothing prompts them to log it: the diary depends on the
+person remembering the app the next morning, which is exactly when most
+evenings are lost.
+
+**Roughly.** Three pieces on top of one another. First, "I'm going" on a
+specific performance — the watchlist entry gains an optional chosen
+`performance_id` (the same column T-081 and T-091 both want), set from the
+play page's date list with a single tap. Second, two reminders per plan: one
+before the event (the day before, or the morning of, with the curtain time),
+and one the day after saying the evening is waiting to be logged. Both are
+`notifications.kind` values in the shape of `playing_tomorrow`, scheduled
+from the chosen performance rather than from the whole run, and delivered by
+the push path the app already has. Third, and independent of push: when the
+app is opened after a planned performance has passed, it presents the
+check-in for that evening up front — the play, theatre and date already
+known, the form itself empty, as it always is — so logging is one screen
+away instead of a search. Logging it clears the plan (T-066's question,
+answered by the plan rather than by the list).
+
+**Depends on.** The watchlist learning which night, which T-081 and T-091
+also wait on and which should be designed once for all three. Native
+notifications working in the Play build (T-107). The "did you go?" prompt
+has to be dismissible without logging, because a plan is not proof of
+attendance and the diary must never record an evening on someone's behalf.
+
 ---
 
 ## Open
@@ -3306,4 +3338,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-109**
+Next free id: **T-110**
