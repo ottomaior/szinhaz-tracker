@@ -309,7 +309,7 @@ vannak kifejtve a megadott azonosítók alatt.
 | **6.2** | **Egy első futás, ami tényleg lefut**: név, ha hiányzik, város, a város színházainak követése, az archívumrács, egy záró képernyő; a `profiles.onboarded_at` kapuzza — T-083 · **kész** | M | 6.1 |
 | **6.3** | **A visszajelzési réteg**: toast visszavonással (T-085), haptika (T-086), hibahatár (T-087), offline sáv (T-088), csontváz és lehúzva frissítés (T-093) · **kész**, a napló csontváza és az optimista írások kivételével | M | semmi |
 | **6.4** | **Telepíthető**: a 2. fázis 2.1-e (manifest, ikonok, „add a kezdőképernyőhöz" kártya) · **kész** · plusz hibafigyelés (5.1), ami egy Sentry-projektre és annak DSN-jére vár | S–M | egy Sentry DSN Ottótól |
-| **6.5** | **Értesítések, amik megérkeznek**: a 2. fázis Web Pushja, natív push az Expón át ugyanabba a táblába, fajtánkénti kapcsolók, és az engedélykérés a jó pillanatban — T-089 · **kész** weben; a natív a következő EAS buildre vár Natív: Firebase-hitelesítőre és új buildre vár (T-107). | L | — |
+| **6.5** | **Értesítések, amik megérkeznek**: a 2. fázis Web Pushja, natív push az Expón át ugyanabba a táblába, fajtánkénti kapcsolók, és az engedélykérés a jó pillanatban — T-089 · **kész** weben; a natív a következő EAS buildre vár Natív: az 5-ös buildben, szeptember 19. óta Play-felülvizsgálaton (T-107). | L | — |
 | **6.6** | **A heti levél** a Resenden át — T-090 · **kész**; hétfőnként a szinkronból | M | — |
 | **6.7** | **Bejelentkezés Apple-lel**, ~~OTA-frissítések (T-014)~~ **kész**, az ikon a valódi méreteiben (T-013), jelszó- és címváltás a Beállításokban (T-092) | M | egy Apple Developer-fiók |
 

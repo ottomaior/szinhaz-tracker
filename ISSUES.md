@@ -437,6 +437,17 @@ honest thing — that this version cannot switch notifications on and the
 next app update brings it — instead of asking the person to try again.
 Shipped over the air to both channels.
 
+> **All three done the same evening, 19 September; waiting on review.**
+> Firebase project `vastaps-fc45c` with the Android app registered
+> (Analytics and Gemini off); its `google-services.json` is the EAS file
+> variable `GOOGLE_SERVICES_JSON` in the production and preview
+> environments, read by `app.config.ts`; the FCM V1 service-account key is
+> on EAS under the Android credentials. Build 0.1.0 (5) carries the Firebase
+> identifiers — checked in the bundle's resources, absent from build 4 —
+> and is on the closed track as "0.1.0 (5) — zárt teszt, értesítések",
+> submitted for review at 19:05. Closes when a phone on build 5 switches
+> notifications on and an `expo` row appears in `push_subscriptions`.
+
 ### T-073 · One sync request out of eleven was refused with "JWT issued at future"
 type: bug · area: data · priority: low · status: open · added: 2026-09-12
 
