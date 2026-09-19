@@ -39,10 +39,16 @@ export type Feature = {
 export const VERSION = 3;
 
 /**
- * Twelve, merged from the app's surface so a seven-minute survey can carry
- * them: "diary" and "rating" are one thing to a respondent, and so are seat,
- * price and the stub photo. Every one of these exists; the question is which
- * three a reader would open the app for, and which three could go.
+ * Twelve, merged from the app's surface so a short survey can carry them:
+ * "diary" and "rating" are one thing to a respondent, and so are seat and
+ * price. The question is which three a reader would open the app for, and
+ * which three could go.
+ *
+ * The ticket photo came off the `hely_ar_jegy` card on 19 September 2026: the
+ * feature is retired on privacy grounds (T-094) and a questionnaire must not
+ * keep proposing it. The id and the version stay, because the SQL function
+ * checks ids rather than labels and the two version-3 answers in hand ranked
+ * the same card; only the words changed.
  */
 export const FEATURES: Feature[] = [
   {
@@ -82,8 +88,8 @@ export const FEATURES: Feature[] = [
   },
   {
     id: "hely_ar_jegy",
-    label: "Ülőhely, jegyár, jegyfotó",
-    detail: "Hol ültél, mennyibe került, és egy fotó a jegyről vagy a műsorfüzetről — az évad végén összeadva.",
+    label: "Ülőhely és jegyár",
+    detail: "Hol ültél, mennyibe került — az évad végén összeadva.",
   },
   {
     id: "kivansaglista",
