@@ -900,8 +900,14 @@ where the `.hu` is ours.
 
 ## Doing
 
+_Nothing yet._
+
+---
+
+## Done
+
 ### T-110 · vastaps.app is not in Google: nothing has told Google it exists
-type: chore · area: landing · priority: high · status: doing · added: 2026-09-19
+type: chore · area: landing · priority: high · status: done · added: 2026-09-19 · done: 2026-09-19
 
 A search for `vastaps.app` on 19 September returned Vastaps Produkció's
 Facebook page and an AI overview saying no such app exists. The domain split
@@ -925,9 +931,23 @@ pages with real content, are the larger follow-up and are not part of this.
 The name-collision analysis under T-029 still holds: the bare word is not
 winnable, the qualified phrases are.
 
----
+**Done on 19 September, all but one step.** `robots.txt` and `sitemap.xml`
+are live on `vastaps.app`; a URL-prefix property for `https://vastaps.app/`
+is verified in Search Console by the meta tag in `landing/index.html` (the
+`google…html` file beside it is a spare — Pages answers it with a 308 to the
+clean URL, so the tag is the one that counts); the sitemap is submitted and
+indexing was requested for the front page, which Search Console already
+listed as "discovered via sitemap"; a Cloudflare redirect rule sends
+`www.vastaps.app/*` to the apex with a 301, query string kept; and the
+GitHub repository's description and homepage carry the URL. The GitHub
+repo description, being on an indexed page, is the first inbound link.
 
-## Done
+**Left for Ottó:** the *domain* property (`vastaps.app`, covering `web.`
+too) is added but unverified. It needs one TXT record on the apex in
+Cloudflare DNS, content `google-site-verification=f4sa5tZdWVeHVP9VNFS67xoaGIg6qRGrk48adDTTVKs`,
+then "Verify" on the property in Search Console. The URL-prefix property
+is enough for the landing page; the domain property is what will show
+`web.vastaps.app` in the same reports.
 
 ### T-107 · Notifications cannot be switched on in the Play build: no Firebase configuration
 type: bug · area: native · priority: high · status: done · added: 2026-09-19 · done: 2026-09-19
