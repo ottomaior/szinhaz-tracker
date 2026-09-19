@@ -22,12 +22,19 @@ export function MaskIcon({
   state = "off",
   color,
   offColor,
+  punchColor,
 }: {
   size?: number;
   /** "on" = filled/active, "off" = empty/inactive */
   state?: "on" | "off";
   color?: string;
   offColor?: string;
+  /**
+   * The tone the eyes and mouth are cut out in when the mask is on. Read from
+   * the palette unless given, like the other two; the share card gives all
+   * three, because it is pinned to one palette whatever the reader chose.
+   */
+  punchColor?: string;
 }) {
   // Resolved from the palette here rather than as default parameters, because
   // this component has to re-render when the theme changes and only a hook can
@@ -44,17 +51,17 @@ export function MaskIcon({
   // background showing through isn't possible in SVG fill, so we punch
   // holes using the bg color passed as `offColor`'s complement — in
   // practice we just draw them in the base app background tone.
-  const punchColor = state === "on" ? palette.onAccent : off;
+  const punch = state === "on" ? (punchColor ?? palette.onAccent) : off;
 
   return (
     <Svg width={size} height={size} viewBox={`0 0 ${MASK_VIEWBOX} ${MASK_VIEWBOX}`}>
       <Path d={MASK_BODY_PATH} {...paint(fill, stroke)} strokeWidth={MASK_STROKE_WIDTH} />
       {MASK_EYES.map((eye) => (
-        <Ellipse key={eye.cx} cx={eye.cx} cy={eye.cy} rx={eye.rx} ry={eye.ry} {...fillPaint(punchColor)} />
+        <Ellipse key={eye.cx} cx={eye.cx} cy={eye.cy} rx={eye.rx} ry={eye.ry} {...fillPaint(punch)} />
       ))}
       <Path
         d={MASK_MOUTH_PATH}
-        {...strokePaint(punchColor)}
+        {...strokePaint(punch)}
         strokeWidth={MASK_STROKE_WIDTH}
         strokeLinecap="round"
         fill="none"

@@ -44,6 +44,12 @@ export default defineConfig({
       "utils/**/*.test.ts",
       "i18n/**/*.test.ts",
       "theme/**/*.test.ts",
+      // The share card's layout, as numbers: the two renderers (canvas on the
+      // web, views on a phone) both trust `services/shareCardSpec.ts` that
+      // the fullest card still fits above its bottom inset. That is
+      // arithmetic, and arithmetic is cheaper to assert than to find on a
+      // phone.
+      "services/**/*.test.ts",
       // The research questionnaire's MaxDiff design: a feature shown four
       // times against another's two wins on exposure, not on value, and the
       // static page carries its own copy of the design — so both are pinned.
