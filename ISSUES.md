@@ -1100,6 +1100,14 @@ was not when the line was first written — an installable Android build exists.
 > does not clip to the window), and that a story's `onLayout`-measured
 > velvet lines up with the fade. The web output is the reference to compare
 > against. Closes for good when a phone on build 6 shares a story.
+>
+> **20 September.** Build 6 cleared review ("App update published", the
+> Console's notice of 19 September). The same day's over-the-air update
+> (group `d76c2928`: the operator dashboard, the Settings row, the reviewer
+> left out of the counts) reached it, and 0.1.0 (7) — the same JavaScript
+> baked in, built on EAS from `deb5bc1` (build `16c1b887`) — went to the
+> closed track as "7 (0.1.0)" and was sent for review. Same fingerprint as
+> build 6, so later updates reach both.
 
 ### T-108 · Share the evening as a story
 type: idea · area: diary · size: M · status: done · added: 2026-09-19 · done: 2026-09-19
