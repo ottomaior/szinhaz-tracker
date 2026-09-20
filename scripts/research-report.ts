@@ -100,7 +100,7 @@ async function main() {
   // ── Ratings ──────────────────────────────────────────────────────────────
   lines.push("", "## Mennyit érnek a funkciók", "");
   lines.push(
-    "Minden válaszoló mind a tizenhét funkcióról megmondta: ezért nyitná meg az appot, jó, hogy van, nem tűnne fel, vagy nem használná. A nettó: „ezért” kétszer, „jó” egyszer, „nem használnám” mínusz egy. A „kell” azok aránya, akik az első kettő egyikét mondták.",
+    "Minden válaszoló mind a tizenhat funkcióról megmondta: ezért nyitná meg az appot, jó, hogy van, nem tűnne fel, vagy nem használná. A nettó: „ezért” kétszer, „jó” egyszer, „nem használnám” mínusz egy. A „kell” azok aránya, akik az első kettő egyikét mondták.",
     ""
   );
   const ratings = scoreRatings(countRatings(rows.map((r) => r.ratings ?? {})));

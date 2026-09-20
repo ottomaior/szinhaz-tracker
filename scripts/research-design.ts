@@ -53,7 +53,7 @@ export const AREAS = [
 export type AreaId = (typeof AREAS)[number]["id"];
 
 /**
- * Seventeen, one per thing the app does that a reader would notice. Merged
+ * Sixteen, one per thing the app does that a reader would notice. Merged
  * where a respondent would see one thing ("diary" and "rating" are one act),
  * split where the app treats them as two (following people is not following
  * a theatre). Every one of these is in the app today.
@@ -105,8 +105,8 @@ export const FEATURES: Feature[] = [
   {
     id: "szempontok",
     area: "naplo",
-    label: "Négy szempont, nem egy szám",
-    detail: "Összbenyomás mellett külön a színészek, a rendezés és a látvány — ha akarod. Ha nem, egy osztályzat is elég.",
+    label: "Értékelés: egy szám, vagy négy szempont",
+    detail: "Egy gyors osztályzat az estéről — vagy ha megérdemli, külön a színészekre, a rendezésre és a látványra is.",
   },
   {
     id: "beugro",
@@ -164,15 +164,9 @@ export const FEATURES: Feature[] = [
   {
     id: "evad_kartya",
     area: "raadas",
-    label: "Évadösszegzés és megosztható kártya",
-    detail: "Egy évad számokban — hány este, hol, kik játszottak a legtöbbször —, és egy este képeslapként, amit elküldhetsz.",
+    label: "Megosztható kártya és story az estédről",
+    detail: "A bejegyzésedből egy kép, kártyaként vagy storyként — az értékeléseddel, vagy anélkül: csak annyi, hogy ott voltál. És az évad végén egy összegzés: hány este, hol, kik a legtöbbször.",
     shot: "user.webp",
-  },
-  {
-    id: "appkent",
-    area: "raadas",
-    label: "Appként a telefonon, a te színvilágoddal",
-    detail: "Kezdőképernyőre tehető, ikonnal, teljes képernyőn; Androidon a Play-ből. Öt színvilág, világos és sötét.",
   },
 ];
 
