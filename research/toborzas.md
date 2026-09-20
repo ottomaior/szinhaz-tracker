@@ -104,6 +104,82 @@ regisztrált fiókkal jön, egy üzenet, és felvesszük az országát. Utána a
 telefonon: Beállítások → Alkalmazások → Google Play Áruház → Tárhely →
 Gyorsítótár törlése (nem az adatokat!), és a telepítési link újra.
 
+## 1c. Az első kör — 20. szeptember, Messengerben
+
+> The set sent on 20 September 2026, the day recruiting started. Ottó asked
+> for short messages that do not speak as him: friends will forward them to
+> their own friends, so nothing says "csináltam" or "kiadhatom", and
+> feedback goes to hello@vastaps.app rather than "ide". The app is shown by
+> pointing at https://vastaps.app instead of describing it. The Android one
+> says why the install has to stay: Google wants 12 testers on the track
+> for 14 consecutive days. Everyone is asked for the questionnaire. Same
+> rules as 1b: "csak Budapest és Debrecen", "pár perc", nothing says the
+> app is free.
+
+### 0 — Egyetlen üzenet mindenkinek (Android, iPhone, böngésző, kérdőív)
+
+> The all-in-one version, for when it is not known what phone the person
+> has, or when the message is meant to be forwarded on. Added the same day.
+
+> Szia! Van egy új színházi napló app, Vastaps a neve. Hogy néz ki és mit tud, itt látod: https://vastaps.app
+>
+> Kipróbálni háromféleképpen lehet:
+>
+> Android – most megy a zárt tesztje, és tesztelőket keres. A Google-nak 12 tesztelő kell 14 napig, mielőtt az app kikerülhet a Play Áruházba, úgyhogy két hétig érdemes fent hagyni a telefonon, nem kell mindennap használni.
+> 1. Csoport: https://groups.google.com/g/vastaps-teszt
+> 2. Telepítés: https://play.google.com/apps/testing/hu.szinhaztracker.app
+> (ugyanazzal a Google-fiókkal, ami a Play Áruházban van)
+>
+> iPhone – az App Store-os verzió kicsit később jön, addig böngészőből megy: https://web.vastaps.app (Safariban „Megosztás” → „Hozzáadás a kezdőképernyőhöz”, és app lesz belőle.)
+>
+> Böngésző – laptopon vagy bármilyen böngészőben sima weboldalként is használható, nem kell hozzá semmit telepíteni: https://web.vastaps.app
+>
+> Egyelőre Budapest és Debrecen van benne. Ha van pár perced, ezt a kérdőívet is töltsd ki, ebből derül ki, mi kell bele: https://vastaps.app/kutatas
+>
+> Ami zavar vagy hiányzik, mehet a hello@vastaps.app címre. És ha ismersz valakit, aki jár színházba, küldd tovább neki. Köszi!
+
+### A — Android
+
+> Szia! Van egy új színházi napló app, Vastaps a neve. Hogy néz ki és mit tud, itt látod: https://vastaps.app
+>
+> Androidon most megy a zárt tesztje, és tesztelőket keres. A Google-nak 12 tesztelő kell 14 napig, mielőtt az app kikerülhet a Play Áruházba, úgyhogy két hétig érdemes fent hagyni a telefonon, nem kell mindennap használni.
+>
+> 1. Csoport: https://groups.google.com/g/vastaps-teszt
+> 2. Telepítés: https://play.google.com/apps/testing/hu.szinhaztracker.app
+> (ugyanazzal a Google-fiókkal, ami a Play Áruházban van)
+>
+> Egyelőre Budapest és Debrecen van benne. Ha van pár perced, ezt a kérdőívet is töltsd ki, ebből derül ki, mi kell bele: https://vastaps.app/kutatas
+>
+> Ami zavar vagy hiányzik, mehet a hello@vastaps.app címre. Köszi!
+
+### B — iPhone vagy laptop
+
+> Szia! Van egy új színházi napló app, Vastaps a neve. Hogy néz ki és mit tud, itt látod: https://vastaps.app
+>
+> iPhone-ra még nincs bolti verzió, de böngészőből ugyanaz megy: https://web.vastaps.app (Safariban „Megosztás” → „Hozzáadás a kezdőképernyőhöz”, és app lesz belőle.)
+>
+> Egyelőre Budapest és Debrecen van benne. Ha van pár perced, ezt a kérdőívet is töltsd ki, ebből derül ki, mi kell bele: https://vastaps.app/kutatas
+>
+> Ami zavar vagy hiányzik, mehet a hello@vastaps.app címre. Köszi!
+
+### C — Csak a kérdőív
+
+> Szia! Készül egy új színházi app, Vastaps a neve, itt látod, hogy néz ki: https://vastaps.app
+>
+> Mielőtt elindul, jó lenne tudni, mi kell bele és mi nem. Ez egy rövid kérdőív, pár perc, nincs jó válasz, csak az, amit te gondolsz: https://vastaps.app/kutatas Köszi!
+
+### D — Utánkövetés Androidon (2–3 nap múlva)
+
+> Szia! Sikerült feltelepíteni a Vastapsot? Ha a Play nem mutat semmit, szinte mindig más Google-fiók van a Play Áruházban, mint amivel a csoportba léptél. Ha elakadtál, írj a hello@vastaps.app címre, segítenek. Ha fent van, csak annyi kell, hogy két hétig maradjon. Köszi!
+
+### E — Emlékeztető a kérdőívre (kb. egy hét múlva)
+
+> Szia, csak egy emlékeztető a Vastaps kérdőívről, tényleg pár perc: https://vastaps.app/kutatas Köszi!
+
+### Ha megkérdezik, mennyibe kerül
+
+> Böngészni, naplózni és értékelni most nem kerül semmibe, és nincs benne hirdetés. Hogy hosszabb távon miből tartja el magát, még nyitott; ha változik, előre szólnak.
+
 ## 2. Facebook- és Reddit-csoportoknak — később
 
 > Post for theatregoer and ticket-exchange groups. Read the group rules first: most ban self-promotion but allow research posts if they are honest about who is asking and why. Post from Ottó's own account, not a page.
