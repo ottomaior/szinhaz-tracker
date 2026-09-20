@@ -419,6 +419,20 @@ attendance and the diary must never record an evening on someone's behalf.
 
 ## Open
 
+### T-113 · "látta a bemutatkozást" on the operator stats says nothing to its reader
+type: chore · area: design · priority: low · status: open · added: 2026-09-20
+
+Ottó looked at the Regisztrációk tiles on `/stats` and asked what "látta a
+bemutatkozást" means and how to reach that part. It counts profiles with
+`onboarded_at` set, which the first-run flow (`app/first-run.tsx`, T-083)
+writes the moment it opens. Two things hide that: the word "bemutatkozás"
+is used nowhere the user sees, and migration `0061` backfilled the column
+for every account that already existed, so the tile reads 2 of 2 today
+without anyone having been through the flow. Reword the label
+(`accountsOnboarded` in `i18n/hu.ts`) to name the thing — "végigment az
+első indításon" or similar — and give the tile a one-line hint saying
+what it measures, as the chart heading above it already does.
+
 ### T-073 · One sync request out of eleven was refused with "JWT issued at future"
 type: bug · area: data · priority: low · status: open · added: 2026-09-12
 
@@ -3490,4 +3504,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-113**
+Next free id: **T-114**
