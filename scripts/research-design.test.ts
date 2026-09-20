@@ -16,8 +16,8 @@ import {
 } from "./research-design";
 
 describe("the feature list", () => {
-  it("has unique ids, and seventeen of them", () => {
-    expect(FEATURES).toHaveLength(17);
+  it("has unique ids, and sixteen of them", () => {
+    expect(FEATURES).toHaveLength(16);
     expect(new Set(FEATURES.map((f) => f.id)).size).toBe(FEATURES.length);
     expect(new Set(MISSING_FEATURES.map((f) => f.id)).size).toBe(MISSING_FEATURES.length);
   });
