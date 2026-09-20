@@ -9,7 +9,7 @@ import { ProgramRow, ProgramRowSkeleton } from "@/components/ui/ProgramRow";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { getProgramDays, getProgramForDay, type ProgramFilters } from "@/services/playsService";
 import type { ProgramDay, ProgramEntry } from "@/data/types";
-import { formatDayLabel, formatLongDate, formatWeekday, todayInBudapest } from "@/utils/datetime";
+import { daypartOfAll, formatDayLabel, formatLongDate, formatWeekday, todayInBudapest } from "@/utils/datetime";
 import { strings } from "@/i18n/hu";
 import { useDockInset } from "@/components/ui/TabBar";
 
@@ -162,7 +162,7 @@ export function ProgramView({ filters, header }: { filters: ProgramFilters; head
           style={{ paddingHorizontal: gutter }}
           eyebrow={
             selectedDay === today
-              ? strings.discover.heroTonight
+              ? strings.discover.heroToday(entries.length ? daypartOfAll(entries.map((e) => e.startsAt)) : undefined)
               : formatWeekday(`${selectedDay}T12:00:00Z`)
           }
           title={formatLongDate(`${selectedDay}T12:00:00Z`)}

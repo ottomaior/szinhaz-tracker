@@ -52,7 +52,7 @@ import { SplitText } from "@/components/motion/SplitText";
 import { strings } from "@/i18n/hu";
 import { personInitials } from "@/utils/people";
 import { foldSearchTerm } from "@/utils/search";
-import { budapestDayKey, formatRuntimeMinutes, formatTime, formatWeekday, todayInBudapest } from "@/utils/datetime";
+import { budapestDayKey, daypart, daypartOfAll, formatRuntimeMinutes, formatTime, formatWeekday, todayInBudapest } from "@/utils/datetime";
 import { makeStyles } from "@/theme/styles";
 
 const FILTERS = [strings.discover.filterAll, strings.discover.filterKoszinhaz, strings.discover.filterFuggetlen, strings.discover.filterSzabadteri];
@@ -941,11 +941,10 @@ export default function DiscoverScreen() {
                   <View style={{ gap: space.md }}>
                     <SectionHeader
                       style={{ paddingHorizontal: gutter }}
-                      eyebrow={
-                        curtains.day === todayInBudapest()
-                          ? strings.discover.curtainsEyebrowTonight
-                          : strings.discover.curtainsEyebrowOn(formatWeekday(curtainsTonight[0].startsAt))
-                      }
+                      eyebrow={strings.discover.curtainsEyebrowOn(
+                        curtains.day === todayInBudapest() ? undefined : formatWeekday(curtainsTonight[0].startsAt),
+                        daypartOfAll(curtainsTonight.map((e) => e.startsAt)),
+                      )}
                       title={strings.discover.curtainsTitle(curtainsTonight.length)}
                       action={strings.discover.upcomingAction}
                       onAction={() => setMode("program")}
@@ -1126,7 +1125,7 @@ function TonightHero({ entry, onPress, tall }: { entry: ProgramEntry; onPress: (
       </PressCard>
       <View style={[styles.heroBadge, { pointerEvents: "none" }]}>
         <Text variant="eyebrow" style={{ color: overlay.onImageAccent }}>
-          {isToday ? strings.discover.heroTonight : strings.discover.heroNext(formatWeekday(entry.startsAt))}
+          {isToday ? strings.discover.heroToday(daypart(entry.startsAt)) : strings.discover.heroNext(formatWeekday(entry.startsAt))}
         </Text>
       </View>
       <View style={[styles.heroCaption, { pointerEvents: "box-none" }]}>

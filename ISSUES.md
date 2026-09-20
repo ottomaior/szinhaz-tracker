@@ -892,6 +892,34 @@ _Nothing yet._
 
 ## Done
 
+### T-112 · "Ma este" on the Discover lead is wrong for a matinée
+type: bug · area: design · priority: med · status: done · added: 2026-09-20 · done: 2026-09-20
+
+The hero on Discover says "MA ESTE" above whatever is on first today. On
+20 September the first curtain was *A nagy Gatsby* at 14:30 in the
+Vígszínház, and the badge still read "Ma este", which is plainly not an
+evening. Same word in the curtains rail eyebrow (`curtainsEyebrowTonight`)
+and in "Legközelebb · <weekday>" / "<weekday> este" for other days, so a
+Saturday with only a matinée gets "Szombat este" too. Ottó spotted it on the
+web app on the first day of recruiting.
+
+Strings are `heroTonight`, `curtainsEyebrowTonight`, `curtainsEyebrowOn` in
+`i18n/hu.ts`; chosen in `app/(tabs)/discover.tsx` around lines 946 and 1129
+from the day alone, without looking at the hour. Fix direction: pick the word
+by the start time — "Ma délután" before about 17:00, "Ma este" after; for
+other days "<weekday> délután" / "<weekday> este"; and when the rail mixes
+afternoon and evening, plain "Ma" / "<weekday>", which the `upcomingToday`
+string already uses. Rounding the threshold at 17:00 matches how Hungarian
+theatre listings talk (a 15:00 is délutáni előadás, a 18:00 is esti).
+
+Done the same day, on `afternoon-is-not-evening`. `utils/datetime.ts` gained
+`daypart()` (afternoon before 17:00 Budapest, evening from then) and
+`daypartOfAll()` (undefined when a run of curtains straddles five). The hero
+badge says "Ma délután" / "Ma este"; the curtains rail says "Ma délután",
+"Szombat este", or just "Ma" / "Szombat" for a mixed day; the Műsor day
+heading does the same over the day's entries. "Legközelebb · szombat" was
+never wrong and is unchanged. Tests in `utils/datetime.test.ts`.
+
 ### T-111 · The questionnaire, version 5: nothing is left out
 type: chore · area: landing · priority: med · status: done · added: 2026-09-20 · done: 2026-09-20
 
@@ -3456,4 +3484,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-112**
+Next free id: **T-113**
