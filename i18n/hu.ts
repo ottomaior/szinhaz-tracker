@@ -3,7 +3,7 @@
  * Screens import from here rather than hardcoding strings, so a future
  * second language (or a copy change) touches this file only.
  */
-import { elapsedSince } from "@/utils/datetime";
+import { elapsedSince, type Daypart } from "@/utils/datetime";
 import { notificationLines } from "./notificationCopy";
 
 /** Hungarian number words for the curtains heading on Discover. */
@@ -208,10 +208,12 @@ export const strings = {
     upcomingEyebrow: "Műsor",
     upcomingAction: "Teljes műsor",
     upcomingToday: "Ma",
-    /* The lead: what is on tonight, or failing that the next evening there is
-       anything on at all. "Ma este" is the answer the reader came for; a
-       weekday is the honest substitute on a dark night. */
-    heroTonight: "Ma este",
+    /* The lead: what is on today, or failing that the next day there is
+       anything on at all. "Ma este" is the answer the reader came for — but
+       a 14:30 matinée is "Ma délután", and when the same day holds both, the
+       heading says only the day (T-112). A weekday is the honest substitute
+       on a dark night. */
+    heroToday: (part: Daypart | undefined) => (part === undefined ? "Ma" : part === "afternoon" ? "Ma délután" : "Ma este"),
     heroNext: (weekday: string) => `Legközelebb · ${weekday}`,
     heroOpen: "Megnézem",
     heroDirected: (name: string) => `${name} rendezése`,
@@ -219,8 +221,10 @@ export const strings = {
        across the theatres in scope. Spelled out up to twelve, because "8
        függöny" on a heading reads as a count and "Nyolc függöny" as a line. */
     curtainsTitle: (n: number) => `${CURTAIN_WORDS[n] ?? String(n)} függöny, egy este`,
-    curtainsEyebrowTonight: "Ma este",
-    curtainsEyebrowOn: (weekday: string) => `${weekday} este`,
+    curtainsEyebrowOn: (weekday: string | undefined, part: Daypart | undefined) => {
+      const day = weekday ?? "Ma";
+      return part === undefined ? day : part === "afternoon" ? `${day} délután` : `${day} este`;
+    },
     /* Section eyebrows: what kind of shelf each one is. */
     featuredEyebrow: "Szerkesztői válogatás",
     premieresEyebrow: "Bemutató előtt",

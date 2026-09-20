@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   budapestDayKey,
+  daypart,
+  daypartOfAll,
   elapsedSince,
   budapestMonthKey,
   dayKeyOffset,
@@ -183,5 +185,26 @@ describe("elapsedSince", () => {
     // Not "-1 órája". The device's clock is not authoritative and a card must
     // not report a negative age when it is a few seconds out.
     expect(elapsedSince("2026-09-06T12:00:30Z", now)).toEqual({ unit: "now" });
+  });
+});
+
+describe("daypart", () => {
+  // 2026-09-20: CEST, so Budapest = UTC+2.
+  it("calls a 14:30 matinée an afternoon and a 19:00 curtain an evening", () => {
+    expect(daypart("2026-09-20T12:30:00Z")).toBe("afternoon"); // 14:30 Budapest
+    expect(daypart("2026-09-20T17:00:00Z")).toBe("evening"); // 19:00 Budapest
+  });
+
+  it("switches at five o'clock Budapest time, not UTC", () => {
+    expect(daypart("2026-09-20T14:59:00Z")).toBe("afternoon"); // 16:59
+    expect(daypart("2026-09-20T15:00:00Z")).toBe("evening"); // 17:00
+    // In January (CET, +01:00) the same UTC hour is 16:00 in Budapest.
+    expect(daypart("2026-01-20T15:00:00Z")).toBe("afternoon");
+  });
+
+  it("is undefined for a day that mixes a matinée and an evening", () => {
+    expect(daypartOfAll(["2026-09-20T12:30:00Z", "2026-09-20T17:00:00Z"])).toBeUndefined();
+    expect(daypartOfAll(["2026-09-20T17:00:00Z", "2026-09-20T18:00:00Z"])).toBe("evening");
+    expect(daypartOfAll([])).toBeUndefined();
   });
 });

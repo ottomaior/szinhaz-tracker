@@ -103,6 +103,33 @@ export function formatTime(iso: string): string {
   });
 }
 
+/**
+ * Whether a curtain is an afternoon or an evening one, by Budapest wall-clock
+ * hour. Hungarian listings call anything before five a "délutáni előadás"
+ * and a 18:00 an "esti"; the app's "Ma este" badge sat on a 14:30 matinée
+ * until it looked at the hour (T-112).
+ */
+export type Daypart = "afternoon" | "evening";
+
+export const EVENING_STARTS_AT_HOUR = 17;
+
+export function daypart(iso: string): Daypart {
+  const hour = Number(
+    new Date(iso).toLocaleTimeString("en-GB", { timeZone: ZONE, hour: "2-digit", hour12: false }),
+  );
+  return hour < EVENING_STARTS_AT_HOUR ? "afternoon" : "evening";
+}
+
+/**
+ * The daypart of a whole run of curtains, or `undefined` when they straddle
+ * five o'clock — a rail with a 15:00 and a 19:00 in it is neither an
+ * afternoon nor an evening, and the heading says only the day.
+ */
+export function daypartOfAll(isos: readonly string[]): Daypart | undefined {
+  const parts = new Set(isos.map(daypart));
+  return parts.size === 1 ? [...parts][0] : undefined;
+}
+
 /** "2026. október" — a month heading for a grouped list of dates. */
 export function formatMonthHeading(iso: string): string {
   return new Date(iso).toLocaleDateString("hu-HU", { timeZone: ZONE, year: "numeric", month: "long" });
