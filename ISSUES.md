@@ -1136,6 +1136,12 @@ was not when the line was first written — an installable Android build exists.
 > baked in, built on EAS from `deb5bc1` (build `16c1b887`) — went to the
 > closed track as "7 (0.1.0)" and was sent for review. Same fingerprint as
 > build 6, so later updates reach both.
+>
+> Later the same day the T-112 fix (bce2cfa) went out as update group
+> `7144bd60` and 0.1.0 (8) was built on EAS (build `1d334669`), but Ottó
+> decided not to upload 8: nobody but him was on the track yet, and a new
+> install gets the update at its first launch anyway, so the build would
+> only have cost another review. It sits on EAS, ready if 7 is rejected.
 
 ### T-108 · Share the evening as a story
 type: idea · area: diary · size: M · status: done · added: 2026-09-19 · done: 2026-09-19
