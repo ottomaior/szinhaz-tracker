@@ -331,7 +331,7 @@ export function parseProductionDetails(html: string): ProductionDetails {
     .filter((t) => t && !/^Rendező[^:]*:/.test(t) && !/^Bemutató/.test(t) && !t.includes("kettőzött szerepek"))
     .join("\n\n");
 
-  const posterUrl = $('meta[property="og:image"]').attr("content") || undefined;
+  const posterUrl = posterUrlOf($);
 
   const cast: { name: string; role: string }[] = [];
   /*
@@ -407,6 +407,53 @@ export function parseProductionDetails(html: string): ProductionDetails {
     subtitle,
     cast,
   };
+}
+
+/**
+ * The poster, read from where the page shows it rather than from where it
+ * advertises it.
+ *
+ * The page draws its poster in the "flyer" block of the left column — a
+ * `div.flyer-blur` carrying the image as a background, with an `<img>` of the
+ * same file beside it. `og:image` is a different field: WordPress's featured
+ * image, which the theatre normally sets to the same file but does not have
+ * to. *Izzik a galagonya* and *Bernarda Alba háza* had a flyer and no
+ * featured image, so `og:image` fell back to the house picture, the shared-
+ * poster rule threw that away, and two productions with artwork on the site
+ * showed the letter tile in the app. This used to read `og:image` alone.
+ *
+ * The flyer is served as a WordPress resize (`…-600x845.jpg`), too small for
+ * a full-bleed hero. WordPress keeps the original upload at the same path
+ * without the size suffix, and when `og:image` is that original — or its
+ * `-scaled` copy, which is what WordPress serves as "full size" for very
+ * large uploads — it is used as is, so a poster already mirrored under that
+ * URL is not fetched and stored a second time. Only when the flyer is a
+ * different picture from `og:image`, or `og:image` is missing, does the
+ * stripped flyer URL become the poster. On the archived *A három testőr*
+ * page the two really are different posters; the flyer is the one a visitor
+ * sees, so it wins there too.
+ */
+export function posterUrlOf($: cheerio.CheerioAPI): string | undefined {
+  const ogImage = $('meta[property="og:image"]').attr("content")?.trim() || undefined;
+
+  const flyerStyle = $("div.flyer-blur").first().attr("style") ?? "";
+  const flyerMatch = flyerStyle.match(/url\(\s*['"]?([^'")]+)['"]?\s*\)/);
+  const flyer = flyerMatch?.[1]?.trim() || $("div.flyer-blur").first().next("img").attr("src")?.trim() || undefined;
+  if (!flyer) return ogImage;
+
+  const original = stripWordPressSize(flyer);
+  if (ogImage && stripWordPressSize(ogImage) === original) return ogImage;
+  return original;
+}
+
+/**
+ * `…/name-600x845.jpg` → `…/name.jpg`, `…/name-scaled.jpg` → `…/name.jpg`.
+ *
+ * Both are WordPress's own naming for the derived copies of one upload, so
+ * two URLs that agree after this refer to the same picture.
+ */
+export function stripWordPressSize(url: string): string {
+  return url.replace(/-(?:\d+x\d+|scaled)(\.[a-z0-9]+)$/i, "$1");
 }
 
 async function fetchCalendarMonth(yyyymm: string, year: number, month: number): Promise<CalendarOccurrence[]> {

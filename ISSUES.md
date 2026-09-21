@@ -419,6 +419,20 @@ attendance and the diary must never record an evening on someone's behalf.
 
 ## Open
 
+### T-113 · "látta a bemutatkozást" on the operator stats says nothing to its reader
+type: chore · area: design · priority: low · status: open · added: 2026-09-20
+
+Ottó looked at the Regisztrációk tiles on `/stats` and asked what "látta a
+bemutatkozást" means and how to reach that part. It counts profiles with
+`onboarded_at` set, which the first-run flow (`app/first-run.tsx`, T-083)
+writes the moment it opens. Two things hide that: the word "bemutatkozás"
+is used nowhere the user sees, and migration `0061` backfilled the column
+for every account that already existed, so the tile reads 2 of 2 today
+without anyone having been through the flow. Reword the label
+(`accountsOnboarded` in `i18n/hu.ts`) to name the thing — "végigment az
+első indításon" or similar — and give the tile a one-line hint saying
+what it measures, as the chart heading above it already does.
+
 ### T-073 · One sync request out of eleven was refused with "JWT issued at future"
 type: bug · area: data · priority: low · status: open · added: 2026-09-12
 
@@ -892,6 +906,34 @@ _Nothing yet._
 
 ## Done
 
+### T-114 · Csokonai posters uploaded as a flyer never reached the app
+type: bug · area: data · priority: med · status: done · added: 2026-09-21 · done: 2026-09-21
+
+On 21 September the Debrecen list on Discover showed letter tiles for *Izzik
+a galagonya* and *Bernarda Alba háza*, days after the theatre had put both
+posters up on csokonaiszinhaz.hu. Ottó saw it in the app.
+
+The Csokonai adapter read the poster from `og:image` only. On that site the
+poster a visitor sees is the "flyer" block of the production page
+(`div.flyer-blur` plus an `<img>` of the same file); `og:image` is
+WordPress's featured image, a separate field the theatre normally sets to
+the same file but had not for these two. So `og:image` fell back to the
+house picture (`csokonai-2023.jpeg`), the shared-poster rule threw that
+away as it should, and the productions ended up with no artwork at all even
+though the site had it.
+
+Done the same day, on `flyer-is-the-poster`. `posterUrlOf()` in
+`sync/adapters/csokonai.ts` now reads the flyer first; the flyer is served
+as a `-600x845` resize, so WordPress's size suffix is stripped to get the
+original upload. Where `og:image` is the same picture (the common case,
+including its `-scaled` copy) it is kept as is, so already mirrored posters
+are not fetched and stored again; where the flyer is a different picture,
+as on the archived *A három testőr* page, the flyer wins because it is the
+one the page shows. The recorded Galagonya page is the fixture. The
+fourteen Csokonai productions still without a poster (*Aida*, *Traviata*,
+*West Side Story*, …) have neither a flyer nor a featured image on the
+site — upcoming premieres with no artwork yet.
+
 ### T-112 · "Ma este" on the Discover lead is wrong for a matinée
 type: bug · area: design · priority: med · status: done · added: 2026-09-20 · done: 2026-09-20
 
@@ -1136,6 +1178,12 @@ was not when the line was first written — an installable Android build exists.
 > baked in, built on EAS from `deb5bc1` (build `16c1b887`) — went to the
 > closed track as "7 (0.1.0)" and was sent for review. Same fingerprint as
 > build 6, so later updates reach both.
+>
+> Later the same day the T-112 fix (bce2cfa) went out as update group
+> `7144bd60` and 0.1.0 (8) was built on EAS (build `1d334669`), but Ottó
+> decided not to upload 8: nobody but him was on the track yet, and a new
+> install gets the update at its first launch anyway, so the build would
+> only have cost another review. It sits on EAS, ready if 7 is rejected.
 
 ### T-108 · Share the evening as a story
 type: idea · area: diary · size: M · status: done · added: 2026-09-19 · done: 2026-09-19
@@ -3484,4 +3532,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-113**
+Next free id: **T-115**
