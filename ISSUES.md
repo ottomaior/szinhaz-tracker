@@ -906,6 +906,34 @@ _Nothing yet._
 
 ## Done
 
+### T-114 · Csokonai posters uploaded as a flyer never reached the app
+type: bug · area: data · priority: med · status: done · added: 2026-09-21 · done: 2026-09-21
+
+On 21 September the Debrecen list on Discover showed letter tiles for *Izzik
+a galagonya* and *Bernarda Alba háza*, days after the theatre had put both
+posters up on csokonaiszinhaz.hu. Ottó saw it in the app.
+
+The Csokonai adapter read the poster from `og:image` only. On that site the
+poster a visitor sees is the "flyer" block of the production page
+(`div.flyer-blur` plus an `<img>` of the same file); `og:image` is
+WordPress's featured image, a separate field the theatre normally sets to
+the same file but had not for these two. So `og:image` fell back to the
+house picture (`csokonai-2023.jpeg`), the shared-poster rule threw that
+away as it should, and the productions ended up with no artwork at all even
+though the site had it.
+
+Done the same day, on `flyer-is-the-poster`. `posterUrlOf()` in
+`sync/adapters/csokonai.ts` now reads the flyer first; the flyer is served
+as a `-600x845` resize, so WordPress's size suffix is stripped to get the
+original upload. Where `og:image` is the same picture (the common case,
+including its `-scaled` copy) it is kept as is, so already mirrored posters
+are not fetched and stored again; where the flyer is a different picture,
+as on the archived *A három testőr* page, the flyer wins because it is the
+one the page shows. The recorded Galagonya page is the fixture. The
+fourteen Csokonai productions still without a poster (*Aida*, *Traviata*,
+*West Side Story*, …) have neither a flyer nor a featured image on the
+site — upcoming premieres with no artwork yet.
+
 ### T-112 · "Ma este" on the Discover lead is wrong for a matinée
 type: bug · area: design · priority: med · status: done · added: 2026-09-20 · done: 2026-09-20
 
@@ -3504,4 +3532,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-114**
+Next free id: **T-115**

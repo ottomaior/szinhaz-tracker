@@ -1,7 +1,15 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { guestCompany, mergeDuplicateTitles, parseProductionDetails, visitingCompany } from "./csokonai";
+import {
+  guestCompany,
+  mergeDuplicateTitles,
+  parseProductionDetails,
+  posterUrlOf,
+  stripWordPressSize,
+  visitingCompany,
+} from "./csokonai";
+import * as cheerio from "cheerio";
 import type { SyncedPlay } from "../lib/types";
 
 /** A real production page from the live WordPress site. */
@@ -12,6 +20,13 @@ const abigel = readFileSync(join(__dirname, "../__fixtures__/csokonai-abigel-gue
 
 /** An archived guest run — same shape, reached through the archive adapter. */
 const pecsiBalett = readFileSync(join(__dirname, "../__fixtures__/csokonai-archive-detail.html"), "utf8");
+
+/**
+ * A production with a flyer but no featured image, recorded on 21 September
+ * 2026: `og:image` is the house picture, and the poster is only in the flyer
+ * block. This is the page the app showed a letter tile for.
+ */
+const galagonya = readFileSync(join(__dirname, "../__fixtures__/csokonai-izzik-a-galagonya.html"), "utf8");
 
 describe("csokonai parseProductionDetails", () => {
   const details = parseProductionDetails(janosVitez);
@@ -34,8 +49,12 @@ describe("csokonai parseProductionDetails", () => {
     expect(details.premiereDate).toBe("2026-01-16");
   });
 
-  it("takes the poster from og:image", () => {
-    expect(details.posterUrl).toMatch(/^https:\/\/csokonaiszinhaz\.hu\/wp-content\/uploads\//);
+  it("keeps og:image as the poster when it is the same picture as the flyer", () => {
+    // The flyer is the 600x857 resize of this same upload; og:image is the
+    // full-size URL already mirrored, so it must stay to avoid a re-fetch.
+    expect(details.posterUrl).toBe(
+      "https://csokonaiszinhaz.hu/wp-content/uploads/2025/06/janos-vitez-plakat-final-alapterv-web-2400px-ok-jav-daljatek-scaled.jpg"
+    );
   });
 
   it("captures the full cast with roles", () => {
@@ -140,6 +159,54 @@ function play(overrides: Partial<SyncedPlay> & { sourceKey: string; title: strin
     ...overrides,
   };
 }
+
+describe("csokonai posterUrlOf", () => {
+  it("takes the flyer when og:image is only the house picture", () => {
+    const details = parseProductionDetails(galagonya);
+    // The flyer is served as a 600x845 resize; the poster is the original
+    // upload at the same path without the size suffix.
+    expect(details.posterUrl).toBe(
+      "https://csokonaiszinhaz.hu/wp-content/uploads/2026/06/csokonai-izzik-a-galagonya-b2-2-page-0001.jpg"
+    );
+  });
+
+  it("prefers the flyer when it is a different picture from og:image", () => {
+    // The archived A három testőr page: featured image and flyer are two
+    // different posters, and the flyer is the one the page shows.
+    const details = parseProductionDetails(pecsiBalett);
+    expect(details.posterUrl).toBe(
+      "https://csokonaiszinhaz.hu/wp-content/uploads/2025/03/2024-08-22-pecsi-balett-a-harom-testor-poster-900px-1.jpg"
+    );
+  });
+
+  it("falls back to og:image on a page without a flyer", () => {
+    const $ = cheerio.load('<meta property="og:image" content="https://csokonaiszinhaz.hu/wp-content/uploads/x/p.jpg">');
+    expect(posterUrlOf($)).toBe("https://csokonaiszinhaz.hu/wp-content/uploads/x/p.jpg");
+  });
+
+  it("reads the flyer off the img when the background style is missing", () => {
+    const $ = cheerio.load(
+      '<div class="flyer-blur"></div><img src="https://csokonaiszinhaz.hu/wp-content/uploads/x/p-600x845.jpg">'
+    );
+    expect(posterUrlOf($)).toBe("https://csokonaiszinhaz.hu/wp-content/uploads/x/p.jpg");
+  });
+
+  it("returns nothing when the page has neither", () => {
+    expect(posterUrlOf(cheerio.load("<p>hi</p>"))).toBeUndefined();
+  });
+});
+
+describe("stripWordPressSize", () => {
+  it("removes a size suffix", () => {
+    expect(stripWordPressSize("https://x/y/name-600x845.jpg")).toBe("https://x/y/name.jpg");
+  });
+  it("removes the -scaled suffix", () => {
+    expect(stripWordPressSize("https://x/y/name-scaled.jpeg")).toBe("https://x/y/name.jpeg");
+  });
+  it("leaves an original alone", () => {
+    expect(stripWordPressSize("https://x/y/name-2400px-ok.jpg")).toBe("https://x/y/name-2400px-ok.jpg");
+  });
+});
 
 describe("mergeDuplicateTitles", () => {
   it("keeps the richer metadata when two pages describe one production", () => {
