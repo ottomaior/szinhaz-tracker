@@ -87,6 +87,14 @@ type RawPerformance = {
   content_two?: Localized;
   content_three?: Localized;
   image?: string | null;
+  /**
+   * The production page's hero picture(s). Where `image` is set the first of
+   * these is the same photograph under a different path; where it is not —
+   * seven current productions on 21 September 2026, *Gyógyfürdő* and *Berlin,
+   * Alexanderplatz* among them — this is the only cover the site has, and it
+   * is what the page shows. See `posterOf`.
+   */
+  images?: { image?: string | null }[] | null;
   contributors?: Localized; // JSON-encoded string: [{role, contributor: "<id>"}]
   creators?: Localized; // same shape
   tags?: { text?: string }[];
@@ -205,7 +213,7 @@ async function run(): Promise<SyncedPlay[]> {
       intermissions,
       premiereDate: parseHungarianDate(p.premiere),
       synopsis: synopsis || undefined,
-      posterUrl: p.image ? `${SITE_URL}/${p.image}` : undefined,
+      posterUrl: posterOf(p),
       isArchived: p.category_id === CATEGORY_ARCHIVE,
       cast,
       performances: [],
@@ -231,6 +239,24 @@ async function run(): Promise<SyncedPlay[]> {
   }
 
   return [...byId.values()];
+}
+
+/**
+ * The cover, from either field the API keeps it in.
+ *
+ * `image` is the card picture the listing uses, `images` is the hero slider
+ * on the production page, and for most productions the two are one
+ * photograph. The theatre does not always fill both: seven current
+ * productions had a hero and no card picture, and because this read `image`
+ * alone they showed the letter tile in the app while the site showed their
+ * artwork. The same shape as Csokonai's T-114, in a different CMS.
+ *
+ * The paths come with and without a leading slash (`uploads/…` in `image`,
+ * `/uploads/…` in `images`), hence the trim.
+ */
+export function posterOf(p: Pick<RawPerformance, "image" | "images">): string | undefined {
+  const path = p.image || p.images?.find((i) => i?.image)?.image;
+  return path ? `${SITE_URL}/${path.replace(/^\/+/, "")}` : undefined;
 }
 
 export const orkenyAdapter: SyncAdapter = { name: "orkeny", run };

@@ -906,6 +906,33 @@ _Nothing yet._
 
 ## Done
 
+### T-115 · Örkény covers kept only in the hero field never reached the app
+type: bug · area: data · priority: med · status: done · added: 2026-09-21 · done: 2026-09-21
+
+Found while checking every theatre for the shape of T-114. Seven current
+Örkény productions — *Gyógyfürdő*, *Berlin, Alexanderplatz*, *A fátyol
+titkai*, *Mega-game*, *A teljesség igénye*, *A nő, aki saját magát kereste*,
+*Légy imádott az asszonyok között!* — showed letter tiles while the site
+showed their artwork.
+
+Örkény's `/api/performances` keeps a cover in two fields: `image`, the card
+picture the listing uses, and `images[]`, the hero slider on the production
+page. For 189 productions both are set and are the same photograph under two
+paths; for these seven only `images` is, and the adapter read `image` alone.
+
+Done the same day, on `orkeny-pictures-field`. `posterOf()` in
+`sync/adapters/orkeny.ts` takes `image` and falls back to the first
+`images[].image`; a dry run against the live API gives 203/203 posters.
+Where both fields are set `image` is still preferred, so nothing already
+mirrored is fetched again.
+
+The same sweep found no other adapter with this problem. The productions
+still without a poster after it — 14 at Csokonai, 10 at Katona, 3 at
+Radnóti — have no artwork on their site at all, only the house image
+(`csokonai-2023.jpeg`, `KATONA-eloadasok-kezdokep-22.jpg`,
+`evad_2026_2027.jpg`) that the shared-poster rule drops on purpose.
+Central, Madách, Nemzeti, Vígszínház and Vojtina are complete.
+
 ### T-114 · Csokonai posters uploaded as a flyer never reached the app
 type: bug · area: data · priority: med · status: done · added: 2026-09-21 · done: 2026-09-21
 
@@ -3532,4 +3559,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-115**
+Next free id: **T-116**
