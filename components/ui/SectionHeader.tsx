@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
-import { space } from "@/theme/tokens";
+import { legacy, space } from "@/theme/tokens";
 import { Text } from "@/components/ui/Text";
 
 /**
@@ -66,5 +66,5 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: space.md,
   },
-  titles: { flexShrink: 1, gap: 3 },
+  titles: { flexShrink: 1, gap: legacy.stackGap3 },
 });

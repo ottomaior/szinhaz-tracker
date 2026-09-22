@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { View, StyleSheet, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { gutter, space } from "@/theme/tokens";
+import { gutter, hairlineWidth, space } from "@/theme/tokens";
 import { CloseIcon } from "@/components/icons/Icons";
 import { Text } from "@/components/ui/Text";
 import { ContentColumn } from "@/components/ui/Screen";
@@ -56,7 +56,7 @@ export function ModalHeader({
 
 const useStyles = makeStyles((colors) => StyleSheet.create({
   bar: {
-    borderBottomWidth: 1,
+    borderBottomWidth: hairlineWidth,
     borderBottomColor: colors.hairlineSoft,
     backgroundColor: colors.bg,
   },

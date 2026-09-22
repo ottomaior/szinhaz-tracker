@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { useFocusEffect, usePathname, useRouter } from "expo-router";
-import { gutter, maxWidth, radius, space } from "@/theme/tokens";
+import { gutter, hairlineWidth, legacy, maxWidth, radius, space } from "@/theme/tokens";
 import { useAuth } from "@/contexts/AuthContext";
 import { getCurrentUser } from "@/services/playsService";
 import type { User } from "@/data/types";
@@ -108,7 +108,7 @@ export function TopBar() {
 const useStyles = makeStyles((colors) => StyleSheet.create({
   bar: {
     backgroundColor: colors.bgElevated,
-    borderBottomWidth: 1,
+    borderBottomWidth: hairlineWidth,
     borderBottomColor: colors.hairlineSoft,
     alignItems: "center",
   },
@@ -124,5 +124,5 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   brand: { flexDirection: "row", alignItems: "center", gap: space.sm },
   nav: { flex: 1, flexDirection: "row", alignItems: "center" },
   actions: { flexDirection: "row", alignItems: "center", gap: space.lg },
-  logButton: { paddingVertical: 8, paddingHorizontal: space.lg, borderRadius: radius.pill },
+  logButton: { paddingVertical: legacy.topBarButtonPaddingVertical, paddingHorizontal: space.lg, borderRadius: radius.pill },
 }));

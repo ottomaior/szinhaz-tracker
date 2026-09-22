@@ -1,6 +1,7 @@
 import { Pressable, Text, StyleSheet } from "react-native";
 import { colors } from "@/theme/colors";
-import { bodyFont } from "@/theme/typography";
+import { legacyType } from "@/theme/type";
+import { hairlineWidth, legacy, radius } from "@/theme/tokens";
 import { useAppFonts } from "@/hooks/useAppFonts";
 import { makeStyles } from "@/theme/styles";
 import { haptic } from "@/utils/haptics";
@@ -33,13 +34,7 @@ export function Chip({
       accessibilityState={{ selected: active }}
       style={[styles.base, active ? styles.active : styles.inactive]}
     >
-      <Text
-        style={{
-          fontFamily: bodyFont(fontsLoaded, active ? "bold" : "medium"),
-          fontSize: 12.5,
-          color: active ? colors.onAccent : colors.textDim,
-        }}
-      >
+      <Text style={[legacyType(active ? "chipActive" : "chip", fontsLoaded), { color: active ? colors.onAccent : colors.textDim }]}>
         {label}
       </Text>
     </Pressable>
@@ -48,16 +43,16 @@ export function Chip({
 
 const useStyles = makeStyles((colors) => StyleSheet.create({
   base: {
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 999,
+    paddingVertical: legacy.chipPaddingVertical,
+    paddingHorizontal: legacy.chipPaddingHorizontal,
+    borderRadius: radius.pill,
   },
   active: {
     backgroundColor: colors.gold,
   },
   inactive: {
     backgroundColor: colors.surface,
-    borderWidth: 1,
+    borderWidth: hairlineWidth,
     borderColor: colors.hairline,
   },
 }));

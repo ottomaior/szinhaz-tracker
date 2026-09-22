@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { colors } from "@/theme/colors";
-import { gutter, minTouchTarget, overlay, radius, space } from "@/theme/tokens";
-import { bodyFont } from "@/theme/typography";
+import { hairlineWidth, legacy, radius, space } from "@/theme/tokens";
+import { legacyType } from "@/theme/type";
 import { useAppFonts } from "@/hooks/useAppFonts";
-import { CheckIcon, ChevronDownIcon, CloseIcon, PinIcon } from "@/components/icons/Icons";
+import { CheckIcon, ChevronDownIcon, PinIcon } from "@/components/icons/Icons";
+import { Sheet, SheetOption } from "@/components/ui/Sheet";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 import { makeStyles } from "@/theme/styles";
@@ -78,7 +78,6 @@ export function SelectChip({
   const styles = useStyles();
 
   const fontsLoaded = useAppFonts();
-  const insets = useSafeAreaInsets();
   const [open, setOpen] = useState(false);
 
   const selected = options.find((o) => o.value === value);
@@ -112,7 +111,7 @@ export function SelectChip({
                 knew it could be pressed. */}
             <PinIcon size={14} color={colors.gold} />
             <Text variant="bodySmall" numberOfLines={1} style={{ flexShrink: 1 }}>
-              <Text variant="bodySmall" style={{ fontFamily: bodyFont(fontsLoaded, "semibold") }}>
+              <Text variant="bodySmall" weight="semibold">
                 {selected?.label ?? strings.discover.filterAll}
               </Text>
               {!!subtitle && (
@@ -135,12 +134,7 @@ export function SelectChip({
         >
           <Text
             numberOfLines={1}
-            style={{
-              fontFamily: bodyFont(fontsLoaded, active ? "bold" : "medium"),
-              fontSize: 12.5,
-              color: active ? colors.onAccent : colors.textDim,
-              maxWidth: 150,
-            }}
+            style={[legacyType(active ? "chipActive" : "chip", fontsLoaded), { color: active ? colors.onAccent : colors.textDim, maxWidth: 150 }]}
           >
             {label}
           </Text>
@@ -148,28 +142,7 @@ export function SelectChip({
         </Pressable>
       )}
 
-      <Modal
-        visible={open}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setOpen(false)}
-        // Android's hardware back closes the sheet rather than leaving the
-        // screen, which `onRequestClose` is what wires up.
-        accessibilityViewIsModal
-      >
-        {/* Tapping the dimmed area behind the sheet dismisses it. The sheet
-            itself stops the press, so a tap inside never closes it. */}
-        <Pressable style={styles.backdrop} onPress={() => setOpen(false)} accessibilityLabel={strings.common.close}>
-          <Pressable style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, space.lg) }]} onPress={() => {}}>
-            <View style={styles.grabber} />
-
-            <View style={styles.sheetHeader}>
-              <Text variant="subheading">{title ?? name}</Text>
-              <Pressable onPress={() => setOpen(false)} hitSlop={10} accessibilityRole="button" accessibilityLabel={strings.common.close}>
-                <CloseIcon size={17} color={colors.textDim} />
-              </Pressable>
-            </View>
-
+      <Sheet visible={open} onClose={() => setOpen(false)} title={title ?? name}>
             <ScrollView
               // Bounded so a long list — 8 theatres, 9 genres — scrolls inside
               // the sheet instead of pushing it off the top of the screen.
@@ -179,44 +152,40 @@ export function SelectChip({
               {options.map((option) => {
                 const isSelected = option.value === value;
                 return (
-                  <Pressable
+                  <SheetOption
                     key={option.value ?? "__all__"}
                     onPress={() => {
                       haptic("selection");
                       onChange(option.value);
                       setOpen(false);
                     }}
-                    accessibilityRole="button"
-                    aria-pressed={isSelected}
-                    accessibilityState={{ selected: isSelected }}
+                    selected={isSelected}
                     style={styles.option}
+                    trailing={isSelected ? <CheckIcon size={16} /> : undefined}
                   >
                     <Text variant="body" tone={isSelected ? "accent" : "default"} style={{ flex: 1 }}>
                       {option.label}
                     </Text>
-                    {isSelected && <CheckIcon size={16} />}
-                  </Pressable>
+                  </SheetOption>
                 );
               })}
             </ScrollView>
-          </Pressable>
-        </Pressable>
-      </Modal>
+      </Sheet>
     </>
   );
 }
 
-const useStyles = makeStyles((colors, elevation) => StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   chip: {
     flexDirection: "row",
     alignItems: "center",
     gap: space.sm,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    paddingVertical: legacy.chipPaddingVertical,
+    paddingHorizontal: legacy.chipPaddingHorizontal,
     borderRadius: radius.pill,
   },
   chipActive: { backgroundColor: colors.gold },
-  chipIdle: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.hairline },
+  chipIdle: { backgroundColor: colors.surface, borderWidth: hairlineWidth, borderColor: colors.hairline },
 
   /* Painted like the idle chips, a size up, so it is unmistakably a button:
      the city is the control most readers touch first, and unpainted it read
@@ -224,62 +193,19 @@ const useStyles = makeStyles((colors, elevation) => StyleSheet.create({
   header: {
     alignSelf: "flex-start",
     marginTop: space.xs,
-    minHeight: 36,
-    paddingVertical: 7,
-    paddingLeft: 12,
-    paddingRight: 14,
+    minHeight: legacy.headerChipMinHeight,
+    paddingVertical: legacy.headerChipPaddingVertical,
+    paddingLeft: legacy.headerChipPaddingLeft,
+    paddingRight: legacy.chipPaddingHorizontal,
     borderRadius: radius.pill,
     backgroundColor: colors.surface,
-    borderWidth: 1,
+    borderWidth: hairlineWidth,
     borderColor: colors.hairline,
     justifyContent: "center",
   },
   headerLine: { flexDirection: "row", alignItems: "center", gap: space.sm },
 
-  /*
-   * Absolutely filled rather than `flex: 1`.
-   *
-   * On react-native-web a Modal's child does not inherit a definite height, so
-   * `flex: 1` collapses it to its content and the sheet renders as a few words
-   * in the bottom-left corner with no backdrop. Pinning all four edges gives
-   * the same result on native and is unambiguous on web.
-   */
-  backdrop: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: overlay.scrim,
-    justifyContent: "flex-end",
-  },
-  sheet: {
-    backgroundColor: colors.bgElevated,
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
-    paddingHorizontal: gutter,
-    paddingTop: space.md,
-    ...elevation.floating,
-  },
-  /** The short bar that says a sheet can be dismissed downward. */
-  grabber: {
-    alignSelf: "center",
-    width: 36,
-    height: 4,
-    borderRadius: radius.pill,
-    backgroundColor: colors.hairline,
-    marginBottom: space.md,
-  },
-  sheetHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingBottom: space.sm,
-    marginBottom: space.xs,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.hairlineSoft,
-  },
-  option: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.md,
-    minHeight: minTouchTarget,
-    paddingVertical: space.md,
-  },
+  // A step taller than the Sheet's own option: a list of eight theatres is
+  // read, not scanned, and the extra air is what makes it a list.
+  option: { paddingVertical: space.md },
 }));

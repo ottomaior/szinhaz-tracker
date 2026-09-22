@@ -3,7 +3,7 @@ import { Animated, Pressable, StyleSheet, View, type StyleProp, type ViewStyle }
 import { useAnimatedValue } from "@/hooks/useAnimatedValue";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { Text } from "@/components/ui/Text";
-import { radius } from "@/theme/tokens";
+import { control, hairlineWidth, legacy, radius } from "@/theme/tokens";
 import { makeStyles } from "@/theme/styles";
 
 /**
@@ -98,16 +98,16 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   track: {
     flexDirection: "row",
     alignSelf: "flex-start",
-    padding: 3,
+    padding: legacy.pillTabsPadding,
     borderRadius: radius.pill,
     backgroundColor: colors.surface,
-    borderWidth: 1,
+    borderWidth: hairlineWidth,
     borderColor: colors.hairlineSoft,
-    gap: 2,
+    gap: legacy.pillTabsGap,
   },
-  trackFlat: { flexDirection: "row", alignSelf: "flex-start", gap: 2 },
-  tab: { height: 32, paddingHorizontal: 14, alignItems: "center", justifyContent: "center", borderRadius: radius.pill },
-  pill: { position: "absolute", top: 3, bottom: 3, left: 0, borderRadius: radius.pill },
+  trackFlat: { flexDirection: "row", alignSelf: "flex-start", gap: legacy.pillTabsGap },
+  tab: { height: control.sm, paddingHorizontal: legacy.pillTabsPaddingHorizontal, alignItems: "center", justifyContent: "center", borderRadius: radius.pill },
+  pill: { position: "absolute", top: legacy.pillTabsPadding, bottom: legacy.pillTabsPadding, left: 0, borderRadius: radius.pill },
   pillGold: { backgroundColor: colors.gold, boxShadow: `0 4px 14px ${colors.goldGlow}` },
   pillFlat: { top: 0, bottom: 0, backgroundColor: colors.neutralTintBg },
 }));

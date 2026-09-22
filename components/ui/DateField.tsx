@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
-import { Modal, Pressable, StyleSheet, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Pressable, StyleSheet, View } from "react-native";
 import { colors } from "@/theme/colors";
-import { gutter, minTouchTarget, overlay, radius, space } from "@/theme/tokens";
-import { bodyFont } from "@/theme/typography";
+import { hairlineWidth, legacy, minTouchTarget, radius, space } from "@/theme/tokens";
+import { legacyType } from "@/theme/type";
 import { useAppFonts } from "@/hooks/useAppFonts";
-import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, CloseIcon } from "@/components/icons/Icons";
+import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon } from "@/components/icons/Icons";
+import { Sheet } from "@/components/ui/Sheet";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 import { dayKeyOffset, formatLongDate, todayInBudapest } from "@/utils/datetime";
@@ -56,7 +56,6 @@ export function DateField({
   const styles = useStyles();
 
   const fontsLoaded = useAppFonts();
-  const insets = useSafeAreaInsets();
   const [open, setOpen] = useState(false);
 
   const today = todayInBudapest();
@@ -108,29 +107,15 @@ export function DateField({
         style={styles.chip}
       >
         <CalendarIcon size={13} color={colors.gold} />
-        <Text
-          numberOfLines={1}
-          style={{ fontFamily: bodyFont(fontsLoaded, "medium"), fontSize: 12.5, color: colors.text }}
-        >
+        <Text numberOfLines={1} style={[legacyType("chip", fontsLoaded), { color: colors.text }]}>
           {chipLabel}
         </Text>
       </Pressable>
 
-      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)} accessibilityViewIsModal>
-        {/* Same construction as SelectChip's sheet, and for the same reason:
-            on react-native-web a Modal's child inherits no definite height, so
-            `flex: 1` collapses the sheet into the corner with no backdrop. */}
-        <Pressable style={styles.backdrop} onPress={() => setOpen(false)} accessibilityLabel={strings.common.close}>
-          <Pressable style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, space.lg) }]} onPress={() => {}}>
-            <View style={styles.grabber} />
-
-            <View style={styles.sheetHeader}>
-              <Text variant="subheading">{label}</Text>
-              <Pressable onPress={() => setOpen(false)} hitSlop={10} accessibilityRole="button" accessibilityLabel={strings.common.close}>
-                <CloseIcon size={17} color={colors.textDim} />
-              </Pressable>
-            </View>
-
+      {/* A step more air under the header than the Sheet gives by default:
+          the quick picks are pills, and pills hard against a rule read as
+          part of it. */}
+      <Sheet visible={open} onClose={() => setOpen(false)} title={label} contentStyle={{ paddingTop: space.sm }}>
             <View style={styles.quickRow}>
               <QuickPick label={strings.checkin.today} active={value === today} onPress={() => choose(today)} />
               <QuickPick label={strings.checkin.yesterday} active={value === yesterday} onPress={() => choose(yesterday)} />
@@ -190,9 +175,7 @@ export function DateField({
                 );
               })}
             </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
+      </Sheet>
     </>
   );
 }
@@ -209,68 +192,31 @@ function QuickPick({ label, active, onPress }: { label: string; active: boolean;
       accessibilityState={{ selected: active }}
       style={[styles.quick, active ? styles.quickActive : styles.quickIdle]}
     >
-      <Text
-        style={{
-          fontFamily: bodyFont(fontsLoaded, active ? "bold" : "medium"),
-          fontSize: 12.5,
-          color: active ? colors.onAccent : colors.textDim,
-        }}
-      >
+      <Text style={[legacyType(active ? "chipActive" : "chip", fontsLoaded), { color: active ? colors.onAccent : colors.textDim }]}>
         {label}
       </Text>
     </Pressable>
   );
 }
 
-const useStyles = makeStyles((colors, elevation) => StyleSheet.create({
+const useStyles = makeStyles((colors) => StyleSheet.create({
   chip: {
     flexDirection: "row",
     alignItems: "center",
     gap: space.sm,
-    paddingVertical: 9,
-    paddingHorizontal: 14,
+    paddingVertical: legacy.dateChipPaddingVertical,
+    paddingHorizontal: legacy.chipPaddingHorizontal,
     borderRadius: radius.pill,
     backgroundColor: colors.surface,
-    borderWidth: 1,
+    borderWidth: hairlineWidth,
     borderColor: colors.hairline,
     alignSelf: "flex-start",
   },
 
-  backdrop: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: overlay.scrim,
-    justifyContent: "flex-end",
-  },
-  sheet: {
-    backgroundColor: colors.bgElevated,
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
-    paddingHorizontal: gutter,
-    paddingTop: space.md,
-    ...elevation.floating,
-  },
-  grabber: {
-    alignSelf: "center",
-    width: 36,
-    height: 4,
-    borderRadius: radius.pill,
-    backgroundColor: colors.hairline,
-    marginBottom: space.md,
-  },
-  sheetHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingBottom: space.sm,
-    marginBottom: space.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.hairlineSoft,
-  },
-
   quickRow: { flexDirection: "row", gap: space.sm, marginBottom: space.lg },
-  quick: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: radius.pill },
+  quick: { paddingVertical: legacy.followButtonPaddingVertical, paddingHorizontal: space.lg, borderRadius: radius.pill },
   quickActive: { backgroundColor: colors.gold },
-  quickIdle: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.hairline },
+  quickIdle: { backgroundColor: colors.surface, borderWidth: hairlineWidth, borderColor: colors.hairline },
 
   monthBar: {
     flexDirection: "row",

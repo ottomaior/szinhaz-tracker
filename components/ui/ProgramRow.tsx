@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, View } from "react-native";
-import { radius, space } from "@/theme/tokens";
+import { hairlineWidth, legacy, radius, space } from "@/theme/tokens";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
@@ -119,12 +119,12 @@ export function ProgramRowSkeleton() {
   const styles = useStyles();
   return (
     <View style={styles.row}>
-      <View style={[styles.lead, { gap: 6 }]}>
+      <View style={[styles.lead, { gap: legacy.programRowLeadGap }]}>
         <Skeleton width={26} height={22} />
         <Skeleton width={22} height={9} />
       </View>
       <Skeleton width={48} height={64} />
-      <View style={[styles.body, { gap: 8 }]}>
+      <View style={[styles.body, { gap: legacy.programRowBodyGap }]}>
         <Skeleton height={14} width="70%" />
         <Skeleton height={10} width="50%" />
       </View>
@@ -166,14 +166,14 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: space.md,
-    paddingVertical: space.sm + 2,
-    borderTopWidth: 1,
+    paddingVertical: legacy.programRowPaddingVertical,
+    borderTopWidth: hairlineWidth,
     borderTopColor: colors.hairlineSoft,
   },
   // Fixed width so the dates form a column rather than stepping in and out
   // with the width of each number.
   lead: { width: 44, alignItems: "center", justifyContent: "center" },
   leadTime: { width: 58, alignItems: "flex-start" },
-  weekday: { marginTop: -2 },
-  body: { flex: 1, gap: 3 },
+  weekday: { marginTop: legacy.programRowWeekdayNudge },
+  body: { flex: 1, gap: legacy.stackGap3 },
 }));

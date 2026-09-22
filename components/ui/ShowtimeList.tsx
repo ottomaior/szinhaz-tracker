@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
-import { space } from "@/theme/tokens";
+import { hairlineWidth, legacy, space } from "@/theme/tokens";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Text } from "@/components/ui/Text";
 import { budapestMonthKey, formatMonthHeading, formatShortDate, formatTime, formatWeekday } from "@/utils/datetime";
@@ -130,7 +130,7 @@ function ShowtimeRow({ performance, kind }: { performance: Performance; kind?: s
           share about 150pt, and "Csokonai Teátrum · énekkari próba" wrapped
           mid-phrase. Two short lines read as two facts. */}
       {(!!performance.room || !!kind) && (
-        <View style={{ flexShrink: 1, gap: 1 }}>
+        <View style={{ flexShrink: 1, gap: legacy.stackGap1 }}>
           {!!performance.room && (
             <Text variant="caption" tone="dim" numberOfLines={1}>
               {performance.room}
@@ -195,11 +195,11 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     alignItems: "center",
     gap: space.md,
     paddingVertical: space.md - 2,
-    borderTopWidth: 1,
+    borderTopWidth: hairlineWidth,
     borderTopColor: colors.hairlineSoft,
   },
   // Fixed widths so the dates and the times line up in columns down the list
   // rather than starting at a different x for every row.
-  dateBlock: { width: 92, gap: 1 },
+  dateBlock: { width: 92, gap: legacy.stackGap1 },
   time: { width: 64 },
 }));

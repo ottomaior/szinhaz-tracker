@@ -3,7 +3,7 @@ import { StyleSheet, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from "@/contexts/AuthContext";
 import { enablePush, getPushStatus, type PushStatus } from "@/services/pushService";
-import { radius, space } from "@/theme/tokens";
+import { hairlineWidth, radius, space } from "@/theme/tokens";
 import { makeStyles } from "@/theme/styles";
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
@@ -101,7 +101,7 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     gap: space.sm,
     padding: space.lg,
     borderRadius: radius.md,
-    borderWidth: 1,
+    borderWidth: hairlineWidth,
     borderColor: colors.gold,
     backgroundColor: colors.goldTintBg,
   },

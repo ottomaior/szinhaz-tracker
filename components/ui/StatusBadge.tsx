@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet } from "react-native";
 import { useColors } from "@/theme/styles";
-import { bodyFont } from "@/theme/typography";
+import { legacyType } from "@/theme/type";
+import { hairlineWidth, legacy, radius } from "@/theme/tokens";
 import { useAppFonts } from "@/hooks/useAppFonts";
 import { strings } from "@/i18n/hu";
 import type { Palette } from "@/theme/themes";
@@ -47,14 +48,7 @@ export function StatusBadge({
       ]}
     >
       {status === "running" && <View style={[styles.dot, { backgroundColor: tone.text }]} />}
-      <Text
-        style={{
-          fontFamily: bodyFont(fontsLoaded, "bold"),
-          fontSize: small ? 9.5 : 10.5,
-          letterSpacing: 0.04,
-          color: tone.text,
-        }}
-      >
+      <Text style={[legacyType(small ? "badgeSmall" : "badge", fontsLoaded), { color: tone.text }]}>
         {strings.status[status]}
       </Text>
     </View>
@@ -75,7 +69,7 @@ export function StatusInline({ status }: { status: PlayStatus }) {
   if (status === "unknown") return null;
   const tone = tonesFor(colors)[status];
   return (
-    <Text style={{ fontFamily: bodyFont(fontsLoaded, "semibold"), color: tone.text }}>
+    <Text style={[legacyType("statusInline", fontsLoaded), { color: tone.text }]}>
       {"● "}
       {strings.status[status]}
     </Text>
@@ -102,13 +96,13 @@ const styles = StyleSheet.create({
   base: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
+    gap: legacy.badgeGap,
     alignSelf: "flex-start",
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingVertical: 3,
-    paddingHorizontal: 9,
+    borderWidth: hairlineWidth,
+    borderRadius: radius.pill,
+    paddingVertical: legacy.badgePaddingVertical,
+    paddingHorizontal: legacy.badgePaddingHorizontal,
   },
-  small: { paddingVertical: 2, paddingHorizontal: 7, gap: 4 },
-  dot: { width: 5, height: 5, borderRadius: 2.5 },
+  small: { paddingVertical: legacy.badgeSmallPaddingVertical, paddingHorizontal: legacy.badgeSmallPaddingHorizontal, gap: legacy.badgeSmallGap },
+  dot: { width: legacy.badgeGap, height: legacy.badgeGap, borderRadius: radius.pill },
 });

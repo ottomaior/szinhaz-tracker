@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Animated, Platform, Pressable, StyleSheet, View, type PressableProps, type StyleProp, type ViewStyle } from "react-native";
 import { useAnimatedValue } from "@/hooks/useAnimatedValue";
 import { NATIVE_DRIVER, useReducedMotion } from "@/hooks/useReducedMotion";
+import { overlay } from "@/theme/tokens";
 
 /**
  * A card that answers the hand, after reactbits' "Tilted Card" and "Glare
@@ -132,5 +133,5 @@ const styles = StyleSheet.create({
   glare: { alignItems: "center", justifyContent: "center" },
   // A tall soft band, moved across the card by `glareX`. White at low alpha
   // rather than a palette token: it is light on a photograph, in every theme.
-  glareBand: { width: "38%", height: "200%", backgroundColor: "rgba(255,255,255,0.10)" },
+  glareBand: { width: "38%", height: "200%", backgroundColor: overlay.glare },
 });

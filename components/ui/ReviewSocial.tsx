@@ -1,11 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { View, StyleSheet, Pressable, TextInput } from "react-native";
+import { View, StyleSheet, Pressable } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
-import { inputFontSize } from "@/theme/type";
-import { radius, space } from "@/theme/tokens";
-import { bodyFont } from "@/theme/typography";
-import { useAppFonts } from "@/hooks/useAppFonts";
+import { hairlineWidth, legacy, radius, space } from "@/theme/tokens";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   COMMENT_MAX_LENGTH,
@@ -21,6 +18,8 @@ import { HeartIcon } from "@/components/icons/Icons";
 import { Avatar } from "@/components/ui/Avatar";
 import { ReportSheet } from "@/components/ui/ReportSheet";
 import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
+import type { TextInput } from "react-native";
 import { formatTimeAgo, strings } from "@/i18n/hu";
 import { makeStyles } from "@/theme/styles";
 import { useToast } from "@/components/ui/Toast";
@@ -59,7 +58,6 @@ export function ReviewSocial({
 
   const router = useRouter();
   const toast = useToast();
-  const fontsLoaded = useAppFonts();
   const { session } = useAuth();
 
   const [likes, setLikes] = useState(0);
@@ -215,7 +213,7 @@ export function ReviewSocial({
             >
               <Avatar uri={c.authorAvatarUrl} initials={c.authorInitials} size={30} />
             </Pressable>
-            <View style={{ flex: 1, gap: 2 }}>
+            <View style={{ flex: 1, gap: space["2xs"] }}>
               <View style={styles.commentMeta}>
                 <Text variant="label" numberOfLines={1} style={{ flexShrink: 1 }}>
                   {c.authorName}
@@ -262,17 +260,16 @@ export function ReviewSocial({
 
         {session ? (
           <View style={{ gap: space.sm }}>
-            <TextInput
+            <TextField
               ref={composer}
               value={draft}
               onChangeText={setDraft}
               placeholder={strings.social.commentPlaceholder}
-              placeholderTextColor={colors.textFaint}
               accessibilityLabel={strings.social.commentPlaceholder}
               multiline
               // No `maxLength`, for the reason the bio field gives: silently
               // swallowing keystrokes reads as a broken keyboard.
-              style={[styles.input, { fontFamily: bodyFont(fontsLoaded) }]}
+              style={styles.input}
             />
             <View style={styles.sendRow}>
               {left <= 100 && (
@@ -330,32 +327,22 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: space.sm,
-    borderWidth: 1,
+    borderWidth: hairlineWidth,
     borderColor: colors.hairline,
-    borderRadius: 999,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    borderRadius: radius.pill,
+    paddingVertical: legacy.followButtonPaddingVertical,
+    paddingHorizontal: legacy.followButtonPaddingHorizontal,
   },
   comment: { flexDirection: "row", gap: space.md, alignItems: "flex-start" },
   commentMeta: { flexDirection: "row", alignItems: "center", gap: space.sm, flexWrap: "wrap" },
-  commentActions: { flexDirection: "row", alignItems: "center", gap: space.lg, marginTop: 2 },
-  input: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    borderRadius: radius.md,
-    padding: 12,
-    minHeight: 64,
-    fontSize: inputFontSize,
-    color: colors.text,
-    textAlignVertical: "top",
-  },
+  commentActions: { flexDirection: "row", alignItems: "center", gap: space.lg, marginTop: space["2xs"] },
+  input: { padding: legacy.inputPadding12 },
   sendRow: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: space.md },
   sendButton: {
-    borderWidth: 1,
+    borderWidth: hairlineWidth,
     borderColor: colors.hairline,
-    borderRadius: 999,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    borderRadius: radius.pill,
+    paddingVertical: legacy.followButtonPaddingVertical,
+    paddingHorizontal: legacy.sendButtonPaddingHorizontal,
   },
 }));

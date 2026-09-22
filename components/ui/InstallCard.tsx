@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { useInstallPrompt } from "@/hooks/useInstallPrompt";
-import { radius, space } from "@/theme/tokens";
+import { hairlineWidth, radius, space } from "@/theme/tokens";
 import { makeStyles } from "@/theme/styles";
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
@@ -63,7 +63,7 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     gap: space.md,
     padding: space.lg,
     borderRadius: radius.md,
-    borderWidth: 1,
+    borderWidth: hairlineWidth,
     borderColor: colors.hairline,
     backgroundColor: colors.surface,
   },

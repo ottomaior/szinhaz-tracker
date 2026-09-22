@@ -40,6 +40,15 @@ npm run diff:shots -- --write ux-audit/before ux-audit/after/feed   # writes <ro
 Zero tolerance by default; `--allow <n>` for a screen with a relative
 timestamp in it. `scripts/diff-shots.ts` explains why zero.
 
+A pair can differ for reasons that are not the code, and the reviewer has
+to know them by sight: the phase of a running animation (the light on a
+`StarBorder`, the HoloCard's sheen, a `PillTabs` or dock spring settling,
+`SplitText` words), the order of a data-driven grid (onboarding), the
+install card on Settings (shown only when the browser fires
+`beforeinstallprompt`, which headless Edge does at random), the caret in a
+focused field, and a few pixels of rasteriser noise along a curve. The
+step-0 set had 50 such pairs and 154 byte-identical ones.
+
 ## The metric
 
 `npm run drift` counts style literals outside `theme/` — a padding typed as

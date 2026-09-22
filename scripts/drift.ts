@@ -28,11 +28,15 @@ const ROOTS = ["app", "components", "hooks", "contexts"];
 
 /** Files whose literals are considered and left alone, with the reason. */
 const ALLOW: Record<string, Category[]> = {
-  "components/ui/PosterPlaceholder.tsx": ["colour"], // six colourways, one monogram tint, one scrim
+  "components/ui/PosterPlaceholder.tsx": ["colour", "type"], // six colourways, one monogram tint, one scrim; the monogram scales with the poster
   "components/ui/HoloCard.tsx": ["colour"], // a season ticket is dark in every theme
   "components/icons/GoogleMark.tsx": ["colour"], // Google's brand colours
   "components/share/ShareCardView.tsx": ["type", "colour"], // a 1080x1920 card scaled by hand
   "components/ui/Text.tsx": ["type"], // the doc comment quotes the old pattern
+  "components/ui/TextField.tsx": ["type"], // the one place a TextInput is told its face
+  "components/ui/Avatar.tsx": ["type"], // the monogram's face follows `serif`, its size the circle
+  "components/motion/ClickSpark.tsx": ["space", "radius"], // a 3x10 ray is drawn, not laid out
+  "components/motion/StarBorder.tsx": ["space"], // the 1.5px rim the light travels along
 };
 
 const RULES: { category: Category; re: RegExp; skip?: RegExp }[] = [

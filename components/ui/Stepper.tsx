@@ -5,7 +5,7 @@ import { NATIVE_DRIVER, useReducedMotion } from "@/hooks/useReducedMotion";
 import { CheckIcon } from "@/components/icons/Icons";
 import { Text } from "@/components/ui/Text";
 import { colors } from "@/theme/colors";
-import { space } from "@/theme/tokens";
+import { legacy, radius, space } from "@/theme/tokens";
 import { makeStyles } from "@/theme/styles";
 
 /**
@@ -21,7 +21,7 @@ import { makeStyles } from "@/theme/styles";
 export function StepIndicator({ steps, current, labels }: { steps: number; current: number; labels?: string[] }) {
   const styles = useStyles();
   return (
-    <View accessibilityRole="progressbar" accessibilityValue={{ min: 1, max: steps, now: current }} style={{ gap: 8 }}>
+    <View accessibilityRole="progressbar" accessibilityValue={{ min: 1, max: steps, now: current }} style={{ gap: space.sm }}>
       <View style={styles.row}>
         {Array.from({ length: steps }).map((_, i) => {
           const n = i + 1;
@@ -109,10 +109,10 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   segmentLast: { flex: 0 },
   labels: { flexDirection: "row", justifyContent: "space-between", gap: space.sm },
   disc: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    borderWidth: 1.5,
+    width: legacy.stepperDisc,
+    height: legacy.stepperDisc,
+    borderRadius: radius.pill,
+    borderWidth: legacy.thickHairline,
     borderColor: colors.hairline,
     alignItems: "center",
     justifyContent: "center",

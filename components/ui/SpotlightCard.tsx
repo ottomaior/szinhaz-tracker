@@ -2,7 +2,7 @@ import { useId, useState, type ReactNode } from "react";
 import { Platform, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 import Svg, { Defs, RadialGradient, Rect, Stop } from "react-native-svg";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { radius, space } from "@/theme/tokens";
+import { hairlineWidth, radius, space } from "@/theme/tokens";
 import { makeStyles } from "@/theme/styles";
 import { useTheme } from "@/contexts/ThemeContext";
 import { themes } from "@/theme/themes";
@@ -64,7 +64,7 @@ export function SpotlightCard({ children, style, padded = true }: { children: Re
 const useStyles = makeStyles((colors, elevation) => StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
-    borderWidth: 1,
+    borderWidth: hairlineWidth,
     borderColor: colors.hairlineSoft,
     borderRadius: radius.lg,
     overflow: "hidden",

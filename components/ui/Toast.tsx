@@ -5,9 +5,9 @@ import { useAnimatedValue } from "@/hooks/useAnimatedValue";
 import { useAtLeast } from "@/hooks/useBreakpoint";
 import { NATIVE_DRIVER, useReducedMotion } from "@/hooks/useReducedMotion";
 import { colors } from "@/theme/colors";
-import { bodyFont } from "@/theme/typography";
+import { legacyType } from "@/theme/type";
 import { useAppFonts } from "@/hooks/useAppFonts";
-import { gutter, radius, space } from "@/theme/tokens";
+import { gutter, hairlineWidth, radius, space } from "@/theme/tokens";
 import { makeStyles } from "@/theme/styles";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
@@ -155,7 +155,7 @@ function ToastView({ toast, onDismiss }: { toast: Active; onDismiss: () => void 
             accessibilityLabel={toast.action.label}
             style={({ pressed }) => [styles.action, pressed && { opacity: 0.7 }]}
           >
-            <Text style={{ fontFamily: bodyFont(fontsLoaded, "bold"), fontSize: 13, color: colors.gold }}>
+            <Text style={[legacyType("toastAction", fontsLoaded), { color: colors.gold }]}>
               {toast.action.label}
             </Text>
           </Pressable>
@@ -186,7 +186,7 @@ const useStyles = makeStyles((colors, elevation) => StyleSheet.create({
     paddingHorizontal: space.lg,
     borderRadius: radius.md,
     backgroundColor: colors.bgElevated,
-    borderWidth: 1,
+    borderWidth: hairlineWidth,
     borderColor: colors.hairline,
     ...elevation.floating,
   },

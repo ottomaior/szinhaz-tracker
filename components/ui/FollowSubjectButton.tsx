@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { View } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
-import { space } from "@/theme/tokens";
+import { legacy, radius, space } from "@/theme/tokens";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   countSubjectFollowers,
@@ -123,7 +123,7 @@ export function FollowSubjectButton({
         disabled={busy}
         onPress={toggle}
         accessibilityLabel={label}
-        style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999 }}
+        style={{ paddingVertical: legacy.followButtonPaddingVertical, paddingHorizontal: legacy.followButtonPaddingHorizontal, borderRadius: radius.pill }}
       />
     );
   }

@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
-import { space } from "@/theme/tokens";
+import { legacy, space } from "@/theme/tokens";
 import { BrandMark } from "@/components/icons/BrandMark";
 import { CalendarIcon, TicketIcon, UserIcon } from "@/components/icons/Icons";
 import { Button } from "@/components/ui/Button";
@@ -40,7 +40,7 @@ export function SignedOutState({ lead }: { lead: "diary" | "watchlist" }) {
         {items.map((item) => (
           <View key={item.key} style={styles.item}>
             <View style={styles.icon}>{item.icon}</View>
-            <View style={{ flex: 1, gap: 2 }}>
+            <View style={{ flex: 1, gap: space["2xs"] }}>
               <Text variant="subheading">{item.title}</Text>
               <Text variant="bodySmall" tone="dim">
                 {item.body}
@@ -70,5 +70,5 @@ const useStyles = makeStyles(() => StyleSheet.create({
     gap: space["2xl"],
   },
   item: { flexDirection: "row", gap: space.md, alignItems: "flex-start" },
-  icon: { width: 24, paddingTop: 2, alignItems: "center" },
+  icon: { width: space["2xl"], paddingTop: legacy.signedOutIconNudge, alignItems: "center" },
 }));

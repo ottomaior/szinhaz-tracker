@@ -1,7 +1,7 @@
 import { Pressable, Text, StyleSheet, View, ActivityIndicator } from "react-native";
 import { colors } from "@/theme/colors";
-import { overlay, space } from "@/theme/tokens";
-import { bodyFont } from "@/theme/typography";
+import { hairlineWidth, legacy, overlay, radius, space } from "@/theme/tokens";
+import { legacyType } from "@/theme/type";
 import { useAppFonts } from "@/hooks/useAppFonts";
 import { makeStyles } from "@/theme/styles";
 
@@ -53,13 +53,7 @@ export function Button({
       ]}
     >
       {loading ? <ActivityIndicator size="small" color={labelColor} /> : icon}
-      <Text
-        style={{
-          fontFamily: bodyFont(fontsLoaded, "bold"),
-          fontSize: 13.5,
-          color: labelColor,
-        }}
-      >
+      <Text style={[legacyType("button", fontsLoaded), { color: labelColor }]}>
         {label}
       </Text>
     </Pressable>
@@ -110,16 +104,16 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 7,
-    borderRadius: 12,
-    paddingVertical: 13,
-    paddingHorizontal: 16,
+    gap: legacy.buttonGap,
+    borderRadius: legacy.buttonRadius,
+    paddingVertical: legacy.buttonPaddingVertical,
+    paddingHorizontal: space.lg,
   },
   primary: {
     backgroundColor: colors.gold,
   },
   outline: {
-    borderWidth: 1,
+    borderWidth: hairlineWidth,
     borderColor: colors.hairline,
   },
   text: {
@@ -131,7 +125,7 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   iconBtn: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: radius.pill,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -139,7 +133,7 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     backgroundColor: overlay.onImageSoft,
   },
   iconBtnSolid: {
-    borderWidth: 1,
+    borderWidth: hairlineWidth,
     borderColor: colors.hairline,
   },
   iconBtnActive: {

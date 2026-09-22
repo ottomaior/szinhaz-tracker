@@ -54,5 +54,5 @@ const styles = StyleSheet.create({
   rail: { gap: space.md, paddingHorizontal: gutter, paddingVertical: space.xs },
   item: { width: TILE_WIDTH },
   tile: { width: TILE_WIDTH, aspectRatio: 4 / 5 },
-  caption: { gap: 2, marginTop: space.sm, width: TILE_WIDTH },
+  caption: { gap: space["2xs"], marginTop: space.sm, width: TILE_WIDTH },
 });

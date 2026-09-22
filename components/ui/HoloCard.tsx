@@ -5,7 +5,7 @@ import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { NATIVE_DRIVER, useReducedMotion } from "@/hooks/useReducedMotion";
 import { useTheme } from "@/contexts/ThemeContext";
 import { themes } from "@/theme/themes";
-import { overlay, radius, space } from "@/theme/tokens";
+import { hairlineWidth, overlay, radius, space } from "@/theme/tokens";
 import { BrandMark } from "@/components/icons/BrandMark";
 import { makeStyles } from "@/theme/styles";
 
@@ -94,7 +94,7 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   card: {
     borderRadius: radius.xl,
     overflow: "hidden",
-    borderWidth: 1,
+    borderWidth: hairlineWidth,
     borderColor: colors.goldTintBorder,
     boxShadow: `0 24px 48px -24px ${colors.shadow}`,
   },

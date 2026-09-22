@@ -11,9 +11,8 @@ import {
 } from "react-native";
 import { colors } from "@/theme/colors";
 import { inputFontSize } from "@/theme/type";
-import { minTouchTarget, radius, space } from "@/theme/tokens";
-import { bodyFont } from "@/theme/typography";
-import { useAppFonts } from "@/hooks/useAppFonts";
+import { hairlineWidth, minTouchTarget, radius, space } from "@/theme/tokens";
+import { TextField } from "@/components/ui/TextField";
 import { SearchIcon, CloseIcon } from "@/components/icons/Icons";
 import { strings } from "@/i18n/hu";
 import { makeStyles } from "@/theme/styles";
@@ -68,7 +67,6 @@ export function SearchField({
   onFocusChange?: (focused: boolean) => void;
 }) {
   const styles = useStyles();
-  const fontsLoaded = useAppFonts();
   const [focused, setFocused] = useState(false);
   const inputRef = useRef<TextInput>(null);
   const hasText = value.length > 0;
@@ -90,7 +88,8 @@ export function SearchField({
       accessibilityRole={Platform.OS === "web" ? ("search" as never) : undefined}
     >
       <SearchIcon size={prominent ? 18 : 17} color={focused ? colors.gold : colors.textFaint} />
-      <TextInput
+      <TextField
+        bare
         ref={inputRef}
         value={value}
         onChangeText={onChangeText}
@@ -114,7 +113,7 @@ export function SearchField({
         // field and clips it (T-104); one line, always.
         numberOfLines={1}
         accessibilityLabel={accessibilityLabel ?? placeholder}
-        style={[styles.input, { fontFamily: bodyFont(fontsLoaded) }]}
+        style={styles.input}
       />
       <View style={styles.trailing}>
         {loading ? (
@@ -144,7 +143,7 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     paddingLeft: space.lg,
     paddingRight: space.sm,
     borderRadius: radius.pill,
-    borderWidth: 1,
+    borderWidth: hairlineWidth,
     borderColor: colors.hairline,
     backgroundColor: colors.surface,
   },
@@ -174,7 +173,7 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   clear: {
     width: 26,
     height: 26,
-    borderRadius: 13,
+    borderRadius: radius.pill,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.neutralTintBg,

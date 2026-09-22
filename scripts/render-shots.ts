@@ -598,6 +598,12 @@ async function audit(d: Driver) {
   await d.goto("/sign-in");
   await d.settle("Bejelentkezés");
   await d.evaluate(`localStorage.setItem(${JSON.stringify("theme.v1")}, ${JSON.stringify(THEME)})`);
+  // A warm-up: the first real page after a theme change is the one most
+  // often caught mid-load — a skeleton with no title yet — so Discover is
+  // opened once and thrown away before the pictures start.
+  await d.goto("/discover");
+  await d.settle("Felfedezés").catch(() => undefined);
+  await sleep(2000);
 
   const failed: string[] = [];
   const shot = async (name: string, path: string, expect: string, after?: () => Promise<void>) => {

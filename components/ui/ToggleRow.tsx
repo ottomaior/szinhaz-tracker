@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, View } from "react-native";
-import { radius, space } from "@/theme/tokens";
+import { hairlineWidth, legacy, radius, space } from "@/theme/tokens";
 import { makeStyles } from "@/theme/styles";
 import { colors } from "@/theme/colors";
 import { CheckIcon } from "@/components/icons/Icons";
@@ -41,7 +41,7 @@ export function ToggleRow({
       accessibilityLabel={label}
       style={[styles.row, on && styles.rowOn, disabled && styles.disabled]}
     >
-      <View style={{ flex: 1, gap: 2 }}>
+      <View style={{ flex: 1, gap: space["2xs"] }}>
         <Text variant="subheading">{label}</Text>
         {!!blurb && (
           <Text variant="caption" tone="faint">
@@ -61,7 +61,7 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     gap: space.md,
     padding: space.md,
     borderRadius: radius.md,
-    borderWidth: 1,
+    borderWidth: hairlineWidth,
     borderColor: colors.hairline,
     backgroundColor: colors.surface,
   },
@@ -70,8 +70,8 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   tick: {
     width: 26,
     height: 26,
-    borderRadius: 13,
-    borderWidth: 1.5,
+    borderRadius: radius.pill,
+    borderWidth: legacy.thickHairline,
     borderColor: colors.hairline,
     alignItems: "center",
     justifyContent: "center",

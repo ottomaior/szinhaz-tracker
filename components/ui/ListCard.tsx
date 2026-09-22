@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, View } from "react-native";
-import { radius, space } from "@/theme/tokens";
+import { hairlineWidth, legacy, radius, space } from "@/theme/tokens";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { Text } from "@/components/ui/Text";
 import type { ListSummary } from "@/services/listsService";
@@ -38,7 +38,7 @@ export function ListCard({
           <View style={styles.emptyCover} />
         ) : (
           covers.map((play, i) => (
-            <View key={play.id} style={[styles.coverSlot, i > 0 && { marginLeft: -22 }, { zIndex: covers.length - i }]}>
+            <View key={play.id} style={[styles.coverSlot, i > 0 && { marginLeft: legacy.listCardOverlap }, { zIndex: covers.length - i }]}>
               <PosterPlaceholder
                 poster={play.poster}
                 title={play.title}
@@ -53,7 +53,7 @@ export function ListCard({
         )}
       </View>
 
-      <View style={{ flex: 1, gap: 3 }}>
+      <View style={{ flex: 1, gap: legacy.stackGap3 }}>
         <Text variant="subheading" numberOfLines={2}>
           {list.title}
         </Text>
@@ -91,7 +91,7 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     borderRadius: radius.sm,
     // A hairline between overlapping covers, so the stack reads as separate
     // productions rather than one smeared image.
-    borderWidth: 1,
+    borderWidth: hairlineWidth,
     borderColor: colors.bg,
   },
   emptyCover: {
@@ -99,7 +99,7 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     height: 60,
     borderRadius: radius.sm,
     backgroundColor: colors.surface,
-    borderWidth: 1,
+    borderWidth: hairlineWidth,
     borderColor: colors.hairlineSoft,
   },
 }));
