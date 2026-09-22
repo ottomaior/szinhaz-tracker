@@ -177,18 +177,28 @@ export function slugOf(detailUrl: string): string {
 export async function fetchProductionIndex(): Promise<string[]> {
   const urls = new Set<string>();
 
+  let previousPage = "";
+
   for (let page = 1; page <= MAX_INDEX_PAGES; page++) {
     const url = page === 1 ? `${BASE_URL}/eloadasok/` : `${BASE_URL}/eloadasok/page/${page}/`;
     let html: string;
     try {
       html = await fetchText(url, { crawlDelayMs: CRAWL_DELAY_MS });
-    } catch {
-      break; // past the last page the site 404s, which fetchText throws on
+    } catch (e) {
+      if (isNotFound(e)) break; // past the last page the site 404s
+      throw e; // a 500 or a timeout is a failure, not the end of the list
     }
 
-    const before = urls.size;
-    for (const href of productionLinksIn(html)) urls.add(href);
-    if (urls.size === before) break; // no new productions: end of the list
+    const links = productionLinksIn(html);
+    // End of the list, or a site that answers an over-the-end page with the
+    // last one again. Deliberately *not* "this page added nothing new": the
+    // pages overlap, and stopping on that dropped whatever came after
+    // (T-121).
+    const fingerprint = links.join("|");
+    if (!links.length || fingerprint === previousPage) break;
+    previousPage = fingerprint;
+
+    for (const href of links) urls.add(href);
   }
 
   return [...urls];
@@ -216,13 +226,20 @@ async function fetchGenreBySlug(): Promise<Map<string, string>> {
     const termSlug = termUrl.replace(/\/+$/, "").split("/").pop() ?? "";
     let label = "";
 
+    let previousPage = "";
+
     for (let page = 1; page <= MAX_INDEX_PAGES; page++) {
       const url = page === 1 ? termUrl : `${termUrl}page/${page}/`;
       let html: string;
       try {
         html = await fetchText(url, { crawlDelayMs: CRAWL_DELAY_MS });
-      } catch {
-        break;
+      } catch (e) {
+        if (isNotFound(e)) break;
+        // Anything else has to be loud. Being in this map is what marks a slug
+        // as a real production, so swallowing a 500 here quietly deletes every
+        // production whose only term is this one — which is exactly how
+        // Abigél vanished (T-121).
+        throw e;
       }
 
       if (!label) {
@@ -231,27 +248,38 @@ async function fetchGenreBySlug(): Promise<Map<string, string>> {
       }
 
       const links = productionLinksIn(html);
-      if (!links.length) break;
+      const fingerprint = links.join("|");
+      if (!links.length || fingerprint === previousPage) break;
+      previousPage = fingerprint;
 
-      let added = false;
       for (const href of links) {
         const slug = slugOf(href);
         // A production can carry several terms; the venue-ish one only wins
         // if nothing better is available, so never let it overwrite a genre.
         if (VENUE_TERM_SLUGS.has(termSlug) && genreBySlug.has(slug)) continue;
         if (!genreBySlug.has(slug) || !VENUE_TERM_SLUGS.has(termSlug)) {
-          if (!genreBySlug.has(slug)) added = true;
           // Empty string, not a placeholder word: the slug being *present* is
           // what marks this as a real production, and the value is the genre
           // only when the term actually carried a readable label.
           genreBySlug.set(slug, VENUE_TERM_SLUGS.has(termSlug) ? "" : label || "");
         }
       }
-      if (!added) break;
     }
   }
 
   return genreBySlug;
+}
+
+/**
+ * Whether a failed fetch was the site saying "no such page".
+ *
+ * `fetchText` throws an `HttpError` carrying the status, and 404 is how this
+ * WordPress answers a page past the end of a list — that is the one error
+ * worth treating as a normal stop. It is read off the shape rather than by
+ * importing the class, which `sync/lib/http.ts` keeps to itself.
+ */
+function isNotFound(e: unknown): boolean {
+  return (e as { status?: number } | null)?.status === 404;
 }
 
 export function productionLinksIn(html: string): string[] {
