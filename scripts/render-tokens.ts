@@ -48,6 +48,17 @@ const BLOCKS = [
   },
 ];
 
+/**
+ * Write the block in the line endings the file already uses.
+ *
+ * The generator emits `\n`, and git hands a Windows checkout `\r\n`. Without
+ * this the replacement never equals what it replaced, so every run rewrote
+ * every page and left the working tree dirty with a diff that contained no
+ * text at all.
+ */
+const matchEndings = (block: string, file: string) =>
+  file.includes("\r\n") ? block.replace(/\r?\n/g, "\r\n") : block;
+
 let wrote = 0;
 for (const { file: page, theme } of PAGES) {
   const before = readFileSync(page, "utf8");
@@ -56,14 +67,13 @@ for (const { file: page, theme } of PAGES) {
     if (block.what.includes("vl-theme") && !theme) continue;
     if (!block.re.test(after)) {
       console.error(
-        `${page} has no ${block.what} element.
-` +
+        `${page} has no ${block.what} element.\n` +
           `Add an empty one where it belongs — this script fills it, it does not place it.`
       );
       process.exitCode = 1;
       continue;
     }
-    after = after.replace(block.re, block.render());
+    after = after.replace(block.re, matchEndings(block.render(), before));
   }
   if (after === before) {
     console.log(`  ${page}  up to date`);

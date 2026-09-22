@@ -35,13 +35,26 @@ const PAGES = [
 
 const BLOCK = new RegExp(`<style id=["']${LANDING_TOKENS_ID}["']>[\\s\\S]*?</style>`);
 
+/**
+ * Compare the text, not the line endings.
+ *
+ * The generator emits `\n` and git hands a Windows checkout `\r\n`, so
+ * comparing the two verbatim asks whether a file was last written by the
+ * generator or by git — which is not a question about whether the tokens are
+ * current. The first version of this test asked exactly that. It passed on
+ * Linux, where checkouts are `\n`, so CI was green while every Windows
+ * worktree failed it, including one belonging to a different branch that had
+ * changed nothing here at all.
+ */
+const text = (s: string) => s.replace(/\r\n/g, "\n");
+
 describe("the landing site's tokens are generated, not typed", () => {
   for (const { file, writer } of PAGES) {
     it(`${file} carries the current block`, () => {
       const source = readFileSync(file, "utf8");
       const found = BLOCK.exec(source);
       expect(found, `${file} has no <style id="${LANDING_TOKENS_ID}"> block — run \`${writer}\``).not.toBeNull();
-      expect(found![0], `${file} is behind theme/ — run \`${writer}\``).toBe(landingTokensStyleTag());
+      expect(text(found![0]), `${file} is behind theme/ — run \`${writer}\``).toBe(text(landingTokensStyleTag()));
     });
   }
 
