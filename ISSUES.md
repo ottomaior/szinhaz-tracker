@@ -419,6 +419,30 @@ attendance and the diary must never record an evening on someone's behalf.
 
 ## Open
 
+### T-116 · One push per notification row: following one theatre buzzed the phone five times
+type: bug · area: notifications · priority: high · status: open · added: 2026-09-22
+
+Ottó followed a single theatre (Csokonai Nemzeti Színház) and the next sync
+delivered five separate push notifications in the same minute, one per new
+production — „Tizenhárom hattyú”, Amit magunkra veszünk, Öregembert
+játszani, Nőnek lenni, Malter-blokk — each reading „Új bemutató: Csokonai
+Nemzeti Színház”. Seen on the installed Android build and reproducible on
+the web app; it is not specific to either client.
+
+The cause is structural rather than a slip. `generate_notifications()`
+(`0030_alerts.sql`) correctly writes one row per fact — that is what the
+inbox wants, since each row leads to its own production. `send-push`
+(`supabase/functions/send-push/index.ts`) then loops over every unpushed row
+and sends one push per row, with `tag`/`collapseId` set to the row id, so
+nothing collapses. A season announcement at a followed theatre therefore
+buzzes the phone once per production, and the same shape applies to a burst
+of likes or to several watchlist plays running tomorrow.
+
+Ottó's direction: not every kind of notification deserves to interrupt the
+phone. Decide which kinds reach the lock screen and which live only in the
+in-app inbox behind the bell, and coalesce what is left so one night's news
+is one interruption rather than N.
+
 ### T-117 · Settings is a wall of boxes and restated labels
 type: chore · area: design · priority: med · status: doing · added: 2026-09-22
 

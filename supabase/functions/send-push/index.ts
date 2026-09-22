@@ -1,7 +1,11 @@
 // deno-lint-ignore-file no-explicit-any
 import { createClient } from "npm:@supabase/supabase-js@2";
 import webpush from "npm:web-push@3";
-import { notificationLine, type NotificationKind } from "../../../i18n/notificationCopy.ts";
+import {
+  notificationLine,
+  notificationSummaryLine,
+  type NotificationKind,
+} from "../../../i18n/notificationCopy.ts";
 import { formatShortDayForSuffix, formatTime } from "../../../utils/datetime.ts";
 
 /**
@@ -29,6 +33,15 @@ import { formatShortDayForSuffix, formatTime } from "../../../utils/datetime.ts"
  * role key as the bearer. It is the only caller: the check below refuses
  * anything else, and the row reads need the service role anyway since the
  * tables are owner-scoped.
+ *
+ * One push per *kind*, not per row (T-116). The rows are the inbox's unit and
+ * stay so; a lock screen is not an inbox. Following one theatre through a
+ * season announcement produced five rows in a night and therefore five
+ * buzzes, each saying the same "Új bemutató: Csokonai Nemzeti Színház". So
+ * the pending rows are grouped by `(user, kind)` before anything is sent: a
+ * group of one is still its own sentence and leads where it always did, and a
+ * group of several becomes a single summary that opens the inbox, where the
+ * separate rows are waiting.
  */
 type Row = {
   id: string;
@@ -70,6 +83,59 @@ function factsOf(row: Row) {
     room: typeof p.room === "string" ? p.room : undefined,
     venue: typeof p.venue === "string" ? p.venue : undefined,
     person: typeof p.person === "string" ? p.person : undefined,
+  };
+}
+
+/**
+ * The one name every row in a group shares, when it has one. It is not always
+ * the same field the single-fact heading uses: five `venue_new_play` rows are
+ * five different productions but one theatre, and the theatre is what makes
+ * "5 új bemutató" mean anything.
+ */
+function subjectOf(row: Row): string | undefined {
+  const p = row.payload ?? {};
+  if (row.kind === "venue_new_play") return typeof p.venue === "string" ? p.venue : undefined;
+  if (row.kind === "dates_published" || row.kind === "playing_tomorrow") return row.plays?.title ?? undefined;
+  return typeof p.person === "string" ? p.person : undefined;
+}
+
+/** One fact, said as it always was, leading where it always did. */
+function messageForRow(row: Row, origin: string) {
+  // The two follow kinds are about a person (0065): the heading is their
+  // name and the row leads to them, or to the requests list.
+  const personId = typeof row.payload?.userId === "string" ? row.payload.userId : undefined;
+  const path =
+    row.kind === "follow_requested"
+      ? "/followers?tab=requests"
+      : row.kind === "follow_accepted" && personId
+        ? `/user/${personId}`
+        : row.review_id
+          ? `/entry/${row.review_id}`
+          : `/play/${row.play_id}`;
+  return {
+    title: row.play_id ? (row.plays?.title ?? "Vastaps") : (row.payload?.person ?? "Vastaps"),
+    body: notificationLine(row.kind, factsOf(row)),
+    target: `${origin}${path}`,
+  };
+}
+
+/**
+ * Several facts of one kind, said once. There is no single production or
+ * entry to open, so it leads to the inbox — except a batch of follow
+ * requests, which has a page of its own that is the thing to do about them.
+ */
+function messageForGroup(group: Row[], origin: string) {
+  const kind = group[0].kind;
+  const subjects = new Set(group.map(subjectOf));
+  const shared = subjects.size === 1 ? [...subjects][0] : undefined;
+  // The follow kinds never repeat for one person, so a group of them is
+  // always several people and never has a name to lead with.
+  const named = Boolean(shared) && kind !== "follow_requested" && kind !== "follow_accepted";
+  const path = kind === "follow_requested" ? "/followers?tab=requests" : "/inbox";
+  return {
+    title: named ? shared! : "Vastaps",
+    body: notificationSummaryLine(kind, group.length, named),
+    target: `${origin}${path}`,
   };
 }
 
@@ -124,27 +190,31 @@ Deno.serve(async (req) => {
   const dead = new Set<string>();
   const expoMessages: { to: string; subId: string; title: string; body: string; url: string; tag: string }[] = [];
 
+  // One group per person per kind, in the order the rows arrived, so a run
+  // that brought a season announcement and a like is two pushes rather than
+  // six. A group of one is indistinguishable from what this loop used to do.
+  const groups = new Map<string, Row[]>();
   for (const row of pending) {
     const wanted = kindsByUser.get(row.user_id);
     if (wanted && !wanted.has(row.kind)) continue;
-    const subs = subsByUser.get(row.user_id) ?? [];
-    if (subs.length === 0) continue;
+    if ((subsByUser.get(row.user_id) ?? []).length === 0) continue;
+    const key = `${row.user_id}:${row.kind}`;
+    const list = groups.get(key) ?? [];
+    list.push(row);
+    groups.set(key, list);
+  }
 
-    // The two follow kinds are about a person (0065): the heading is their
-    // name and the row leads to them, or to the requests list.
-    const personId = typeof row.payload?.userId === "string" ? row.payload.userId : undefined;
-    const title = row.play_id ? (row.plays?.title ?? "Vastaps") : (row.payload?.person ?? "Vastaps");
-    const body = notificationLine(row.kind, factsOf(row));
-    const path =
-      row.kind === "follow_requested"
-        ? "/followers?tab=requests"
-        : row.kind === "follow_accepted" && personId
-          ? `/user/${personId}`
-          : row.review_id
-            ? `/entry/${row.review_id}`
-            : `/play/${row.play_id}`;
-    const target = `${origin}${path}`;
-    const payload = JSON.stringify({ title, body, url: target, tag: row.id });
+  for (const group of groups.values()) {
+    const kind = group[0].kind;
+    const subs = subsByUser.get(group[0].user_id)!;
+    const { title, body, target } =
+      group.length === 1 ? messageForRow(group[0], origin) : messageForGroup(group, origin);
+    // The tag is what a lock screen replaces rather than stacks. A single
+    // fact keeps its own row id; a summary is tagged by kind, so tonight's
+    // "5 új bemutató" takes the place of last night's rather than sitting
+    // beneath it.
+    const tag = group.length === 1 ? group[0].id : `summary:${kind}`;
+    const payload = JSON.stringify({ title, body, url: target, tag });
 
     for (const sub of subs) {
       if (dead.has(sub.id)) continue;
@@ -154,7 +224,7 @@ Deno.serve(async (req) => {
           await webpush.sendNotification(
             { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
             payload,
-            { TTL: 60 * 60 * 24, urgency: row.kind === "playing_tomorrow" ? "high" : "normal" }
+            { TTL: 60 * 60 * 24, urgency: kind === "playing_tomorrow" ? "high" : "normal" }
           );
           sent++;
         } catch (e: any) {
@@ -163,7 +233,7 @@ Deno.serve(async (req) => {
           else console.error("[send-push] web send failed", sub.id, status, e?.message ?? e);
         }
       } else {
-        expoMessages.push({ to: sub.endpoint, subId: sub.id, title, body, url: target, tag: row.id });
+        expoMessages.push({ to: sub.endpoint, subId: sub.id, title, body, url: target, tag });
       }
     }
   }
