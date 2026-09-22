@@ -419,6 +419,37 @@ attendance and the diary must never record an evening on someone's behalf.
 
 ## Open
 
+### T-120 · Two npm scripts changed the native fingerprint and cut the phones off from updates
+type: bug · area: infra · priority: high · status: open · added: 2026-09-22
+
+The 22 September `eas update --channel production` published successfully and
+will reach **nobody**. It went out on runtime version `06ad71df…`; the
+builds actually installed from the closed test (7 and 8, both 20 September)
+carry fingerprint `ee5018a4…`. The fingerprint runtime policy in
+`app.config.ts` then does exactly what it is there for and offers the update
+to no binary.
+
+Nothing native changed. The only difference in `package.json` since build 8
+is two dev-only scripts, `drift` and `diff:shots`. `@expo/fingerprint`
+counts `packageJson:scripts` as a fingerprint source, so adding them was
+enough. Proven rather than guessed: recomputing the fingerprint with build
+8's `package.json` and with the current one differs in exactly one source —
+`packageJson:scripts`, and nothing else — `3b424c89…` against `ed42055c…`.
+
+The trap is that `eas update` reports "Published!" either way. Nothing in the
+output says the update is inert, and the phones simply never see it.
+
+Two ways out. Removing the two scripts restores the old fingerprint and lets
+the update reach the phones today; the work they do is still reachable as
+`npx tsx scripts/drift.ts` and `npx tsx scripts/diff-shots.ts`. Otherwise it
+needs `eas build --profile production`, an upload to the closed track and a
+Play review before any over-the-air update flows again.
+
+Worth a line in `CLAUDE.md` either way: adding an npm script is a native
+change as far as updates are concerned, and after any `eas update` the
+published runtime version should be checked against the installed build's
+before it is called done.
+
 ### T-119 · Some covers never arrive and the tile sits on its blurhash forever
 type: bug · area: design · priority: high · status: open · added: 2026-09-22
 
@@ -3665,4 +3696,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-120**
+Next free id: **T-121**
