@@ -25,6 +25,7 @@ export function PersonRow({
   initials,
   serif = false,
   trailing,
+  action,
   onPress,
   accessibilityLabel,
   style,
@@ -36,7 +37,16 @@ export function PersonRow({
   initials: string;
   /** Bodoni initials, for a performer rather than a member. */
   serif?: boolean;
+  /** Read-only content at the end of the row: a rating, a count. */
   trailing?: ReactNode;
+  /**
+   * A control at the end of the row — accept, unfollow, unblock.
+   *
+   * A sibling of the pressable rather than a child of it: a button inside
+   * a button is invalid on the web and reads as one target to a screen
+   * reader, which is what T-070 reported on the list screen.
+   */
+  action?: ReactNode;
   onPress?: () => void;
   accessibilityLabel?: string;
   style?: StyleProp<ViewStyle>;
@@ -61,7 +71,29 @@ export function PersonRow({
       {trailing}
     </>
   );
-  if (!onPress) return <View style={[styles.row, style]}>{body}</View>;
+  if (!onPress) {
+    return (
+      <View style={[styles.row, style]}>
+        {body}
+        {action}
+      </View>
+    );
+  }
+  if (action) {
+    return (
+      <View style={[styles.row, style]}>
+        <Pressable
+          onPress={onPress}
+          accessibilityRole="button"
+          accessibilityLabel={accessibilityLabel ?? name}
+          style={pressStyle("row", palette, styles.pressableRow)}
+        >
+          {body}
+        </Pressable>
+        {action}
+      </View>
+    );
+  }
   return (
     <Pressable
       onPress={onPress}
@@ -131,5 +163,8 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     borderBottomWidth: hairlineWidth,
     borderBottomColor: colors.hairlineSoft,
   },
+  // The row's own body when a control sits beside it: the same layout, no
+  // hairline of its own, since the row around it draws one.
+  pressableRow: { flex: 1, flexDirection: "row", alignItems: "center", gap: space.md, paddingVertical: space.sm },
   lines: { flex: 1, gap: space["2xs"] },
 }));
