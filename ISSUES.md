@@ -419,6 +419,47 @@ attendance and the diary must never record an evening on someone's behalf.
 
 ## Open
 
+### T-121 · A paginated list stopped early, and Abigél was never in the catalogue
+type: bug · area: data · priority: high · status: doing · added: 2026-09-22
+
+Ottó found two performances on csokonaiszinhaz.hu — „Kocsák Tibor – Somogyi
+Szilárd – Miklós Tibor: Abigél”, a Kolozsvári Állami Magyar Színház guest
+run at the IX. MagdaFeszt on 30 September and 1 October — that Vastaps did
+not have. It had no row at all: no play, no performances, nothing archived,
+no trace under any source key. The theatre's page was published on 3
+September and last modified on 4 September, so it had been there for nearly
+three weeks, through every nightly run.
+
+Nothing reported a problem. The 22 September run recorded 43 plays upserted
+and **0 failed**.
+
+**The cause.** Both of the adapter's paginated walks — `fetchProductionIndex`
+and `fetchGenreBySlug` in `sync/adapters/csokonai.ts` — stopped as soon as a
+page contributed no slug they had not already seen (`if (urls.size ===
+before) break` and `if (!added) break`). That is not the same question as
+whether the list has ended: these lists overlap heavily, because a production
+carries several genre terms and consecutive pages repeat entries. On a day
+when a term's first page happened to be entirely familiar, the walk stopped
+there and every later page was dropped.
+
+**Why it hit this production in particular.** `run()` keeps a production only
+if the genre map has its slug — that is the filter separating real
+productions from the theatre's talks and building tours. Abigél's only genre
+term is `ix-magdafeszt`; it is in none of `proza-hu`, `zene-opera-hu`,
+`tanc-hu` or the outdoor-stage term. So the one truncated walk was its only
+route into the catalogue, and losing it was silent.
+
+The same loops also swallowed *every* fetch error as "end of list", so a 500
+or a timeout on a term page would quietly delete every production whose only
+term was that one, with reconcile then removing the rows.
+
+**Fixed** by walking until a page has no productions on it, or repeats the
+previous page verbatim — which is what a site that never 404s answers past
+the end — and by letting anything that is not a 404 throw, so a bad fetch
+fails the adapter loudly instead of shrinking the catalogue. Covered by
+`sync/adapters/csokonai-pagination.test.ts`, which fails against the old
+code. A `--source=csokonai` run then brought Abigél in with all three dates.
+
 ### T-120 · Two npm scripts changed the native fingerprint and cut the phones off from updates
 type: bug · area: infra · priority: med · status: open · added: 2026-09-22
 
@@ -3697,4 +3738,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-121**
+Next free id: **T-122**
