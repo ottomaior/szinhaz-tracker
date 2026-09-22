@@ -419,6 +419,37 @@ attendance and the diary must never record an evening on someone's behalf.
 
 ## Open
 
+### T-124 · A sponsor logo became the cover, because it came first on the page
+type: bug · area: data · priority: med · status: doing · added: 2026-09-22
+
+Parasztopera at the Radnóti showed the radiocáfé 98.0 logo as its cover art
+— a 220×156 sponsor PNG — instead of the production still, everywhere the
+poster appears. Ottó found it on the play page and guessed it would not be
+the only one.
+
+`parseProductionDetail` in `sync/adapters/radnoti.ts` took
+`$(".szindarab_adatlap img").first()`, which is whatever picture the editor
+put at the top of the detail block. On most pages that is the cover; on this
+one a sponsor logo sits in front of it.
+
+The theme marks the real cover with `attachment-imax-single-thumb` — the
+1200×480 crop of the banner the page opens with, usually a file named
+`..._boritokep_...`. Surveyed ten live pages: every one carries exactly one
+image with that class and in every case it is the right picture, so the class
+is a better answer than position. **Two of the ten were wrong** under the old
+rule — Parasztopera (radiocáfé) and KELETI BLoKk (a Sirokkó logo).
+
+Fixed by preferring the marked cover and keeping "first image" only as the
+fallback for a page that marks none, since a production with no cover is
+better served by its first picture than by nothing. Covered by three tests
+against a saved copy of the Parasztopera page; the first fails against the
+old code. A `--source=radnoti` run re-mirrored both posters.
+
+Checked the other adapters for the same shape: they all select a specific
+class or container (`.szinlap-kep`, `.p-img`, `.showViewPageImage`,
+`.artist-image`) rather than the first image in a broad block, so this was
+Radnóti's alone.
+
 ### T-125 · "Ma este" showed one poster when the evening has seven
 type: idea · area: design · size: M · status: doing · added: 2026-09-22
 
