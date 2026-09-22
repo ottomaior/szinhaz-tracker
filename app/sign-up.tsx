@@ -1,15 +1,14 @@
 import { useState } from "react";
-import { View, StyleSheet, Pressable, TextInput } from "react-native";
+import { View, ScrollView, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
-import { inputFontSize } from "@/theme/type";
-import { gutter, radius, space } from "@/theme/tokens";
-import { bodyFont } from "@/theme/typography";
-import { useAppFonts } from "@/hooks/useAppFonts";
+import { gutter, maxWidth, space } from "@/theme/tokens";
 import { PASSWORD_MIN_LENGTH, authErrorMessage, resendConfirmation, signUp } from "@/services/authService";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { ContentColumn } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
+import { Notice } from "@/components/ui/Notice";
 import { Button } from "@/components/ui/Button";
 import { SocialSignIn } from "@/components/ui/SocialSignIn";
 import { strings } from "@/i18n/hu";
@@ -20,7 +19,6 @@ export default function SignUpScreen() {
   const styles = useStyles();
 
   const router = useRouter();
-  const fontsLoaded = useAppFonts();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -91,7 +89,8 @@ export default function SignUpScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ModalHeader title={strings.auth.signUpTitle} />
 
-      <ContentColumn style={{ padding: gutter, gap: space.lg }}>
+      <ScrollView keyboardShouldPersistTaps="handled">
+        <ContentColumn width="reading" style={styles.form}>
         {awaitingConfirmation ? (
           <>
             <Text variant="heading">{strings.auth.confirmEmailTitle}</Text>
@@ -101,11 +100,7 @@ export default function SignUpScreen() {
             <Text variant="bodySmall" tone="faint">
               {strings.auth.confirmEmailSpam}
             </Text>
-            {resendNote && (
-              <Text accessibilityRole="alert" variant="bodySmall" tone="accent">
-                {resendNote}
-              </Text>
-            )}
+            {resendNote && <Notice>{resendNote}</Notice>}
             <Button
               label={strings.auth.resendConfirmation}
               variant="outline"
@@ -123,45 +118,35 @@ export default function SignUpScreen() {
           <>
         <SocialSignIn onSignedIn={() => closeModal(router)} onError={setError} />
 
-        <TextInput
+        <TextField
           value={name}
           onChangeText={setName}
           placeholder={strings.auth.nameLabel}
-          placeholderTextColor={colors.textFaint}
           accessibilityLabel={strings.auth.nameLabel}
           autoComplete="name"
-          style={[styles.input, { fontFamily: bodyFont(fontsLoaded) }]}
         />
-        <TextInput
+        <TextField
           value={email}
           onChangeText={setEmail}
           placeholder={strings.auth.emailLabel}
-          placeholderTextColor={colors.textFaint}
           accessibilityLabel={strings.auth.emailLabel}
           autoCapitalize="none"
           autoComplete="email"
           keyboardType="email-address"
-          style={[styles.input, { fontFamily: bodyFont(fontsLoaded) }]}
         />
-        <TextInput
+        <TextField
           value={password}
           onChangeText={setPassword}
           placeholder={strings.auth.passwordLabel}
-          placeholderTextColor={colors.textFaint}
           accessibilityLabel={strings.auth.passwordLabel}
           autoCapitalize="none"
           autoComplete="new-password"
           secureTextEntry
           onSubmitEditing={handleSubmit}
           returnKeyType="go"
-          style={[styles.input, { fontFamily: bodyFont(fontsLoaded) }]}
         />
 
-        {error && (
-          <Text accessibilityRole="alert" variant="bodySmall" tone="accent">
-            {error}
-          </Text>
-        )}
+        {error && <Notice>{error}</Notice>}
 
         <Button label={strings.auth.signUpButton} onPress={handleSubmit} loading={submitting} disabled={submitting} />
 
@@ -169,38 +154,36 @@ export default function SignUpScreen() {
             both documents existed under /legal and this screen never
             mentioned them (T-058). Two links in a caption, the way every
             sign-up form does it; pressing the button is the acceptance. */}
-        <Text variant="caption" tone="faint" style={{ textAlign: "center" }}>
+        <Text variant="caption" tone="faint" style={styles.switch}>
           {strings.auth.legalNoticeBefore}
-          <Text variant="caption" style={{ color: colors.gold }} onPress={() => router.push("/legal/feltetelek")} accessibilityRole="link">
+          <Text variant="caption" tone="accent" onPress={() => router.push("/legal/feltetelek")} accessibilityRole="link">
             {strings.auth.legalNoticeTerms}
           </Text>
           {strings.auth.legalNoticeBetween}
-          <Text variant="caption" style={{ color: colors.gold }} onPress={() => router.push("/legal/adatvedelem")} accessibilityRole="link">
+          <Text variant="caption" tone="accent" onPress={() => router.push("/legal/adatvedelem")} accessibilityRole="link">
             {strings.auth.legalNoticePrivacy}
           </Text>
           {strings.auth.legalNoticeAfter}
         </Text>
 
-        <Pressable onPress={() => router.replace("/sign-in")} style={{ alignItems: "center", marginTop: 8 }} accessibilityRole="button">
-          <Text variant="bodySmall" tone="faint">
-            {strings.auth.haveAccount} <Text style={{ color: colors.gold }}>{strings.auth.switchToSignIn}</Text>
+        <Text variant="bodySmall" tone="faint" style={styles.switch}>
+          {strings.auth.haveAccount}{" "}
+          <Text variant="bodySmall" tone="accent" accessibilityRole="link" onPress={() => router.replace("/sign-in")}>
+            {strings.auth.switchToSignIn}
           </Text>
-        </Pressable>
+        </Text>
           </>
         )}
-      </ContentColumn>
+        </ContentColumn>
+      </ScrollView>
     </View>
   );
 }
 
-const useStyles = makeStyles((colors) => StyleSheet.create({
-  input: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    borderRadius: radius.md,
-    padding: space.lg,
-    fontSize: inputFontSize,
-    color: colors.text,
-  },
+const useStyles = makeStyles(() => StyleSheet.create({
+  // Narrower than a reading column: a row of form fields 680pt wide reads
+  // as a table, and every field here holds one short answer.
+  form: { padding: gutter, gap: space.lg, maxWidth: maxWidth.reading / 2, alignSelf: "center", width: "100%" },
+  link: { alignSelf: "center" },
+  switch: { textAlign: "center" },
 }));

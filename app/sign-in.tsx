@@ -1,16 +1,15 @@
 import { useState } from "react";
-import { View, StyleSheet, Pressable, TextInput } from "react-native";
+import { View, ScrollView, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { isAuthApiError } from "@supabase/supabase-js";
 import { colors } from "@/theme/colors";
-import { inputFontSize } from "@/theme/type";
-import { gutter, radius, space } from "@/theme/tokens";
-import { bodyFont } from "@/theme/typography";
-import { useAppFonts } from "@/hooks/useAppFonts";
+import { gutter, maxWidth, space } from "@/theme/tokens";
 import { authErrorMessage, resendConfirmation, signIn } from "@/services/authService";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { ContentColumn } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
+import { Notice } from "@/components/ui/Notice";
 import { Button } from "@/components/ui/Button";
 import { SocialSignIn } from "@/components/ui/SocialSignIn";
 import { strings } from "@/i18n/hu";
@@ -21,7 +20,6 @@ export default function SignInScreen() {
   const styles = useStyles();
 
   const router = useRouter();
-  const fontsLoaded = useAppFonts();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string>();
@@ -77,45 +75,41 @@ export default function SignInScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ModalHeader title={strings.auth.signInTitle} />
 
-      <ContentColumn style={{ padding: gutter, gap: space.lg }}>
+      <ScrollView keyboardShouldPersistTaps="handled">
+        <ContentColumn width="reading" style={styles.form}>
         <SocialSignIn onSignedIn={() => closeModal(router)} onError={setError} />
 
-        <TextInput
+        <TextField
           value={email}
           onChangeText={setEmail}
           placeholder={strings.auth.emailLabel}
-          placeholderTextColor={colors.textFaint}
           accessibilityLabel={strings.auth.emailLabel}
           autoCapitalize="none"
           autoComplete="email"
           keyboardType="email-address"
-          style={[styles.input, { fontFamily: bodyFont(fontsLoaded) }]}
         />
-        <TextInput
+        <TextField
           value={password}
           onChangeText={setPassword}
           placeholder={strings.auth.passwordLabel}
-          placeholderTextColor={colors.textFaint}
           accessibilityLabel={strings.auth.passwordLabel}
           autoCapitalize="none"
           autoComplete="current-password"
           secureTextEntry
           onSubmitEditing={handleSubmit}
           returnKeyType="go"
-          style={[styles.input, { fontFamily: bodyFont(fontsLoaded) }]}
         />
 
-        {error && (
-          <Text accessibilityRole="alert" variant="bodySmall" tone="accent">
-            {error}
-          </Text>
-        )}
+        {error && <Notice>{error}</Notice>}
         {unconfirmed && (
-          <Pressable onPress={handleResend} disabled={resending} accessibilityRole="button">
-            <Text variant="bodySmall" style={{ color: colors.gold }}>
-              {strings.auth.resendConfirmation}
-            </Text>
-          </Pressable>
+          <Button
+            variant="text"
+            size="sm"
+            label={strings.auth.resendConfirmation}
+            onPress={handleResend}
+            disabled={resending}
+            style={styles.link}
+          />
         )}
 
         {/* The button used to only dim while submitting, so a second tap fired
@@ -126,34 +120,30 @@ export default function SignInScreen() {
             who cannot get in is far likelier to have forgotten a password than
             to want a second account, and putting the recovery route under the
             signup route is how people end up with two diaries. */}
-        <Pressable
+        <Button
+          variant="text"
+          size="sm"
+          label={strings.auth.forgotPassword}
           onPress={() => router.push("/forgot-password")}
-          style={{ alignItems: "center" }}
-          accessibilityRole="button"
-        >
-          <Text variant="bodySmall" style={{ color: colors.gold }}>
-            {strings.auth.forgotPassword}
-          </Text>
-        </Pressable>
+          style={styles.link}
+        />
 
-        <Pressable onPress={() => router.replace("/sign-up")} style={{ alignItems: "center", marginTop: 8 }} accessibilityRole="button">
-          <Text variant="bodySmall" tone="faint">
-            {strings.auth.noAccount} <Text style={{ color: colors.gold }}>{strings.auth.switchToSignUp}</Text>
+        <Text variant="bodySmall" tone="faint" style={styles.switch}>
+          {strings.auth.noAccount}{" "}
+          <Text variant="bodySmall" tone="accent" accessibilityRole="link" onPress={() => router.replace("/sign-up")}>
+            {strings.auth.switchToSignUp}
           </Text>
-        </Pressable>
-      </ContentColumn>
+        </Text>
+        </ContentColumn>
+      </ScrollView>
     </View>
   );
 }
 
-const useStyles = makeStyles((colors) => StyleSheet.create({
-  input: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    borderRadius: radius.md,
-    padding: space.lg,
-    fontSize: inputFontSize,
-    color: colors.text,
-  },
+const useStyles = makeStyles(() => StyleSheet.create({
+  // Narrower than a reading column: a row of form fields 680pt wide reads
+  // as a table, and every field here holds one short answer.
+  form: { padding: gutter, gap: space.lg, maxWidth: maxWidth.reading / 2, alignSelf: "center", width: "100%" },
+  link: { alignSelf: "center" },
+  switch: { textAlign: "center" },
 }));
