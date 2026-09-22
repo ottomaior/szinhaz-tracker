@@ -220,6 +220,9 @@ export const strings = {
     /* The poster rail under the lead: every curtain going up that evening
        across the theatres in scope. Spelled out up to twelve, because "8
        függöny" on a heading reads as a count and "Nyolc függöny" as a line. */
+    /* Read aloud for one dot of the evening's lead (T-125): the dots are a
+       row of identical circles to a screen reader without it. */
+    curtainAt: (time: string, title: string) => `${time} — ${title}`,
     curtainsTitle: (n: number) => `${CURTAIN_WORDS[n] ?? String(n)} függöny, egy este`,
     curtainsEyebrowOn: (weekday: string | undefined, part: Daypart | undefined) => {
       const day = weekday ?? "Ma";

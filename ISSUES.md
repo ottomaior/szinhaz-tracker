@@ -450,6 +450,46 @@ class or container (`.szinlap-kep`, `.p-img`, `.showViewPageImage`,
 `.artist-image`) rather than the first image in a broad block, so this was
 Radnóti's alone.
 
+### T-125 · "Ma este" showed one poster when the evening has seven
+type: idea · area: design · size: M · status: doing · added: 2026-09-22
+
+**The problem.** The Discover lead badges a poster MA ESTE and shows one
+production, but an evening usually has six or seven curtains. The one the app
+happened to lead with read as the only thing on, and the rest were a rail
+further down that a reader has to reach before learning they exist. Ottó
+asked for the lead to be swipeable and to rotate on its own.
+
+**Roughly.** The lead now carries every curtain of its evening — the same
+list the „Hét függöny, egy este” rail held, so that rail is gone rather
+than saying it twice. Dots and a count under the poster, a swipe to move, and
+a ten-second rotation so the evening introduces itself without a gesture
+nobody knows to make. It stops for good once touched, never runs while the
+tab is in the background, and does not run at all under reduced motion, where
+the dots and the swipe are the whole feature.
+
+Three things the rotation forced:
+
+- **One frame for the evening.** `posterAspect` clamps between 4:5 and 4:3,
+  a two-thirds difference in height, so a changing frame would shove the page
+  up and down every ten seconds. The frame is now driven by the column's
+  width and each poster is shown whole inside it. A single curtain keeps its
+  own proportions.
+- **Paging that works on the web.** `pagingEnabled` left
+  `scroll-snap-type: none`, and neither `onScrollBeginDrag` nor
+  `onTouchStart` fires for a mouse drag. So the CSS is set explicitly, the
+  strip is nudged onto the nearest poster once it has been still for a
+  moment, and "the reader has taken over" is read from the scroll itself.
+- **Re-aligning on a resize.** The offset is pixels, so it means a different
+  slide the moment the slide is a different size — a rotated phone put the
+  wrong poster under the right title until the strip was re-aligned.
+
+**Left behind.** `components/ui/PosterRail.tsx` and the `curtainsTitle`,
+`curtainsEyebrowOn` and `CURTAIN_WORDS` strings now have no caller. Kept for
+the moment rather than deleted in the same change that stopped using them,
+which is the repo's habit; worth a broom in a later one, along with a
+decision about whether the „Hét függöny, egy este” line is worth keeping
+as a heading above the lead.
+
 ### T-121 · A paginated list stopped early, and Abigél was never in the catalogue
 type: bug · area: data · priority: high · status: doing · added: 2026-09-22
 
