@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { View, ScrollView, StyleSheet, Pressable, Share, Platform, Linking } from "react-native";
+import { View, ScrollView, StyleSheet, Share, Platform, Linking } from "react-native";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
-import { gutter, overlay, radius, space } from "@/theme/tokens";
+import { control, duration as motion, gutter, hairlineWidth, icon, mask, maxWidth, overlay, radius, space } from "@/theme/tokens";
+import { typeScale } from "@/theme/type";
 import {
   addToWatchlist,
   getPlayById,
@@ -19,13 +20,15 @@ import { useAtLeast } from "@/hooks/useBreakpoint";
 import type { Performance, Play, Portrait, Poster, Review, User, Venue } from "@/data/types";
 import { getPortraits } from "@/services/peopleService";
 import { IconButton, Button } from "@/components/ui/Button";
-import { Avatar } from "@/components/ui/Avatar";
+import { PersonRow } from "@/components/ui/Rows";
+import { MeterBar } from "@/components/ui/Cards";
+import { Notice } from "@/components/ui/Notice";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { ContentColumn } from "@/components/ui/Screen";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Text } from "@/components/ui/Text";
 import { SpotlightCard } from "@/components/ui/SpotlightCard";
-import { SplitText } from "@/components/motion/SplitText";
 import { StarBorder } from "@/components/motion/StarBorder";
 import { FadeIn } from "@/components/motion/Reveal";
 import { MaskRatingRow } from "@/components/icons/MaskIcon";
@@ -284,14 +287,12 @@ export default function PlayDetailScreen() {
   if (loadFailed) {
     return (
       <View style={styles.centered}>
-        <Text variant="body" tone="dim" style={{ textAlign: "center" }}>
-          {strings.checkin.playNotFound}
-        </Text>
-        <Pressable onPress={() => closeModal(router, "/(tabs)")} accessibilityRole="button" hitSlop={8}>
-          <Text variant="label" tone="accent">
-            {strings.checkin.close}
-          </Text>
-        </Pressable>
+        <EmptyState
+          align="center"
+          title={strings.checkin.playNotFound}
+          actionLabel={strings.checkin.close}
+          onAction={() => closeModal(router, "/(tabs)")}
+        />
       </View>
     );
   }
@@ -301,15 +302,15 @@ export default function PlayDetailScreen() {
     // rather than snapping from a blank screen to a full one (T-093).
     return (
       <View style={{ flex: 1, backgroundColor: colors.bg }}>
-        <View style={{ width: "100%", aspectRatio: 3 / 4, maxHeight: 420 }}>
+        <View style={{ width: "100%", aspectRatio: FALLBACK_HERO_ASPECT, maxHeight: maxWidth.reading - space["5xl"] * 4 }}>
           <Skeleton width="100%" height="100%" radius={0} />
         </View>
         <View style={{ padding: gutter, gap: space.md }}>
-          <Skeleton width="70%" height={28} />
-          <Skeleton width="45%" height={14} />
-          <Skeleton width="100%" height={46} radius={radius.md} style={{ marginTop: space.sm }} />
-          <Skeleton width="92%" height={14} style={{ marginTop: space.md }} />
-          <Skeleton width="80%" height={14} />
+          <Skeleton width="70%" height={typeScale.title.lineHeight} />
+          <Skeleton width="45%" height={space.lg} />
+          <Skeleton width="100%" height={control.md} radius={radius.md} style={{ marginTop: space.sm }} />
+          <Skeleton width="92%" height={space.lg} style={{ marginTop: space.md }} />
+          <Skeleton width="80%" height={space.lg} />
         </View>
       </View>
     );
@@ -322,416 +323,454 @@ export default function PlayDetailScreen() {
     .filter(Boolean)
     .join(" · ");
 
+  /**
+   * The title block. On a phone it sits on the poster under the scrim and
+   * takes its colours from `overlay`, never from the palette: the scrim
+   * under it is the dark stage in every theme, and a printed theme's
+   * near-black text would vanish into it. On a wide screen it sits beside
+   * the poster on the page, in the page's own colours.
+   */
+  const onImage = !wide;
+  const titleBlock = (
+    <FadeIn style={styles.titleBlock}>
+      {!!heroFacts && (
+        <Text variant="eyebrow" numberOfLines={1} style={onImage ? { color: overlay.onImageAccent } : undefined}>
+          {heroFacts}
+        </Text>
+      )}
+      <Text variant="display" style={onImage ? { color: overlay.onImageHeading } : undefined}>
+        {play.title}
+      </Text>
+      {/* The line the house prints under the title, where the house prints
+          it. Csokonai sets it on its production page and on every calendar
+          row, and it is the only thing that says what kind of evening this
+          is when the eyebrow's coarse genre cannot: „Izzik a galagonya” is
+          filed under próza and is a public choir rehearsal (`énekkari
+          próba`); elsewhere the slot holds `opera-beavató`, `workshop`,
+          `díjátadó és gála`. Until this line existed the app showed those as
+          plain performances and left the reader to find out in the synopsis,
+          if at all — see T-002. When the line names who made the production
+          rather than what it is, it is the vendégjáték note below instead
+          (T-025), so the same words are not printed twice. */}
+      {!!play.subtitle && !play.producedBy && (
+        <Text variant="bodySmall" tone={onImage ? undefined : "dim"} style={onImage ? { color: overlay.onImageText } : undefined}>
+          {play.subtitle}
+        </Text>
+      )}
+      {/* The director's name is a link; the author's is not. That is not an
+          oversight — `play_cast` and `plays.director` are what a person page
+          is built from, and nothing in the catalogue indexes the playwright,
+          so a Shakespeare link would open an empty page. The credit line
+          stays one sentence either way. */}
+      {(!!play.author || !!play.director) && (
+        <Text variant="bodySmall" tone={onImage ? undefined : "dim"} style={onImage ? { color: overlay.onImageText } : undefined}>
+          {play.author}
+          {!!play.author && !!play.director && " · "}
+          {!!play.director && (
+            <>
+              {"rend. "}
+              <Text
+                variant="bodySmall"
+                weight="semibold"
+                tone={onImage ? undefined : "accent"}
+                accessibilityRole="link"
+                onPress={() => openPerson(play.director)}
+                style={onImage ? { color: overlay.onImageAccent } : undefined}
+              >
+                {play.director}
+              </Text>
+            </>
+          )}
+        </Text>
+      )}
+    </FadeIn>
+  );
+
+  /* One filled gold control, and the two toggles that already have a home
+     beside it as icons. "Felvétel egy listára" used to be a second
+     full-width bar, and the venue follow a third — three stacked bars, two
+     of them gold, before the showtimes. */
+  const actions = (
+    <View style={styles.actions}>
+      <StarBorder style={{ flex: 1 }} radius={radius.md} delay={motion.reveal}>
+        <Button
+          label={strings.playDetail.logButton}
+          icon={<PlusIcon size={icon.inline} />}
+          onPress={() => router.push({ pathname: "/checkin", params: { playId: play.id } })}
+        />
+      </StarBorder>
+      <IconButton
+        onPress={toggleWatchlist}
+        active={inWatchlist}
+        disabled={watchlistBusy}
+        accessibilityLabel={inWatchlist ? strings.playDetail.removeFromWatchlist : strings.playDetail.addToWatchlist}
+      >
+        <TicketIcon color={inWatchlist ? colors.onAccent : colors.text} />
+      </IconButton>
+      {/* Separate from the watchlist on purpose. The watchlist answers "am I
+          going to this", which is one question with one answer; a list
+          answers "what does this belong with", which is open-ended and can
+          be several at once. */}
+      <IconButton
+        onPress={() => (session ? setListSheetOpen(true) : router.push("/sign-in"))}
+        accessibilityLabel={strings.playDetail.addToList}
+      >
+        <ListPlusIcon color={colors.text} />
+      </IconButton>
+    </View>
+  );
+
+  const backAndShare = (
+    <View style={styles.chrome}>
+      <IconButton translucent={onImage} onPress={() => closeModal(router, "/(tabs)")} accessibilityLabel={strings.playDetail.back}>
+        <ChevronLeftIcon color={onImage ? overlay.onImageHeading : colors.text} />
+      </IconButton>
+      <IconButton translucent={onImage} onPress={handleShare} accessibilityLabel={strings.playDetail.share}>
+        <ShareIcon color={onImage ? overlay.onImageHeading : colors.text} />
+      </IconButton>
+    </View>
+  );
+
+  /* The page under the title, in the order a reader decides in: is it on
+     and when, the way in, then what the reader and their circle thought,
+     the house, the story, the people. One rhythm — a section header and
+     its content, `space["2xl"]` between sections, hairlines between rows. */
+  const sections = (
+    <>
+      <View style={{ gap: space.sm }}>
+        {/* One line: is it on, and when next. The badge used to be a pill on
+            its own row with the date in dim text underneath; as a sentence
+            the two facts read together, which is how they are asked. */}
+        <Text variant="bodySmall" tone="dim">
+          <StatusInline status={play.status} />
+          {!!scheduling && (
+            <>
+              {play.status !== "unknown" && " · "}
+              {scheduling.label}
+              {": "}
+              <Text variant="bodySmall">{scheduling.value}</Text>
+            </>
+          )}
+        </Text>
+
+        {/* Why the badge says what it says — in Hungarian, and only when it
+            is not already said above. `plays.status_reason` is written by
+            `recompute_play_status()` in English for whoever is reading the
+            database, so the note is derived here from the same facts and
+            returns nothing in the cases the line above has covered. */}
+        {!!statusNote(play) && (
+          <Text variant="caption" tone="faint">
+            {statusNote(play)}
+          </Text>
+        )}
+
+        {play.isArchived && (
+          <Text variant="caption" tone="faint">
+            {strings.playDetail.archivedNote}
+          </Text>
+        )}
+
+        {/* Above the festival line and a step louder than it, because the two
+            say different-sized things. Which festival an evening belongs to
+            is context; who made it is the production's authorship, and this
+            page otherwise reads as though the venue did. See T-025. */}
+        {!!play.producedBy && !!play.subtitle && (
+          <Text variant="bodySmall" tone="dim">
+            {strings.playDetail.guestRun(play.subtitle)}
+          </Text>
+        )}
+
+        {play.isFestival && !!play.festivalName && (
+          <Text variant="caption" tone="faint">
+            {play.festivalName}
+          </Text>
+        )}
+      </View>
+
+      {!wide && actions}
+
+      <AddToListSheet
+        playId={play.id}
+        visible={listSheetOpen}
+        onClose={() => setListSheetOpen(false)}
+        // The production goes along, so the list is made with it on it
+        // rather than found again afterwards (T-062).
+        onCreateList={() => {
+          setListSheetOpen(false);
+          router.push({ pathname: "/lists", params: { attach: play.id, attachTitle: play.title } });
+        }}
+      />
+
+      {!!notice && <Notice>{notice}</Notice>}
+
+      {/* Where somebody who has just decided to go actually needs to end up
+          — before any opinion, the reader's own included, because the
+          decision is made here. Every adapter fetches this page and used to
+          discard the address; the link sits on the showtimes' baseline
+          because that is where the decision is made. Absent for hand-added
+          plays and for Örkény, whose API publishes no slug to build a route
+          from. */}
+      <FadeIn delay={motion.state}>
+        <SpotlightCard>
+          <ShowtimeList
+            performances={performances}
+            play={play}
+            action={play.sourceUrl ? strings.playDetail.ticketsShort : undefined}
+            onAction={play.sourceUrl ? () => openTickets(play.sourceUrl!) : undefined}
+          />
+        </SpotlightCard>
+      </FadeIn>
+
+      {/* What the public average used to be.
+
+          The average, the three per-dimension bars and the distribution
+          chart under them all came off together: with the platform this
+          early, an average two people wide has the authority of a figure and
+          none of the evidence, and the chart spent a third of the screen
+          saying the same thing in bars. The column is still maintained in
+          the database — see the README — so this comes back as a component
+          when there are enough people to mean something.
+
+          What stands here instead is the one rating on this screen that is
+          not a claim about a crowd: yours. Absent for a signed-out reader and
+          for anybody who has not rated the production, rather than drawn
+          empty — the block it replaced used to render a bold gold "0.0" that
+          read as a terrible score rather than as no answer.
+
+          The three per-dimension bars are back, and they are the other half
+          of the same rule. They came off because check-in seeded them and
+          saved them whether or not the person touched those rows, so drawing
+          them would have handed somebody a "Rendezés 3.0" they never chose.
+          Since a4c777d the form leaves them unset unless they are answered,
+          and null means "did not answer" all the way to the screen — so what
+          is drawn here is now what this person said, the same as the figure
+          beside it, and never a number filled in for them. They are their
+          own scores and not an average, which is why they belong on this
+          side of the line the block draws. */}
+      {own && (
+        <View style={{ gap: space.sm }}>
+          <SectionHeader
+            title={strings.playDetail.yourRatingTitle}
+            action={own.entries > 1 ? strings.playDetail.yourRatingEntries(own.entries) : strings.playDetail.yourRatingOpen}
+            onAction={() => router.push({ pathname: "/entry/[id]", params: { id: own.entry.id } })}
+          />
+          {/* On hairlines rather than in a box: a card here made the rating
+              the heaviest object on the screen, above the title. */}
+          <View style={styles.ratingBlock}>
+            <View style={styles.ratingSummary}>
+              <Text variant="display" tone="accent">{own.rating.toFixed(1)}</Text>
+              <MaskRatingRow rating={own.rating} size={mask.inline} />
+            </View>
+            <View style={{ flex: 1, gap: space.md }}>
+              {/* Dropped entirely when they answered none of the three, which
+                  is now the ordinary case for a quick check-in. A column of
+                  three dashes is not information, and it would make an entry
+                  that said one honest thing look like one that failed to say
+                  four. */}
+              {hasOwnSubRatings && (
+                <View style={{ gap: space.md }}>
+                  <RatingBar label={strings.playDetail.acting} value={own.entry.ratingActing} />
+                  <RatingBar label={strings.playDetail.directing} value={own.entry.ratingDirecting} />
+                  <RatingBar label={strings.playDetail.setDesign} value={own.entry.ratingSetDesign} />
+                </View>
+              )}
+              <Text variant="caption" tone="faint">
+                {own.entry.seenAt
+                  ? strings.playDetail.yourRatingSeen(formatLongDate(`${own.entry.seenAt}T12:00:00Z`))
+                  : strings.playDetail.yourRatingUndated}
+              </Text>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* Below the reader's own opinion and above the synopsis: this is the
+          one opinion on the screen that is about people the reader actually
+          chose, and burying it under the cast list would put it below every
+          stranger's average. Hidden entirely when nobody you follow has been
+          — an empty "your friends" block is a reminder that you have none,
+          which is not what a listing is for. */}
+      {friendRatings.length > 0 && (
+        <View>
+          <SectionHeader
+            eyebrow={strings.playDetail.followingEyebrow}
+            title={strings.friends.playHeading}
+            action={strings.friends.seenBy(friendRatings.length)}
+            style={styles.rowsHeader}
+          />
+          {friendRatings.map((f) => (
+            <PersonRow
+              key={f.userId}
+              name={f.name}
+              avatarUri={f.avatarUrl}
+              initials={f.initials}
+              meta={f.seenAt ? formatLongDate(`${f.seenAt}T12:00:00Z`) : undefined}
+              onPress={() => router.push(`/user/${f.userId}`)}
+              trailing={
+                f.rating !== undefined ? (
+                  <MaskRatingRow rating={f.rating} size={mask.inline} />
+                ) : (
+                  <Text variant="caption" tone="faint">{strings.friends.unrated}</Text>
+                )
+              }
+            />
+          ))}
+        </View>
+      )}
+
+      {/* The theatre, not the production. This is the one place in the app a
+          house can be subscribed to, and it belongs here rather than on a
+          venue page of its own: there is no such screen, and the moment
+          somebody wants "more like this" is while they are looking at one of
+          its productions. A row with a small pill — a follow is a secondary
+          commitment and reads as one. */}
+      {!!venue && (
+        <View style={styles.venueRow}>
+          <View style={{ flex: 1, gap: space["2xs"] }}>
+            <Text variant="eyebrow" tone="faint">{strings.playDetail.venueEyebrow}</Text>
+            <Text variant="subheading" numberOfLines={2}>{venue.name}</Text>
+          </View>
+          <FollowSubjectButton type="venue" subjectKey={venue.id} showHint={false} compact />
+        </View>
+      )}
+
+      {!!play.synopsis && (
+        <View style={{ gap: space.sm }}>
+          <SectionHeader title={strings.playDetail.aboutHeading} />
+          <Text variant="body" tone="dim" numberOfLines={synopsisOpen ? undefined : SYNOPSIS_COLLAPSED_LINES}>
+            {play.synopsis}
+          </Text>
+          {play.synopsis.length > 420 && (
+            <Button
+              variant="text"
+              size="sm"
+              label={synopsisOpen ? strings.playDetail.readLess : strings.playDetail.readMore}
+              onPress={() => setSynopsisOpen((s) => !s)}
+              style={styles.readMore}
+            />
+          )}
+        </View>
+      )}
+
+      {/* A list rather than a strip of circles: at 64pt a role like "Zoltán,
+          a narrátor" was cut after one word, and the strip hid everyone past
+          the fourth name. A cast list exists to provoke "what else is she
+          in", so every row opens the person page. */}
+      {play.cast.length > 0 && (
+        <View>
+          <SectionHeader
+            eyebrow={strings.playDetail.castCount(play.cast.length)}
+            title={strings.playDetail.castCrew}
+            style={styles.rowsHeader}
+          />
+          {play.cast.map((c, i) => (
+            // Keyed by index: the same performer legitimately appears twice
+            // when they cover two roles in one production.
+            <PersonRow
+              key={`${c.name}-${i}`}
+              name={c.name}
+              avatarUri={portraits.get(personSlug(c.name))?.thumbUrl}
+              initials={initialsOf(c.name)}
+              serif
+              // Neither line is clamped. A Brecht chorus member carries
+              // eleven roles in one string, and cutting that at two lines
+              // with an ellipsis left the last six unreadable with nothing
+              // to press (T-047); the list is a column of rows with room to
+              // grow, so the row grows.
+              meta={
+                c.role ? (
+                  <Text variant="caption" tone="faint">
+                    {c.role}
+                  </Text>
+                ) : undefined
+              }
+              onPress={() => openPerson(c.name)}
+            />
+          ))}
+        </View>
+      )}
+
+      {/* Yours and the people you follow, and nobody else — see 0041. A
+          stranger's entry arrives with its rating and its note already
+          emptied by the database, so listing it would put a name over a
+          blank and invite the reader to wonder what was wrong with it. The
+          count follows the list rather than the query for the same reason: a
+          heading promising eight opinions above two of them is the sort of
+          number that is technically true and reads as a bug. */}
+      <View>
+        <SectionHeader
+          title={strings.playDetail.fromFollowing}
+          action={strings.playDetail.reviewsCount(readableReviews.length)}
+          style={styles.rowsHeader}
+        />
+        {readableReviews.length === 0 ? (
+          <Text variant="bodySmall" tone="faint">
+            {strings.playDetail.noReviewsYet}
+          </Text>
+        ) : (
+          readableReviews.map((r) => <ReviewRow key={r.id} review={r} />)
+        )}
+      </View>
+    </>
+  );
+
+  if (wide) {
+    /* Two columns from the `expanded` breakpoint: the poster as shot, at
+       its own proportion, in a column of its own with the actions under
+       it; the title and everything else in a reading column beside it. A
+       letterboxed 500pt band over a phone column was the old answer, and it
+       kept the middle third of every still and the title of every poster. */
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        <ScrollView contentContainerStyle={{ paddingBottom: space["4xl"] }}>
+          <ContentColumn width="content" style={styles.wideColumn}>
+            {backAndShare}
+            <View style={styles.columns}>
+              <View style={styles.posterColumn}>
+                <View style={[styles.posterFrame, { aspectRatio: heroAspect(play.poster) }]}>
+                  <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} height="100%" radius={radius.lg} priority="high" />
+                </View>
+                {/* These are working photographers' production stills; the
+                    credit belongs with the image wherever it is shown at
+                    size. */}
+                {!!play.poster?.credit && (
+                  <Text variant="caption" tone="faint">
+                    {play.poster.credit}
+                  </Text>
+                )}
+                {actions}
+              </View>
+              <View style={styles.readingColumn}>
+                {titleBlock}
+                {sections}
+              </View>
+            </View>
+          </ContentColumn>
+        </ScrollView>
+      </View>
+    );
+  }
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView bounces={false} contentContainerStyle={{ paddingBottom: space["4xl"] }}>
-        {/* The title block lives on the poster, under the scrim the feed card
-            already uses. Everything on the image takes its colour from
-            `overlay`, never from the palette: the scrim under it is the dark
-            stage in every theme, and a printed theme's near-black text would
-            vanish into it. */}
-        <View style={[styles.hero, { aspectRatio: heroAspect(play.poster) }, wide && styles.heroWide]}>
-          {/* Whole picture on a wide screen, over a blurred copy of itself:
-              a window-wide hero cropped to a 500pt band kept the middle third
-              of every still and the title of every poster, and on a desktop
-              there is room to show the frame as shot. On a phone `cover`
-              stays — the ratio there follows the image, so little is lost. */}
-          <PosterPlaceholder
-            poster={play.poster}
-            title={play.title}
-            seed={play.id}
-            height="100%"
-            radius={0}
-            scrim
-            priority="high"
-            contentFit={wide ? "contain" : "cover"}
-            backdrop={wide}
-          />
-          <View style={[styles.heroTop, { top: insets.top + space.lg }]}>
-            <IconButton translucent onPress={() => closeModal(router, "/(tabs)")} accessibilityLabel={strings.playDetail.back}>
-              <ChevronLeftIcon color={overlay.onImageHeading} />
-            </IconButton>
-            <IconButton translucent onPress={handleShare} accessibilityLabel={strings.playDetail.share}>
-              <ShareIcon color={overlay.onImageHeading} />
-            </IconButton>
-          </View>
+        <View style={[styles.hero, { aspectRatio: heroAspect(play.poster) }]}>
+          <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} height="100%" radius={0} scrim priority="high" />
+          <View style={[styles.heroTop, { top: insets.top + space.lg }]}>{backAndShare}</View>
           {/* These are working photographers' production stills; the credit
               belongs with the image wherever it is shown at size. Under the
               share button rather than in the corner the caption now owns. */}
           {!!play.poster?.credit && (
-            <Text variant="caption" style={[styles.posterCredit, { top: insets.top + space.lg + 44 }]}>
+            <Text variant="caption" style={[styles.posterCredit, { top: insets.top + space.lg + control.md }]}>
               {play.poster.credit}
             </Text>
           )}
-          {/* Pinned to the bottom edge, then centred to the same reading
-              column the text below uses, so the title on the image and the
-              paragraphs under it share a left edge on a wide screen. */}
           <View style={[styles.heroCaptionWrap, { pointerEvents: "box-none" }]}>
-          <ContentColumn style={styles.heroCaption}>
-            {!!heroFacts && (
-              <Text variant="eyebrow" numberOfLines={1} style={{ color: overlay.onImageAccent }}>
-                {heroFacts}
-              </Text>
-            )}
-            <SplitText text={play.title} color={overlay.onImageHeading} />
-            {/* The line the house prints under the title, where the house
-                prints it. Csokonai sets it on its production page and on every
-                calendar row, and it is the only thing that says what kind of
-                evening this is when the eyebrow's coarse genre cannot: „Izzik
-                a galagonya” is filed under próza and is a public choir
-                rehearsal (`énekkari próba`); elsewhere the slot holds
-                `opera-beavató`, `workshop`, `díjátadó és gála`. Until this
-                line existed the app showed those as plain performances and
-                left the reader to find out in the synopsis, if at all — see
-                T-002. When the line names who made the production rather
-                than what it is, it is the vendégjáték note below instead
-                (T-025), so the same words are not printed twice. */}
-            {!!play.subtitle && !play.producedBy && (
-              <Text variant="bodySmall" style={{ color: overlay.onImageText }}>
-                {play.subtitle}
-              </Text>
-            )}
-            {/* The director's name is a link; the author's is not. That is not
-                an oversight — `play_cast` and `plays.director` are what a
-                person page is built from, and nothing in the catalogue indexes
-                the playwright, so a Shakespeare link would open an empty page.
-                The credit line stays one sentence either way. */}
-            {(!!play.author || !!play.director) && (
-              <Text variant="bodySmall" style={{ color: overlay.onImageText }}>
-                {play.author}
-                {!!play.author && !!play.director && " · "}
-                {!!play.director && (
-                  <>
-                    {"rend. "}
-                    <Text
-                      variant="bodySmall"
-                      accessibilityRole="link"
-                      onPress={() => openPerson(play.director)}
-                      style={{ color: overlay.onImageAccent, fontWeight: "600" }}
-                    >
-                      {play.director}
-                    </Text>
-                  </>
-                )}
-              </Text>
-            )}
-          </ContentColumn>
+            <ContentColumn style={styles.heroCaption}>{titleBlock}</ContentColumn>
           </View>
         </View>
 
-        <ContentColumn style={{ paddingHorizontal: gutter, gap: space["2xl"], marginTop: space.lg }}>
-          <View style={{ gap: space.sm }}>
-            {/* One line: is it on, and when next. The badge used to be a pill
-                on its own row with the date in dim text underneath; as a
-                sentence the two facts read together, which is how they are
-                asked. */}
-            <Text variant="bodySmall" tone="dim">
-              <StatusInline status={play.status} />
-              {!!scheduling && (
-                <>
-                  {play.status !== "unknown" && " · "}
-                  {scheduling.label}
-                  {": "}
-                  <Text variant="bodySmall">{scheduling.value}</Text>
-                </>
-              )}
-            </Text>
-
-            {/* Why the badge says what it says — in Hungarian, and only when
-                it is not already said above. `plays.status_reason` is written
-                by `recompute_play_status()` in English for whoever is reading
-                the database, so the note is derived here from the same facts
-                and returns nothing in the cases the line above has covered. */}
-            {!!statusNote(play) && (
-              <Text variant="caption" tone="faint">
-                {statusNote(play)}
-              </Text>
-            )}
-
-            {play.isArchived && (
-              <Text variant="caption" tone="faint">
-                {strings.playDetail.archivedNote}
-              </Text>
-            )}
-
-            {/* Above the festival line and a step louder than it, because the
-                two say different-sized things. Which festival an evening
-                belongs to is context; who made it is the production's
-                authorship, and this page otherwise reads as though the venue
-                did. See T-025. */}
-            {!!play.producedBy && !!play.subtitle && (
-              <Text variant="bodySmall" tone="dim">
-                {strings.playDetail.guestRun(play.subtitle)}
-              </Text>
-            )}
-
-            {play.isFestival && !!play.festivalName && (
-              <Text variant="caption" tone="faint">
-                {play.festivalName}
-              </Text>
-            )}
-          </View>
-
-          {/* One filled gold control, and the two toggles that already have a
-              home beside it as icons. "Felvétel egy listára" used to be a
-              second full-width bar, and the venue follow a third — three
-              stacked bars, two of them gold, before the showtimes. */}
-          <View style={styles.actions}>
-            <StarBorder style={{ flex: 1 }} radius={radius.pill}>
-              <Button
-                label={strings.playDetail.logButton}
-                icon={<PlusIcon size={16} />}
-                style={styles.logButton}
-                onPress={() => router.push({ pathname: "/checkin", params: { playId: play.id } })}
-              />
-            </StarBorder>
-            <IconButton
-              onPress={toggleWatchlist}
-              active={inWatchlist}
-              disabled={watchlistBusy}
-              accessibilityLabel={inWatchlist ? strings.playDetail.removeFromWatchlist : strings.playDetail.addToWatchlist}
-            >
-              <TicketIcon size={18} color={inWatchlist ? colors.onAccent : colors.text} />
-            </IconButton>
-            {/* Separate from the watchlist on purpose. The watchlist answers
-                "am I going to this", which is one question with one answer; a
-                list answers "what does this belong with", which is open-ended
-                and can be several at once. */}
-            <IconButton
-              onPress={() => (session ? setListSheetOpen(true) : router.push("/sign-in"))}
-              accessibilityLabel={strings.playDetail.addToList}
-            >
-              <ListPlusIcon size={18} color={colors.text} />
-            </IconButton>
-          </View>
-
-          <AddToListSheet
-            playId={play.id}
-            visible={listSheetOpen}
-            onClose={() => setListSheetOpen(false)}
-            // The production goes along, so the list is made with it on it
-            // rather than found again afterwards (T-062).
-            onCreateList={() => {
-              setListSheetOpen(false);
-              router.push({ pathname: "/lists", params: { attach: play.id, attachTitle: play.title } });
-            }}
-          />
-
-          {!!notice && (
-            <Text accessibilityRole="alert" variant="bodySmall" tone="accent">
-              {notice}
-            </Text>
-          )}
-
-          {/* What the public average used to be.
-
-              The average, the three per-dimension bars and the distribution
-              chart under them all came off together: with the platform this
-              early, an average two people wide has the authority of a figure
-              and none of the evidence, and the chart spent a third of the
-              screen saying the same thing in bars. The column is still
-              maintained in the database — see the README — so this comes back
-              as a component when there are enough people to mean something.
-
-              What stands here instead is the one rating on this screen that is
-              not a claim about a crowd: yours. Absent for a signed-out reader
-              and for anybody who has not rated the production, rather than
-              drawn empty — the block it replaced used to render a bold gold
-              "0.0" that read as a terrible score rather than as no answer.
-
-              The three per-dimension bars are back, and they are the other
-              half of the same rule. They came off because check-in seeded them
-              and saved them whether or not the person touched those rows, so
-              drawing them would have handed somebody a "Rendezés 3.0" they
-              never chose. Since a4c777d the form leaves them unset unless they
-              are answered, and null means "did not answer" all the way to the
-              screen — so what is drawn here is now what this person said, the
-              same as the figure beside it, and never a number filled in for
-              them. They are their own scores and not an average, which is why
-              they belong on this side of the line the block draws. */}
-          {own && (
-            <View style={{ gap: space.sm }}>
-              <SectionHeader
-                title={strings.playDetail.yourRatingTitle}
-                action={own.entries > 1 ? strings.playDetail.yourRatingEntries(own.entries) : strings.playDetail.yourRatingOpen}
-                onAction={() => router.push({ pathname: "/entry/[id]", params: { id: own.entry.id } })}
-              />
-              {/* On hairlines rather than in a box: a card here made the rating
-                  the heaviest object on the screen, above the title. */}
-              <View style={styles.ratingBlock}>
-                <View style={styles.ratingSummary}>
-                  <Text variant="display" tone="accent">{own.rating.toFixed(1)}</Text>
-                  <MaskRatingRow rating={own.rating} size={12} gap={2} />
-                </View>
-                <View style={{ flex: 1, gap: space.md }}>
-                  {/* Dropped entirely when they answered none of the three,
-                      which is now the ordinary case for a quick check-in. A
-                      column of three dashes is not information, and it would
-                      make an entry that said one honest thing look like one
-                      that failed to say four. */}
-                  {hasOwnSubRatings && (
-                    <View style={{ gap: space.md }}>
-                      <RatingBar label={strings.playDetail.acting} value={own.entry.ratingActing} />
-                      <RatingBar label={strings.playDetail.directing} value={own.entry.ratingDirecting} />
-                      <RatingBar label={strings.playDetail.setDesign} value={own.entry.ratingSetDesign} />
-                    </View>
-                  )}
-                  <Text variant="caption" tone="faint">
-                    {own.entry.seenAt
-                      ? strings.playDetail.yourRatingSeen(formatLongDate(`${own.entry.seenAt}T12:00:00Z`))
-                      : strings.playDetail.yourRatingUndated}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          )}
-
-          {/* Above the synopsis and the showtimes, below the ratings: this is
-              the one opinion on the screen that is about people the reader
-              actually chose, and burying it under the cast list would put it
-              below every stranger's average. Hidden entirely when nobody you
-              follow has been — an empty "your friends" block is a reminder that
-              you have none, which is not what a listing is for. */}
-          {friendRatings.length > 0 && (
-            <View style={{ gap: space.sm }}>
-              <SectionHeader
-                eyebrow={strings.playDetail.followingEyebrow}
-                title={strings.friends.playHeading}
-                action={strings.friends.seenBy(friendRatings.length)}
-              />
-              {friendRatings.map((f) => (
-                <Pressable
-                  key={f.userId}
-                  onPress={() => router.push(`/user/${f.userId}`)}
-                  style={styles.personRow}
-                  accessibilityRole="button"
-                  accessibilityLabel={f.name}
-                >
-                  <Avatar uri={f.avatarUrl} initials={f.initials} size={34} />
-                  <View style={{ flex: 1, gap: 2 }}>
-                    <Text variant="label" numberOfLines={1}>{f.name}</Text>
-                    {!!f.seenAt && (
-                      <Text variant="caption" tone="faint">
-                        {formatLongDate(`${f.seenAt}T12:00:00Z`)}
-                      </Text>
-                    )}
-                  </View>
-                  {f.rating !== undefined ? (
-                    <MaskRatingRow rating={f.rating} size={13} />
-                  ) : (
-                    <Text variant="caption" tone="faint">{strings.friends.unrated}</Text>
-                  )}
-                </Pressable>
-              ))}
-            </View>
-          )}
-
-          {/* Where somebody who has just decided to go actually needs to end
-              up. Every adapter fetches this page and used to discard the
-              address; the link sits on the showtimes' baseline because that is
-              where the decision is made. Absent for hand-added plays and for
-              Örkény, whose API publishes no slug to build a route from. */}
-          <FadeIn delay={120}>
-            <SpotlightCard>
-              <ShowtimeList
-                performances={performances}
-                play={play}
-                action={play.sourceUrl ? strings.playDetail.ticketsShort : undefined}
-                onAction={play.sourceUrl ? () => openTickets(play.sourceUrl!) : undefined}
-              />
-            </SpotlightCard>
-          </FadeIn>
-
-          {/* The theatre, not the production. This is the one place in the app
-              a house can be subscribed to, and it belongs here rather than on
-              a venue page of its own: there is no such screen, and the moment
-              somebody wants "more like this" is while they are looking at one
-              of its productions. A row with a small pill — a follow is a
-              secondary commitment and reads as one. */}
-          {!!venue && (
-            <View style={styles.venueRow}>
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text variant="eyebrow" tone="faint">{strings.playDetail.venueEyebrow}</Text>
-                <Text variant="subheading" numberOfLines={2}>{venue.name}</Text>
-              </View>
-              <FollowSubjectButton type="venue" subjectKey={venue.id} showHint={false} compact />
-            </View>
-          )}
-
-          {!!play.synopsis && (
-            <View style={{ gap: space.sm }}>
-              <SectionHeader title={strings.playDetail.aboutHeading} />
-              <Text variant="body" tone="dim" numberOfLines={synopsisOpen ? undefined : SYNOPSIS_COLLAPSED_LINES}>
-                {play.synopsis}
-              </Text>
-              {play.synopsis.length > 420 && (
-                <Pressable onPress={() => setSynopsisOpen((s) => !s)} hitSlop={8} accessibilityRole="button">
-                  <Text variant="label" tone="accent">
-                    {synopsisOpen ? strings.playDetail.readLess : strings.playDetail.readMore}
-                  </Text>
-                </Pressable>
-              )}
-            </View>
-          )}
-
-          {/* A list rather than a strip of circles: at 64pt a role like
-              "Zoltán, a narrátor" was cut after one word, and the strip hid
-              everyone past the fourth name. A cast list exists to provoke
-              "what else is she in", so every row opens the person page. */}
-          {play.cast.length > 0 && (
-            <View>
-              <SectionHeader
-                eyebrow={strings.playDetail.castCount(play.cast.length)}
-                title={strings.playDetail.castCrew}
-                style={{ marginBottom: space.xs }}
-              />
-              {play.cast.map((c, i) => (
-                // Keyed by index: the same performer legitimately appears
-                // twice when they cover two roles in one production.
-                <Pressable
-                  key={`${c.name}-${i}`}
-                  style={styles.castRow}
-                  onPress={() => openPerson(c.name)}
-                  accessibilityRole="button"
-                  accessibilityLabel={c.name}
-                >
-                  <Avatar uri={portraits.get(personSlug(c.name))?.thumbUrl} initials={initialsOf(c.name)} size={34} serif />
-                  {/* Neither line is clamped. A Brecht chorus member carries
-                      eleven roles in one string, and cutting that at two
-                      lines with an ellipsis left the last six unreadable with
-                      nothing to press (T-047); the list is a column of rows
-                      with room to grow, so the row grows. */}
-                  <View style={{ flex: 1, gap: 1 }}>
-                    <Text variant="label">{c.name}</Text>
-                    {!!c.role && (
-                      <Text variant="caption" tone="faint">
-                        {c.role}
-                      </Text>
-                    )}
-                  </View>
-                </Pressable>
-              ))}
-            </View>
-          )}
-
-          {/* Yours and the people you follow, and nobody else — see 0041.
-              A stranger's entry arrives with its rating and its note already
-              emptied by the database, so listing it would put a name over a
-              blank and invite the reader to wonder what was wrong with it.
-              The count follows the list rather than the query for the same
-              reason: a heading promising eight opinions above two of them is
-              the sort of number that is technically true and reads as a bug. */}
-          <View style={{ gap: space.md }}>
-            <SectionHeader title={strings.playDetail.fromFollowing} action={strings.playDetail.reviewsCount(readableReviews.length)} />
-            {readableReviews.length === 0 ? (
-              <Text variant="bodySmall" tone="faint">
-                {strings.playDetail.noReviewsYet}
-              </Text>
-            ) : (
-              readableReviews.map((r) => <ReviewRow key={r.id} review={r} />)
-            )}
-          </View>
-        </ContentColumn>
+        <ContentColumn style={styles.body}>{sections}</ContentColumn>
       </ScrollView>
     </View>
   );
@@ -821,27 +860,11 @@ function formatRuntime(minutes: number) {
  * not a verdict.
  */
 function RatingBar({ label, value }: { label: string; value?: number }) {
-  const styles = useStyles();
-
-  const pct = value === undefined ? 0 : Math.max(0, Math.min(1, value / 5)) * 100;
-  return (
-    <View style={styles.bar}>
-      <Text variant="caption" tone="dim" style={styles.barLabel} numberOfLines={1}>
-        {label}
-      </Text>
-      <View style={styles.barTrack}>
-        <View style={[styles.barFill, { width: `${pct}%` }]} />
-      </View>
-      <Text variant="label" tone={value === undefined ? "faint" : "default"} style={styles.barValue}>
-        {value === undefined ? strings.common.noRating : value.toFixed(1)}
-      </Text>
-    </View>
-  );
+  return <MeterBar label={label} fraction={value === undefined ? 0 : value / 5} value={value === undefined ? strings.common.noRating : value.toFixed(1)} />;
 }
 
 function ReviewRow({ review }: { review: Review }) {
-  const styles = useStyles();
-
+  const router = useRouter();
   const [user, setUser] = useState<User>();
   useEffect(() => {
     getUserById(review.userId)
@@ -851,16 +874,20 @@ function ReviewRow({ review }: { review: Review }) {
   if (!user) return null;
 
   return (
-    <View style={styles.reviewRow}>
-      <Avatar uri={user.avatarUrl} initials={user.initials} size={32} />
-      <View style={{ flex: 1, gap: space.xs }}>
-        <Text variant="label">{user.name}</Text>
-        {review.ratingOverall !== undefined && <MaskRatingRow rating={review.ratingOverall} size={11} gap={2} />}
-        {!!review.text && (
-          <Text variant="bodySmall" tone="dim">{`„${review.text}”`}</Text>
-        )}
-      </View>
-    </View>
+    <PersonRow
+      name={user.name}
+      avatarUri={user.avatarUrl}
+      initials={user.initials}
+      onPress={() => router.push(`/user/${user.id}`)}
+      meta={
+        <View style={{ gap: space.xs }}>
+          {review.ratingOverall !== undefined && <MaskRatingRow rating={review.ratingOverall} size={mask.inline} />}
+          {!!review.text && (
+            <Text variant="bodySmall" tone="dim">{`„${review.text}”`}</Text>
+          )}
+        </View>
+      }
+    />
   );
 }
 
@@ -870,17 +897,12 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     backgroundColor: colors.surface2,
     justifyContent: "flex-end",
   },
-  // On a desktop the image spans the window, so its height is what needs
-  // bounding rather than its ratio; the picture is then shown whole inside
-  // that band (`contain` + `backdrop` above) instead of cropped to it.
-  heroWide: { maxHeight: 500 },
   heroTop: {
     position: "absolute",
     left: space.lg,
     right: space.lg,
-    flexDirection: "row",
-    justifyContent: "space-between",
   },
+  chrome: { flexDirection: "row", justifyContent: "space-between" },
   posterCredit: {
     position: "absolute",
     right: space.lg,
@@ -896,48 +918,39 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   heroCaption: {
     paddingHorizontal: gutter,
     paddingBottom: space.xl,
-    gap: space.sm,
   },
+  titleBlock: { gap: space.sm },
+  body: { paddingHorizontal: gutter, gap: space["2xl"], marginTop: space.lg },
+
+  // The wide layout: a poster column at the width of a reading column's
+  // half, the page beside it.
+  wideColumn: { paddingHorizontal: gutter, paddingTop: space.xl, gap: space["2xl"] },
+  columns: { flexDirection: "row", alignItems: "flex-start", gap: space["4xl"] },
+  posterColumn: { width: maxWidth.reading / 2, gap: space.lg },
+  posterFrame: { width: "100%", borderRadius: radius.lg, overflow: "hidden", backgroundColor: colors.surface2 },
+  readingColumn: { flex: 1, maxWidth: maxWidth.reading, gap: space["2xl"] },
+
   actions: { flexDirection: "row", alignItems: "stretch", gap: space.sm },
-  logButton: { borderRadius: radius.pill },
   ratingBlock: {
     flexDirection: "row",
     alignItems: "center",
     gap: space.xl,
     paddingVertical: space.lg,
-    borderTopWidth: 1,
+    borderTopWidth: hairlineWidth,
     borderTopColor: colors.hairlineSoft,
-    borderBottomWidth: 1,
+    borderBottomWidth: hairlineWidth,
     borderBottomColor: colors.hairlineSoft,
   },
-  ratingSummary: { alignItems: "center", gap: space.xs, width: 96 },
-  bar: { flexDirection: "row", alignItems: "center", gap: space.sm },
-  barLabel: { width: 84 },
-  barTrack: { flex: 1, height: 4, borderRadius: 2, backgroundColor: colors.surface2, overflow: "hidden" },
-  barFill: { height: "100%", backgroundColor: colors.gold },
-  barValue: { width: 28, textAlign: "right" },
-
-
+  ratingSummary: { alignItems: "center", gap: space.xs, width: space["5xl"] + space["3xl"] },
+  // A header above a column of rows: the rows draw their own hairlines, so
+  // the header only needs a step of air before the first.
+  rowsHeader: { marginBottom: space.xs },
+  readMore: { alignSelf: "flex-start", marginLeft: -space.sm },
   venueRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: space.md,
-    paddingVertical: space.lg,
-    borderTopWidth: 1,
-    borderTopColor: colors.hairlineSoft,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.hairlineSoft,
   },
-  personRow: { flexDirection: "row", alignItems: "center", gap: space.md, paddingVertical: space.xs },
-  castRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.md,
-    paddingVertical: space.sm,
-    borderTopWidth: 1,
-    borderTopColor: colors.hairlineSoft,
-  },
-  reviewRow: { flexDirection: "row", gap: space.md },
 
   centered: {
     flex: 1,
