@@ -1,8 +1,8 @@
 import { useCallback, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
-import { gutter, radius, space } from "@/theme/tokens";
+import { gutter, space } from "@/theme/tokens";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   acceptFollowRequest,
@@ -14,7 +14,7 @@ import {
   unfollowUser,
   type PersonSummary,
 } from "@/services/followService";
-import { Avatar } from "@/components/ui/Avatar";
+import { PersonRow } from "@/components/ui/Rows";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ModalHeader } from "@/components/ui/ModalHeader";
@@ -150,68 +150,57 @@ export default function FollowersScreen() {
           {list && list.length === 0 && <EmptyState title={emptyTitle} />}
 
           {list && list.length > 0 && (
-            <View style={{ gap: space.xs }}>
+            <View>
               {list.map((person) => {
                 const busy = busyId === person.id;
                 return (
-                  // The person and the actions are siblings, not nested: a
-                  // button inside a button is invalid on the web and reads as
-                  // one target to a screen reader (T-070 was the same fault).
-                  <View key={person.id} style={styles.row}>
-                    <Pressable
-                      onPress={() => router.push(`/user/${person.id}`)}
-                      accessibilityRole="button"
-                      accessibilityLabel={person.name}
-                      style={styles.person}
-                    >
-                      <Avatar uri={person.avatarUrl} initials={person.initials} size={44} />
-                      <View style={{ flex: 1, gap: 2 }}>
-                        <Text variant="body" numberOfLines={1}>
-                          {person.name}
-                        </Text>
-                        <Text variant="caption" tone="faint" numberOfLines={1}>
-                          {[`@${person.handle}`, person.city].filter(Boolean).join(" · ")}
-                        </Text>
-                      </View>
-                    </Pressable>
-
-                    {tab === "requests" && (
-                      <View style={styles.actions}>
+                  <PersonRow
+                    key={person.id}
+                    name={person.name}
+                    meta={[`@${person.handle}`, person.city].filter(Boolean).join(" · ")}
+                    avatarUri={person.avatarUrl}
+                    initials={person.initials}
+                    onPress={() => router.push(`/user/${person.id}`)}
+                    action={
+                      tab === "requests" ? (
+                        <View style={styles.actions}>
+                          <Button
+                            label={strings.people.accept}
+                            size="sm"
+                            disabled={busy}
+                            onPress={() =>
+                              act(person.id, () => acceptFollowRequest(person.id), strings.people.acceptedToast(person.name))
+                            }
+                          />
+                          <Button
+                            label={strings.people.decline}
+                            variant="text"
+                            size="sm"
+                            disabled={busy}
+                            onPress={() =>
+                              act(person.id, () => declineFollowRequest(person.id), strings.people.declinedToast(person.name))
+                            }
+                          />
+                        </View>
+                      ) : tab === "followers" ? (
                         <Button
-                          label={strings.people.accept}
-                          variant="primary"
-                          disabled={busy}
-                          onPress={() =>
-                            act(person.id, () => acceptFollowRequest(person.id), strings.people.acceptedToast(person.name))
-                          }
-                        />
-                        <Button
-                          label={strings.people.decline}
+                          label={strings.people.removeFollower}
                           variant="text"
+                          size="sm"
                           disabled={busy}
-                          onPress={() =>
-                            act(person.id, () => declineFollowRequest(person.id), strings.people.declinedToast(person.name))
-                          }
+                          onPress={() => act(person.id, () => removeFollower(person.id), strings.people.removedToast(person.name))}
                         />
-                      </View>
-                    )}
-                    {tab === "followers" && (
-                      <Button
-                        label={strings.people.removeFollower}
-                        variant="text"
-                        disabled={busy}
-                        onPress={() => act(person.id, () => removeFollower(person.id), strings.people.removedToast(person.name))}
-                      />
-                    )}
-                    {tab === "following" && (
-                      <Button
-                        label={strings.people.unfollow}
-                        variant="text"
-                        disabled={busy}
-                        onPress={() => act(person.id, () => unfollowUser(person.id), strings.feedback.unfollowed(person.name))}
-                      />
-                    )}
-                  </View>
+                      ) : (
+                        <Button
+                          label={strings.people.unfollow}
+                          variant="text"
+                          size="sm"
+                          disabled={busy}
+                          onPress={() => act(person.id, () => unfollowUser(person.id), strings.feedback.unfollowed(person.name))}
+                        />
+                      )
+                    }
+                  />
                 );
               })}
             </View>
@@ -222,17 +211,6 @@ export default function FollowersScreen() {
   );
 }
 
-const useStyles = makeStyles((colors) => StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.md,
-    padding: space.md,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    backgroundColor: colors.surface,
-  },
-  person: { flex: 1, flexDirection: "row", alignItems: "center", gap: space.md },
+const useStyles = makeStyles(() => StyleSheet.create({
   actions: { flexDirection: "row", alignItems: "center", gap: space.xs },
 }));

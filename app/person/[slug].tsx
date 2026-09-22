@@ -2,22 +2,23 @@ import { useCallback, useState } from "react";
 import { View, ScrollView, StyleSheet } from "react-native";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
-import { gutter, hairlineWidth, radius, space } from "@/theme/tokens";
+import { avatar, control, gutter, hairlineWidth, radius, space } from "@/theme/tokens";
 import { getPersonCredits, getPersonProfile, getPortrait, type PersonCredit, type PersonProfile } from "@/services/peopleService";
 import { getDiaryPlaysForUser, getCurrentUser, getFilterVenues, getVenuesByIds } from "@/services/playsService";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Portrait, Venue } from "@/data/types";
-import { Avatar } from "@/components/ui/Avatar";
+import { ProfileHeader, StatsRow } from "@/components/ui/Cards";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { PlayRow } from "@/components/ui/PlayRow";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { FollowSubjectButton } from "@/components/ui/FollowSubjectButton";
 import { ContentColumn } from "@/components/ui/Screen";
 import { SectionHeader } from "@/components/ui/SectionHeader";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { RowSkeleton, Skeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 import { creditLabel, personInitials } from "@/utils/people";
+import { typeScale } from "@/theme/type";
 import { makeStyles } from "@/theme/styles";
 
 /**
@@ -146,44 +147,37 @@ export default function PersonScreen() {
 
           {loaded && !failed && !!profile && (
             <>
-              <View style={styles.header}>
-                <Avatar uri={portrait?.thumbUrl} initials={personInitials(profile.displayName)} size={64} serif />
-                <View style={{ flex: 1, gap: 4 }}>
-                  <Text variant="display">{profile.displayName}</Text>
-                  <Text variant="bodySmall" tone="faint">
-                    {summaryLine(profile)}
-                  </Text>
-                </View>
-              </View>
+              <ProfileHeader
+                name={profile.displayName}
+                meta={summaryLine(profile)}
+                avatarUri={portrait?.thumbUrl}
+                initials={personInitials(profile.displayName)}
+                serif
+              >
+                {/* Above the statistics rather than below the credit list: the
+                    reason to be on this page at all is often "I want to know
+                    when they are next on", and burying that under sixty rows
+                    of past work answers a different question. */}
+                {!!slug && <FollowSubjectButton type="person" subjectKey={slug} />}
+              </ProfileHeader>
 
-              {/* Above the statistics rather than below the credit list: the
-                  reason to be on this page at all is often "I want to know
-                  when they are next on", and burying that under sixty rows of
-                  past work answers a different question. */}
-              {!!slug && <FollowSubjectButton type="person" subjectKey={slug} />}
+              <StatsRow
+                divided
+                items={[
+                  { value: profile.creditCount, label: strings.person.credits },
+                  { value: profile.venueCount, label: strings.person.venues },
+                  ...(profile.directedCount > 0 ? [{ value: profile.directedCount, label: strings.person.directed }] : []),
+                  // Only once there is a diary to count against. A gold zero
+                  // beside somebody's name reads as a score, not as a prompt.
+                  ...(session && seenCount > 0
+                    ? [{ value: <Text variant="numeral">{seenCount}</Text>, label: strings.person.seenByYou }]
+                    : []),
+                ]}
+              />
 
-              <View style={styles.statsRow}>
-                <Stat value={profile.creditCount} label={strings.person.credits} />
-                <View style={styles.statDivider} />
-                <Stat value={profile.venueCount} label={strings.person.venues} />
-                {profile.directedCount > 0 && (
-                  <>
-                    <View style={styles.statDivider} />
-                    <Stat value={profile.directedCount} label={strings.person.directed} />
-                  </>
-                )}
-                {/* Only once there is a diary to count against. A gold zero
-                    beside somebody's name reads as a score, not as a prompt. */}
-                {!!session && seenCount > 0 && (
-                  <>
-                    <View style={styles.statDivider} />
-                    <Stat value={seenCount} label={strings.person.seenByYou} gold />
-                  </>
-                )}
-              </View>
-
-              <View style={{ gap: space.md }}>
+              <View>
                 <SectionHeader
+                  style={{ marginBottom: space.xs }}
                   eyebrow={strings.person.credits}
                   title={strings.person.creditsHeading}
                   action={String(credits.length)}
@@ -278,58 +272,30 @@ function yearOf(premiereDate?: string): string | undefined {
   return premiereDate ? premiereDate.slice(0, 4) : undefined;
 }
 
-function Stat({ value, label, gold = false }: { value: number; label: string; gold?: boolean }) {
-  const styles = useStyles();
-
-  return (
-    <View style={styles.stat}>
-      <Text variant="numeral" tone={gold ? "accent" : "default"}>
-        {value}
-      </Text>
-      <Text variant="caption" tone="faint" style={{ textAlign: "center" }}>
-        {label}
-      </Text>
-    </View>
-  );
-}
-
 function PersonSkeleton() {
   const styles = useStyles();
 
   return (
     <View style={{ gap: space.xl }}>
       <View style={styles.header}>
-        <Skeleton width={64} height={64} radius={32} />
+        <Skeleton width={avatar.hero} height={avatar.hero} radius={radius.pill} />
         <View style={{ flex: 1, gap: space.sm }}>
-          <Skeleton width="70%" height={22} />
-          <Skeleton width="45%" height={14} />
+          <Skeleton width="70%" height={typeScale.title.lineHeight} />
+          <Skeleton width="45%" height={space.lg} />
         </View>
       </View>
-      <Skeleton width="100%" height={58} radius={radius.md} />
-      {[0, 1, 2].map((i) => (
-        <View key={i} style={{ flexDirection: "row", gap: space.md }}>
-          <Skeleton width={56} height={84} radius={radius.sm} />
-          <View style={{ flex: 1, gap: space.sm }}>
-            <Skeleton width="80%" height={16} />
-            <Skeleton width="50%" height={12} />
-          </View>
-        </View>
-      ))}
+      <Skeleton width="100%" height={control.md} radius={radius.md} />
+      <View>
+        {[0, 1, 2].map((i) => (
+          <RowSkeleton key={i} />
+        ))}
+      </View>
     </View>
   );
 }
 
 const useStyles = makeStyles((colors) => StyleSheet.create({
   header: { flexDirection: "row", alignItems: "center", gap: space.md },
-  statsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    paddingVertical: space.md,
-  },
-  stat: { flex: 1, alignItems: "center", gap: 2 },
-  statDivider: { width: 1, alignSelf: "stretch", backgroundColor: colors.hairlineSoft },
   // A rule above it rather than a card around it: a boxed caveat at the end of
   // a credit list reads as an error message, and nothing here has gone wrong.
   coverage: {

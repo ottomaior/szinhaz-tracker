@@ -1,12 +1,9 @@
 import { useEffect, useState } from "react";
-import { View, ScrollView, StyleSheet, Pressable, TextInput } from "react-native";
+import { View, ScrollView, StyleSheet } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
-import { inputFontSize } from "@/theme/type";
-import { gutter, radius, space } from "@/theme/tokens";
-import { bodyFont } from "@/theme/typography";
-import { useAppFonts } from "@/hooks/useAppFonts";
+import { gutter, space } from "@/theme/tokens";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   BIO_MAX_LENGTH,
@@ -18,6 +15,9 @@ import {
   uploadAvatar,
 } from "@/services/profileService";
 import { Avatar } from "@/components/ui/Avatar";
+import { TextField } from "@/components/ui/TextField";
+import { Notice } from "@/components/ui/Notice";
+import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/Button";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { ContentColumn } from "@/components/ui/Screen";
@@ -42,7 +42,6 @@ export default function EditProfileScreen() {
 
   const router = useRouter();
   const toast = useToast();
-  const fontsLoaded = useAppFonts();
   const { session, loading } = useAuth();
 
   const [name, setName] = useState("");
@@ -150,7 +149,16 @@ export default function EditProfileScreen() {
     }
   }
 
-  if (loading) return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        <ModalHeader title={strings.editProfile.title} fallbackRoute="/(tabs)/profile" />
+        <ContentColumn style={{ padding: gutter }}>
+          <ScreenSkeleton rows={2} />
+        </ContentColumn>
+      </View>
+    );
+  }
 
   if (!session) {
     return (
@@ -186,24 +194,22 @@ export default function EditProfileScreen() {
                   shows is exactly what a feed card will show. */}
               <Avatar uri={previewUri} initials={profileInitials(name)} size={72} serif />
               <View style={{ gap: space.sm, flexShrink: 1 }}>
-                <Pressable
-                  onPress={handlePickPhoto}
-                  disabled={uploading}
-                  accessibilityRole="button"
-                  style={styles.photoButton}
-                >
-                  <Text variant="label">
-                    {uploading
+                <Button
+                  variant="outline"
+                  size="sm"
+                  label={
+                    uploading
                       ? strings.editProfile.photoUploading
                       : hasPhoto
                         ? strings.editProfile.photoReplace
-                        : strings.editProfile.photoAdd}
-                  </Text>
-                </Pressable>
+                        : strings.editProfile.photoAdd
+                  }
+                  onPress={handlePickPhoto}
+                  disabled={uploading}
+                  loading={uploading}
+                />
                 {hasPhoto && !uploading && (
-                  <Pressable onPress={handleRemovePhoto} hitSlop={8} accessibilityRole="button">
-                    <Text variant="label" tone="dim">{strings.editProfile.photoRemove}</Text>
-                  </Pressable>
+                  <Button variant="text" size="sm" label={strings.editProfile.photoRemove} onPress={handleRemovePhoto} />
                 )}
               </View>
             </View>
@@ -215,7 +221,6 @@ export default function EditProfileScreen() {
             value={name}
             onChangeText={setName}
             placeholder={strings.editProfile.namePlaceholder}
-            fontsLoaded={fontsLoaded}
           />
 
           <View style={{ gap: space.sm }}>
@@ -224,7 +229,6 @@ export default function EditProfileScreen() {
               value={handle}
               onChangeText={setHandle}
               placeholder={strings.editProfile.handlePlaceholder}
-              fontsLoaded={fontsLoaded}
               autoCapitalize="none"
               autoCorrect={false}
             />
@@ -236,7 +240,6 @@ export default function EditProfileScreen() {
             value={city}
             onChangeText={setCity}
             placeholder={strings.editProfile.cityPlaceholder}
-            fontsLoaded={fontsLoaded}
           />
 
           <View style={{ gap: space.sm }}>
@@ -253,25 +256,20 @@ export default function EditProfileScreen() {
                 </Text>
               )}
             </View>
-            <TextInput
+            <TextField
               value={bio}
               onChangeText={setBio}
               placeholder={strings.editProfile.bioPlaceholder}
-              placeholderTextColor={colors.textFaint}
               accessibilityLabel={strings.editProfile.bioLabel}
               multiline
               // Deliberately no `maxLength`: silently swallowing keystrokes
               // reads as a broken keyboard. The counter and the check in
               // `handleSave` say what is wrong instead.
-              style={[styles.input, styles.bioInput, { fontFamily: bodyFont(fontsLoaded) }]}
+              style={styles.bio}
             />
           </View>
 
-          {!!error && (
-            <Text accessibilityRole="alert" variant="bodySmall" tone="accent">
-              {error}
-            </Text>
-          )}
+          {!!error && <Notice>{error}</Notice>}
 
           <Button
             label={saving ? strings.editProfile.saving : strings.editProfile.save}
@@ -289,7 +287,6 @@ function Field({
   value,
   onChangeText,
   placeholder,
-  fontsLoaded,
   autoCapitalize,
   autoCorrect,
 }: {
@@ -297,52 +294,33 @@ function Field({
   value: string;
   onChangeText: (v: string) => void;
   placeholder?: string;
-  fontsLoaded: boolean;
   autoCapitalize?: "none" | "sentences" | "words" | "characters";
   autoCorrect?: boolean;
 }) {
-  const styles = useStyles();
-
   return (
     <View style={{ gap: space.sm }}>
       <Text variant="label" tone="dim">{label}</Text>
-      <TextInput
+      <TextField
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={colors.textFaint}
         accessibilityLabel={label}
         autoCapitalize={autoCapitalize}
         autoCorrect={autoCorrect}
-        style={[styles.input, { fontFamily: bodyFont(fontsLoaded) }]}
       />
     </View>
   );
 }
 
-const useStyles = makeStyles((colors) => StyleSheet.create({
+const useStyles = makeStyles(() => StyleSheet.create({
   photoRow: { flexDirection: "row", alignItems: "center", gap: space.lg },
-  photoButton: {
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    borderRadius: 999,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
   bioLabelRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     gap: space.sm,
   },
-  input: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    borderRadius: radius.md,
-    padding: 14,
-    fontSize: inputFontSize,
-    color: colors.text,
-  },
-  bioInput: { minHeight: 108, textAlignVertical: "top" },
+  // Taller than the shared field's minimum: a bio is a paragraph, and the
+  // counter that appears under it wants room above it.
+  bio: { minHeight: space["5xl"] + space["3xl"] },
 }));

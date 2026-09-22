@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { Animated, Easing, View, type StyleProp, type TextStyle, type ViewStyle } from "react-native";
 import { NATIVE_DRIVER, useReducedMotion } from "@/hooks/useReducedMotion";
+import { duration as motion } from "@/theme/tokens";
 import { Text } from "@/components/ui/Text";
 import type { TypeTone, TypeVariant } from "@/theme/type";
 
@@ -55,7 +56,7 @@ export function SplitText({
     const anim = Animated.stagger(
       stagger,
       values.map((v) =>
-        Animated.timing(v, { toValue: 1, duration: 520, easing: Easing.out(Easing.cubic), useNativeDriver: NATIVE_DRIVER })
+        Animated.timing(v, { toValue: 1, duration: motion.reveal, easing: Easing.out(Easing.cubic), useNativeDriver: NATIVE_DRIVER })
       )
     );
     const handle = setTimeout(() => anim.start(), delay);

@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
-import { View, ScrollView, StyleSheet, Pressable } from "react-native";
+import { View, ScrollView, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
 import { gutter, space } from "@/theme/tokens";
 import { useSearchQuery } from "@/hooks/useSearchQuery";
 import { getFollowing, searchPeople, type PersonSummary } from "@/services/followService";
 import { useAuth } from "@/contexts/AuthContext";
-import { Avatar } from "@/components/ui/Avatar";
+import { PersonRow } from "@/components/ui/Rows";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { RowSkeleton } from "@/components/ui/Skeleton";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { SearchField } from "@/components/ui/SearchField";
 import { ContentColumn } from "@/components/ui/Screen";
@@ -78,30 +80,34 @@ export default function PeopleScreen() {
             </View>
           )}
 
-          <View style={{ gap: space.xs }}>
-            {shown.map((person) => (
-              <Pressable
-                key={person.id}
-                style={styles.row}
-                onPress={() => router.push(`/user/${person.id}`)}
-                accessibilityRole="button"
-                accessibilityLabel={person.name}
-              >
-                <Avatar uri={person.avatarUrl} initials={person.initials} size={44} />
-                <View style={{ flex: 1, gap: 2 }}>
-                  <Text variant="body">{person.name}</Text>
-                  <Text variant="caption" tone="faint">
-                    {[`@${person.handle}`, person.city].filter(Boolean).join(" · ")}
-                  </Text>
-                </View>
-              </Pressable>
-            ))}
-          </View>
+          {searching && (
+            <View>
+              {[0, 1, 2].map((i) => (
+                <RowSkeleton key={i} />
+              ))}
+            </View>
+          )}
+
+          {shown.length > 0 && (
+            <View>
+              {shown.map((person) => (
+                <PersonRow
+                  key={person.id}
+                  name={person.name}
+                  meta={[`@${person.handle}`, person.city].filter(Boolean).join(" · ")}
+                  avatarUri={person.avatarUrl}
+                  initials={person.initials}
+                  onPress={() => router.push(`/user/${person.id}`)}
+                />
+              ))}
+            </View>
+          )}
 
           {!searching && shown.length === 0 && (isSearching || !!session) && (
-            <Text variant="bodySmall" tone="faint">
-              {isSearching ? strings.people.searchEmpty : strings.people.followingEmpty}
-            </Text>
+            <EmptyState
+              align="center"
+              title={isSearching ? strings.people.searchEmpty : strings.people.followingEmpty}
+            />
           )}
         </ContentColumn>
       </ScrollView>
@@ -109,12 +115,6 @@ export default function PeopleScreen() {
   );
 }
 
-const useStyles = makeStyles((colors) => StyleSheet.create({
+const useStyles = makeStyles(() => StyleSheet.create({
   searchRow: { marginTop: space.md },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.md,
-    paddingVertical: space.sm,
-  },
 }));

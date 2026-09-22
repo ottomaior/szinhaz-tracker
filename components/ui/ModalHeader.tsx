@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { View, StyleSheet, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { gutter, space } from "@/theme/tokens";
+import { bar, gutter, hairlineWidth, icon, space } from "@/theme/tokens";
 import { CloseIcon } from "@/components/icons/Icons";
 import { Text } from "@/components/ui/Text";
 import { ContentColumn } from "@/components/ui/Screen";
@@ -39,7 +39,7 @@ export function ModalHeader({
         <View style={styles.row}>
           <Pressable
             onPress={() => closeModal(router, fallbackRoute)}
-            hitSlop={12}
+            hitSlop={space.sm}
             accessibilityRole="button"
             accessibilityLabel={strings.common.close}
           >
@@ -47,7 +47,7 @@ export function ModalHeader({
           </Pressable>
           <Text variant="subheading">{title}</Text>
           {/* Matches the close icon's width so the title sits centred. */}
-          {action ?? <View style={{ width: 18 }} />}
+          {action ?? <View style={{ width: icon.chrome }} />}
         </View>
       </ContentColumn>
     </View>
@@ -56,12 +56,12 @@ export function ModalHeader({
 
 const useStyles = makeStyles((colors) => StyleSheet.create({
   bar: {
-    borderBottomWidth: 1,
+    borderBottomWidth: hairlineWidth,
     borderBottomColor: colors.hairlineSoft,
     backgroundColor: colors.bg,
   },
   row: {
-    height: 56,
+    height: bar,
     paddingHorizontal: gutter,
     flexDirection: "row",
     alignItems: "center",

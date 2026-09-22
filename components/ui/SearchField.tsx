@@ -11,9 +11,8 @@ import {
 } from "react-native";
 import { colors } from "@/theme/colors";
 import { inputFontSize } from "@/theme/type";
-import { minTouchTarget, radius, space } from "@/theme/tokens";
-import { bodyFont } from "@/theme/typography";
-import { useAppFonts } from "@/hooks/useAppFonts";
+import { control, hairlineWidth, icon, minTouchTarget, radius, space } from "@/theme/tokens";
+import { TextField } from "@/components/ui/TextField";
 import { SearchIcon, CloseIcon } from "@/components/icons/Icons";
 import { strings } from "@/i18n/hu";
 import { makeStyles } from "@/theme/styles";
@@ -68,7 +67,6 @@ export function SearchField({
   onFocusChange?: (focused: boolean) => void;
 }) {
   const styles = useStyles();
-  const fontsLoaded = useAppFonts();
   const [focused, setFocused] = useState(false);
   const inputRef = useRef<TextInput>(null);
   const hasText = value.length > 0;
@@ -89,8 +87,15 @@ export function SearchField({
       style={[styles.field, prominent && styles.prominent, focused && styles.focused]}
       accessibilityRole={Platform.OS === "web" ? ("search" as never) : undefined}
     >
-      <SearchIcon size={prominent ? 18 : 17} color={focused ? colors.gold : colors.textFaint} />
-      <TextInput
+      {/* In its own box, so a narrow field — the top bar's, on a laptop —
+          shrinks the text rather than the magnifier. A flex row shrinks
+          whatever it can, and an icon at nought pixels reads as a field
+          somebody forgot to finish. */}
+      <View style={styles.icon}>
+        <SearchIcon size={prominent ? icon.chrome : icon.inline} color={focused ? colors.gold : colors.textFaint} />
+      </View>
+      <TextField
+        bare
         ref={inputRef}
         value={value}
         onChangeText={onChangeText}
@@ -114,7 +119,7 @@ export function SearchField({
         // field and clips it (T-104); one line, always.
         numberOfLines={1}
         accessibilityLabel={accessibilityLabel ?? placeholder}
-        style={[styles.input, { fontFamily: bodyFont(fontsLoaded) }]}
+        style={styles.input}
       />
       <View style={styles.trailing}>
         {loading ? (
@@ -122,12 +127,12 @@ export function SearchField({
         ) : hasText ? (
           <Pressable
             onPress={clear}
-            hitSlop={8}
+            hitSlop={space.sm}
             accessibilityRole="button"
             accessibilityLabel={strings.common.clearSearch}
             style={styles.clear}
           >
-            <CloseIcon size={14} color={colors.textDim} strokeWidth={2.2} />
+            <CloseIcon color={colors.textDim} />
           </Pressable>
         ) : null}
       </View>
@@ -144,12 +149,17 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     paddingLeft: space.lg,
     paddingRight: space.sm,
     borderRadius: radius.pill,
-    borderWidth: 1,
+    borderWidth: hairlineWidth,
     borderColor: colors.hairline,
     backgroundColor: colors.surface,
+    // A long placeholder in a short field spilled out over whatever sat
+    // beside it: a flex item may not shrink below its content unless it is
+    // told it may, and the box has to clip what is still too long.
+    overflow: "hidden",
   },
+  icon: { flexShrink: 0 },
   prominent: {
-    minHeight: 50,
+    minHeight: control.lg,
   },
   focused: {
     borderColor: colors.goldTintBorder,
@@ -157,6 +167,7 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   },
   input: {
     flex: 1,
+    minWidth: 0,
     // Zero vertical padding: the row's minHeight is the height, so the text
     // sits centred instead of on a padding of its own.
     paddingVertical: 0,
@@ -166,15 +177,15 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as object) : null),
   },
   trailing: {
-    width: 32,
-    height: 32,
+    width: control.sm,
+    height: control.sm,
     alignItems: "center",
     justifyContent: "center",
   },
   clear: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: space["2xl"],
+    height: space["2xl"],
+    borderRadius: radius.pill,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.neutralTintBg,

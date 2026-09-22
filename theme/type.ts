@@ -116,15 +116,20 @@ const toneColor = (palette: Palette, tone: TypeTone): string => {
  * asynchronously and every screen renders before they arrive — see
  * theme/typography.ts.
  */
+export type TypeWeight = VariantSpec["weight"];
+
 export function typeStyle(
   variant: TypeVariant,
   fontsLoaded: boolean,
   tone?: TypeTone,
-  palette: Palette = colors
+  palette: Palette = colors,
+  /** A heavier or lighter cut of the role's face, for a name inside a sentence. Never a different size. */
+  weight?: TypeWeight
 ): TextStyle {
   const spec = VARIANTS[variant];
+  const w = weight ?? spec.weight;
   return {
-    fontFamily: spec.family === "display" ? displayFont(fontsLoaded, spec.weight === "regular" ? "regular" : "semibold") : bodyFont(fontsLoaded, spec.weight),
+    fontFamily: spec.family === "display" ? displayFont(fontsLoaded, w === "regular" ? "regular" : "semibold") : bodyFont(fontsLoaded, w),
     fontSize: spec.size,
     lineHeight: spec.lineHeight,
     letterSpacing: spec.letterSpacing,
@@ -147,3 +152,12 @@ export const typeScale = VARIANTS;
  * is still set by hand.
  */
 export const inputFontSize = 16;
+
+/**
+ * The dock's label is the one piece of text outside the scale, and it is
+ * outside on purpose: five labels share the width of a phone, "Kívánságlista"
+ * is the longest, and `caption` (11.5) broke it into two lines on a large
+ * system font (T-106). Named here rather than typed in the dock so that it
+ * is visibly a decision.
+ */
+export const dockLabel: TextStyle = { fontSize: 10, lineHeight: 13 };

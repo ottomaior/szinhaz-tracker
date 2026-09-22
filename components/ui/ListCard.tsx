@@ -1,5 +1,7 @@
 import { Pressable, StyleSheet, View } from "react-native";
-import { radius, space } from "@/theme/tokens";
+import { hairlineWidth, radius, space } from "@/theme/tokens";
+import { pressStyle } from "@/components/ui/pressable";
+import { useColors } from "@/theme/styles";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { Text } from "@/components/ui/Text";
 import type { ListSummary } from "@/services/listsService";
@@ -18,6 +20,15 @@ import { makeStyles } from "@/theme/styles";
  * things in it, and four separate tiles read as four separate list rows. The
  * stack also degrades honestly — a list with two entries shows two.
  */
+/**
+ * The cover fan: four thumbnails overlapping by `OVERLAP`, at the small
+ * size that is this card's motif rather than the row thumbnail — four
+ * of those side by side would be a rail, not a glimpse.
+ */
+const COVER = { width: 40, height: 60 };
+const OVERLAP = space.xl;
+const FAN_WIDTH = COVER.width + (COVER.width - OVERLAP) * 3;
+
 export function ListCard({
   list,
   playsById,
@@ -28,23 +39,24 @@ export function ListCard({
   onPress: () => void;
 }) {
   const styles = useStyles();
+  const palette = useColors();
 
   const covers = list.coverPlayIds.map((id) => playsById.get(id)).filter((p): p is Play => !!p);
 
   return (
-    <Pressable onPress={onPress} style={styles.card} accessibilityRole="button" accessibilityLabel={list.title}>
+    <Pressable onPress={onPress} style={pressStyle("row", palette, styles.card)} accessibilityRole="button" accessibilityLabel={list.title}>
       <View style={styles.covers}>
         {covers.length === 0 ? (
           <View style={styles.emptyCover} />
         ) : (
           covers.map((play, i) => (
-            <View key={play.id} style={[styles.coverSlot, i > 0 && { marginLeft: -22 }, { zIndex: covers.length - i }]}>
+            <View key={play.id} style={[styles.coverSlot, i > 0 && { marginLeft: -OVERLAP }, { zIndex: covers.length - i }]}>
               <PosterPlaceholder
                 poster={play.poster}
                 title={play.title}
                 seed={play.id}
-                width={40}
-                height={60}
+                width={COVER.width}
+                height={COVER.height}
                 radius={radius.sm}
                 preferThumb
               />
@@ -53,7 +65,7 @@ export function ListCard({
         )}
       </View>
 
-      <View style={{ flex: 1, gap: 3 }}>
+      <View style={{ flex: 1, gap: space["2xs"] }}>
         <Text variant="subheading" numberOfLines={2}>
           {list.title}
         </Text>
@@ -86,20 +98,20 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     gap: space.md,
     paddingVertical: space.sm,
   },
-  covers: { flexDirection: "row", alignItems: "center", width: 96 },
+  covers: { flexDirection: "row", alignItems: "center", width: FAN_WIDTH },
   coverSlot: {
     borderRadius: radius.sm,
     // A hairline between overlapping covers, so the stack reads as separate
     // productions rather than one smeared image.
-    borderWidth: 1,
+    borderWidth: hairlineWidth,
     borderColor: colors.bg,
   },
   emptyCover: {
-    width: 40,
-    height: 60,
+    width: COVER.width,
+    height: COVER.height,
     borderRadius: radius.sm,
     backgroundColor: colors.surface,
-    borderWidth: 1,
+    borderWidth: hairlineWidth,
     borderColor: colors.hairlineSoft,
   },
 }));

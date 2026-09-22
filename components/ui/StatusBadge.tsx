@@ -1,7 +1,7 @@
-import { View, Text, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native";
 import { useColors } from "@/theme/styles";
-import { bodyFont } from "@/theme/typography";
-import { useAppFonts } from "@/hooks/useAppFonts";
+import { hairlineWidth, radius, space } from "@/theme/tokens";
+import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 import type { Palette } from "@/theme/themes";
 import type { PlayStatus } from "@/data/types";
@@ -13,48 +13,26 @@ import type { PlayStatus } from "@/data/types";
  * source data is stale, and a badge saying so would be noise to a reader who
  * cannot act on it.
  *
- * Two forms. The pill is for a screen about one production, where the status
- * is worth a line of its own. `inline` is for a tile in a grid or a row in a
- * list, and there it says nothing at all for `running`: forty tiles wearing
- * forty identical gold pills told the reader nothing, since running is what a
- * browsing grid is *of*. The exceptions — paused, closed, not yet open — are
- * the news, and they keep a quiet pill so the eye lands on them.
+ * One size, set in the eyebrow role — the small tracked capitals the app
+ * uses everywhere for "what kind of thing this is" — and at most one per
+ * row, at the end of the meta line. `inline` is for a tile in a grid or a
+ * row in a list, and there it says nothing at all for `running`: forty
+ * tiles wearing forty identical gold pills told the reader nothing, since
+ * running is what a browsing grid is *of*. The exceptions — paused, closed,
+ * not yet open — are the news, and they keep a quiet pill so the eye lands
+ * on them.
  */
-export function StatusBadge({
-  status,
-  size = "md",
-  inline = false,
-}: {
-  status: PlayStatus;
-  size?: "sm" | "md";
-  inline?: boolean;
-}) {
-  const fontsLoaded = useAppFonts();
+export function StatusBadge({ status, inline = false }: { status: PlayStatus; inline?: boolean }) {
   const colors = useColors();
   if (status === "unknown") return null;
   if (inline && status === "running") return null;
 
   const tone = tonesFor(colors)[status];
-  const small = size === "sm" || inline;
 
   return (
-    <View
-      accessibilityRole="text"
-      style={[
-        styles.base,
-        small && styles.small,
-        { backgroundColor: tone.bg, borderColor: tone.border },
-      ]}
-    >
+    <View accessibilityRole="text" style={[styles.base, { backgroundColor: tone.bg, borderColor: tone.border }]}>
       {status === "running" && <View style={[styles.dot, { backgroundColor: tone.text }]} />}
-      <Text
-        style={{
-          fontFamily: bodyFont(fontsLoaded, "bold"),
-          fontSize: small ? 9.5 : 10.5,
-          letterSpacing: 0.04,
-          color: tone.text,
-        }}
-      >
+      <Text variant="eyebrow" style={{ color: tone.text }}>
         {strings.status[status]}
       </Text>
     </View>
@@ -68,14 +46,14 @@ export function StatusBadge({
  * Következő: szept. 19." — where a pill would be a badge interrupting prose.
  * A Text rather than a View so it can sit *inside* the sentence and wrap with
  * it: as a separate box the rest of the line broke underneath it on a phone.
+ * It inherits the sentence's size and sets only its weight.
  */
 export function StatusInline({ status }: { status: PlayStatus }) {
-  const fontsLoaded = useAppFonts();
   const colors = useColors();
   if (status === "unknown") return null;
   const tone = tonesFor(colors)[status];
   return (
-    <Text style={{ fontFamily: bodyFont(fontsLoaded, "semibold"), color: tone.text }}>
+    <Text variant="bodySmall" weight="semibold" style={{ color: tone.text }}>
       {"● "}
       {strings.status[status]}
     </Text>
@@ -102,13 +80,12 @@ const styles = StyleSheet.create({
   base: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
+    gap: space.xs,
     alignSelf: "flex-start",
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingVertical: 3,
-    paddingHorizontal: 9,
+    borderWidth: hairlineWidth,
+    borderRadius: radius.pill,
+    paddingVertical: space.xs,
+    paddingHorizontal: space.sm,
   },
-  small: { paddingVertical: 2, paddingHorizontal: 7, gap: 4 },
-  dot: { width: 5, height: 5, borderRadius: 2.5 },
+  dot: { width: space.xs, height: space.xs, borderRadius: radius.pill },
 });

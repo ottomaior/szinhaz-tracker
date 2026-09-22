@@ -1,8 +1,16 @@
 import Svg, { Path, Circle, Rect } from "react-native-svg";
 import { colors } from "@/theme/colors";
 import { paint, strokePaint } from "@/components/icons/svgPaint";
+import { icon } from "@/theme/tokens";
 
 type IconProps = { size?: number; color?: string; strokeWidth?: number };
+
+/**
+ * Two sizes and one stroke, from theme/tokens.ts: `icon.inline` (16) for a
+ * glyph sitting in a line of text and `icon.chrome` (20) for a standalone
+ * tap target. The plus keeps its own weight — it is the one accent glyph.
+ */
+const STROKE = 1.8;
 
 /**
  * The palette defaults below are default *parameters*, which JavaScript
@@ -15,7 +23,7 @@ type IconProps = { size?: number; color?: string; strokeWidth?: number };
  * this app is memoised in between.
  */
 
-export function HomeIcon({ size = 21, color = colors.textFaint, strokeWidth = 1.8 }: IconProps) {
+export function HomeIcon({ size = icon.chrome, color = colors.textFaint, strokeWidth = STROKE }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M3 11.5 12 4l9 7.5" {...strokePaint(color)} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
@@ -30,7 +38,7 @@ export function HomeIcon({ size = 21, color = colors.textFaint, strokeWidth = 1.
   );
 }
 
-export function CompassIcon({ size = 21, color = colors.textFaint, strokeWidth = 1.8 }: IconProps) {
+export function CompassIcon({ size = icon.chrome, color = colors.textFaint, strokeWidth = STROKE }: IconProps) {
   // A real compass rose, not a second magnifier — the Discover tab and the
   // search field inside it used to share the exact same glyph.
   return (
@@ -47,7 +55,7 @@ export function CompassIcon({ size = 21, color = colors.textFaint, strokeWidth =
 }
 
 /** Three lines and a plus: "put this on a list". */
-export function ListPlusIcon({ size = 18, color = colors.text, strokeWidth = 1.8 }: IconProps) {
+export function ListPlusIcon({ size = icon.inline, color = colors.text, strokeWidth = STROKE }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -61,7 +69,7 @@ export function ListPlusIcon({ size = 18, color = colors.text, strokeWidth = 1.8
   );
 }
 
-export function TicketIcon({ size = 21, color = colors.textFaint, strokeWidth = 1.8 }: IconProps) {
+export function TicketIcon({ size = icon.chrome, color = colors.textFaint, strokeWidth = STROKE }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -75,7 +83,7 @@ export function TicketIcon({ size = 21, color = colors.textFaint, strokeWidth = 
   );
 }
 
-export function UserIcon({ size = 21, color = colors.textFaint, strokeWidth = 1.8 }: IconProps) {
+export function UserIcon({ size = icon.chrome, color = colors.textFaint, strokeWidth = STROKE }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx={12} cy={8} r={3.6} {...strokePaint(color)} strokeWidth={strokeWidth} />
@@ -92,7 +100,7 @@ export function PlusIcon({ size = 22, color = colors.onAccent, strokeWidth = 2.2
   );
 }
 
-export function BellIcon({ size = 20, color = colors.textDim, strokeWidth = 1.6 }: IconProps) {
+export function BellIcon({ size = icon.chrome, color = colors.textDim, strokeWidth = STROKE }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -107,7 +115,7 @@ export function BellIcon({ size = 20, color = colors.textDim, strokeWidth = 1.6 
   );
 }
 
-export function SearchIcon({ size = 17, color = colors.textFaint, strokeWidth = 1.8 }: IconProps) {
+export function SearchIcon({ size = icon.inline, color = colors.textFaint, strokeWidth = STROKE }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx={11} cy={11} r={7} {...strokePaint(color)} strokeWidth={strokeWidth} />
@@ -125,9 +133,9 @@ export function SearchIcon({ size = 17, color = colors.textFaint, strokeWidth = 
  * shades of the same outline are not.
  */
 export function HeartIcon({
-  size = 16,
+  size = icon.inline,
   color = colors.textFaint,
-  strokeWidth = 1.6,
+  strokeWidth = STROKE,
   filled = false,
 }: IconProps & { filled?: boolean }) {
   return (
@@ -143,7 +151,7 @@ export function HeartIcon({
   );
 }
 
-export function CommentIcon({ size = 16, color = colors.textFaint, strokeWidth = 1.6 }: IconProps) {
+export function CommentIcon({ size = icon.inline, color = colors.textFaint, strokeWidth = STROKE }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -157,7 +165,7 @@ export function CommentIcon({ size = 16, color = colors.textFaint, strokeWidth =
   );
 }
 
-export function ChevronLeftIcon({ size = 17, color = colors.text, strokeWidth = 2 }: IconProps) {
+export function ChevronLeftIcon({ size = icon.inline, color = colors.text, strokeWidth = STROKE }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M15 5 8 12l7 7" {...strokePaint(color)} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
@@ -165,7 +173,7 @@ export function ChevronLeftIcon({ size = 17, color = colors.text, strokeWidth = 
   );
 }
 
-export function ChevronRightIcon({ size = 17, color = colors.text, strokeWidth = 2 }: IconProps) {
+export function ChevronRightIcon({ size = icon.inline, color = colors.text, strokeWidth = STROKE }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M9 5l7 7-7 7" {...strokePaint(color)} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
@@ -173,23 +181,8 @@ export function ChevronRightIcon({ size = 17, color = colors.text, strokeWidth =
   );
 }
 
-/** Leaving the app — on the button that opens the theatre's own page. */
-export function ExternalLinkIcon({ size = 14, color = colors.gold, strokeWidth = 1.8 }: IconProps) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"
-        {...strokePaint(color)}
-        strokeWidth={strokeWidth}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
-
 /** The affordance on a control that opens a list of options. */
-export function ChevronDownIcon({ size = 13, color = colors.textDim, strokeWidth = 2 }: IconProps) {
+export function ChevronDownIcon({ size = icon.inline, color = colors.textDim, strokeWidth = STROKE }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="m5 9 7 7 7-7" {...strokePaint(color)} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
@@ -198,7 +191,7 @@ export function ChevronDownIcon({ size = 13, color = colors.textDim, strokeWidth
 }
 
 /** Marks the chosen option in a list. */
-export function CheckIcon({ size = 16, color = colors.gold, strokeWidth = 2.2 }: IconProps) {
+export function CheckIcon({ size = icon.inline, color = colors.gold, strokeWidth = STROKE }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="m5 13 4.5 4.5L19 7" {...strokePaint(color)} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
@@ -206,7 +199,7 @@ export function CheckIcon({ size = 16, color = colors.gold, strokeWidth = 2.2 }:
   );
 }
 
-export function CloseIcon({ size = 18, color = colors.text, strokeWidth = 2 }: IconProps) {
+export function CloseIcon({ size = icon.chrome, color = colors.text, strokeWidth = STROKE }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="m6 6 12 12M18 6 6 18" {...strokePaint(color)} strokeWidth={strokeWidth} strokeLinecap="round" />
@@ -214,7 +207,7 @@ export function CloseIcon({ size = 18, color = colors.text, strokeWidth = 2 }: I
   );
 }
 
-export function ShareIcon({ size = 16, color = colors.text, strokeWidth = 1.8 }: IconProps) {
+export function ShareIcon({ size = icon.chrome, color = colors.text, strokeWidth = STROKE }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx={18} cy={5} r={2.4} {...strokePaint(color)} strokeWidth={strokeWidth} />
@@ -225,7 +218,7 @@ export function ShareIcon({ size = 16, color = colors.text, strokeWidth = 1.8 }:
   );
 }
 
-export function CalendarIcon({ size = 16, color = colors.textFaint, strokeWidth = 1.7 }: IconProps) {
+export function CalendarIcon({ size = icon.inline, color = colors.textFaint, strokeWidth = STROKE }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Rect x={3.5} y={5} width={17} height={16} rx={2.5} {...strokePaint(color)} strokeWidth={strokeWidth} />
@@ -234,7 +227,7 @@ export function CalendarIcon({ size = 16, color = colors.textFaint, strokeWidth 
   );
 }
 
-export function PinIcon({ size = 16, color = colors.textFaint, strokeWidth = 1.7 }: IconProps) {
+export function PinIcon({ size = icon.inline, color = colors.textFaint, strokeWidth = STROKE }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M12 21s7-6.5 7-11.5A7 7 0 0 0 5 9.5C5 14.5 12 21 12 21z" {...strokePaint(color)} strokeWidth={strokeWidth} strokeLinejoin="round" />
@@ -243,17 +236,7 @@ export function PinIcon({ size = 16, color = colors.textFaint, strokeWidth = 1.7
   );
 }
 
-export function CameraIcon({ size = 15, color = colors.textFaint, strokeWidth = 1.7 }: IconProps) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Rect x={3} y={7} width={18} height={13} rx={2.5} {...strokePaint(color)} strokeWidth={strokeWidth} />
-      <Path d="M8 7 9.5 4h5L16 7" {...strokePaint(color)} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
-      <Circle cx={12} cy={13.5} r={3.4} {...strokePaint(color)} strokeWidth={strokeWidth} />
-    </Svg>
-  );
-}
-
-export function SettingsIcon({ size = 19, color = colors.text, strokeWidth = 1.7 }: IconProps) {
+export function SettingsIcon({ size = icon.chrome, color = colors.text, strokeWidth = STROKE }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx={12} cy={12} r={3} {...strokePaint(color)} strokeWidth={strokeWidth} />

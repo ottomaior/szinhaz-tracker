@@ -1,12 +1,10 @@
 import { useState } from "react";
-import { View, StyleSheet, TextInput, Switch } from "react-native";
+import { View, StyleSheet, Switch } from "react-native";
 import { colors } from "@/theme/colors";
-import { inputFontSize } from "@/theme/type";
 import { radius, space } from "@/theme/tokens";
-import { bodyFont } from "@/theme/typography";
-import { useAppFonts } from "@/hooks/useAppFonts";
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
 import { strings } from "@/i18n/hu";
 import { makeStyles } from "@/theme/styles";
 
@@ -47,7 +45,6 @@ export function ListForm({
   onCancel: () => void;
 }) {
   const styles = useStyles();
-  const fontsLoaded = useAppFonts();
 
   const [title, setTitle] = useState(initial?.title ?? EMPTY.title);
   const [description, setDescription] = useState(initial?.description ?? EMPTY.description);
@@ -77,23 +74,21 @@ export function ListForm({
           {notice}
         </Text>
       )}
-      <TextInput
+      <TextField
         value={title}
         onChangeText={setTitle}
         placeholder={strings.lists.titlePlaceholder}
-        placeholderTextColor={colors.textFaint}
         accessibilityLabel={strings.lists.titlePlaceholder}
         maxLength={120}
-        style={[styles.input, { fontFamily: bodyFont(fontsLoaded) }]}
+        style={styles.input}
       />
-      <TextInput
+      <TextField
         value={description}
         onChangeText={setDescription}
         placeholder={strings.lists.descriptionPlaceholder}
-        placeholderTextColor={colors.textFaint}
         accessibilityLabel={strings.lists.descriptionPlaceholder}
         multiline
-        style={[styles.input, styles.textArea, { fontFamily: bodyFont(fontsLoaded) }]}
+        style={[styles.input, styles.textArea]}
       />
 
       {/* Whether the order is a judgement. Recorded rather than inferred,
@@ -155,17 +150,13 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     borderRadius: radius.md,
     padding: space.md,
   },
+  // Tighter and on the elevated ground: the form sits inside a `surface`
+  // composer, and a field on the same tone as its box disappears into it.
   input: {
     backgroundColor: colors.bgElevated,
     borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: colors.hairline,
     paddingHorizontal: space.md,
     paddingVertical: space.sm,
-    color: colors.text,
-    // 16px: iOS Safari zooms the page whenever a focused field's text is
-    // smaller. See the note in README's design system section.
-    fontSize: inputFontSize,
   },
   textArea: { minHeight: 68, textAlignVertical: "top" },
   switchRow: { flexDirection: "row", alignItems: "center", gap: space.md },

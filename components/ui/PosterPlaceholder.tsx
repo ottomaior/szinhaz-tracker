@@ -24,6 +24,25 @@ import { makeStyles } from "@/theme/styles";
  * `scrim` draws a bottom-up dark gradient over the image so caption text laid
  * on top of it stays readable no matter how bright the photo is.
  */
+/**
+ * The shape a hero frame should take for a given poster.
+ *
+ * The catalogue is close to half landscape production stills and half
+ * portrait artwork, and forcing either into the other's frame loses the part
+ * worth looking at. A hero follows its own picture instead, within limits:
+ * the clamp keeps a panorama from becoming a letterbox slit and a tall
+ * poster from pushing everything else off the screen. Whatever the clamp
+ * still cuts is handled by `backdrop`, which shows the frame whole over a
+ * blurred copy of itself rather than cropping it.
+ */
+export const HERO_MIN_ASPECT = 4 / 5;
+export const HERO_MAX_ASPECT = 4 / 3;
+
+export function posterAspect(poster: Poster | undefined, fallback: number): number {
+  if (!poster?.width || !poster?.height) return fallback;
+  return Math.min(HERO_MAX_ASPECT, Math.max(HERO_MIN_ASPECT, poster.width / poster.height));
+}
+
 export function PosterPlaceholder({
   poster,
   title,

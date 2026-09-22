@@ -1,11 +1,6 @@
 import { useEffect, useState } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors } from "@/theme/colors";
-import { inputFontSize } from "@/theme/type";
-import { gutter, minTouchTarget, overlay, radius, space } from "@/theme/tokens";
-import { bodyFont } from "@/theme/typography";
-import { useAppFonts } from "@/hooks/useAppFonts";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { space } from "@/theme/tokens";
 import {
   REPORT_NOTE_MAX_LENGTH,
   REPORT_REASONS,
@@ -13,7 +8,9 @@ import {
   type ReportReason,
   type ReportTarget,
 } from "@/services/moderationService";
-import { CheckIcon, CloseIcon } from "@/components/icons/Icons";
+import { CheckIcon } from "@/components/icons/Icons";
+import { Sheet, SheetFooter, SheetOption, sheetScroll } from "@/components/ui/Sheet";
+import { TextField } from "@/components/ui/TextField";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 import { makeStyles } from "@/theme/styles";
@@ -57,9 +54,6 @@ export function ReportSheet({
 }) {
   const styles = useStyles();
 
-  const insets = useSafeAreaInsets();
-  const fontsLoaded = useAppFonts();
-
   const [reason, setReason] = useState<ReportReason>();
   const [note, setNote] = useState("");
   const [sending, setSending] = useState(false);
@@ -91,30 +85,8 @@ export function ReportSheet({
   }
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} accessibilityViewIsModal>
-      {/* Pinned with absoluteFill rather than `flex: 1`, for the reason
-          AddToListSheet gives: on react-native-web a Modal's child inherits no
-          definite height and the sheet collapses into the corner. */}
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel={strings.common.close}>
-        <Pressable
-          style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, space.lg) }]}
-          onPress={() => {}}
-        >
-          <View style={styles.grabber} />
-
-          <View style={styles.sheetHeader}>
-            <Text variant="subheading">{TITLES[target]}</Text>
-            <Pressable
-              onPress={onClose}
-              hitSlop={10}
-              accessibilityRole="button"
-              accessibilityLabel={strings.common.close}
-            >
-              <CloseIcon size={17} color={colors.textDim} />
-            </Pressable>
-          </View>
-
-          <ScrollView style={{ maxHeight: 420 }} contentContainerStyle={{ paddingBottom: space.sm }}>
+    <Sheet visible={visible} onClose={onClose} title={TITLES[target]}>
+          <ScrollView {...sheetScroll}>
             <Text variant="bodySmall" tone="dim" style={{ paddingVertical: space.sm }}>
               {strings.moderation.reportLead}
             </Text>
@@ -123,34 +95,31 @@ export function ReportSheet({
               {REPORT_REASONS.map((id) => {
                 const selected = reason === id;
                 return (
-                  <Pressable
+                  <SheetOption
                     key={id}
                     onPress={() => setReason(id)}
                     accessibilityRole="radio"
-                    aria-checked={selected}
-                    accessibilityState={{ selected }}
-                    style={styles.option}
+                    selected={selected}
+                    trailing={selected ? <CheckIcon /> : undefined}
                   >
                     <Text variant="body" tone={selected ? "accent" : "default"} style={{ flex: 1 }}>
                       {strings.moderation.reasons[id]}
                     </Text>
-                    {selected && <CheckIcon size={16} />}
-                  </Pressable>
+                  </SheetOption>
                 );
               })}
             </View>
 
-            <TextInput
+            <TextField
               value={note}
               onChangeText={setNote}
               placeholder={strings.moderation.notePlaceholder}
-              placeholderTextColor={colors.textFaint}
               accessibilityLabel={strings.moderation.notePlaceholder}
               multiline
               // No `maxLength`, for the reason the bio and comment fields give:
               // silently swallowing keystrokes reads as a broken keyboard. The
               // service truncates instead, and the column allows 1000.
-              style={[styles.input, { fontFamily: bodyFont(fontsLoaded) }]}
+              style={styles.input}
             />
             {note.trim().length > REPORT_NOTE_MAX_LENGTH && (
               <Text variant="caption" tone="accent">
@@ -165,78 +134,23 @@ export function ReportSheet({
             )}
           </ScrollView>
 
-          <Pressable
-            onPress={submit}
-            disabled={!reason || sending}
-            accessibilityRole="button"
-            aria-busy={sending}
-            accessibilityState={{ disabled: !reason || sending, busy: sending }}
-            style={[styles.submitRow, { opacity: reason && !sending ? 1 : 0.4 }]}
-          >
-            <Text variant="label" tone="accent">
-              {sending ? strings.moderation.submitting : strings.moderation.submit}
-            </Text>
-          </Pressable>
-        </Pressable>
-      </Pressable>
-    </Modal>
+          <SheetFooter style={{ opacity: reason && !sending ? 1 : 0.4 }}>
+            <Pressable
+              onPress={submit}
+              disabled={!reason || sending}
+              accessibilityRole="button"
+              aria-busy={sending}
+              accessibilityState={{ disabled: !reason || sending, busy: sending }}
+            >
+              <Text variant="label" tone="accent">
+                {sending ? strings.moderation.submitting : strings.moderation.submit}
+              </Text>
+            </Pressable>
+          </SheetFooter>
+    </Sheet>
   );
 }
 
-const useStyles = makeStyles((colors, elevation) => StyleSheet.create({
-  backdrop: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: overlay.scrim,
-    justifyContent: "flex-end",
-  },
-  sheet: {
-    backgroundColor: colors.bgElevated,
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
-    paddingHorizontal: gutter,
-    paddingTop: space.md,
-    ...elevation.floating,
-  },
-  grabber: {
-    alignSelf: "center",
-    width: 36,
-    height: 4,
-    borderRadius: radius.pill,
-    backgroundColor: colors.hairline,
-    marginBottom: space.md,
-  },
-  sheetHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingBottom: space.sm,
-    marginBottom: space.xs,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.hairlineSoft,
-  },
-  option: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.md,
-    minHeight: minTouchTarget,
-    paddingVertical: space.sm,
-  },
-  input: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    borderRadius: radius.md,
-    padding: 12,
-    minHeight: 64,
-    marginTop: space.md,
-    fontSize: inputFontSize,
-    color: colors.text,
-    textAlignVertical: "top",
-  },
-  submitRow: {
-    borderTopWidth: 1,
-    borderTopColor: colors.hairlineSoft,
-    paddingTop: space.md,
-    alignItems: "center",
-  },
+const useStyles = makeStyles(() => StyleSheet.create({
+  input: { marginTop: space.md },
 }));

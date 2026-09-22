@@ -1,11 +1,12 @@
 import { useCallback, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useColors } from "@/theme/styles";
-import { gutter, minTouchTarget, space } from "@/theme/tokens";
+import { gutter, space } from "@/theme/tokens";
 import { useAuth } from "@/contexts/AuthContext";
 import { getBlockedUsers, unblockUser, type BlockedPerson } from "@/services/moderationService";
-import { Avatar } from "@/components/ui/Avatar";
+import { PersonRow } from "@/components/ui/Rows";
+import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { ContentColumn } from "@/components/ui/Screen";
@@ -92,49 +93,32 @@ export default function BlockedUsersScreen() {
               )}
 
               {loaded && people.length === 0 && (
-                <Text variant="bodySmall" tone="faint">
-                  {strings.moderation.blockedListEmpty}
-                </Text>
+                <EmptyState align="center" title={strings.moderation.blockedListEmpty} />
               )}
 
-              <View style={{ gap: space.md }}>
+              <View>
                 {people.map((person) => (
-                  <View key={person.id} style={styles.row}>
-                    {/* Their profile still opens — `profiles` stays readable
-                        when a block hides the writing, precisely so this list
-                        is not a column of blanks. */}
-                    <Pressable
-                      onPress={() => router.push(`/user/${person.id}`)}
-                      accessibilityRole="button"
-                      accessibilityLabel={person.name}
-                      style={styles.person}
-                    >
-                      <Avatar uri={person.avatarUrl} initials={person.initials} size={36} />
-                      <View style={{ flex: 1, gap: 2 }}>
-                        <Text variant="label" numberOfLines={1}>
-                          {person.name}
-                        </Text>
-                        {!!person.handle && (
-                          <Text variant="caption" tone="faint" numberOfLines={1}>
-                            {`@${person.handle}`}
-                          </Text>
-                        )}
-                      </View>
-                    </Pressable>
-                    <Pressable
-                      onPress={() => unblock(person)}
-                      disabled={!!busyId}
-                      hitSlop={8}
-                      accessibilityRole="button"
-                      aria-busy={busyId === person.id}
-                      accessibilityState={{ busy: busyId === person.id, disabled: !!busyId }}
-                      style={{ opacity: busyId === person.id ? 0.5 : 1 }}
-                    >
-                      <Text variant="caption" tone="accent">
-                        {strings.moderation.unblock}
-                      </Text>
-                    </Pressable>
-                  </View>
+                  // Their profile still opens — `profiles` stays readable when
+                  // a block hides the writing, precisely so this list is not a
+                  // column of blanks.
+                  <PersonRow
+                    key={person.id}
+                    name={person.name}
+                    meta={person.handle ? `@${person.handle}` : undefined}
+                    avatarUri={person.avatarUrl}
+                    initials={person.initials}
+                    onPress={() => router.push(`/user/${person.id}`)}
+                    action={
+                      <Button
+                        variant="text"
+                        size="sm"
+                        label={strings.moderation.unblock}
+                        onPress={() => unblock(person)}
+                        disabled={!!busyId}
+                        loading={busyId === person.id}
+                      />
+                    }
+                  />
                 ))}
               </View>
             </>
@@ -145,12 +129,4 @@ export default function BlockedUsersScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.md,
-    minHeight: minTouchTarget,
-  },
-  person: { flexDirection: "row", alignItems: "center", gap: space.md, flex: 1 },
-});
+

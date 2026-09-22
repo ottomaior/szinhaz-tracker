@@ -1,13 +1,10 @@
 import { useEffect, useState } from "react";
-import { View, ScrollView, StyleSheet, Pressable, TextInput } from "react-native";
+import { View, ScrollView, StyleSheet, Pressable } from "react-native";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
-import { inputFontSize } from "@/theme/type";
-import { gutter, radius, space } from "@/theme/tokens";
-import { bodyFont } from "@/theme/typography";
-import { useAppFonts } from "@/hooks/useAppFonts";
+import { gutter, hairlineWidth, radius, space } from "@/theme/tokens";
 import { useSearchQuery } from "@/hooks/useSearchQuery";
 import { useAuth } from "@/contexts/AuthContext";
 import { createPlay, createVenue, searchVenues, uploadUserPoster } from "@/services/playsService";
@@ -16,6 +13,8 @@ import { CloseIcon } from "@/components/icons/Icons";
 import { Button } from "@/components/ui/Button";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { SearchField } from "@/components/ui/SearchField";
+import { TextField } from "@/components/ui/TextField";
+import { LinkRow } from "@/components/ui/Rows";
 import { ContentColumn } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { Chip } from "@/components/ui/Chip";
@@ -30,7 +29,6 @@ export default function AddPlayScreen() {
   const styles = useStyles();
 
   const router = useRouter();
-  const fontsLoaded = useAppFonts();
   const { session, loading } = useAuth();
 
   const [title, setTitle] = useState("");
@@ -211,7 +209,7 @@ export default function AddPlayScreen() {
         <LabeledInput label={strings.addPlay.authorLabel} value={author} onChangeText={setAuthor} />
         <LabeledInput label={strings.addPlay.directorLabel} value={director} onChangeText={setDirector} />
         <LabeledInput label={strings.addPlay.genreLabel} value={genre} onChangeText={setGenre} />
-        <View style={{ flexDirection: "row", gap: 10 }}>
+        <View style={styles.pair}>
           <View style={{ flex: 1 }}>
             <LabeledInput label={strings.addPlay.runtimeLabel} value={runtimeMinutes} onChangeText={setRuntimeMinutes} keyboardType="number-pad" />
           </View>
@@ -221,8 +219,8 @@ export default function AddPlayScreen() {
         </View>
         <LabeledInput label={strings.addPlay.premiereDateLabel} value={premiereDate} onChangeText={setPremiereDate} placeholder="2026-09-01" />
 
-        <View style={{ gap: 8 }}>
-          <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.addPlay.posterLabel}</Text>
+        <View style={{ gap: space.sm }}>
+          <Text variant="label" tone="dim">{strings.addPlay.posterLabel}</Text>
           {posterUri && (
             <Image
               source={{ uri: posterUri }}
@@ -265,8 +263,8 @@ export default function AddPlayScreen() {
           <Text variant="caption" tone="dim">{strings.addPlay.posterHint}</Text>
         </View>
 
-        <View style={{ gap: 8 }}>
-          <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.addPlay.venueLabel}</Text>
+        <View style={{ gap: space.sm }}>
+          <Text variant="label" tone="dim">{strings.addPlay.venueLabel}</Text>
           {selectedVenue ? (
             <Pressable
               style={styles.selectedVenue}
@@ -278,7 +276,7 @@ export default function AddPlayScreen() {
               <Text variant="caption" tone="faint">{selectedVenue.city}</Text>
               {/* Tapping the card cleared the selection with nothing on screen
                   saying so. */}
-              <Text variant="caption" tone="accent" style={{ marginTop: 4 }}>
+              <Text variant="caption" tone="accent" style={{ marginTop: space.xs }}>
                 {strings.addPlay.clearVenue}
               </Text>
             </Pressable>
@@ -290,22 +288,25 @@ export default function AddPlayScreen() {
                 placeholder={strings.addPlay.venueSearchPlaceholder}
                 loading={venueTerm.length > 1 && venueSearch.loading}
               />
-              {venueResults.map((v) => (
-                <Pressable key={v.id} style={styles.venueResultRow} onPress={() => setSelectedVenue(v)} accessibilityRole="button">
-                  <Text variant="bodySmall">{v.name}</Text>
-                  <Text variant="caption" tone="faint">{v.city}</Text>
-                </Pressable>
-              ))}
-              <Pressable onPress={() => setShowNewVenueForm((s) => !s)} accessibilityRole="button">
-                <Text variant="label" tone="accent">
-                  {strings.addPlay.venueNotFound} {strings.addPlay.createVenue}
-                </Text>
-              </Pressable>
+              {venueResults.length > 0 && (
+                <View>
+                  {venueResults.map((v) => (
+                    <LinkRow key={v.id} label={v.name} blurb={v.city} onPress={() => setSelectedVenue(v)} trailing={<></>} />
+                  ))}
+                </View>
+              )}
+              <Button
+                variant="text"
+                size="sm"
+                label={`${strings.addPlay.venueNotFound} ${strings.addPlay.createVenue}`}
+                onPress={() => setShowNewVenueForm((s) => !s)}
+                style={styles.inlineLink}
+              />
               {showNewVenueForm && (
-                <View style={{ gap: 8 }}>
+                <View style={{ gap: space.sm }}>
                   <LabeledInput label={strings.addPlay.venueNameLabel} value={newVenueName} onChangeText={setNewVenueName} />
                   <LabeledInput label={strings.addPlay.venueCityLabel} value={newVenueCity} onChangeText={setNewVenueCity} />
-                  <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
+                  <View style={styles.chipRow}>
                     {VENUE_TYPES.map((t) => (
                       <Chip key={t} label={t} active={newVenueType === t} onPress={() => setNewVenueType(t)} />
                     ))}
@@ -323,25 +324,23 @@ export default function AddPlayScreen() {
           )}
         </View>
 
-        <View style={{ gap: 8 }}>
-          <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.addPlay.castLabel}</Text>
+        <View style={{ gap: space.sm }}>
+          <Text variant="label" tone="dim">{strings.addPlay.castLabel}</Text>
           {cast.map((member, i) => (
-            <View key={i} style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
-              <TextInput
+            <View key={i} style={styles.castRow}>
+              <TextField
                 value={member.name}
                 onChangeText={(v) => updateCastMember(i, { name: v })}
                 placeholder={strings.addPlay.castNamePlaceholder}
-                placeholderTextColor={colors.textFaint}
                 accessibilityLabel={strings.addPlay.castNamePlaceholder}
-                style={[styles.input, { flex: 1, fontFamily: bodyFont(fontsLoaded) }]}
+                style={{ flex: 1 }}
               />
-              <TextInput
+              <TextField
                 value={member.role}
                 onChangeText={(v) => updateCastMember(i, { role: v })}
                 placeholder={strings.addPlay.castRolePlaceholder}
-                placeholderTextColor={colors.textFaint}
                 accessibilityLabel={strings.addPlay.castRolePlaceholder}
-                style={[styles.input, { flex: 1, fontFamily: bodyFont(fontsLoaded) }]}
+                style={{ flex: 1 }}
               />
               <Pressable
                 onPress={() => removeCastMember(i)}
@@ -382,63 +381,31 @@ function LabeledInput({
   placeholder?: string;
   keyboardType?: "default" | "number-pad";
 }) {
-  const styles = useStyles();
-
-  const fontsLoaded = useAppFonts();
   return (
-    <View style={{ gap: 6 }}>
-      <Text variant="label" tone="dim" style={styles.sectionLabel}>{label}</Text>
-      <TextInput
+    <View style={{ gap: space.sm }}>
+      <Text variant="label" tone="dim">{label}</Text>
+      <TextField
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={colors.textFaint}
         keyboardType={keyboardType}
         accessibilityLabel={label}
-        style={[styles.input, { fontFamily: bodyFont(fontsLoaded) }]}
       />
     </View>
   );
 }
 
 const useStyles = makeStyles((colors) => StyleSheet.create({
-  // The brand face is applied per-instance like everywhere else in the app;
-  // this style used to pin itself to "System" and skip Sora entirely.
-  sectionLabel: {
-    letterSpacing: 0.2,
-  },
-  // 3:2 rather than the 2:3 poster slot: what people photograph and upload is
-  // usually a landscape production still, and the play screen sizes the real
-  // hero from the image's own dimensions anyway.
-  posterPreview: {
-    width: "100%",
-    aspectRatio: 3 / 2,
-    borderRadius: radius.md,
-    backgroundColor: colors.surface,
-  },
-  input: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    borderRadius: radius.md,
-    padding: 14,
-    fontSize: inputFontSize,
-    color: colors.text,
-  },
+  pair: { flexDirection: "row", gap: space.sm },
+  inlineLink: { alignSelf: "flex-start", marginLeft: -space.sm },
+  castRow: { flexDirection: "row", gap: space.sm, alignItems: "center" },
+  chipRow: { flexDirection: "row", gap: space.sm, flexWrap: "wrap" },
+  posterPreview: { width: "100%", aspectRatio: 3 / 4, borderRadius: radius.md, backgroundColor: colors.surface },
   selectedVenue: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
+    gap: space["2xs"],
+    borderWidth: hairlineWidth,
     borderColor: colors.hairline,
     borderRadius: radius.md,
-    padding: 14,
-    gap: 2,
-  },
-  venueResultRow: {
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: colors.hairlineSoft,
-    borderRadius: radius.md,
-    gap: 2,
+    padding: space.lg,
   },
 }));

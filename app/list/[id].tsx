@@ -1,8 +1,8 @@
 import { useCallback, useState } from "react";
-import { View, ScrollView, StyleSheet, Pressable } from "react-native";
+import { View, ScrollView, StyleSheet } from "react-native";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
-import { gutter, radius, space } from "@/theme/tokens";
+import { gutter, hairlineWidth, space } from "@/theme/tokens";
 import { deleteList, getList, removeFromList, updateList, type ListDetail, addToList } from "@/services/listsService";
 import { getCurrentUser, getVenuesByIds } from "@/services/playsService";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,11 +11,15 @@ import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ListForm, type ListFormValues } from "@/components/ui/ListForm";
 import { ModalHeader } from "@/components/ui/ModalHeader";
+import { ConfirmCard } from "@/components/ui/Cards";
+import { Notice } from "@/components/ui/Notice";
+import { Chip } from "@/components/ui/Chip";
 import { PlayRow } from "@/components/ui/PlayRow";
 import { ContentColumn } from "@/components/ui/Screen";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { RowSkeleton, Skeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
+import { typeScale } from "@/theme/type";
 import { makeStyles } from "@/theme/styles";
 import { useToast } from "@/components/ui/Toast";
 import { haptic } from "@/utils/haptics";
@@ -137,17 +141,13 @@ export default function ListScreen() {
         <ContentColumn style={{ padding: gutter, gap: space.xl }}>
           {!loaded && (
             <View style={{ gap: space.lg }}>
-              <Skeleton width="70%" height={26} />
-              <Skeleton width="90%" height={14} />
-              {[0, 1, 2].map((i) => (
-                <View key={i} style={{ flexDirection: "row", gap: space.md }}>
-                  <Skeleton width={56} height={84} radius={radius.sm} />
-                  <View style={{ flex: 1, gap: space.sm }}>
-                    <Skeleton width="80%" height={16} />
-                    <Skeleton width="50%" height={12} />
-                  </View>
-                </View>
-              ))}
+              <Skeleton width="70%" height={typeScale.title.lineHeight} />
+              <Skeleton width="90%" height={space.lg} />
+              <View>
+                {[0, 1, 2].map((i) => (
+                  <RowSkeleton key={i} />
+                ))}
+              </View>
             </View>
           )}
 
@@ -170,23 +170,18 @@ export default function ListScreen() {
                     {list.description}
                   </Text>
                 )}
-                <Text variant="caption" tone="faint">
-                  {[
-                    strings.lists.itemCount(list.itemCount),
-                    list.isRanked ? strings.lists.rankedBadge : undefined,
-                    list.isFeatured ? strings.lists.featuredBadge : undefined,
-                    list.isPublic ? undefined : strings.lists.privateBadge,
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </Text>
+                {/* What kind of list this is, as tags rather than as a
+                    joined caption: "12 előadás · Rangsorolt · Privát" read as
+                    one sentence about the count. */}
+                <View style={styles.tagRow}>
+                  <Text variant="caption" tone="faint">{strings.lists.itemCount(list.itemCount)}</Text>
+                  {list.isRanked && <Chip label={strings.lists.rankedBadge} />}
+                  {list.isFeatured && <Chip label={strings.lists.featuredBadge} />}
+                  {!list.isPublic && <Chip label={strings.lists.privateBadge} />}
+                </View>
               </View>
 
-              {!!notice && (
-                <Text accessibilityRole="alert" variant="bodySmall" tone="accent">
-                  {notice}
-                </Text>
-              )}
+              {!!notice && <Notice>{notice}</Notice>}
 
               {list.entries.length === 0 && (
                 <EmptyState
@@ -197,7 +192,7 @@ export default function ListScreen() {
                 />
               )}
 
-              <View style={{ gap: space.md }}>
+              <View>
                 {list.entries.map((entry, i) => (
                   <PlayRow
                     key={entry.play.id}
@@ -231,17 +226,13 @@ export default function ListScreen() {
                             always live inside a tappable row is the one a
                             tap meant for the row hits. */}
                         {isOwner && editing && (
-                          <Pressable
+                          <Button
+                            variant="text"
+                            size="sm"
+                            label={strings.lists.removeEntry}
                             onPress={() => handleRemove(entry.play.id, entry.play.title, entry.note)}
-                            hitSlop={8}
                             disabled={busy}
-                            accessibilityRole="button"
-                            accessibilityLabel={strings.lists.removeEntry}
-                          >
-                            <Text variant="caption" tone="faint">
-                              {strings.lists.removeEntry}
-                            </Text>
-                          </Pressable>
+                          />
                         )}
                       </View>
                     }
@@ -260,33 +251,19 @@ export default function ListScreen() {
                       onCancel={() => setEditing(false)}
                     />
                   ) : confirmingDelete ? (
-                    <>
-                      <Text variant="subheading">{strings.lists.deleteConfirmTitle}</Text>
-                      <Text variant="bodySmall" tone="dim">
-                        {strings.lists.deleteConfirmBody(list.itemCount)}
-                      </Text>
-                      <View style={{ flexDirection: "row", gap: space.sm }}>
-                        <Button
-                          label={strings.common.cancel}
-                          variant="outline"
-                          style={{ flex: 1 }}
-                          onPress={() => setConfirmingDelete(false)}
-                        />
-                        <Button label={strings.lists.deleteList} style={{ flex: 1 }} disabled={busy} onPress={handleDelete} />
-                      </View>
-                    </>
+                    <ConfirmCard
+                      title={strings.lists.deleteConfirmTitle}
+                      body={strings.lists.deleteConfirmBody(list.itemCount)}
+                      confirmLabel={strings.lists.deleteList}
+                      cancelLabel={strings.common.cancel}
+                      onConfirm={handleDelete}
+                      onCancel={() => setConfirmingDelete(false)}
+                      busy={busy}
+                    />
                   ) : (
                     <View style={styles.ownerActions}>
-                      <Pressable onPress={() => setEditing(true)} accessibilityRole="button" hitSlop={8}>
-                        <Text variant="label" tone="accent">
-                          {strings.lists.editList}
-                        </Text>
-                      </Pressable>
-                      <Pressable onPress={() => setConfirmingDelete(true)} accessibilityRole="button" hitSlop={8}>
-                        <Text variant="label" tone="faint">
-                          {strings.lists.deleteList}
-                        </Text>
-                      </Pressable>
+                      <Button variant="outline" size="sm" label={strings.lists.editList} onPress={() => setEditing(true)} />
+                      <Button variant="text" size="sm" label={strings.lists.deleteList} onPress={() => setConfirmingDelete(true)} />
                     </View>
                   )}
                 </View>
@@ -300,11 +277,12 @@ export default function ListScreen() {
 }
 
 const useStyles = makeStyles((colors) => StyleSheet.create({
+  tagRow: { flexDirection: "row", alignItems: "center", gap: space.sm, flexWrap: "wrap" },
   ownerZone: {
     gap: space.md,
-    borderTopWidth: 1,
+    borderTopWidth: hairlineWidth,
     borderTopColor: colors.hairlineSoft,
     paddingTop: space.lg,
   },
-  ownerActions: { flexDirection: "row", gap: space.xl },
+  ownerActions: { flexDirection: "row", gap: space.sm },
 }));

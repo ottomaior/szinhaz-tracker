@@ -1,6 +1,6 @@
 import { Text as RNText, type TextProps as RNTextProps, type TextStyle, type StyleProp } from "react-native";
 import { useAppFonts } from "@/hooks/useAppFonts";
-import { typeStyle, type TypeTone, type TypeVariant } from "@/theme/type";
+import { typeStyle, type TypeTone, type TypeVariant, type TypeWeight } from "@/theme/type";
 import { useColors } from "@/theme/styles";
 
 /**
@@ -24,16 +24,19 @@ export function Text({
   // eyebrow, the numeral — carry their own tone, and theme/type.ts applies it
   // only when the call site has named none.
   tone,
+  weight,
   style,
   ...rest
 }: RNTextProps & {
   variant?: TypeVariant;
   tone?: TypeTone;
+  /** The role's face in another cut — a name set semibold inside a sentence. */
+  weight?: TypeWeight;
   style?: StyleProp<TextStyle>;
 }) {
   const fontsLoaded = useAppFonts();
   // Every piece of text in the app comes through here, so this is also where
   // most of the tree learns that the theme changed — see theme/styles.ts.
   const colors = useColors();
-  return <RNText {...rest} style={[typeStyle(variant, fontsLoaded, tone, colors), style]} />;
+  return <RNText {...rest} style={[typeStyle(variant, fontsLoaded, tone, colors, weight), style]} />;
 }

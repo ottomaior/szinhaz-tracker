@@ -45,7 +45,7 @@ export function SectionHeader({
       {trailing ??
         (!!action &&
           (onAction ? (
-            <Pressable onPress={onAction} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${title}: ${action}`}>
+            <Pressable onPress={onAction} hitSlop={space.sm} accessibilityRole="button" accessibilityLabel={`${title}: ${action}`}>
               <Text variant="label" tone="accent">
                 {action}
               </Text>
@@ -66,5 +66,5 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: space.md,
   },
-  titles: { flexShrink: 1, gap: 3 },
+  titles: { flexShrink: 1, gap: space["2xs"] },
 });

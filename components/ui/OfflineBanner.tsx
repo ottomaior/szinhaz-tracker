@@ -1,7 +1,7 @@
 import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOnline } from "@/hooks/useOnline";
-import { space } from "@/theme/tokens";
+import { hairlineWidth, space } from "@/theme/tokens";
 import { makeStyles } from "@/theme/styles";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
@@ -37,7 +37,7 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     paddingVertical: space.sm,
     paddingHorizontal: space.lg,
     backgroundColor: colors.goldTintBg,
-    borderBottomWidth: 1,
+    borderBottomWidth: hairlineWidth,
     borderBottomColor: colors.hairline,
     alignItems: "center",
   },

@@ -17,30 +17,32 @@ import { makeStyles } from "@/theme/styles";
  * in a dark void — the second and third screens a curious visitor taps, and
  * neither said what a diary or a watchlist was for. This is the same block on
  * both, so the two tabs make one argument rather than two apologies, and the
- * tab the reader is on leads the list.
+ * tab the reader is on leads the list and names the page in the eyebrow —
+ * two tabs that showed the identical screen read as the app not responding
+ * (T-079).
  */
 export function SignedOutState({ lead }: { lead: "diary" | "watchlist" }) {
   const styles = useStyles();
 
   const router = useRouter();
   const items = [
-    { key: "diary", icon: <CalendarIcon size={20} color={colors.gold} />, title: strings.signedOut.diaryTitle, body: strings.signedOut.diaryBody },
-    { key: "watchlist", icon: <TicketIcon size={20} color={colors.gold} />, title: strings.signedOut.watchlistTitle, body: strings.signedOut.watchlistBody },
-    { key: "people", icon: <UserIcon size={20} color={colors.gold} />, title: strings.signedOut.peopleTitle, body: strings.signedOut.peopleBody },
+    { key: "diary", icon: <CalendarIcon color={colors.gold} />, title: strings.signedOut.diaryTitle, body: strings.signedOut.diaryBody },
+    { key: "watchlist", icon: <TicketIcon color={colors.gold} />, title: strings.signedOut.watchlistTitle, body: strings.signedOut.watchlistBody },
+    { key: "people", icon: <UserIcon color={colors.gold} />, title: strings.signedOut.peopleTitle, body: strings.signedOut.peopleBody },
   ].sort((a, b) => (a.key === lead ? -1 : b.key === lead ? 1 : 0));
 
   return (
     <ContentColumn style={styles.wrap}>
       <BrandMark size={40} />
       <View style={{ gap: space.xs }}>
-        <Text variant="eyebrow">{strings.signedOut.eyebrow}</Text>
+        <Text variant="eyebrow">{lead === "diary" ? strings.tabs.profile : strings.tabs.watchlist}</Text>
         <Text variant="display">{strings.signedOut.title}</Text>
       </View>
       <View style={{ gap: space.lg }}>
         {items.map((item) => (
           <View key={item.key} style={styles.item}>
             <View style={styles.icon}>{item.icon}</View>
-            <View style={{ flex: 1, gap: 2 }}>
+            <View style={{ flex: 1, gap: space["2xs"] }}>
               <Text variant="subheading">{item.title}</Text>
               <Text variant="bodySmall" tone="dim">
                 {item.body}
@@ -51,7 +53,7 @@ export function SignedOutState({ lead }: { lead: "diary" | "watchlist" }) {
       </View>
       <View style={{ gap: space.md }}>
         <Button label={strings.signedOut.signUp} onPress={() => router.push("/sign-up")} />
-        <Pressable onPress={() => router.push("/sign-in")} accessibilityRole="button" hitSlop={8} style={{ alignSelf: "center" }}>
+        <Pressable onPress={() => router.push("/sign-in")} accessibilityRole="button" hitSlop={space.sm} style={{ alignSelf: "center" }}>
           <Text variant="bodySmall" tone="faint">
             {strings.signedOut.haveAccount}{" "}
             <Text variant="bodySmall" tone="accent">{strings.signedOut.signIn}</Text>
@@ -70,5 +72,5 @@ const useStyles = makeStyles(() => StyleSheet.create({
     gap: space["2xl"],
   },
   item: { flexDirection: "row", gap: space.md, alignItems: "flex-start" },
-  icon: { width: 24, paddingTop: 2, alignItems: "center" },
+  icon: { width: space["2xl"], paddingTop: space["2xs"], alignItems: "center" },
 }));

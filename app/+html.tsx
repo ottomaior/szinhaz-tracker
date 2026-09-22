@@ -52,6 +52,11 @@ const THEME_CSS = [
   // through wherever the app does not paint — most visibly when a scroll
   // rubber-bands past the end of the content.
   `html,body{background:var(${cssVarName("bg")})}`,
+  // The one focus ring. react-native-web draws none of its own and the
+  // search field removes the browser's, so before this a keyboard had no
+  // way of seeing where it was. `:focus-visible` rather than `:focus`, so a
+  // mouse click leaves no ring behind.
+  `:focus-visible{outline:2px solid var(${cssVarName("goldTintBorder")});outline-offset:2px;border-radius:4px}`,
 ].join("\n");
 
 /**

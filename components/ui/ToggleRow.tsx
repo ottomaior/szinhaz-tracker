@@ -1,8 +1,9 @@
 import { Pressable, StyleSheet, View } from "react-native";
-import { radius, space } from "@/theme/tokens";
+import { hairlineWidth, radius, space } from "@/theme/tokens";
+import { CheckDisc } from "@/components/ui/CheckDisc";
+import { disabledStyle, pressStyle } from "@/components/ui/pressable";
+import { useColors } from "@/theme/styles";
 import { makeStyles } from "@/theme/styles";
-import { colors } from "@/theme/colors";
-import { CheckIcon } from "@/components/icons/Icons";
 import { Text } from "@/components/ui/Text";
 import { haptic } from "@/utils/haptics";
 
@@ -27,6 +28,7 @@ export function ToggleRow({
   disabled?: boolean;
 }) {
   const styles = useStyles();
+  const palette = useColors();
   return (
     <Pressable
       onPress={() => {
@@ -39,9 +41,9 @@ export function ToggleRow({
       accessibilityRole="switch"
       accessibilityState={{ checked: on, disabled }}
       accessibilityLabel={label}
-      style={[styles.row, on && styles.rowOn, disabled && styles.disabled]}
+      style={pressStyle("row", palette, [styles.row, on && styles.rowOn, disabled && disabledStyle])}
     >
-      <View style={{ flex: 1, gap: 2 }}>
+      <View style={{ flex: 1, gap: space["2xs"] }}>
         <Text variant="subheading">{label}</Text>
         {!!blurb && (
           <Text variant="caption" tone="faint">
@@ -49,7 +51,7 @@ export function ToggleRow({
           </Text>
         )}
       </View>
-      <View style={[styles.tick, on && styles.tickOn]}>{on && <CheckIcon size={14} color={colors.onAccent} />}</View>
+      <CheckDisc on={on} />
     </Pressable>
   );
 }
@@ -61,20 +63,9 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     gap: space.md,
     padding: space.md,
     borderRadius: radius.md,
-    borderWidth: 1,
+    borderWidth: hairlineWidth,
     borderColor: colors.hairline,
     backgroundColor: colors.surface,
   },
   rowOn: { borderColor: colors.gold },
-  disabled: { opacity: 0.55 },
-  tick: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    borderWidth: 1.5,
-    borderColor: colors.hairline,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  tickOn: { backgroundColor: colors.gold, borderColor: colors.gold },
 }));

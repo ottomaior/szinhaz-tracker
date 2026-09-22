@@ -1,8 +1,9 @@
-import { Linking, StyleSheet, View } from "react-native";
+import { Linking, StyleSheet } from "react-native";
 import { space } from "@/theme/tokens";
 import { makeStyles } from "@/theme/styles";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { ContentColumn } from "@/components/ui/Screen";
 import { strings } from "@/i18n/hu";
 import { operator } from "@/i18n/legal";
 
@@ -33,7 +34,7 @@ export function ErrorScreen({ error, retry }: { error: Error; retry: () => Promi
   }
 
   return (
-    <View style={styles.screen}>
+    <ContentColumn style={styles.screen}>
       <EmptyState
         align="center"
         title={strings.feedback.errorTitle}
@@ -44,7 +45,7 @@ export function ErrorScreen({ error, retry }: { error: Error; retry: () => Promi
       {!!contact && (
         <Button label={strings.feedback.errorReport} variant="text" onPress={report} style={styles.report} />
       )}
-    </View>
+    </ContentColumn>
   );
 }
 

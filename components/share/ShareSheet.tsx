@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Modal, Pressable, StyleSheet, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { StyleSheet, View } from "react-native";
 import { colors } from "@/theme/colors";
-import { gutter, minTouchTarget, overlay, radius, space } from "@/theme/tokens";
+import { control, radius, rule, space } from "@/theme/tokens";
 import { useShareCard } from "@/components/share/ShareCardProvider";
-import { ChevronRightIcon, CloseIcon } from "@/components/icons/Icons";
+import { ChevronRightIcon } from "@/components/icons/Icons";
+import { Sheet, SheetOption } from "@/components/ui/Sheet";
 import { Text } from "@/components/ui/Text";
 import { ToggleRow } from "@/components/ui/ToggleRow";
 import { strings } from "@/i18n/hu";
@@ -44,8 +44,6 @@ export function ShareSheet({
    */
   opinion?: ShareCardOpinion;
 }) {
-  const styles = useStyles();
-  const insets = useSafeAreaInsets();
   const { share } = useShareCard();
 
   const [withOpinion, setWithOpinion] = useState(false);
@@ -89,29 +87,7 @@ export function ShareSheet({
   }
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} accessibilityViewIsModal>
-      {/* Pinned with absoluteFill rather than `flex: 1`, for the reason
-          AddToListSheet gives: on react-native-web a Modal's child inherits no
-          definite height and the sheet collapses into the corner. */}
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel={strings.common.close}>
-        <Pressable
-          style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, space.lg) }]}
-          onPress={() => {}}
-        >
-          <View style={styles.grabber} />
-
-          <View style={styles.sheetHeader}>
-            <Text variant="subheading">{strings.shareCard.sheetTitle}</Text>
-            <Pressable
-              onPress={onClose}
-              hitSlop={10}
-              accessibilityRole="button"
-              accessibilityLabel={strings.common.close}
-            >
-              <CloseIcon size={17} color={colors.textDim} />
-            </Pressable>
-          </View>
-
+    <Sheet visible={visible} onClose={onClose} title={strings.shareCard.sheetTitle}>
           <Text variant="bodySmall" tone="dim" style={{ paddingVertical: space.sm }}>
             {strings.shareCard.lead}
           </Text>
@@ -150,9 +126,7 @@ export function ShareSheet({
               {error}
             </Text>
           )}
-        </Pressable>
-      </Pressable>
-    </Modal>
+    </Sheet>
   );
 }
 
@@ -174,76 +148,31 @@ function FormatRow({
   onPress: () => void;
 }) {
   const styles = useStyles();
-  const frameH = 34;
+  const frameH = space["3xl"];
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      aria-busy={busy}
-      accessibilityState={{ disabled, busy }}
-      style={[styles.option, disabled && !busy && { opacity: 0.4 }]}
-    >
+    <SheetOption onPress={onPress} disabled={disabled} busy={busy} keepBusyOpaque accessibilityLabel={label}>
       <View style={styles.frameWell}>
         <View style={[styles.frame, { width: Math.round(frameH * ratio), height: frameH }]} />
       </View>
-      <View style={{ flex: 1, gap: 2 }}>
+      <View style={{ flex: 1, gap: space["2xs"] }}>
         <Text variant="subheading">{busy ? strings.shareCard.preparing : label}</Text>
         <Text variant="caption" tone="faint">{blurb}</Text>
       </View>
-      <ChevronRightIcon size={15} color={colors.textFaint} />
-    </Pressable>
+      <ChevronRightIcon color={colors.textFaint} />
+    </SheetOption>
   );
 }
 
-const useStyles = makeStyles((colors, elevation) => StyleSheet.create({
-  backdrop: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: overlay.scrim,
-    justifyContent: "flex-end",
-  },
-  sheet: {
-    backgroundColor: colors.bgElevated,
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
-    paddingHorizontal: gutter,
-    paddingTop: space.md,
-    ...elevation.floating,
-  },
-  grabber: {
-    alignSelf: "center",
-    width: 36,
-    height: 4,
-    borderRadius: radius.pill,
-    backgroundColor: colors.hairline,
-    marginBottom: space.md,
-  },
-  sheetHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingBottom: space.sm,
-    marginBottom: space.xs,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.hairlineSoft,
-  },
-  option: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.md,
-    minHeight: minTouchTarget,
-    paddingVertical: space.sm,
-  },
+const useStyles = makeStyles((colors) => StyleSheet.create({
   frameWell: {
-    width: 44,
-    height: 44,
+    width: control.md,
+    height: control.md,
     alignItems: "center",
     justifyContent: "center",
   },
   frame: {
-    borderWidth: 1.5,
+    borderWidth: rule,
     borderColor: colors.gold,
-    borderRadius: 3,
+    borderRadius: radius.sm,
   },
 }));

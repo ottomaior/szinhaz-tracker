@@ -21,6 +21,8 @@ import type { Palette } from "./themes";
  * until they mean nothing.
  */
 export const space = {
+  /** Between a title line and the meta line under it, where the leading already carries most of the air. */
+  "2xs": 2,
   xs: 4,
   sm: 8,
   md: 12,
@@ -155,6 +157,10 @@ export const overlay = {
    * theme.
    */
   onImageAccent: "#ecd08a",
+  /** A hairline on the dark card: the rule above the profile's stats. */
+  onImageRule: "rgba(246,238,232,0.14)",
+  /** The band of light that sweeps a pressed poster — components/motion/PressCard. */
+  glare: "rgba(255,255,255,0.10)",
 } as const;
 
 /**
@@ -193,3 +199,108 @@ export const maxWidth = {
 
 /** Below this, a tap target is hard to hit reliably. */
 export const minTouchTarget = 44;
+
+/**
+ * Control heights.
+ *
+ * Three, and every pressable in the app is one of them: `sm` for a chip, a
+ * pill button and a segmented tab; `md` for a button, a field and anything a
+ * finger has to land on (`minTouchTarget`, under another name); `lg` only for
+ * the search field that heads a screen. A bar — the modal header, the top
+ * bar's inner row — is `bar`.
+ */
+export const control = {
+  sm: 32,
+  md: 44,
+  lg: 50,
+} as const;
+
+export const bar = 56;
+
+/** An accent rule beside a notice or a quotation: thicker than a hairline, thinner than a bar. */
+export const rule = 2;
+
+/**
+ * The sizes a thing appears at, named so the same object is the same size
+ * on every screen.
+ *
+ * Before this the app used six poster-thumbnail geometries, eight avatar
+ * diameters, nine mask sizes and eight chrome-icon sizes for what a reader
+ * experiences as one thumbnail, one face, one glyph and one icon. Each set
+ * below is the whole allowed range; a screen that needs a fourth avatar size
+ * needs a reason, not a number.
+ */
+export const thumb = {
+  /** A production in a list row. 2:3, the poster's own proportion. */
+  row: { width: 56, height: 84 },
+  /** A tile in a rail or a fold of covers. 4:5, so a rail is a rail and not a row turned sideways. */
+  tile: { width: 124, height: 155 },
+} as const;
+
+export const avatar = {
+  /** Beside a comment or in a byline's second line. */
+  inline: 32,
+  /** A byline, a header: the face that says whose screen this is. */
+  byline: 36,
+  /** A list row about a person. */
+  row: 44,
+  /** The face at the top of a profile. */
+  hero: 72,
+} as const;
+
+/** The mask rating glyph — see components/icons/MaskIcon.tsx. */
+export const mask = {
+  /** In a meta line, next to a caption. */
+  inline: 12,
+  /** In a row's trailing slot, and the interactive sub-rows of the check-in. */
+  row: 16,
+  /** The check-in's overall rating: five masks you press. */
+  hero: 30,
+} as const;
+
+/** Chrome icons — components/icons/Icons.tsx. */
+export const icon = {
+  /** Sitting in a line of text: a chevron, a pin, a heart on a counter. */
+  inline: 16,
+  /** A standalone tap target: the bell, the close cross, the back arrow. */
+  chrome: 20,
+} as const;
+
+/**
+ * Motion, in three durations.
+ *
+ * `state` is a thing changing under the finger — a chip toggling, a row
+ * pressed, a hover arriving. `enter` is a thing arriving or leaving: a toast,
+ * a sheet, the next step of a form. `reveal` is a screen introducing itself:
+ * the fade-and-lift of a list, the words of a title, a number counting up.
+ * Everything in components/motion picks one of the three; nothing chooses
+ * its own number.
+ */
+export const duration = {
+  state: 160,
+  enter: 260,
+  reveal: 420,
+} as const;
+
+/** The one spring: quick, with a little give. The dock keeps its own, livelier one. */
+export const spring = { speed: 24, bounciness: 6 } as const;
+
+/**
+ * The floating dock — components/ui/TabBar.tsx — is deliberately its own
+ * object, after reactbits' "Dock": a pill that does not share the control
+ * heights because it is not a control but a piece of furniture the controls
+ * sit on. Its numbers are named here so that they are visibly chosen.
+ */
+export const dock = {
+  height: 66,
+  margin: 14,
+  radius: 26,
+  paddingX: 6,
+  paddingBottom: 8,
+  itemWidth: 60,
+  itemGap: 3,
+  plusSize: 54,
+  plusLift: 6,
+  labelSize: 10,
+  labelLineHeight: 13,
+} as const;

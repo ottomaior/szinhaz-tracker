@@ -123,7 +123,7 @@ export function FollowSubjectButton({
         disabled={busy}
         onPress={toggle}
         accessibilityLabel={label}
-        style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999 }}
+        size="sm"
       />
     );
   }

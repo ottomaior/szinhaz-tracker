@@ -1,11 +1,10 @@
 import { useMemo, useState } from "react";
-import { Modal, Pressable, StyleSheet, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Pressable, StyleSheet, View } from "react-native";
 import { colors } from "@/theme/colors";
-import { gutter, minTouchTarget, overlay, radius, space } from "@/theme/tokens";
-import { bodyFont } from "@/theme/typography";
-import { useAppFonts } from "@/hooks/useAppFonts";
-import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, CloseIcon } from "@/components/icons/Icons";
+import { icon, minTouchTarget, radius, space } from "@/theme/tokens";
+import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon } from "@/components/icons/Icons";
+import { Sheet } from "@/components/ui/Sheet";
+import { Chip } from "@/components/ui/Chip";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 import { dayKeyOffset, formatLongDate, todayInBudapest } from "@/utils/datetime";
@@ -54,9 +53,6 @@ export function DateField({
   label?: string;
 }) {
   const styles = useStyles();
-
-  const fontsLoaded = useAppFonts();
-  const insets = useSafeAreaInsets();
   const [open, setOpen] = useState(false);
 
   const today = todayInBudapest();
@@ -95,61 +91,41 @@ export function DateField({
 
   return (
     <>
-      <Pressable
+      <Chip
+        label={chipLabel}
         onPress={() => {
           const { year, month } = parseDayKey(value ?? today);
           setCursor({ year, month });
           setOpen(true);
         }}
-        accessibilityRole="button"
         accessibilityLabel={`${label}: ${chipLabel}`}
-        aria-expanded={open}
-        accessibilityState={{ expanded: open }}
+        leading={<CalendarIcon color={colors.gold} />}
         style={styles.chip}
-      >
-        <CalendarIcon size={13} color={colors.gold} />
-        <Text
-          numberOfLines={1}
-          style={{ fontFamily: bodyFont(fontsLoaded, "medium"), fontSize: 12.5, color: colors.text }}
-        >
-          {chipLabel}
-        </Text>
-      </Pressable>
+      />
 
-      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)} accessibilityViewIsModal>
-        {/* Same construction as SelectChip's sheet, and for the same reason:
-            on react-native-web a Modal's child inherits no definite height, so
-            `flex: 1` collapses the sheet into the corner with no backdrop. */}
-        <Pressable style={styles.backdrop} onPress={() => setOpen(false)} accessibilityLabel={strings.common.close}>
-          <Pressable style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, space.lg) }]} onPress={() => {}}>
-            <View style={styles.grabber} />
-
-            <View style={styles.sheetHeader}>
-              <Text variant="subheading">{label}</Text>
-              <Pressable onPress={() => setOpen(false)} hitSlop={10} accessibilityRole="button" accessibilityLabel={strings.common.close}>
-                <CloseIcon size={17} color={colors.textDim} />
-              </Pressable>
-            </View>
-
+      {/* A step more air under the header than the Sheet gives by default:
+          the quick picks are pills, and pills hard against a rule read as
+          part of it. */}
+      <Sheet visible={open} onClose={() => setOpen(false)} title={label} contentStyle={{ paddingTop: space.sm }}>
             <View style={styles.quickRow}>
-              <QuickPick label={strings.checkin.today} active={value === today} onPress={() => choose(today)} />
-              <QuickPick label={strings.checkin.yesterday} active={value === yesterday} onPress={() => choose(yesterday)} />
-              <QuickPick label={strings.checkin.noDate} active={value === undefined} onPress={() => choose(undefined)} />
+              <Chip label={strings.checkin.today} active={value === today} onPress={() => choose(today)} />
+              <Chip label={strings.checkin.yesterday} active={value === yesterday} onPress={() => choose(yesterday)} />
+              <Chip label={strings.checkin.noDate} active={value === undefined} onPress={() => choose(undefined)} />
             </View>
 
             <View style={styles.monthBar}>
-              <Pressable onPress={() => shiftMonth(-1)} hitSlop={10} accessibilityRole="button" accessibilityLabel={strings.checkin.previousMonth}>
-                <ChevronLeftIcon size={16} color={colors.textDim} />
+              <Pressable onPress={() => shiftMonth(-1)} hitSlop={space.sm} accessibilityRole="button" accessibilityLabel={strings.checkin.previousMonth}>
+                <ChevronLeftIcon color={colors.textDim} />
               </Pressable>
               <Text variant="label">{monthHeading(cursor.year, cursor.month)}</Text>
               {/* Hidden rather than disabled at the current month: there is
                   nothing forward of today to reach, and a control that is
                   present but inert invites the tap anyway. */}
               {atCurrentMonth ? (
-                <View style={{ width: 16 }} />
+                <View style={{ width: icon.inline }} />
               ) : (
-                <Pressable onPress={() => shiftMonth(1)} hitSlop={10} accessibilityRole="button" accessibilityLabel={strings.checkin.nextMonth}>
-                  <ChevronRightIcon size={16} color={colors.textDim} />
+                <Pressable onPress={() => shiftMonth(1)} hitSlop={space.sm} accessibilityRole="button" accessibilityLabel={strings.checkin.nextMonth}>
+                  <ChevronRightIcon color={colors.textDim} />
                 </Pressable>
               )}
             </View>
@@ -190,87 +166,15 @@ export function DateField({
                 );
               })}
             </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
+      </Sheet>
     </>
   );
 }
 
-function QuickPick({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  const styles = useStyles();
-
-  const fontsLoaded = useAppFonts();
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      aria-pressed={active}
-      accessibilityState={{ selected: active }}
-      style={[styles.quick, active ? styles.quickActive : styles.quickIdle]}
-    >
-      <Text
-        style={{
-          fontFamily: bodyFont(fontsLoaded, active ? "bold" : "medium"),
-          fontSize: 12.5,
-          color: active ? colors.onAccent : colors.textDim,
-        }}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
-const useStyles = makeStyles((colors, elevation) => StyleSheet.create({
-  chip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.sm,
-    paddingVertical: 9,
-    paddingHorizontal: 14,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    alignSelf: "flex-start",
-  },
-
-  backdrop: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: overlay.scrim,
-    justifyContent: "flex-end",
-  },
-  sheet: {
-    backgroundColor: colors.bgElevated,
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
-    paddingHorizontal: gutter,
-    paddingTop: space.md,
-    ...elevation.floating,
-  },
-  grabber: {
-    alignSelf: "center",
-    width: 36,
-    height: 4,
-    borderRadius: radius.pill,
-    backgroundColor: colors.hairline,
-    marginBottom: space.md,
-  },
-  sheetHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingBottom: space.sm,
-    marginBottom: space.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.hairlineSoft,
-  },
+const useStyles = makeStyles((colors) => StyleSheet.create({
+  chip: { alignSelf: "flex-start" },
 
   quickRow: { flexDirection: "row", gap: space.sm, marginBottom: space.lg },
-  quick: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: radius.pill },
-  quickActive: { backgroundColor: colors.gold },
-  quickIdle: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.hairline },
 
   monthBar: {
     flexDirection: "row",

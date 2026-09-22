@@ -1,11 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { View, StyleSheet, Pressable, TextInput } from "react-native";
+import { View, StyleSheet, Pressable } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
-import { inputFontSize } from "@/theme/type";
-import { radius, space } from "@/theme/tokens";
-import { bodyFont } from "@/theme/typography";
-import { useAppFonts } from "@/hooks/useAppFonts";
+import { avatar, space } from "@/theme/tokens";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   COMMENT_MAX_LENGTH,
@@ -20,7 +17,10 @@ import {
 import { HeartIcon } from "@/components/icons/Icons";
 import { Avatar } from "@/components/ui/Avatar";
 import { ReportSheet } from "@/components/ui/ReportSheet";
+import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
+import type { TextInput } from "react-native";
 import { formatTimeAgo, strings } from "@/i18n/hu";
 import { makeStyles } from "@/theme/styles";
 import { useToast } from "@/components/ui/Toast";
@@ -59,7 +59,6 @@ export function ReviewSocial({
 
   const router = useRouter();
   const toast = useToast();
-  const fontsLoaded = useAppFonts();
   const { session } = useAuth();
 
   const [likes, setLikes] = useState(0);
@@ -183,21 +182,18 @@ export function ReviewSocial({
   return (
     <View style={{ gap: space.lg }}>
       <View style={styles.likeRow}>
-        <Pressable
+        {/* A gold heart for "liked": the label stays in the row's own tone,
+            because the button is an outline and gold text on an outline pill
+            would read as the accent-coloured `text` variant. */}
+        <Button
+          variant="outline"
+          size="sm"
+          label={strings.social.like}
+          icon={<HeartIcon color={liked ? colors.gold : colors.textFaint} filled={liked} />}
           onPress={toggleLike}
           disabled={busy}
-          hitSlop={8}
-          accessibilityRole="button"
-          aria-pressed={liked}
-          accessibilityState={{ selected: liked }}
           accessibilityLabel={session ? strings.social.like : strings.social.signInToLike}
-          style={styles.likeButton}
-        >
-          <HeartIcon size={18} color={liked ? colors.gold : colors.textFaint} filled={liked} />
-          <Text variant="label" tone={liked ? "accent" : "dim"}>
-            {strings.social.like}
-          </Text>
-        </Pressable>
+        />
         {likes > 0 && (
           <Text variant="caption" tone="faint">{strings.social.likeCount(likes)}</Text>
         )}
@@ -213,9 +209,9 @@ export function ReviewSocial({
               accessibilityRole="button"
               accessibilityLabel={c.authorName}
             >
-              <Avatar uri={c.authorAvatarUrl} initials={c.authorInitials} size={30} />
+              <Avatar uri={c.authorAvatarUrl} initials={c.authorInitials} size={avatar.inline} />
             </Pressable>
-            <View style={{ flex: 1, gap: 2 }}>
+            <View style={{ flex: 1, gap: space["2xs"] }}>
               <View style={styles.commentMeta}>
                 <Text variant="label" numberOfLines={1} style={{ flexShrink: 1 }}>
                   {c.authorName}
@@ -231,7 +227,7 @@ export function ReviewSocial({
                     policy in 0032 is what actually decides; this only avoids
                     showing a control that would be refused. */}
                 {(c.userId === myId || reviewOwnerId === myId) && (
-                  <Pressable onPress={() => remove(c)} hitSlop={6} accessibilityRole="button">
+                  <Pressable onPress={() => remove(c)} hitSlop={space.sm} accessibilityRole="button">
                     <Text variant="caption" tone="dim">{strings.social.delete}</Text>
                   </Pressable>
                 )}
@@ -242,7 +238,7 @@ export function ReviewSocial({
                   <Pressable
                     onPress={() => setReporting(c)}
                     disabled={reported.has(c.id)}
-                    hitSlop={6}
+                    hitSlop={space.sm}
                     accessibilityRole="button"
                     accessibilityState={{ disabled: reported.has(c.id) }}
                   >
@@ -262,17 +258,16 @@ export function ReviewSocial({
 
         {session ? (
           <View style={{ gap: space.sm }}>
-            <TextInput
+            <TextField
               ref={composer}
               value={draft}
               onChangeText={setDraft}
               placeholder={strings.social.commentPlaceholder}
-              placeholderTextColor={colors.textFaint}
               accessibilityLabel={strings.social.commentPlaceholder}
               multiline
               // No `maxLength`, for the reason the bio field gives: silently
               // swallowing keystrokes reads as a broken keyboard.
-              style={[styles.input, { fontFamily: bodyFont(fontsLoaded) }]}
+              style={styles.input}
             />
             <View style={styles.sendRow}>
               {left <= 100 && (
@@ -280,20 +275,18 @@ export function ReviewSocial({
                   {strings.social.remaining(left)}
                 </Text>
               )}
-              <Pressable
+              <Button
+                variant="outline"
+                size="sm"
+                label={sending ? strings.social.sending : strings.social.send}
                 onPress={send}
                 disabled={!draft.trim() || sending}
-                accessibilityRole="button"
-                style={[styles.sendButton, { opacity: draft.trim() && !sending ? 1 : 0.4 }]}
-              >
-                <Text variant="label">
-                  {sending ? strings.social.sending : strings.social.send}
-                </Text>
-              </Pressable>
+                loading={sending}
+              />
             </View>
           </View>
         ) : (
-          <Pressable onPress={() => router.push("/sign-in")} accessibilityRole="button" hitSlop={6}>
+          <Pressable onPress={() => router.push("/sign-in")} accessibilityRole="button" hitSlop={space.sm}>
             <Text variant="bodySmall" tone="accent">{strings.social.signInToComment}</Text>
           </Pressable>
         )}
@@ -326,36 +319,9 @@ export function ReviewSocial({
 
 const useStyles = makeStyles((colors) => StyleSheet.create({
   likeRow: { flexDirection: "row", alignItems: "center", gap: space.md },
-  likeButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.sm,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    borderRadius: 999,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-  },
   comment: { flexDirection: "row", gap: space.md, alignItems: "flex-start" },
   commentMeta: { flexDirection: "row", alignItems: "center", gap: space.sm, flexWrap: "wrap" },
-  commentActions: { flexDirection: "row", alignItems: "center", gap: space.lg, marginTop: 2 },
-  input: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    borderRadius: radius.md,
-    padding: 12,
-    minHeight: 64,
-    fontSize: inputFontSize,
-    color: colors.text,
-    textAlignVertical: "top",
-  },
+  commentActions: { flexDirection: "row", alignItems: "center", gap: space.lg, marginTop: space["2xs"] },
+  input: {},
   sendRow: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: space.md },
-  sendButton: {
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    borderRadius: 999,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
 }));

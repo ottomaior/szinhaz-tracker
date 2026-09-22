@@ -1,16 +1,22 @@
 import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { useFocusEffect, usePathname, useRouter } from "expo-router";
-import { gutter, maxWidth, radius, space } from "@/theme/tokens";
+import { avatar, bar, gutter, hairlineWidth, icon, maxWidth, space } from "@/theme/tokens";
 import { useAuth } from "@/contexts/AuthContext";
 import { getCurrentUser } from "@/services/playsService";
 import type { User } from "@/data/types";
 import { BrandMark } from "@/components/icons/BrandMark";
-import { PlusIcon } from "@/components/icons/Icons";
+import { BellIcon, PlusIcon } from "@/components/icons/Icons";
+import { CountBadge } from "@/components/ui/Badges";
+import { IconButton } from "@/components/ui/Button";
+import { getUnreadCount } from "@/services/notificationService";
+import { pressStyle } from "@/components/ui/pressable";
+import { useColors } from "@/theme/styles";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
 import { PillTabs } from "@/components/ui/PillTabs";
+import { SearchField } from "@/components/ui/SearchField";
 import { strings } from "@/i18n/hu";
 import { makeStyles } from "@/theme/styles";
 
@@ -38,7 +44,10 @@ export function TopBar() {
   const router = useRouter();
   const pathname = usePathname();
   const { session } = useAuth();
+  const palette = useColors();
   const [viewer, setViewer] = useState<User>();
+  const [unread, setUnread] = useState(0);
+  const [query, setQuery] = useState("");
 
   // The reader's face, refreshed on focus for the reason the feed header gives:
   // the screen that changes it returns here.
@@ -46,12 +55,21 @@ export function TopBar() {
     useCallback(() => {
       if (!session) {
         setViewer(undefined);
+        setUnread(0);
         return;
       }
       let active = true;
       getCurrentUser()
         .then((u) => {
           if (active) setViewer(u);
+        })
+        .catch(() => undefined);
+      // The bell's count, for the same reason the phone's feed header
+      // refreshes it on focus: it clears when the reader comes back from
+      // the inbox having read everything.
+      getUnreadCount()
+        .then((n) => {
+          if (active) setUnread(n);
         })
         .catch(() => undefined);
       return () => {
@@ -68,7 +86,12 @@ export function TopBar() {
   return (
     <View style={styles.bar}>
       <View style={styles.inner}>
-        <Pressable onPress={() => router.push("/(tabs)/discover")} style={styles.brand} accessibilityRole="link" accessibilityLabel={strings.appName}>
+        <Pressable
+          onPress={() => router.push("/(tabs)/discover")}
+          style={pressStyle("quiet", palette, styles.brand)}
+          accessibilityRole="link"
+          accessibilityLabel={strings.appName}
+        >
           <BrandMark size={22} />
           <Text variant="heading">{strings.appName}</Text>
         </Pressable>
@@ -85,16 +108,53 @@ export function TopBar() {
           />
         </View>
 
+        {/* The app's search, where a desktop reader looks for it and reachable
+            from every screen rather than from Felfedezés alone. Submitting
+            hands the term to that screen, which is the one built to answer
+            it; the phone has no bar, and keeps its field in the screen. */}
+        <View style={styles.search}>
+          <SearchField
+            value={query}
+            onChangeText={setQuery}
+            // The short form: the bar's field is a fraction of the width
+            // the screen's own field has, and "Darabok, színházak, színészek"
+            // arrives there already cut in half.
+            placeholder={strings.discover.searchOpen}
+            accessibilityLabel={strings.discover.searchLabel}
+            onSubmit={() => {
+              const term = query.trim();
+              if (term) router.push({ pathname: "/(tabs)/discover", params: { q: term } });
+            }}
+            onClear={() => router.push({ pathname: "/(tabs)/discover", params: { q: "" } })}
+          />
+        </View>
+
         <View style={styles.actions}>
           <Button
             label={strings.checkin.headerTitle}
-            icon={<PlusIcon size={15} />}
+            icon={<PlusIcon size={icon.inline} />}
+            size="sm"
             onPress={() => router.push("/checkin")}
-            style={styles.logButton}
           />
+          {/* The inbox lives here on a wide screen. It used to be on the
+              feed's own header, which meant the notifications were somewhere
+              different depending on which tab the reader was on. */}
+          {!!session && (
+            <View style={styles.bell}>
+              <IconButton onPress={() => router.push("/inbox")} accessibilityLabel={strings.inbox.openNotifications}>
+                <BellIcon />
+              </IconButton>
+              {unread > 0 && <CountBadge count={unread} style={styles.badge} />}
+            </View>
+          )}
           {session ? (
-            <Pressable onPress={() => router.push("/(tabs)/profile")} accessibilityRole="button" accessibilityLabel={strings.tabs.profile}>
-              <Avatar uri={viewer?.avatarUrl} initials={viewer?.initials ?? ""} size={34} />
+            <Pressable
+              onPress={() => router.push("/(tabs)/profile")}
+              style={pressStyle("quiet", palette, undefined)}
+              accessibilityRole="button"
+              accessibilityLabel={strings.tabs.profile}
+            >
+              <Avatar uri={viewer?.avatarUrl} initials={viewer?.initials ?? ""} size={avatar.byline} />
             </Pressable>
           ) : (
             <Button label={strings.auth.signInButton} variant="text" onPress={() => router.push("/sign-in")} />
@@ -108,21 +168,29 @@ export function TopBar() {
 const useStyles = makeStyles((colors) => StyleSheet.create({
   bar: {
     backgroundColor: colors.bgElevated,
-    borderBottomWidth: 1,
+    borderBottomWidth: hairlineWidth,
     borderBottomColor: colors.hairlineSoft,
     alignItems: "center",
   },
   inner: {
     width: "100%",
     maxWidth: maxWidth.content,
-    height: 60,
+    height: bar,
     paddingHorizontal: gutter,
     flexDirection: "row",
     alignItems: "center",
-    gap: space["3xl"],
+    gap: space.lg,
   },
-  brand: { flexDirection: "row", alignItems: "center", gap: space.sm },
-  nav: { flex: 1, flexDirection: "row", alignItems: "center" },
-  actions: { flexDirection: "row", alignItems: "center", gap: space.lg },
-  logButton: { paddingVertical: 8, paddingHorizontal: space.lg, borderRadius: radius.pill },
+  brand: { flexDirection: "row", alignItems: "center", gap: space.sm, flexShrink: 0 },
+  // The bar's one flexible column, and the only one that may shrink: the
+  // brand, the sections and the actions are each as wide as their words, and
+  // the field takes what is left between them.
+  search: { flex: 1, minWidth: space["5xl"] * 2, maxWidth: maxWidth.reading / 2 },
+  nav: { flexDirection: "row", alignItems: "center", flexShrink: 0 },
+  actions: { flexDirection: "row", alignItems: "center", gap: space.md, flexShrink: 0 },
+  // `overflow: visible` matters: the badge is positioned outside the bell's
+  // own box, and clipping it would leave a bell that never looks like it has
+  // anything in it.
+  bell: { position: "relative", overflow: "visible" },
+  badge: { position: "absolute", top: 0, right: 0 },
 }));

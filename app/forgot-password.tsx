@@ -1,15 +1,14 @@
 import { useState } from "react";
-import { View, StyleSheet, TextInput } from "react-native";
+import { View, ScrollView, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
-import { inputFontSize } from "@/theme/type";
-import { gutter, radius, space } from "@/theme/tokens";
-import { bodyFont } from "@/theme/typography";
-import { useAppFonts } from "@/hooks/useAppFonts";
+import { gutter, maxWidth, space } from "@/theme/tokens";
 import { authErrorMessage, requestPasswordReset } from "@/services/authService";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { ContentColumn } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
+import { TextField } from "@/components/ui/TextField";
+import { Notice } from "@/components/ui/Notice";
 import { Button } from "@/components/ui/Button";
 import { strings } from "@/i18n/hu";
 import { makeStyles } from "@/theme/styles";
@@ -28,7 +27,6 @@ export default function ForgotPasswordScreen() {
   const styles = useStyles();
 
   const router = useRouter();
-  const fontsLoaded = useAppFonts();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string>();
@@ -56,7 +54,8 @@ export default function ForgotPasswordScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ModalHeader title={strings.auth.forgotTitle} />
 
-      <ContentColumn style={{ padding: gutter, gap: space.lg }}>
+      <ScrollView keyboardShouldPersistTaps="handled">
+        <ContentColumn width="reading" style={styles.form}>
         {sent ? (
           <>
             <Text variant="heading">{strings.auth.forgotSentTitle}</Text>
@@ -78,25 +77,19 @@ export default function ForgotPasswordScreen() {
               {strings.auth.forgotBody}
             </Text>
 
-            <TextInput
+            <TextField
               value={email}
               onChangeText={setEmail}
               placeholder={strings.auth.emailLabel}
-              placeholderTextColor={colors.textFaint}
               accessibilityLabel={strings.auth.emailLabel}
               autoCapitalize="none"
               autoComplete="email"
               keyboardType="email-address"
               onSubmitEditing={handleSubmit}
               returnKeyType="go"
-              style={[styles.input, { fontFamily: bodyFont(fontsLoaded) }]}
             />
 
-            {!!error && (
-              <Text accessibilityRole="alert" variant="bodySmall" tone="accent">
-                {error}
-              </Text>
-            )}
+            {!!error && <Notice>{error}</Notice>}
 
             <Button
               label={strings.auth.forgotButton}
@@ -106,19 +99,16 @@ export default function ForgotPasswordScreen() {
             />
           </>
         )}
-      </ContentColumn>
+        </ContentColumn>
+      </ScrollView>
     </View>
   );
 }
 
-const useStyles = makeStyles((colors) => StyleSheet.create({
-  input: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    borderRadius: radius.md,
-    padding: space.lg,
-    fontSize: inputFontSize,
-    color: colors.text,
-  },
+const useStyles = makeStyles(() => StyleSheet.create({
+  // Narrower than a reading column: a row of form fields 680pt wide reads
+  // as a table, and every field here holds one short answer.
+  form: { padding: gutter, gap: space.lg, maxWidth: maxWidth.reading / 2, alignSelf: "center", width: "100%" },
+  link: { alignSelf: "center" },
+  switch: { textAlign: "center" },
 }));

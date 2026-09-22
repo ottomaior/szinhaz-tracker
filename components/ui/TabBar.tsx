@@ -4,7 +4,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import type { BottomTabBarProps } from "expo-router/js-tabs";
 import { colors } from "@/theme/colors";
-import { space } from "@/theme/tokens";
+import { dock, hairlineWidth, radius, space } from "@/theme/tokens";
+import { dockLabel } from "@/theme/type";
 import { NATIVE_DRIVER, useReducedMotion } from "@/hooks/useReducedMotion";
 import { HomeIcon, CompassIcon, TicketIcon, UserIcon, PlusIcon } from "@/components/icons/Icons";
 import { Text } from "@/components/ui/Text";
@@ -26,8 +27,8 @@ const TAB_LABELS: Record<string, string> = {
 };
 
 /** The dock's height above the bottom edge, before the safe-area inset. */
-const DOCK_HEIGHT = 66;
-const DOCK_MARGIN = 14;
+const DOCK_HEIGHT = dock.height;
+const DOCK_MARGIN = dock.margin;
 
 /**
  * How much of the bottom of a screen the dock covers.
@@ -131,7 +132,7 @@ function DockItem({
           adjustsFontSizeToFit
           minimumFontScale={0.75}
           maxFontSizeMultiplier={1.15}
-          style={{ color, fontSize: 10, lineHeight: 13 }}
+          style={[dockLabel, { color }]}
         >
           {label}
         </Text>
@@ -193,26 +194,26 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     width: "100%",
     maxWidth: 440,
     height: DOCK_HEIGHT,
-    borderRadius: 26,
+    borderRadius: dock.radius,
     flexDirection: "row",
     alignItems: "flex-end",
     justifyContent: "space-around",
-    paddingHorizontal: 6,
-    paddingBottom: 8,
+    paddingHorizontal: dock.paddingX,
+    paddingBottom: dock.paddingBottom,
     backgroundColor: colors.dockGlass,
-    borderWidth: 1,
+    borderWidth: hairlineWidth,
     borderColor: colors.hairline,
     boxShadow: `0 1px 0 ${colors.edgeHighlight} inset, 0 20px 40px -20px ${colors.shadow}, 0 0 40px -18px ${colors.goldGlow}`,
   },
-  tab: { width: 60, alignItems: "center" },
-  tabInner: { alignItems: "center", gap: 3 },
-  dot: { width: 4, height: 4, borderRadius: 2, backgroundColor: "transparent" },
+  tab: { width: dock.itemWidth, alignItems: "center" },
+  tabInner: { alignItems: "center", gap: dock.itemGap },
+  dot: { width: space.xs, height: space.xs, borderRadius: radius.pill, backgroundColor: "transparent" },
   dotOn: { backgroundColor: colors.gold },
-  centerSlot: { alignItems: "center", justifyContent: "flex-end", marginBottom: 6 },
+  centerSlot: { alignItems: "center", justifyContent: "flex-end", marginBottom: dock.plusLift },
   centerBtn: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    width: dock.plusSize,
+    height: dock.plusSize,
+    borderRadius: radius.pill,
     backgroundColor: colors.gold,
     alignItems: "center",
     justifyContent: "center",

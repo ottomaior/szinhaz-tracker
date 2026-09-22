@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { View, ScrollView, StyleSheet, Pressable } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
-import { gutter, overlay, radius, space } from "@/theme/tokens";
+import { control, gutter, hairlineWidth, overlay, radius, space } from "@/theme/tokens";
 import {
   getCities,
   getCurrentUser,
@@ -146,7 +146,7 @@ export default function OnboardingScreen() {
         }
       />
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: FOOTER_CLEARANCE }}>
         <ContentColumn style={{ padding: gutter, gap: space.lg }}>
           <Text variant="body" tone="dim">
             {strings.onboarding.lede}
@@ -209,7 +209,7 @@ export default function OnboardingScreen() {
                     role="checkbox"
                     aria-checked={isSelected}
                     aria-label={play.title}
-                    style={{ gap: 6 }}
+                    style={{ gap: space.sm }}
                   >
                     <View>
                       <PosterPlaceholder
@@ -267,6 +267,9 @@ export default function OnboardingScreen() {
   );
 }
 
+/** What the pinned footer covers: its own height plus a step of air. */
+const FOOTER_CLEARANCE = space["5xl"] + space["4xl"];
+
 const useStyles = makeStyles((colors) => StyleSheet.create({
   cityRow: { flexDirection: "row", gap: space.sm, flexWrap: "wrap" },
   tickOverlay: {
@@ -277,9 +280,9 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     justifyContent: "center",
   },
   tick: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: control.sm,
+    height: control.sm,
+    borderRadius: radius.pill,
     backgroundColor: colors.gold,
     alignItems: "center",
     justifyContent: "center",
@@ -293,7 +296,7 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     paddingTop: space.md,
     paddingBottom: space.xl,
     backgroundColor: colors.bgElevated,
-    borderTopWidth: 1,
+    borderTopWidth: hairlineWidth,
     borderTopColor: colors.hairline,
   },
 }));

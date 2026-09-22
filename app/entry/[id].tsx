@@ -2,18 +2,19 @@ import { useCallback, useState } from "react";
 import { View, ScrollView, StyleSheet, Pressable } from "react-native";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
-import { gutter, radius, space } from "@/theme/tokens";
+import { gutter, hairlineWidth, mask, space } from "@/theme/tokens";
 import { deleteReview, getDiaryEntry, getUserById } from "@/services/playsService";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/Button";
 import type { Performance, Play, Review, User, Venue } from "@/data/types";
-import { Avatar } from "@/components/ui/Avatar";
-import { ChevronRightIcon } from "@/components/icons/Icons";
+import { PersonRow } from "@/components/ui/Rows";
+import { PlayRow } from "@/components/ui/PlayRow";
+import { ConfirmCard } from "@/components/ui/Cards";
+import { Notice } from "@/components/ui/Notice";
 import { MaskRatingRow } from "@/components/icons/MaskIcon";
 import { Chip } from "@/components/ui/Chip";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ModalHeader } from "@/components/ui/ModalHeader";
-import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { ContentColumn } from "@/components/ui/Screen";
 import { ReportSheet } from "@/components/ui/ReportSheet";
 import { ReviewSocial } from "@/components/ui/ReviewSocial";
@@ -26,7 +27,7 @@ import { personSlug } from "@/utils/people";
 import { makeStyles } from "@/theme/styles";
 import { useToast } from "@/components/ui/Toast";
 import { haptic } from "@/utils/haptics";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { RowSkeleton, Skeleton } from "@/components/ui/Skeleton";
 
 /**
  * One evening, read back.
@@ -139,17 +140,10 @@ export default function DiaryEntryScreen() {
       <View style={{ flex: 1, backgroundColor: colors.bg }}>
         <ModalHeader title={strings.entry.headerTitle} fallbackRoute="/(tabs)/profile" />
         <ContentColumn style={{ padding: gutter, gap: space.lg }}>
-          <View style={{ flexDirection: "row", gap: space.md }}>
-            <Skeleton width={96} height={144} radius={radius.md} />
-            <View style={{ flex: 1, gap: space.sm, paddingTop: space.sm }}>
-              <Skeleton width="90%" height={22} />
-              <Skeleton width="60%" height={14} />
-              <Skeleton width="50%" height={14} />
-            </View>
-          </View>
-          <Skeleton width="100%" height={14} />
-          <Skeleton width="85%" height={14} />
-          <Skeleton width="70%" height={14} />
+          <RowSkeleton />
+          <Skeleton width="100%" height={space.lg} />
+          <Skeleton width="85%" height={space.lg} />
+          <Skeleton width="70%" height={space.lg} />
         </ContentColumn>
       </View>
     );
@@ -187,45 +181,28 @@ export default function DiaryEntryScreen() {
           {/* Whose evening, and the way to them. Your own opens your profile
               tab rather than a second copy of it. */}
           {!!author && (
-            <Pressable
+            <PersonRow
+              name={author.name}
+              meta={`@${author.handle}`}
+              avatarUri={author.avatarUrl}
+              initials={author.initials}
               onPress={() => (isMine ? router.push("/(tabs)/profile") : router.push(`/user/${author.id}`))}
-              accessibilityRole="button"
-              accessibilityLabel={author.name}
-              style={styles.byline}
-            >
-              <Avatar uri={author.avatarUrl} initials={author.initials} size={36} />
-              <View style={{ flexShrink: 1 }}>
-                <Text variant="bodySmall" numberOfLines={1}>{author.name}</Text>
-                <Text variant="caption" tone="faint" numberOfLines={1}>@{author.handle}</Text>
-              </View>
-            </Pressable>
+            />
           )}
 
           {/* What was seen, and the way back to it. */}
-          <Pressable
+          <PlayRow
+            play={play}
             onPress={() => router.push(`/play/${play.id}`)}
-            accessibilityRole="button"
-            accessibilityLabel={play.title}
-            style={styles.playRow}
-          >
-            <PosterPlaceholder
-              poster={play.poster}
-              title={play.title}
-              seed={play.id}
-              width={56}
-              height={84}
-              radius={radius.sm}
-              preferThumb
-            />
-            <View style={{ flex: 1, gap: 3 }}>
-              <Text variant="subheading">{play.title}</Text>
-              <Text variant="caption" tone="faint" numberOfLines={1}>
-                {venue?.name ?? play.author}
-              </Text>
-              <Text variant="caption" tone="accent">{strings.entry.openPlay}</Text>
-            </View>
-            <ChevronRightIcon size={15} color={colors.textFaint} />
-          </Pressable>
+            meta={
+              <>
+                <Text variant="caption" tone="faint" numberOfLines={1}>
+                  {venue?.name ?? play.author}
+                </Text>
+                <Text variant="caption" tone="accent">{strings.entry.openPlay}</Text>
+              </>
+            }
+          />
 
           {/* The night. The curtain time comes from the performance the entry
               points at, when it points at one — the date alone cannot say
@@ -245,7 +222,7 @@ export default function DiaryEntryScreen() {
               )}
             </View>
             {review.ratingOverall !== undefined && (
-              <MaskRatingRow rating={review.ratingOverall} size={20} gap={4} />
+              <MaskRatingRow rating={review.ratingOverall} size={mask.row} gap={space.xs} />
             )}
           </View>
 
@@ -259,15 +236,15 @@ export default function DiaryEntryScreen() {
               has loaded; the byline above is the way to their profile and the
               follow button on it. */}
           {!review.canSeeOpinion && (
-            <Text variant="bodySmall" tone="faint">
+            <Notice tone="info">
               {author ? strings.feed.followToSee(author.name) : strings.feed.followToSeeGeneric}
-            </Text>
+            </Notice>
           )}
 
           {cast.length > 0 && (
             <View style={{ gap: space.sm }}>
               <Text variant="label" tone="dim">{strings.entry.castHeading}</Text>
-              <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
+              <View style={styles.chipRow}>
                 {cast.map((member) => {
                   const slug = personSlug(member.name);
                   return (
@@ -297,13 +274,13 @@ export default function DiaryEntryScreen() {
           {(!!review.seat || review.priceHuf !== undefined) && (
             <View style={styles.factsRow}>
               {!!review.seat && (
-                <View style={{ flex: 1, gap: 2 }}>
+                <View style={{ flex: 1, gap: space["2xs"] }}>
                   <Text variant="label" tone="dim">{strings.entry.seatHeading}</Text>
                   <Text variant="body">{review.seat}</Text>
                 </View>
               )}
               {review.priceHuf !== undefined && (
-                <View style={{ flex: 1, gap: 2 }}>
+                <View style={{ flex: 1, gap: space["2xs"] }}>
                   <Text variant="label" tone="dim">{strings.entry.priceHeading}</Text>
                   <Text variant="body">{strings.entry.priceValue(review.priceHuf)}</Text>
                 </View>
@@ -319,7 +296,7 @@ export default function DiaryEntryScreen() {
           )}
 
           {review.tags.length > 0 && (
-            <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
+            <View style={styles.chipRow}>
               {review.tags.map((tag) => (
                 <Chip key={tag} label={tag} active />
               ))}
@@ -332,24 +309,18 @@ export default function DiaryEntryScreen() {
               thing to undo, had none. */}
           {isMine && (
             <View style={styles.ownerActions}>
-              <Pressable
-                onPress={() =>
-                  router.push({ pathname: "/checkin", params: { reviewId: review.id } })
-                }
-                accessibilityRole="button"
-                style={styles.ownerButton}
-              >
-                <Text variant="label">{strings.entry.edit}</Text>
-              </Pressable>
-              <Pressable
+              <Button
+                variant="outline"
+                size="sm"
+                label={strings.entry.edit}
+                onPress={() => router.push({ pathname: "/checkin", params: { reviewId: review.id } })}
+              />
+              <Button
+                variant="text"
+                size="sm"
+                label={strings.entry.delete}
                 onPress={() => setConfirmingDelete((s) => !s)}
-                accessibilityRole="button"
-                aria-expanded={confirmingDelete}
-                accessibilityState={{ expanded: confirmingDelete }}
-                style={styles.ownerButton}
-              >
-                <Text variant="label" tone="dim">{strings.entry.delete}</Text>
-              </Pressable>
+              />
             </View>
           )}
 
@@ -358,29 +329,16 @@ export default function DiaryEntryScreen() {
               cast, a seat, a price, a photograph and a conversation, and
               deleting it takes all of them. */}
           {isMine && confirmingDelete && (
-            <View style={styles.confirmCard}>
-              <Text variant="subheading">{strings.entry.deleteConfirmTitle}</Text>
-              <Text variant="bodySmall" tone="dim">{strings.entry.deleteConfirmBody}</Text>
-              {!!deleteError && (
-                <Text accessibilityRole="alert" variant="bodySmall" tone="accent">
-                  {deleteError}
-                </Text>
-              )}
-              <View style={{ flexDirection: "row", gap: space.md }}>
-                <Button
-                  label={strings.common.cancel}
-                  variant="outline"
-                  style={{ flex: 1 }}
-                  onPress={() => setConfirmingDelete(false)}
-                />
-                <Button
-                  label={deleting ? strings.entry.deleting : strings.entry.delete}
-                  style={{ flex: 1 }}
-                  disabled={deleting}
-                  onPress={handleDelete}
-                />
-              </View>
-            </View>
+            <ConfirmCard
+              title={strings.entry.deleteConfirmTitle}
+              body={strings.entry.deleteConfirmBody}
+              confirmLabel={deleting ? strings.entry.deleting : strings.entry.delete}
+              cancelLabel={strings.common.cancel}
+              onConfirm={handleDelete}
+              onCancel={() => setConfirmingDelete(false)}
+              busy={deleting}
+              notice={deleteError ? <Notice>{deleteError}</Notice> : undefined}
+            />
           )}
 
           {/* The social half. It lives here rather than on the feed card
@@ -411,17 +369,13 @@ export default function DiaryEntryScreen() {
               be somebody. */}
           {!!session && !isMine && (
             <View style={styles.reportRow}>
-              <Pressable
+              <Button
+                variant="text"
+                size="sm"
+                label={reported ? strings.moderation.reported : strings.moderation.report}
                 onPress={() => setReporting(true)}
                 disabled={reported}
-                hitSlop={8}
-                accessibilityRole="button"
-                accessibilityState={{ disabled: reported }}
-              >
-                <Text variant="caption" tone={reported ? "faint" : "dim"}>
-                  {reported ? strings.moderation.reported : strings.moderation.report}
-                </Text>
-              </Pressable>
+              />
             </View>
           )}
         </ContentColumn>
@@ -478,48 +432,15 @@ function formatDate(dayKey: string) {
 }
 
 const useStyles = makeStyles((colors) => StyleSheet.create({
-  playRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.md,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: space.md,
-  },
   metaRow: { flexDirection: "row", alignItems: "center", gap: space.md, flexWrap: "wrap" },
-  factsRow: {
-    flexDirection: "row",
-    gap: space.lg,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: space.md,
-  },
-  byline: { flexDirection: "row", alignItems: "center", gap: space.md },
-  ownerActions: { flexDirection: "row", gap: space.sm, flexWrap: "wrap" },
-  ownerButton: {
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    borderRadius: 999,
-    paddingVertical: 9,
-    paddingHorizontal: 18,
-  },
-  confirmCard: {
-    gap: space.md,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    borderRadius: radius.lg,
-    padding: space.md,
-  },
-  reportRow: {
-    flexDirection: "row",
-    paddingTop: space.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.hairlineSoft,
-  },
+  chipRow: { flexDirection: "row", gap: space.sm, flexWrap: "wrap" },
+  factsRow: { flexDirection: "row", gap: space.lg },
+  ownerActions: { flexDirection: "row", gap: space.sm, alignSelf: "flex-start" },
   socialBlock: {
-    borderTopWidth: 1,
+    borderTopWidth: hairlineWidth,
     borderTopColor: colors.hairlineSoft,
-    paddingTop: space.lg,
+    paddingTop: space.xl,
   },
+  reportRow: { alignItems: "center" },
 }));
+

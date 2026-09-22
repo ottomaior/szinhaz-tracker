@@ -3,7 +3,8 @@ import { View, ScrollView, StyleSheet, Pressable, RefreshControl } from "react-n
 import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
-import { gutter, overlay, radius, space } from "@/theme/tokens";
+import { avatar, gutter, hairlineWidth, overlay, radius, space, thumb } from "@/theme/tokens";
+import { useAtLeast } from "@/hooks/useBreakpoint";
 import {
   getCurrentUser,
   getFeed,
@@ -17,6 +18,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { BellIcon, CommentIcon, HeartIcon } from "@/components/icons/Icons";
 import { MaskRatingRow } from "@/components/icons/MaskIcon";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
+import { PlayRow } from "@/components/ui/PlayRow";
+import { CountBadge, OverlayPill } from "@/components/ui/Badges";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { pressStyle } from "@/components/ui/pressable";
 import { Avatar } from "@/components/ui/Avatar";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Screen } from "@/components/ui/Screen";
@@ -28,7 +33,7 @@ import { SplitText } from "@/components/motion/SplitText";
 import { Text } from "@/components/ui/Text";
 import { formatTimeAgo, strings } from "@/i18n/hu";
 import { budapestDayKey, formatLongDate, formatShowtime } from "@/utils/datetime";
-import { makeStyles } from "@/theme/styles";
+import { makeStyles, useColors } from "@/theme/styles";
 
 /**
  * Whether this launch has already sent a signed-out visitor to Discover.
@@ -63,6 +68,9 @@ export default function FeedScreen() {
   const [scope, setScope] = useState<FeedScope>("everyone");
   const [unread, setUnread] = useState(0);
   const [viewer, setViewer] = useState<User>();
+  // From the `expanded` breakpoint the top bar carries the reader's face, and
+  // a second one on the page header read as two different people.
+  const wide = useAtLeast("expanded");
 
   const load = useCallback(async () => {
     setFailed(false);
@@ -180,22 +188,18 @@ export default function FeedScreen() {
                 can only ever be empty is a control that teaches you to ignore
                 it. The badge is a count, not a dot, because "3 dates published"
                 and "1" are different decisions about whether to look now. */}
-            {!!session && (
+            {/* On a wide screen the top bar carries the bell; two inboxes on
+                one page is one too many. */}
+            {!!session && !wide && (
               <Pressable
                 onPress={() => router.push("/inbox")}
-                hitSlop={8}
+                hitSlop={space.sm}
                 accessibilityRole="button"
                 accessibilityLabel={strings.inbox.openNotifications}
                 style={styles.bell}
               >
                 <BellIcon />
-                {unread > 0 && (
-                  <View style={styles.badge}>
-                    <Text variant="caption" style={styles.badgeText}>
-                      {strings.inbox.unreadBadge(unread)}
-                    </Text>
-                  </View>
-                )}
+                {unread > 0 && <CountBadge count={unread} style={styles.badge} />}
               </Pressable>
             )}
 
@@ -203,14 +207,14 @@ export default function FeedScreen() {
                 diary. Signed out there is nobody to show and the Profil tab
                 is the honest route, so it is simply absent rather than a
                 grey silhouette that opens a sign-in prompt. */}
-            {!!session && (
+            {!!session && !wide && (
               <Pressable
                 onPress={() => router.push("/(tabs)/profile")}
-                hitSlop={8}
+                hitSlop={space.sm}
                 accessibilityRole="button"
                 accessibilityLabel={strings.tabs.profile}
               >
-                <Avatar uri={viewer?.avatarUrl} initials={viewer?.initials ?? ""} size={36} />
+                <Avatar uri={viewer?.avatarUrl} initials={viewer?.initials ?? ""} size={avatar.byline} />
               </Pressable>
             )}
           </View>
@@ -232,19 +236,17 @@ export default function FeedScreen() {
               value={scope}
               onChange={setScope}
             />
-          ) : (
-            <View style={{ flex: 1 }} />
-          )}
-          <Pressable onPress={() => router.push("/people")} hitSlop={8} accessibilityRole="button" style={styles.tab}>
-            <Text variant="label" tone="accent">{strings.feed.findPeople}</Text>
-          </Pressable>
+          ) : null}
+          <Button variant="text" size="sm" label={strings.feed.findPeople} onPress={() => router.push("/people")} style={styles.findPeople} />
         </View>
 
         <ScrollView
           contentContainerStyle={[styles.body, { paddingBottom: dockInset }]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.gold} />}
         >
-          <AnimatedList stagger={70} axis="y" style={styles.list}>
+          {loading && page.items.length === 0 && <FeedSkeleton />}
+
+          <AnimatedList stagger={70} initialDelay={120} axis="y" style={styles.list}>
           {page.items.map((item) => (
             <FeedCardRouter
               key={feedItemKey(item)}
@@ -390,6 +392,7 @@ function BackfillCard({
   onOpenPlay: (id: string) => void;
 }) {
   const styles = useStyles();
+  const palette = useColors();
 
   const shown = item.reviews.slice(0, BACKFILL_TILES);
   const rest = item.reviews.length - shown.length;
@@ -407,9 +410,9 @@ function BackfillCard({
               onPress={() => onOpenPlay(play.id)}
               accessibilityRole="button"
               accessibilityLabel={play.title}
-              style={styles.backfillTile}
+              style={pressStyle("row", palette, styles.backfillTile)}
             >
-              <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} width={72} height={104} radius={radius.sm} preferThumb />
+              <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} width={thumb.row.width} height={thumb.row.height} radius={radius.sm} preferThumb />
               <Text variant="caption" numberOfLines={2}>{play.title}</Text>
             </Pressable>
           );
@@ -437,16 +440,17 @@ const BACKFILL_TILES = 8;
  */
 function CardByline({ user, action, meta }: { user: FeedAuthor; action: string; meta: string }) {
   const styles = useStyles();
+  const palette = useColors();
 
   const router = useRouter();
   return (
     <Pressable
-      style={styles.byline}
+      style={pressStyle("row", palette, styles.byline)}
       onPress={() => router.push(`/user/${user.id}`)}
       accessibilityRole="button"
       accessibilityLabel={user.name}
     >
-      <Avatar uri={user.avatarUrl} initials={user.initials} size={36} />
+      <Avatar uri={user.avatarUrl} initials={user.initials} size={avatar.byline} />
       <View style={{ flexShrink: 1 }}>
         <Text variant="bodySmall">
           <Text variant="bodySmall" style={styles.name}>
@@ -482,6 +486,7 @@ function CheckinCard({
   onOpenEntry: (reviewId: string, options?: { compose?: boolean }) => void;
 }) {
   const styles = useStyles();
+  const palette = useColors();
 
   const router = useRouter();
   const { session } = useAuth();
@@ -546,18 +551,12 @@ function CheckinCard({
       <PressCard onPress={() => onOpenPlay(play.id)} accessibilityRole="button" accessibilityLabel={play.title} radius={0} tilt={5}>
         {/* `scrim` matters here: these are production photos, and bright ones
             left the white caption below completely unreadable. */}
-        <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} height={220} radius={0} scrim priority="high" />
+        <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} height={POSTER_HEIGHT} radius={0} scrim priority="high" />
         {/* Everything on the image takes its colour from `overlay`, not from
             the palette. The scrim is dark in every theme, so a theme with
             near-black text would print this caption in ink over a lit
             production photograph. */}
-        {!!venue?.name && (
-          <View style={styles.posterEyebrow}>
-            <Text variant="eyebrow" numberOfLines={1} style={{ color: overlay.onImageAccent }}>
-              {venue.name}
-            </Text>
-          </View>
-        )}
+        {!!venue?.name && <OverlayPill style={styles.posterEyebrow}>{venue.name}</OverlayPill>}
         <View style={styles.posterCaption}>
           <Text variant="title" numberOfLines={2} style={{ color: overlay.onImageHeading }}>
             {play.title}
@@ -607,24 +606,24 @@ function CheckinCard({
           <Pressable
             onPress={toggleLike}
             disabled={likeBusy}
-            hitSlop={10}
+            hitSlop={space.sm}
             accessibilityRole="button"
             aria-pressed={liked}
             accessibilityState={{ selected: liked }}
             accessibilityLabel={session ? strings.social.like : strings.social.signInToLike}
-            style={styles.counter}
+            style={pressStyle("quiet", palette, styles.counter)}
           >
-            <HeartIcon size={15} color={liked ? colors.gold : colors.textFaint} filled={liked} />
+            <HeartIcon color={liked ? colors.gold : colors.textFaint} filled={liked} />
             <Text variant="caption" tone={liked ? "accent" : "faint"}>{likes}</Text>
           </Pressable>
           <Pressable
             onPress={() => onOpenEntry(review.id, { compose: true })}
-            hitSlop={10}
+            hitSlop={space.sm}
             accessibilityRole="button"
             accessibilityLabel={strings.social.commentsHeading}
-            style={styles.counter}
+            style={pressStyle("quiet", palette, styles.counter)}
           >
-            <CommentIcon size={15} color={colors.textFaint} />
+            <CommentIcon color={colors.textFaint} />
             <Text variant="caption" tone="faint">{review.commentCount}</Text>
           </Pressable>
         </View>
@@ -660,8 +659,6 @@ function WatchlistCard({
   user: FeedAuthor;
   onOpenPlay: (id: string) => void;
 }) {
-  const styles = useStyles();
-
   const when = play.nextPerformanceAt
     ? formatShowtime(play.nextPerformanceAt)
     : play.premiereDate
@@ -674,12 +671,10 @@ function WatchlistCard({
   return (
     <View style={{ gap: space.md }}>
       <CardByline user={user} action={strings.feed.wantsToSee} meta={`${formatTimeAgo(entry.addedAt)} · ${strings.feed.addedToWatchlist}`} />
-      <Pressable onPress={() => onOpenPlay(play.id)} style={styles.watchlistRow} accessibilityRole="button" accessibilityLabel={play.title}>
-        <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} width={56} height={76} radius={radius.sm} preferThumb />
-        <View style={{ flex: 1, gap: 3 }}>
-          <Text variant="subheading" numberOfLines={2}>
-            {play.title}
-          </Text>
+      <PlayRow
+        play={play}
+        onPress={() => onOpenPlay(play.id)}
+        meta={
           <Text variant="caption" tone="faint" numberOfLines={1}>
             {venue?.name}
             {!!when && (
@@ -689,12 +684,41 @@ function WatchlistCard({
               </>
             )}
           </Text>
-        </View>
-      </Pressable>
-      <View style={styles.divider} />
+        }
+      />
     </View>
   );
 }
+
+/**
+ * The shape of the first three cards, before the page arrives.
+ *
+ * The feed used to open on a blank column and then jump when the cards
+ * landed; now it opens on the outline of what is coming — a face, two
+ * lines, a picture — and fills in place.
+ */
+function FeedSkeleton() {
+  const styles = useStyles();
+  return (
+    <View style={styles.list}>
+      {Array.from({ length: 3 }).map((_, i) => (
+        <View key={i} style={{ gap: space.md }}>
+          <View style={styles.byline}>
+            <Skeleton width={avatar.byline} height={avatar.byline} radius={radius.pill} />
+            <View style={{ flex: 1, gap: space.xs }}>
+              <Skeleton height={space.md} width="45%" />
+              <Skeleton height={space.sm} width="30%" />
+            </View>
+          </View>
+          <Skeleton height={POSTER_HEIGHT} radius={radius.xl} />
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/** The feed card's poster band. */
+const POSTER_HEIGHT = 220;
 
 const useStyles = makeStyles((colors, elevation) => StyleSheet.create({
   topBar: {
@@ -705,6 +729,7 @@ const useStyles = makeStyles((colors, elevation) => StyleSheet.create({
     justifyContent: "space-between",
   },
   topBarActions: { flexDirection: "row", alignItems: "center", gap: space.lg },
+  findPeople: { marginRight: -space.sm },
   cardFooter: {
     flexDirection: "row",
     alignItems: "center",
@@ -712,24 +737,12 @@ const useStyles = makeStyles((colors, elevation) => StyleSheet.create({
     gap: space.md,
   },
   counters: { flexDirection: "row", alignItems: "center", gap: space.lg },
-  counter: { flexDirection: "row", alignItems: "center", gap: 5 },
+  counter: { flexDirection: "row", alignItems: "center", gap: space.xs },
   // `overflow: visible` matters: the badge is positioned outside the bell's own
   // box, and clipping it would leave a bell that never looks like it has
   // anything in it.
   bell: { position: "relative", overflow: "visible" },
-  badge: {
-    position: "absolute",
-    top: -5,
-    right: -7,
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
-    paddingHorizontal: 4,
-    backgroundColor: colors.gold,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  badgeText: { color: colors.onAccent, fontWeight: "700", fontSize: 10, lineHeight: 16 },
+  badge: { position: "absolute", top: -space.sm, right: -space.sm },
   scopeRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -737,42 +750,34 @@ const useStyles = makeStyles((colors, elevation) => StyleSheet.create({
     paddingHorizontal: gutter,
     paddingBottom: space.sm,
   },
-  tab: { paddingVertical: space.md - 2 },
+
   body: { padding: gutter, gap: space["2xl"] },
   list: { gap: space["2xl"] },
   // The evening as one object: poster on top, opinion underneath, one rounded
   // surface around both. The card used to be a poster and some text
   // separated from the next by a hairline; on a surface the rating and the
   // note read as belonging to the picture above them.
+  // One depth recipe, from the tokens: the card used to carry a border, the
+  // raised edge and a shadow of its own, and was the heaviest object in
+  // the app for it.
   card: {
     backgroundColor: colors.surface,
-    borderWidth: 1,
+    borderWidth: hairlineWidth,
     borderColor: colors.hairlineSoft,
     borderRadius: radius.xl,
     overflow: "hidden",
     ...elevation.raised,
-    boxShadow: `0 14px 30px -18px ${colors.shadow}`,
   },
   cardBody: { paddingHorizontal: space.lg, paddingTop: space.md, paddingBottom: space.lg, gap: space.md },
   byline: { flexDirection: "row", alignItems: "center", gap: space.md },
   backfillRow: { flexDirection: "row", gap: space.md },
-  backfillTile: { width: 72, gap: space.xs },
-  backfillMore: { height: 104, alignItems: "center", justifyContent: "center", borderRadius: radius.sm, borderWidth: 1, borderColor: colors.hairline },
+  backfillTile: { width: thumb.row.width, gap: space.xs, borderRadius: radius.sm },
+  backfillMore: { height: thumb.row.height, alignItems: "center", justifyContent: "center", borderRadius: radius.sm, borderWidth: hairlineWidth, borderColor: colors.hairline },
   loadMore: { alignSelf: "center", minWidth: 220, marginTop: space.md },
   name: { color: colors.text },
-  watchlistRow: { flexDirection: "row", alignItems: "center", gap: space.md },
-  posterEyebrow: {
-    position: "absolute",
-    top: space.md,
-    left: space.md,
-    maxWidth: "70%",
-    backgroundColor: overlay.onImage,
-    borderRadius: radius.pill,
-    paddingVertical: 4,
-    paddingHorizontal: 9,
-  },
+  posterEyebrow: { position: "absolute", top: space.md, left: space.md },
   // `right` was missing once, so long titles ran off the poster and out past
   // the edge of the card.
   posterCaption: { position: "absolute", left: space.lg, right: space.lg, bottom: space.lg, gap: space.xs },
-  divider: { height: 1, backgroundColor: colors.hairlineSoft, marginTop: space.xs },
+  divider: { height: hairlineWidth, backgroundColor: colors.hairlineSoft, marginTop: space.xs },
 }));

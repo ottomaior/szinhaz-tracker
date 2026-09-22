@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
-import { View, ScrollView, StyleSheet, Pressable } from "react-native";
+import { View, ScrollView } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
-import { gutter, radius, space } from "@/theme/tokens";
+import { gutter, space } from "@/theme/tokens";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   getNotifications,
@@ -10,15 +10,18 @@ import {
 } from "@/services/notificationService";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ModalHeader } from "@/components/ui/ModalHeader";
-import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { ContentColumn } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 import { formatShortDayForSuffix, formatTime } from "@/utils/datetime";
-import { makeStyles, useColors } from "@/theme/styles";
+import { useColors } from "@/theme/styles";
 import { notificationLine } from "@/i18n/notificationCopy";
 import { isPersonKind } from "@/i18n/notificationCopy";
-import { Avatar } from "@/components/ui/Avatar";
+import type { Play } from "@/data/types";
+import { PersonRow } from "@/components/ui/Rows";
+import { PlayRow } from "@/components/ui/PlayRow";
+import { CountBadge } from "@/components/ui/Badges";
+import { RowSkeleton } from "@/components/ui/Skeleton";
 import { personInitials } from "@/utils/people";
 
 /**
@@ -67,7 +70,18 @@ export default function InboxScreen() {
     }, [session, load])
   );
 
-  if (loading) return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        <ModalHeader title={strings.inbox.headerTitle} fallbackRoute="/(tabs)" />
+        <ContentColumn style={{ padding: gutter }}>
+          {[0, 1, 2].map((i) => (
+            <RowSkeleton key={i} />
+          ))}
+        </ContentColumn>
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -126,40 +140,36 @@ function NotificationRow({
   notification: AppNotification;
   onPress: () => void;
 }) {
-  const styles = useStyles();
+  // A dot rather than an "unread" label: the row is already a sentence, and
+  // the state is worth one glyph, not a second line of text.
+  const unread = !notification.readAt ? <CountBadge /> : undefined;
+  const meta = (
+    <Text variant="bodySmall" tone="dim" numberOfLines={2}>
+      {describe(notification)}
+    </Text>
+  );
 
-  return (
-    <Pressable
+  // About a person or about a production, and the row follows: a face and
+  // two lines, or a poster and two lines.
+  return isPersonKind(notification.kind) ? (
+    <PersonRow
+      name={notification.playTitle}
+      meta={meta}
+      initials={personInitials(notification.playTitle)}
       onPress={onPress}
-      style={[styles.row, !notification.readAt && styles.unread]}
-      accessibilityRole="button"
-      accessibilityLabel={notification.playTitle}
-    >
-      {isPersonKind(notification.kind) ? (
-        <View style={{ width: 44, alignItems: "center", justifyContent: "center" }}>
-          <Avatar initials={personInitials(notification.playTitle)} size={44} />
-        </View>
-      ) : (
-        <PosterPlaceholder
-          poster={notification.poster}
-          title={notification.playTitle}
-          seed={notification.playId ?? notification.id}
-          width={44}
-          height={66}
-          radius={radius.sm}
-          preferThumb
-        />
-      )}
-      <View style={{ flex: 1, gap: 3 }}>
-        <Text variant="label" numberOfLines={2}>{notification.playTitle}</Text>
-        <Text variant="bodySmall" tone="dim" numberOfLines={2}>
-          {describe(notification)}
-        </Text>
-      </View>
-      {/* A dot rather than an "unread" label: the row is already a sentence,
-          and the state is worth one glyph, not a second line of text. */}
-      {!notification.readAt && <View style={styles.dot} />}
-    </Pressable>
+      trailing={unread}
+    />
+  ) : (
+    <PlayRow
+      play={{
+        id: notification.playId ?? notification.id,
+        title: notification.playTitle,
+        poster: notification.poster,
+      } as Play}
+      onPress={onPress}
+      meta={meta}
+      trailing={unread}
+    />
   );
 }
 
@@ -185,15 +195,4 @@ function describe(n: AppNotification): string {
   });
 }
 
-const useStyles = makeStyles((colors) => StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.md,
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    padding: space.md,
-  },
-  unread: { borderWidth: 1, borderColor: colors.hairline },
-  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.gold },
-}));
+

@@ -19,7 +19,20 @@ import { makeStyles } from "@/theme/styles";
  * Reduced motion holds the lights still at the corners, which reads as a
  * lit rim rather than as a control that is stuck.
  */
-export function StarBorder({ children, style, radius = radii.pill, speed = 5200 }: { children: ReactNode; style?: StyleProp<ViewStyle>; radius?: number; speed?: number }) {
+export function StarBorder({
+  children,
+  style,
+  radius = radii.pill,
+  speed = 5200,
+  delay = 0,
+}: {
+  children: ReactNode;
+  style?: StyleProp<ViewStyle>;
+  radius?: number;
+  speed?: number;
+  /** Milliseconds before the lights start moving — after the screen's own reveal, so nothing runs on first paint. */
+  delay?: number;
+}) {
   const styles = useStyles();
   const reduced = useReducedMotion();
   const progress = useAnimatedValue(0);
@@ -27,12 +40,13 @@ export function StarBorder({ children, style, radius = radii.pill, speed = 5200 
 
   useEffect(() => {
     if (reduced) return;
-    const loop = Animated.loop(
-      Animated.timing(progress, { toValue: 1, duration: speed, easing: Easing.linear, useNativeDriver: NATIVE_DRIVER })
-    );
+    const loop = Animated.sequence([
+      Animated.delay(delay),
+      Animated.loop(Animated.timing(progress, { toValue: 1, duration: speed, easing: Easing.linear, useNativeDriver: NATIVE_DRIVER })),
+    ]);
     loop.start();
     return () => loop.stop();
-  }, [progress, reduced, speed]);
+  }, [progress, reduced, speed, delay]);
 
   const span = Math.max(width, 1);
   const leftward = progress.interpolate({ inputRange: [0, 1], outputRange: [span, -LIGHT] });

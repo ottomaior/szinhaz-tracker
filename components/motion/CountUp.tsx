@@ -1,14 +1,21 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Animated, Easing } from "react-native";
 import { useAnimatedValue } from "@/hooks/useAnimatedValue";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { duration as motion } from "@/theme/tokens";
 import { Text } from "@/components/ui/Text";
 import type { TypeTone, TypeVariant } from "@/theme/type";
 import type { StyleProp, TextStyle } from "react-native";
 
 /**
- * A figure that counts up to its value on first sight, after reactbits'
- * "Count Up".
+ * A figure that counts to its value, after reactbits' "Count Up".
+ *
+ * Not on first sight: the app's motion rule is that nothing animates on the
+ * first paint of a screen, and four numbers rolling up from zero under the
+ * reader's name were the one place a screen opened on something still
+ * changing. The figure prints at its value and counts only when the value
+ * changes — after a check-in lands, after a follow — from the number it
+ * showed to the number it shows now.
  *
  * Drives a JS-side Animated value and prints it through state: text content
  * cannot be animated natively, and for a number that runs for under a second
@@ -18,7 +25,7 @@ import type { StyleProp, TextStyle } from "react-native";
 export function CountUp({
   value,
   decimals = 0,
-  duration = 900,
+  duration = motion.reveal,
   delay = 0,
   variant = "numeral",
   tone,
@@ -33,16 +40,19 @@ export function CountUp({
   style?: StyleProp<TextStyle>;
 }) {
   const reduced = useReducedMotion();
-  const [shown, setShown] = useState(reduced ? value : 0);
+  const [shown, setShown] = useState(value);
+  const from = useRef(value);
   const anim = useAnimatedValue(0);
 
   useEffect(() => {
-    if (reduced) {
+    const start = from.current;
+    from.current = value;
+    if (reduced || start === value) {
       setShown(value);
       return;
     }
     anim.setValue(0);
-    const id = anim.addListener(({ value: p }) => setShown(value * p));
+    const id = anim.addListener(({ value: p }) => setShown(start + (value - start) * p));
     const timing = Animated.timing(anim, {
       toValue: 1,
       duration,

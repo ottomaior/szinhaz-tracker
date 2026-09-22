@@ -1,5 +1,8 @@
 import { Pressable, StyleSheet, View } from "react-native";
-import { radius, space } from "@/theme/tokens";
+import { control, hairlineWidth, radius, space, thumb } from "@/theme/tokens";
+import { typeScale } from "@/theme/type";
+import { pressStyle } from "@/components/ui/pressable";
+import { useColors } from "@/theme/styles";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
@@ -33,6 +36,7 @@ export function ProgramRow({
   onPress: () => void;
 }) {
   const styles = useStyles();
+  const palette = useColors();
 
   const isToday = budapestDayKey(entry.startsAt) === todayInBudapest();
   const kind = programKind(entry);
@@ -42,7 +46,7 @@ export function ProgramRow({
       : [entry.room, entry.runtimeMinutes != null ? formatRuntimeMinutes(entry.runtimeMinutes) : undefined, kind];
 
   return (
-    <Pressable onPress={onPress} style={styles.row} accessibilityRole="button" accessibilityLabel={entry.title}>
+    <Pressable onPress={onPress} style={pressStyle("row", palette, styles.row)} accessibilityRole="button" accessibilityLabel={entry.title}>
       {lead === "date" ? (
         <View style={styles.lead}>
           <Text variant="numeral" tone={isToday ? "accent" : "default"}>
@@ -62,8 +66,8 @@ export function ProgramRow({
         poster={entry.poster}
         title={entry.title}
         seed={entry.playId}
-        width={48}
-        height={64}
+        width={thumb.row.width}
+        height={thumb.row.height}
         radius={radius.sm}
         preferThumb
       />
@@ -119,14 +123,14 @@ export function ProgramRowSkeleton() {
   const styles = useStyles();
   return (
     <View style={styles.row}>
-      <View style={[styles.lead, { gap: 6 }]}>
-        <Skeleton width={26} height={22} />
-        <Skeleton width={22} height={9} />
+      <View style={[styles.lead, { gap: space.xs }]}>
+        <Skeleton width={space["2xl"]} height={typeScale.numeral.lineHeight} />
+        <Skeleton width={space.xl} height={space.sm} />
       </View>
-      <Skeleton width={48} height={64} />
-      <View style={[styles.body, { gap: 8 }]}>
-        <Skeleton height={14} width="70%" />
-        <Skeleton height={10} width="50%" />
+      <Skeleton width={thumb.row.width} height={thumb.row.height} />
+      <View style={[styles.body, { gap: space.sm }]}>
+        <Skeleton height={space.lg} width="70%" />
+        <Skeleton height={space.md} width="50%" />
       </View>
     </View>
   );
@@ -166,14 +170,14 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: space.md,
-    paddingVertical: space.sm + 2,
-    borderTopWidth: 1,
+    paddingVertical: space.sm,
+    borderTopWidth: hairlineWidth,
     borderTopColor: colors.hairlineSoft,
   },
   // Fixed width so the dates form a column rather than stepping in and out
   // with the width of each number.
-  lead: { width: 44, alignItems: "center", justifyContent: "center" },
-  leadTime: { width: 58, alignItems: "flex-start" },
-  weekday: { marginTop: -2 },
-  body: { flex: 1, gap: 3 },
+  lead: { width: control.md, alignItems: "center", justifyContent: "center" },
+  leadTime: { width: space["5xl"], alignItems: "flex-start" },
+  weekday: {},
+  body: { flex: 1, gap: space["2xs"] },
 }));

@@ -5,10 +5,10 @@ import { useAnimatedValue } from "@/hooks/useAnimatedValue";
 import { useAtLeast } from "@/hooks/useBreakpoint";
 import { NATIVE_DRIVER, useReducedMotion } from "@/hooks/useReducedMotion";
 import { colors } from "@/theme/colors";
-import { bodyFont } from "@/theme/typography";
-import { useAppFonts } from "@/hooks/useAppFonts";
-import { gutter, radius, space } from "@/theme/tokens";
-import { makeStyles } from "@/theme/styles";
+import { dock, duration, gutter, hairlineWidth, icon, radius, space } from "@/theme/tokens";
+import { makeStyles, useColors } from "@/theme/styles";
+import { pressStyle } from "@/components/ui/pressable";
+import { CloseIcon } from "@/components/icons/Icons";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 
@@ -89,18 +89,17 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 }
 
 /**
- * Below the floating tab bar's top edge on a phone: the bar is 64pt tall
- * and sits `space.md` above the safe area, and the raised "+" reaches
- * another ~22pt above it. The toast clears all of that.
+ * Above the floating dock on a phone: the dock's height, its margin off the
+ * safe area, and a step of air for the raised "+" that stands proud of it.
  */
-const PHONE_BOTTOM_CLEARANCE = 112;
+const PHONE_BOTTOM_CLEARANCE = dock.height + dock.margin + space["3xl"];
 
 function ToastView({ toast, onDismiss }: { toast: Active; onDismiss: () => void }) {
   const styles = useStyles();
   const wide = useAtLeast("expanded");
   const insets = useSafeAreaInsets();
   const reduced = useReducedMotion();
-  const fontsLoaded = useAppFonts();
+  const palette = useColors();
   const progress = useAnimatedValue(reduced ? 1 : 0);
   const [busy, setBusy] = useState(false);
 
@@ -108,7 +107,7 @@ function ToastView({ toast, onDismiss }: { toast: Active; onDismiss: () => void 
     if (reduced) return;
     Animated.timing(progress, {
       toValue: 1,
-      duration: 260,
+      duration: duration.enter,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: NATIVE_DRIVER,
     }).start();
@@ -150,26 +149,24 @@ function ToastView({ toast, onDismiss }: { toast: Active; onDismiss: () => void 
           <Pressable
             onPress={handleAction}
             disabled={busy}
-            hitSlop={8}
+            hitSlop={space.sm}
             accessibilityRole="button"
             accessibilityLabel={toast.action.label}
-            style={({ pressed }) => [styles.action, pressed && { opacity: 0.7 }]}
+            style={pressStyle("quiet", palette, styles.action)}
           >
-            <Text style={{ fontFamily: bodyFont(fontsLoaded, "bold"), fontSize: 13, color: colors.gold }}>
+            <Text variant="label" tone="accent">
               {toast.action.label}
             </Text>
           </Pressable>
         )}
         <Pressable
           onPress={onDismiss}
-          hitSlop={10}
+          hitSlop={space.sm}
           accessibilityRole="button"
           accessibilityLabel={strings.feedback.dismiss}
           style={styles.close}
         >
-          <Text variant="caption" tone="faint">
-            ✕
-          </Text>
+          <CloseIcon size={icon.inline} color={colors.textFaint} />
         </Pressable>
       </Animated.View>
     </View>
@@ -186,7 +183,7 @@ const useStyles = makeStyles((colors, elevation) => StyleSheet.create({
     paddingHorizontal: space.lg,
     borderRadius: radius.md,
     backgroundColor: colors.bgElevated,
-    borderWidth: 1,
+    borderWidth: hairlineWidth,
     borderColor: colors.hairline,
     ...elevation.floating,
   },

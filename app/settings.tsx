@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { Link, useRouter, type Href } from "expo-router";
 import { colors } from "@/theme/colors";
-import { inputFontSize } from "@/theme/type";
-import { bodyFont } from "@/theme/typography";
-import { useAppFonts } from "@/hooks/useAppFonts";
-import { gutter, radius, space } from "@/theme/tokens";
+import { gutter, hairlineWidth, radius, space } from "@/theme/tokens";
 import { themes, THEME_ORDER, type ThemeId } from "@/theme/themes";
 import { CheckIcon, ChevronRightIcon } from "@/components/icons/Icons";
 import { Button } from "@/components/ui/Button";
+import { TextField } from "@/components/ui/TextField";
+import { Notice } from "@/components/ui/Notice";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
@@ -188,7 +187,7 @@ function ThemeRow({
         <View style={[styles.swatchDot, { backgroundColor: palette.gold }]} />
       </View>
 
-      <View style={{ flex: 1, gap: 2 }}>
+      <View style={{ flex: 1, gap: space["2xs"] }}>
         <Text variant="subheading">{label}</Text>
         <Text variant="caption" tone="faint" numberOfLines={2}>
           {blurb}
@@ -226,7 +225,7 @@ function LinkRow({
   return (
     <Link href={href} asChild>
       <Pressable accessibilityRole="link" accessibilityLabel={label} style={styles.row}>
-        <View style={{ flex: 1, gap: 2 }}>
+        <View style={{ flex: 1, gap: space["2xs"] }}>
           <Text variant="subheading">{label}</Text>
           <Text variant="caption" tone="faint">
             {blurb}
@@ -284,7 +283,6 @@ function AccountSection() {
   const styles = useStyles();
 
   const router = useRouter();
-  const fontsLoaded = useAppFonts();
 
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string>();
@@ -335,7 +333,7 @@ function AccountSection() {
       </View>
 
       <View style={{ gap: space.md }}>
-        <View style={{ gap: 2 }}>
+        <View style={{ gap: space["2xs"] }}>
           <Text variant="subheading">{strings.settings.exportTitle}</Text>
           <Text variant="caption" tone="faint">
             {canExport ? strings.settings.exportHint : strings.settings.exportUnsupported}
@@ -350,11 +348,7 @@ function AccountSection() {
             disabled={exporting}
           />
         ) : null}
-        {!!exportError && (
-          <Text accessibilityRole="alert" variant="bodySmall" tone="accent">
-            {exportError}
-          </Text>
-        )}
+        {!!exportError && <Notice>{exportError}</Notice>}
       </View>
 
       <View style={styles.danger}>
@@ -370,21 +364,16 @@ function AccountSection() {
             <Text variant="bodySmall" tone="dim">
               {strings.settings.deleteConfirmPrompt(confirmWord)}
             </Text>
-            <TextInput
+            <TextField
               value={typed}
               onChangeText={setTyped}
               placeholder={confirmWord}
-              placeholderTextColor={colors.textFaint}
               accessibilityLabel={strings.settings.deleteConfirmPrompt(confirmWord)}
               autoCapitalize="characters"
               autoCorrect={false}
-              style={[styles.input, { fontFamily: bodyFont(fontsLoaded) }]}
+              style={styles.confirmInput}
             />
-            {!!deleteError && (
-              <Text accessibilityRole="alert" variant="bodySmall" tone="accent">
-                {deleteError}
-              </Text>
-            )}
+            {!!deleteError && <Notice>{deleteError}</Notice>}
             <View style={{ flexDirection: "row", gap: space.sm }}>
               <Button
                 label={strings.common.cancel}
@@ -417,6 +406,14 @@ function AccountSection() {
   );
 }
 
+/**
+ * The theme miniature's own geometry — a 52x40 page with a card, a rule and
+ * a dot on it. Off the spacing grid on purpose: this is a drawing of a
+ * screen at a twentieth of its size, not a piece of layout.
+ */
+const SWATCH_INSET = 5;
+const SWATCH_LINE = 3;
+
 const useStyles = makeStyles((colors) => StyleSheet.create({
   content: { paddingHorizontal: gutter, paddingTop: space.xl, paddingBottom: space["4xl"], gap: space.lg },
   row: {
@@ -425,7 +422,7 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     gap: space.md,
     padding: space.md,
     borderRadius: radius.md,
-    borderWidth: 1,
+    borderWidth: hairlineWidth,
     borderColor: colors.hairlineSoft,
   },
   rowSelected: { borderColor: colors.gold, backgroundColor: colors.surface },
@@ -439,19 +436,13 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     gap: space.md,
     padding: space.lg,
     borderRadius: radius.lg,
-    borderWidth: 1,
+    borderWidth: hairlineWidth,
     borderColor: colors.gold,
     backgroundColor: colors.surface,
   },
-  input: {
-    backgroundColor: colors.bg,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    borderRadius: radius.md,
-    padding: space.md,
-    fontSize: inputFontSize,
-    color: colors.text,
-  },
+  // On the ground rather than on a surface: the field sits inside the one
+  // boxed block on the screen, and a surface inside a surface disappears.
+  confirmInput: { backgroundColor: colors.bg, padding: space.md },
   /**
    * A miniature of the theme rather than a row of colour chips: four bare
    * swatches say which colours are in a palette, but not what it feels like to
@@ -461,13 +452,13 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     width: 52,
     height: 40,
     borderRadius: radius.sm,
-    borderWidth: 1,
+    borderWidth: hairlineWidth,
     overflow: "hidden",
     justifyContent: "flex-end",
-    padding: 5,
-    gap: 3,
+    padding: SWATCH_INSET,
+    gap: SWATCH_LINE,
   },
-  swatchCard: { position: "absolute", top: 5, left: 5, right: 5, height: 14, borderRadius: 3 },
-  swatchRule: { height: 3, width: "70%", borderRadius: 2, opacity: 0.85 },
-  swatchDot: { height: 3, width: "35%", borderRadius: 2 },
+  swatchCard: { position: "absolute", top: SWATCH_INSET, left: SWATCH_INSET, right: SWATCH_INSET, height: space.lg - SWATCH_LINE, borderRadius: SWATCH_LINE },
+  swatchRule: { height: SWATCH_LINE, width: "70%", borderRadius: SWATCH_LINE, opacity: 0.85 },
+  swatchDot: { height: SWATCH_LINE, width: "35%", borderRadius: SWATCH_LINE },
 }));

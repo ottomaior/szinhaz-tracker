@@ -33,10 +33,28 @@
  * After running this, run `npm run stamp:shots` so the cache-busting hashes in
  * `index.html` follow the new bytes — or just `npm run deploy:landing`, which
  * does it as its first step.
+ *
+ * ## The audit mode
+ *
+ *     SHOTS_BASE_URL=http://localhost:8081 npm run shots -- --audit \
+ *         --viewport phone --theme velvetDark --out ux-audit/before
+ *
+ * The same renderer, pointed at every screen and state the app has rather
+ * than the seven the landing page shows, for the Velvet Curtain finish pass:
+ * a "before" set on `main`, an "after" set per screen on the branch, and a
+ * pixel diff between them (`scripts/diff-shots.ts`) as the proof that a
+ * consolidation commit changed nothing and a polish commit changed only what
+ * it meant to. PNG rather than WebP, because these are compared, not served.
+ *
+ * `--viewport` is `phone` (390x844 at 2x) or `desktop` (1280x800 at 1x);
+ * `--theme` is any id from theme/themes.ts and is written to the key the
+ * no-flash script in app/+html.tsx reads, so the very first paint is already
+ * in that palette; `--out` is the directory the set lands in, under
+ * `<viewport>/<theme>/`. Route names can still be passed to take a subset.
  */
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
-import { writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -60,10 +78,36 @@ const OUT = resolve("landing/shots");
  */
 const BASE = (process.env.SHOTS_BASE_URL ?? "https://web.vastaps.app").replace(/\/$/, "");
 
-/** The capture geometry. See the header — these three numbers are load-bearing. */
-const WIDTH = 402;
-const HEIGHT = 874;
-const SCALE = 3;
+const FLAGS = new Map<string, string>();
+const POSITIONAL: string[] = [];
+for (let i = 2; i < process.argv.length; i++) {
+  const a = process.argv[i];
+  if (a.startsWith("--")) {
+    const next = process.argv[i + 1];
+    if (next && !next.startsWith("--")) {
+      FLAGS.set(a.slice(2), next);
+      i++;
+    } else FLAGS.set(a.slice(2), "true");
+  } else POSITIONAL.push(a);
+}
+const AUDIT = FLAGS.get("audit") === "true";
+const VIEWPORT = (FLAGS.get("viewport") ?? "phone") as "phone" | "desktop";
+const THEME = FLAGS.get("theme") ?? "velvetDark";
+const AUDIT_OUT = resolve(FLAGS.get("out") ?? "ux-audit/before", VIEWPORT, THEME);
+
+/**
+ * The capture geometry. See the header — for the landing shots these three
+ * numbers are load-bearing. The audit set uses the sizes the polish pass is
+ * reviewed at: a 390pt phone and a 1280pt browser window.
+ */
+const GEOMETRY = AUDIT
+  ? VIEWPORT === "desktop"
+    ? { width: 1280, height: 800, scale: 1, mobile: false }
+    : { width: 390, height: 844, scale: 2, mobile: true }
+  : { width: 402, height: 874, scale: 3, mobile: true };
+const WIDTH = GEOMETRY.width;
+const HEIGHT = GEOMETRY.height;
+const SCALE = GEOMETRY.scale;
 const OUTPUT_WIDTH = 810;
 
 /**
@@ -129,7 +173,22 @@ async function connect(wsUrl: string) {
     send(method: string, params: Record<string, unknown> = {}): Promise<any> {
       return new Promise((res, rej) => {
         const n = ++id;
-        pending.set(n, { resolve: res, reject: rej });
+        // A renderer that dies mid-navigation never answers, and a promise
+        // that never settles hangs the whole run; thirty seconds is longer
+        // than any real reply takes.
+        const timer = setTimeout(() => {
+          if (pending.delete(n)) rej(new Error(`${method} did not answer within 30s`));
+        }, 30_000);
+        pending.set(n, {
+          resolve: (v) => {
+            clearTimeout(timer);
+            res(v);
+          },
+          reject: (e) => {
+            clearTimeout(timer);
+            rej(e);
+          },
+        });
         ws.send(JSON.stringify({ id: n, method, params }));
       });
     },
@@ -175,7 +234,7 @@ async function magicLinkFor(email: string): Promise<string> {
 }
 
 async function main() {
-  const only = process.argv.slice(2).filter((a) => !a.startsWith("-"));
+  const only = POSITIONAL;
   const wanted = (name: string) => only.length === 0 || only.includes(name.replace(/\.webp$/, ""));
 
   const edge = [
@@ -234,7 +293,7 @@ async function main() {
     width: WIDTH,
     height: HEIGHT,
     deviceScaleFactor: SCALE,
-    mobile: true,
+    mobile: GEOMETRY.mobile,
   });
 
   const evaluate = async (expression: string) => {
@@ -254,7 +313,9 @@ async function main() {
    */
   async function settle(expect: string) {
     let state = "never evaluated";
-    for (let i = 0; i < 80; i++) {
+    // A cold dev server compiles the bundle on the first request, which
+    // takes longer than the twenty seconds the deployed site is given.
+    for (let i = 0; i < (AUDIT ? 320 : 80); i++) {
       await sleep(250);
       state = await evaluate(`(() => {
         const text = document.body?.innerText ?? "";
@@ -267,7 +328,9 @@ async function main() {
           const r = i.getBoundingClientRect();
           return r.bottom > 0 && r.top < window.innerHeight && r.width > 0;
         });
-        if (imgs.length === 0) return "no images in the viewport yet";
+        // A sign-in form has no picture in it; the audit set waits for
+        // whatever images there are rather than insisting on one.
+        if (imgs.length === 0) return ${AUDIT} ? "ready" : "no images in the viewport yet";
         const pending = imgs.filter((i) => !i.complete || i.naturalWidth === 0);
         if (pending.length > 0) {
           return pending.length + " of " + imgs.length + " images unresolved, first: " +
@@ -277,13 +340,29 @@ async function main() {
         return "ready";
       })()`);
       if (state === "ready") {
+        // The audit set has no image to wait for on many screens, and a
+        // skeleton says nothing in its text; so the page is also asked to
+        // hold still — the same words and the same pictures three polls
+        // running — before it counts as loaded.
+        if (AUDIT) {
+          let last = "";
+          let stable = 0;
+          for (let j = 0; j < 60 && stable < 3; j++) {
+            await sleep(700);
+            const now = await evaluate(`document.body.innerText.length + ":" + document.images.length`);
+            stable = now === last ? stable + 1 : 0;
+            last = now;
+          }
+        }
         // One more frame, so any reflow the fonts caused is inside the capture
         // rather than smeared across it.
         await sleep(400);
         return;
       }
     }
-    console.error(`Never became ready while waiting for ${JSON.stringify(expect)} — ${state}`);
+    const message = `Never became ready while waiting for ${JSON.stringify(expect)} — ${state}`;
+    if (AUDIT) throw new Error(message);
+    console.error(message);
     process.exit(1);
   }
 
@@ -291,6 +370,12 @@ async function main() {
   async function capture(name: string) {
     const shot = await send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
     const png = Buffer.from(shot.data, "base64");
+    if (AUDIT) {
+      const out = join(AUDIT_OUT, name.replace(/\.webp$/, "") + ".png");
+      await writeFile(out, png);
+      console.log(`${name.padEnd(28)} ${(png.length / 1024).toFixed(0)}kB`);
+      return;
+    }
     const out = join(OUT, name);
     await sharp(png)
       .resize(OUTPUT_WIDTH, null, { fit: "inside" })
@@ -345,6 +430,13 @@ async function main() {
   async function goto(path: string) {
     await send("Page.navigate", { url: `${BASE}${path}` });
     await sleep(500);
+  }
+
+  if (AUDIT) {
+    await audit({ goto, settle, capture, clickText, signIn, evaluate, send, wanted });
+    ws.close();
+    browser.kill();
+    return;
   }
 
   // ------------------------------------------------- user.webp, signed out
@@ -463,6 +555,163 @@ async function main() {
   ws.close();
   browser.kill();
   console.log("\nNow run `npm run stamp:shots` so index.html points at the new bytes.");
+}
+
+type Driver = {
+  goto: (path: string) => Promise<void>;
+  settle: (expect: string) => Promise<void>;
+  capture: (name: string) => Promise<void>;
+  clickText: (label: string, selector: string) => Promise<boolean>;
+  signIn: (email: string) => Promise<void>;
+  evaluate: (expression: string) => Promise<any>;
+  send: (method: string, params?: Record<string, unknown>) => Promise<any>;
+  wanted: (name: string) => boolean;
+};
+
+/**
+ * The id of Eszter's entry for the production the shots are taken on, so the
+ * evening page can be photographed. Looked up rather than typed, because an
+ * entry can be deleted and re-logged and nothing here should go stale.
+ */
+async function eszterEntryId(): Promise<string | undefined> {
+  const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return undefined;
+  const res = await fetch(
+    `${url}/rest/v1/reviews?select=id&user_id=eq.${ESZTER}&play_id=eq.${UVEGHAZ}&order=created_at.desc&limit=1`,
+    { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+  );
+  if (!res.ok) return undefined;
+  const rows = (await res.json()) as { id: string }[];
+  return rows[0]?.id;
+}
+
+/**
+ * Every screen and every state, signed out first and signed in after, in the
+ * order a stranger and then a member would meet them.
+ */
+async function audit(d: Driver) {
+  await mkdir(AUDIT_OUT, { recursive: true });
+
+  // The palette, before the first real page: the no-flash script reads this
+  // key on every load, so setting it once on the origin colours all of them.
+  await d.goto("/sign-in");
+  await d.settle("Bejelentkezés");
+  await d.evaluate(`localStorage.setItem(${JSON.stringify("theme.v1")}, ${JSON.stringify(THEME)})`);
+  // A warm-up: the first real page after a theme change is the one most
+  // often caught mid-load — a skeleton with no title yet — so Discover is
+  // opened once and thrown away before the pictures start.
+  await d.goto("/discover");
+  await d.settle("Felfedezés").catch(() => undefined);
+  await sleep(2000);
+
+  const failed: string[] = [];
+  const shot = async (name: string, path: string, expect: string, after?: () => Promise<void>) => {
+    if (!d.wanted(name)) return;
+    try {
+      await d.goto(path);
+      await d.settle(expect);
+      if (after) await after();
+      await d.capture(name);
+    } catch (e) {
+      // One route that will not settle is one missing picture, not a lost
+      // run: it is reported at the end and the next route is taken.
+      failed.push(name);
+      console.error(`${name}: ${(e as Error).message}`);
+    }
+  };
+  const tab = async (label: string) => {
+    if (!(await d.clickText(label, '[role="tab"]'))) throw new Error(`no tab "${label}"`);
+    await sleep(900);
+  };
+  const button = async (label: string) => {
+    if (!(await d.clickText(label, '[role="button"]'))) throw new Error(`no button "${label}"`);
+    await sleep(700);
+  };
+  const type = async (selector: string, text: string) => {
+    const focused = await d.evaluate(
+      `(() => { const el = document.querySelector(${JSON.stringify(selector)}); if (!el) return false; el.focus(); return true; })()`
+    );
+    if (!focused) throw new Error(`no field ${selector}`);
+    await d.send("Input.insertText", { text });
+    await sleep(2500);
+  };
+  const SEARCH = 'input[type="search"], input[placeholder*="Darabok"]';
+
+  // ------------------------------------------------------------ signed out
+  await shot("discover", "/discover", "Felfedezés");
+  await shot("discover-musor", "/discover", "Felfedezés", () => tab("Műsor"));
+  await shot("discover-listak", "/discover", "Felfedezés", () => tab("Listák"));
+  await shot("discover-search", "/discover", "Felfedezés", () => type(SEARCH, SEARCH_QUERY));
+  await shot("discover-search-empty", "/discover", "Felfedezés", () => type(SEARCH, "zzqqxxw"));
+  await shot("feed-signedout", "/", "Felfedezés"); // hands off to Discover once per launch
+  await shot("watchlist-signedout", "/watchlist", "Kívánságlista");
+  await shot("profile-signedout", "/profile", "Profil");
+  await shot("play", `/play/${UVEGHAZ}`, "Az üvegház");
+  await shot("person", `/person/${PERSON}`, "Für Anikó");
+  await shot("list", `/list/${LIST}`, "Bodó Viktor Budapesten");
+  await shot("user-signedout", `/user/${ESZTER}`, "Tóth Eszter");
+  await shot("sign-in", "/sign-in", "Bejelentkezés");
+  await shot("sign-up", "/sign-up", "Regisztráció");
+  await shot("forgot-password", "/forgot-password", "jelszó");
+  await shot("reset-password-nosession", "/reset-password", "jelszó");
+  await shot("legal", "/legal/adatvedelem", "Adatkezelési");
+  await shot("not-found", "/nincs-ilyen-oldal", "Vastaps");
+  await shot("inbox-signedout", "/inbox", "Értesítések");
+  await shot("followers-signedout", "/followers", "Követ");
+  await shot("people-signedout", "/people", "Színházbarátok");
+  await shot("season-signedout", "/season/2026", "vad");
+  await shot("stats-signedout", "/stats", "számok");
+  await shot("checkin-signedout", "/checkin", "Bejelentkezés"); // redirects
+  await shot("lists-signedout", "/lists", "Listák");
+
+  // The offline banner: the browser's own offline event, not a cut cable.
+  if (d.wanted("discover-offline")) {
+    await d.goto("/discover");
+    await d.settle("Felfedezés");
+    await d.send("Network.enable");
+    await d.send("Network.emulateNetworkConditions", { offline: true, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
+    await sleep(1200);
+    await d.capture("discover-offline");
+    await d.send("Network.emulateNetworkConditions", { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
+  }
+
+  // ------------------------------------------------------------- signed in
+  await d.signIn(ESZTER_EMAIL);
+  const entry = await eszterEntryId();
+
+  await shot("feed", "/", "Hírfolyam");
+  await shot("feed-following", "/", "Hírfolyam", () => tab("Követettek"));
+  await shot("watchlist", "/watchlist", "Kívánságlista");
+  await shot("profile", "/profile", "Profil");
+  await shot("profile-reviews", "/profile", "Profil", () => tab("Vélemények"));
+  await shot("user", `/user/${ESZTER}`, "Tóth Eszter");
+  await shot("inbox", "/inbox", "Értesítések");
+  await shot("followers", "/followers", "Követ");
+  await shot("people", "/people", "Színházbarátok");
+  await shot("lists", "/lists", "Listák");
+  await shot("settings", "/settings", "Beállítások");
+  await shot("edit-profile", "/edit-profile", "Profil szerkesztése");
+  await shot("blocked", "/blocked", "Letiltott");
+  await shot("season", "/season/2026", "vad");
+  await shot("stats", "/stats", "számok");
+  await shot("add-play", "/add-play", "Darab");
+  await shot("onboarding", "/onboarding", "láttál");
+  await shot("first-run", "/first-run", "Vastaps");
+  await shot("reset-password", "/reset-password", "jelszó");
+  await shot("checkin-picker", "/checkin", "Előadás");
+  await shot("checkin-when", `/checkin?playId=${UVEGHAZ}`, "Melyik este volt?");
+  await shot("checkin-rate", `/checkin?playId=${UVEGHAZ}`, "Melyik este volt?", () => button("Tovább"));
+  await shot("checkin-note", `/checkin?playId=${UVEGHAZ}`, "Melyik este volt?", async () => {
+    await button("Tovább");
+    await button("Tovább");
+  });
+  await shot("play-signedin", `/play/${UVEGHAZ}`, "Az üvegház");
+  if (entry) await shot("entry", `/entry/${entry}`, "Napló");
+  else console.error("No entry of Eszter's for Az üvegház — entry.png skipped.");
+
+  if (failed.length) console.error(`
+Not captured: ${failed.join(", ")}`);
 }
 
 main().catch((e) => {
