@@ -28,6 +28,8 @@
     "store": "tsx scripts/render-store.ts",
     "verify:bundle": "tsx scripts/verify-bundle.ts",
     "drift": "tsx scripts/drift.ts",
+    "drift:landing": "tsx scripts/drift-landing.ts",
+    "shots:landing": "tsx scripts/render-landing-shots.ts",
     "diff:shots": "tsx scripts/diff-shots.ts"
   },
   "dependencies": {
