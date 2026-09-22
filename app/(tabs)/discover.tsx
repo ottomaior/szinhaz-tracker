@@ -3,7 +3,7 @@ import { View, ScrollView, StyleSheet, Pressable } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
-import { gutter, overlay, radius, space } from "@/theme/tokens";
+import { gutter, maxWidth, overlay, radius, space, thumb } from "@/theme/tokens";
 import { useAtLeast } from "@/hooks/useBreakpoint";
 import { useRecentSearches } from "@/hooks/useRecentSearches";
 import { useSearchQuery } from "@/hooks/useSearchQuery";
@@ -26,7 +26,9 @@ import { getFriendsRecentPlays } from "@/services/friendsService";
 import { searchPlays, type SearchPage, type SortKey } from "@/services/searchService";
 import { getPortraits, searchPeople, type PersonSearchResult } from "@/services/peopleService";
 import type { Play, Portrait, ProgramEntry, Venue, VenueType } from "@/data/types";
-import { Avatar } from "@/components/ui/Avatar";
+import { PersonRow } from "@/components/ui/Rows";
+import { PosterTile } from "@/components/ui/PosterTile";
+import { OverlayPill } from "@/components/ui/Badges";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { SelectChip, type SelectOption } from "@/components/ui/SelectChip";
@@ -34,7 +36,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ListCard } from "@/components/ui/ListCard";
 import { ListsBody } from "@/components/ui/ListsBody";
-import { PosterCardSkeleton, Skeleton, SkeletonRail } from "@/components/ui/Skeleton";
+import { PosterCardSkeleton, Skeleton } from "@/components/ui/Skeleton";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { ProgramRow, ProgramRowSkeleton, programKind } from "@/components/ui/ProgramRow";
 import { Screen, ContentColumn } from "@/components/ui/Screen";
@@ -112,7 +114,6 @@ const FILTER_TO_VENUE_TYPE: Record<string, VenueType | undefined> = {
  * less out of a landscape still than 2:3 did. The play detail hero, where
  * there is only one image and room to spare, honours the real ratio instead.
  */
-const TILE_ASPECT = 3 / 4;
 
 /**
  * Discover answers three questions and says which one it is on.
@@ -639,8 +640,8 @@ export default function DiscoverScreen() {
    * screen that answers a question the rails cannot, and hiding it behind a
    * magnifier made it a feature people had to know about.
    */
-  const chipRow = (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+  const chips = (
+    <>
       {SHOW_VENUE_TYPE_FILTER && (
         <SelectChip
           name={strings.discover.filterVenueType}
@@ -704,6 +705,16 @@ export default function DiscoverScreen() {
           }}
         />
       )}
+    </>
+  );
+  // On a phone the facets scroll off the edge; on a wide screen there is
+  // room for all of them, and a row that scrolls at 1100pt hides two chips
+  // for no reason.
+  const chipRow = wide ? (
+    <View style={[styles.chipRow, styles.chipWrap]}>{chips}</View>
+  ) : (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+      {chips}
     </ScrollView>
   );
 
@@ -737,12 +748,36 @@ export default function DiscoverScreen() {
     </View>
   );
 
+  /* Always on screen rather than behind a magnifier: the field is the
+     one control here that answers a question the rails cannot, and a
+     search you have to discover is a search half the readers never make.
+     Typing takes the screen over; the cross gives it back. */
+  const search = (
+    <SearchField
+      value={query}
+      onChangeText={setQuery}
+      prominent
+      // A newer answer is on its way and the grid below is the older
+      // one. The spinner says so without emptying it.
+      loading={isSearching && (playSearch.loading || peopleSearch.loading)}
+      placeholder={strings.discover.searchPlaceholder}
+      accessibilityLabel={strings.discover.searchLabel}
+      onFocusChange={setSearchFocused}
+      // Recorded on submit rather than on every keystroke, so the
+      // list holds "Katona" and not "K", "Ka", "Kat".
+      onSubmit={() => remember(query)}
+    />
+  );
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Screen>
         <View style={[styles.header, { paddingTop: insets.top + space.md }]}>
-          <View style={styles.titleRow}>
-            <View style={{ flex: 1, gap: 2 }}>
+          {/* On a phone the title, the city and the search stack; from the
+              `expanded` breakpoint the search sits beside the title, so the
+              pinned header is two rows across 1100pt rather than four. */}
+          <View style={[styles.titleRow, wide && styles.titleRowWide]}>
+            <View style={{ flex: 1, gap: space.sm }}>
               <SplitText text={strings.discover.title} />
               {/* The city decides what the whole screen is about, so it is
                   printed under the title like a season under a theatre's
@@ -758,28 +793,10 @@ export default function DiscoverScreen() {
                 />
               )}
             </View>
+            {wide && <View style={styles.searchWide}>{search}</View>}
           </View>
 
-          {/* Always on screen rather than behind a magnifier: the field is the
-              one control here that answers a question the rails cannot, and
-              a search you have to discover is a search half the readers never
-              make. Typing takes the screen over; the cross gives it back. */}
-          <View style={styles.searchRow}>
-            <SearchField
-              value={query}
-              onChangeText={setQuery}
-              prominent
-              // A newer answer is on its way and the grid below is the older
-              // one. The spinner says so without emptying it.
-              loading={isSearching && (playSearch.loading || peopleSearch.loading)}
-              placeholder={strings.discover.searchPlaceholder}
-              accessibilityLabel={strings.discover.searchLabel}
-              onFocusChange={setSearchFocused}
-              // Recorded on submit rather than on every keystroke, so the
-              // list holds "Katona" and not "K", "Ka", "Kat".
-              onSubmit={() => remember(query)}
-            />
-          </View>
+          {!wide && <View style={styles.searchRow}>{search}</View>}
 
           {/* Only while the field is focused and empty: once there is a query
               the results themselves are the better answer, and the row would
@@ -788,7 +805,7 @@ export default function DiscoverScreen() {
             <View style={{ gap: space.xs, paddingTop: space.sm }}>
               <View style={styles.rowBetween}>
                 <Text variant="eyebrow" tone="faint">{strings.discover.recentTitle}</Text>
-                <Pressable onPress={clearRecent} hitSlop={8} accessibilityRole="button">
+                <Pressable onPress={clearRecent} hitSlop={space.sm} accessibilityRole="button">
                   <Text variant="caption" tone="dim">{strings.discover.recentClear}</Text>
                 </Pressable>
               </View>
@@ -1123,11 +1140,9 @@ function TonightHero({ entry, onPress, tall }: { entry: ProgramEntry; onPress: (
       <PressCard onPress={onPress} accessibilityRole="button" accessibilityLabel={entry.title} style={StyleSheet.absoluteFill} surfaceStyle={{ flex: 1 }} tilt={4}>
         <PosterPlaceholder poster={entry.poster} title={entry.title} seed={entry.playId} height="100%" radius={0} scrim priority="high" />
       </PressCard>
-      <View style={[styles.heroBadge, { pointerEvents: "none" }]}>
-        <Text variant="eyebrow" style={{ color: overlay.onImageAccent }}>
-          {isToday ? strings.discover.heroToday(daypart(entry.startsAt)) : strings.discover.heroNext(formatWeekday(entry.startsAt))}
-        </Text>
-      </View>
+      <OverlayPill style={[styles.heroBadge, { pointerEvents: "none" }]}>
+        {isToday ? strings.discover.heroToday(daypart(entry.startsAt)) : strings.discover.heroNext(formatWeekday(entry.startsAt))}
+      </OverlayPill>
       <View style={[styles.heroCaption, { pointerEvents: "box-none" }]}>
         <Text variant="eyebrow" style={{ color: overlay.onImageAccent }}>
           {formatTime(entry.startsAt)} · {entry.venueName}
@@ -1141,7 +1156,7 @@ function TonightHero({ entry, onPress, tall }: { entry: ProgramEntry; onPress: (
           </Text>
         )}
         <View style={styles.heroActions}>
-          <Button label={strings.discover.heroOpen} onPress={onPress} style={styles.heroButton} />
+          <Button label={strings.discover.heroOpen} onPress={onPress} />
         </View>
       </View>
     </View>
@@ -1160,23 +1175,8 @@ function useVenue(venueId: string): Venue | undefined {
 }
 
 function PremiereCard({ play, onPress }: { play: Play; onPress: () => void }) {
-  const styles = useStyles();
-
   const venue = useVenue(play.venueId);
-
-  return (
-    <Pressable onPress={onPress} style={styles.railCard} accessibilityRole="button" accessibilityLabel={play.title}>
-      <View style={{ aspectRatio: TILE_ASPECT }}>
-        <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} height="100%" radius={radius.md} preferThumb portraitFrame />
-      </View>
-      <Text variant="label" numberOfLines={2}>
-        {play.title}
-      </Text>
-      <Text variant="caption" tone="faint" numberOfLines={2}>
-        {venue?.name}
-      </Text>
-    </Pressable>
-  );
+  return <PosterTile poster={play.poster} title={play.title} seed={play.id} width={thumb.tile.width} onPress={onPress} meta={venue?.name} />;
 }
 
 /**
@@ -1191,22 +1191,21 @@ function PremiereCard({ play, onPress }: { play: Play; onPress: () => void }) {
  */
 function TrendingCard({ play, onPress }: { play: Play; onPress: () => void }) {
   const venue = useVenue(play.venueId);
-
   return (
-    <Pressable onPress={onPress} style={{ gap: space.sm }} accessibilityRole="button" accessibilityLabel={play.title}>
-      <View style={{ aspectRatio: TILE_ASPECT }}>
-        <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} height="100%" radius={radius.md} preferThumb portraitFrame />
-      </View>
-      <View style={{ gap: 3 }}>
-        <Text variant="label" numberOfLines={2}>
-          {play.title}
-        </Text>
-        <Text variant="caption" tone="faint" numberOfLines={1}>
-          {venue?.name}
-        </Text>
-        <StatusBadge status={play.status} inline />
-      </View>
-    </Pressable>
+    <PosterTile
+      poster={play.poster}
+      title={play.title}
+      seed={play.id}
+      onPress={onPress}
+      meta={
+        <>
+          <Text variant="caption" tone="faint" numberOfLines={1}>
+            {venue?.name}
+          </Text>
+          <StatusBadge status={play.status} inline />
+        </>
+      }
+    />
   );
 }
 
@@ -1230,8 +1229,6 @@ function PersonResultRow({
   portrait?: Portrait;
   onPress: () => void;
 }) {
-  const styles = useStyles();
-
   const parts = [strings.discover.personCredits(person.creditCount)];
   if (person.directedCount > 0) parts.push(strings.discover.personDirected(person.directedCount));
   if (person.venueCount > 0) parts.push(strings.person.venueCount(person.venueCount));
@@ -1244,20 +1241,14 @@ function PersonResultRow({
   }
 
   return (
-    <Pressable
+    <PersonRow
+      name={person.displayName}
+      meta={parts.join(" · ")}
+      avatarUri={portrait?.thumbUrl}
+      initials={personInitials(person.displayName)}
+      serif
       onPress={onPress}
-      style={styles.personRow}
-      accessibilityRole="button"
-      accessibilityLabel={person.displayName}
-    >
-      <Avatar uri={portrait?.thumbUrl} initials={personInitials(person.displayName)} size={44} serif />
-      <View style={{ flex: 1, gap: 2 }}>
-        <Text variant="body">{person.displayName}</Text>
-        <Text variant="caption" tone="faint" numberOfLines={1}>
-          {parts.join(" · ")}
-        </Text>
-      </View>
-    </Pressable>
+    />
   );
 }
 
@@ -1271,11 +1262,16 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     justifyContent: "space-between",
     gap: space.md,
   },
+  titleRowWide: { alignItems: "center", gap: space["2xl"] },
   searchRow: { marginTop: space.lg },
+  // A field the width of a reading column minus its gutters: wide enough
+  // for the placeholder, narrow enough not to be the widest thing on the page.
+  searchWide: { width: maxWidth.reading - gutter * 2 - space["5xl"] * 3 },
   tabs: { marginTop: space.md, marginBottom: space.md },
   // `alignItems: "center"`: a chip keeps its own height even if the row is
   // ever given more than it needs (T-105).
   chipRow: { gap: space.sm, paddingHorizontal: gutter, paddingVertical: space.md, alignItems: "center" },
+  chipWrap: { flexDirection: "row", flexWrap: "wrap" },
   rowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   scrollBody: {},
 
@@ -1283,16 +1279,10 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   // tall, and a hero stretched to match became a portrait twice the height of
   // the poster it was showing.
   leadWide: { flexDirection: "row", gap: space["2xl"], alignItems: "flex-start" },
-  leadSide: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.hairlineSoft,
-    borderRadius: radius.lg,
-    paddingHorizontal: space.lg,
-    paddingTop: space.lg,
-    paddingBottom: space.xs,
-  },
+  // A column, not a panel: the rows under the header draw their own
+  // hairlines, and a bordered surface beside a full-bleed poster made two
+  // objects of one lead.
+  leadSide: { flex: 1 },
   leadStacked: { marginTop: space["2xl"] },
 
   hero: {
@@ -1302,33 +1292,17 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     width: "100%",
   },
   heroTall: { flex: 1.35, aspectRatio: 1.15, alignSelf: "flex-start" },
-  heroBadge: {
-    position: "absolute",
-    top: space.lg,
-    left: space.lg,
-    backgroundColor: overlay.onImage,
-    borderRadius: radius.pill,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-  },
+  heroBadge: { position: "absolute", top: space.lg, left: space.lg },
   heroCaption: {
     position: "absolute",
     left: space.lg,
     right: space.lg,
     bottom: space.lg,
-    gap: 6,
+    gap: space.sm,
   },
   heroActions: { flexDirection: "row", alignItems: "center", gap: space.lg, marginTop: space.sm },
-  heroButton: { paddingVertical: 10, paddingHorizontal: space.lg, borderRadius: radius.md },
 
-  rail: { gap: space.lg, paddingHorizontal: gutter },
-  railCard: { width: 132, gap: space.sm },
+  rail: { gap: space.md, paddingHorizontal: gutter },
 
-  personRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.md,
-    paddingVertical: space.sm,
-  },
   loadMore: { alignSelf: "center", minWidth: 220 },
 }));

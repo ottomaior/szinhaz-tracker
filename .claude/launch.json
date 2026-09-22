@@ -3,9 +3,10 @@
   "configurations": [
     {
       "name": "expo-web",
-      "runtimeExecutable": "npx",
+      "runtimeExecutable": "node",
       "runtimeArgs": [
-        "expo",
+        "--max-old-space-size=8192",
+        "node_modules/expo/bin/cli",
         "start",
         "--web"
       ],
@@ -65,9 +66,10 @@
     },
     {
       "name": "expo-web-clear",
-      "runtimeExecutable": "npx",
+      "runtimeExecutable": "node",
       "runtimeArgs": [
-        "expo",
+        "--max-old-space-size=8192",
+        "node_modules/expo/bin/cli",
         "start",
         "--web",
         "--clear"

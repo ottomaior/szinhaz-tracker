@@ -58,7 +58,7 @@ export function Skeleton({
 }
 
 /** One browsing tile: poster, title, venue. Matches the real card's rhythm. */
-export function PosterCardSkeleton({ aspectRatio = 3 / 4 }: { aspectRatio?: number }) {
+export function PosterCardSkeleton({ aspectRatio = thumb.tile.width / thumb.tile.height }: { aspectRatio?: number }) {
   return (
     <View style={{ gap: space.sm }}>
       <View style={{ aspectRatio }}>
