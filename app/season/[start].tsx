@@ -1,8 +1,8 @@
 import { useCallback, useState } from "react";
-import { View, ScrollView, StyleSheet, Pressable } from "react-native";
+import { View, ScrollView, StyleSheet } from "react-native";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
-import { gutter, radius, space } from "@/theme/tokens";
+import { gutter, mask, radius, space } from "@/theme/tokens";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   getSeasonGenres,
@@ -17,12 +17,14 @@ import {
 } from "@/services/seasonService";
 import { getPlayById } from "@/services/playsService";
 import type { Play } from "@/data/types";
-import { ChevronRightIcon } from "@/components/icons/Icons";
 import { MaskRatingRow } from "@/components/icons/MaskIcon";
 import { Chip } from "@/components/ui/Chip";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { MeterBar, StatsRow } from "@/components/ui/Cards";
+import { PlayRow } from "@/components/ui/PlayRow";
+import { LinkRow } from "@/components/ui/Rows";
+import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { ModalHeader } from "@/components/ui/ModalHeader";
-import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { ContentColumn } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
@@ -104,7 +106,16 @@ export default function SeasonScreen() {
     }, [session, seasonStart])
   );
 
-  if (loading) return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        <ModalHeader title={strings.season.headerTitle} fallbackRoute="/(tabs)/profile" />
+        <ContentColumn style={{ padding: gutter }}>
+          <ScreenSkeleton />
+        </ContentColumn>
+      </View>
+    );
+  }
 
   const label = seasonLabelWithSuffix(seasonStart);
   const empty = !!stats && stats.entries === 0;
@@ -158,30 +169,26 @@ export default function SeasonScreen() {
 
               {!!stats && !empty && (
                 <>
-                  <View style={styles.statsCard}>
-                    <Stat value={stats.entries} label={strings.season.entries} gold />
-                    <View style={styles.divider} />
-                    <Stat value={stats.venues} label={strings.season.venues} />
-                    <View style={styles.divider} />
-                    <Stat value={stats.cities} label={strings.season.cities} />
-                    {stats.rewatches > 0 && (
-                      <>
-                        <View style={styles.divider} />
-                        <Stat value={stats.rewatches} label={strings.season.rewatches} />
-                      </>
-                    )}
-                  </View>
+                  <StatsRow
+                    divided
+                    items={[
+                      { value: <Text variant="numeral">{stats.entries}</Text>, label: strings.season.entries },
+                      { value: stats.venues, label: strings.season.venues },
+                      { value: stats.cities, label: strings.season.cities },
+                      ...(stats.rewatches > 0 ? [{ value: stats.rewatches, label: strings.season.rewatches }] : []),
+                    ]}
+                  />
 
                   {/* First and last night. Two dates rather than a span,
                       because "szept. 12. – jún. 4." reads as a run of shows;
                       these are the two ends of your own year. */}
                   {!!stats.firstNight && !!stats.lastNight && (
                     <View style={styles.factsRow}>
-                      <View style={{ flex: 1, gap: 2 }}>
+                      <View style={{ flex: 1, gap: space["2xs"] }}>
                         <Text variant="label" tone="dim">{strings.season.firstNight}</Text>
                         <Text variant="body">{formatLongDate(`${stats.firstNight}T12:00:00Z`)}</Text>
                       </View>
-                      <View style={{ flex: 1, gap: 2 }}>
+                      <View style={{ flex: 1, gap: space["2xs"] }}>
                         <Text variant="label" tone="dim">{strings.season.lastNight}</Text>
                         <Text variant="body">{formatLongDate(`${stats.lastNight}T12:00:00Z`)}</Text>
                       </View>
@@ -191,29 +198,13 @@ export default function SeasonScreen() {
                   {!!topPlay && (
                     <View style={{ gap: space.sm }}>
                       <Text variant="label" tone="dim">{strings.season.topHeading}</Text>
-                      <Pressable
+                      <PlayRow
+                        play={topPlay}
                         onPress={() => router.push(`/play/${topPlay.id}`)}
-                        style={styles.topRow}
-                        accessibilityRole="button"
-                        accessibilityLabel={topPlay.title}
-                      >
-                        <PosterPlaceholder
-                          poster={topPlay.poster}
-                          title={topPlay.title}
-                          seed={topPlay.id}
-                          width={48}
-                          height={72}
-                          radius={radius.sm}
-                          preferThumb
-                        />
-                        <View style={{ flex: 1, gap: 4 }}>
-                          <Text variant="subheading" numberOfLines={2}>{topPlay.title}</Text>
-                          {stats.topRating !== undefined && (
-                            <MaskRatingRow rating={stats.topRating} size={14} />
-                          )}
-                        </View>
-                        <ChevronRightIcon size={15} color={colors.textFaint} />
-                      </Pressable>
+                        trailing={
+                          stats.topRating !== undefined ? <MaskRatingRow rating={stats.topRating} size={mask.inline} /> : undefined
+                        }
+                      />
                     </View>
                   )}
 
@@ -260,21 +251,16 @@ export default function SeasonScreen() {
                     <View style={{ gap: space.sm }}>
                       <Text variant="label" tone="dim">{strings.season.peopleHeading}</Text>
                       {people.map((p) => (
-                        <Pressable
+                        <LinkRow
                           key={p.slug}
-                          onPress={() =>
-                            router.push({ pathname: "/person/[slug]", params: { slug: p.slug } })
+                          label={p.name}
+                          onPress={() => router.push({ pathname: "/person/[slug]", params: { slug: p.slug } })}
+                          trailing={
+                            <Text variant="caption" tone="faint">
+                              {strings.season.peopleNights(p.nights)}
+                            </Text>
                           }
-                          style={styles.personRow}
-                          accessibilityRole="button"
-                          accessibilityLabel={p.name}
-                        >
-                          <Text variant="body" style={{ flex: 1 }} numberOfLines={1}>{p.name}</Text>
-                          <Text variant="caption" tone="faint">
-                            {strings.season.peopleNights(p.nights)}
-                          </Text>
-                          <ChevronRightIcon size={15} color={colors.textFaint} />
-                        </Pressable>
+                        />
                       ))}
                       <Text variant="caption" tone="faint">{strings.season.peopleSource}</Text>
                     </View>
@@ -304,54 +290,25 @@ export default function SeasonScreen() {
  * some opera", which a length answers directly.
  */
 function GenreBars({ genres, total }: { genres: SeasonGenre[]; total: number }) {
-  const styles = useStyles();
-
   const most = Math.max(...genres.map((g) => g.entries), 1);
   return (
     <View style={{ gap: space.sm }}>
+      {/* Scaled against the largest genre, not against the total: with one
+          genre at 90% every other bar would be a sliver too short to read. */}
       {genres.map((g) => (
-        <View key={g.genre} style={{ gap: 4 }}>
-          <View style={styles.genreLabelRow}>
-            <Text variant="bodySmall">{strings.genres[g.genre] ?? g.genre}</Text>
-            <Text variant="caption" tone="faint">
-              {g.entries}
-              {total > 0 ? ` · ${Math.round((g.entries / total) * 100)}%` : ""}
-            </Text>
-          </View>
-          {/* Scaled against the largest genre, not against the total: with one
-              genre at 90% every other bar would be a sliver too short to read. */}
-          <View style={styles.genreTrack}>
-            <View style={[styles.genreFill, { width: `${(g.entries / most) * 100}%` }]} />
-          </View>
-        </View>
+        <MeterBar
+          key={g.genre}
+          label={strings.genres[g.genre] ?? g.genre}
+          fraction={g.entries / most}
+          value={total > 0 ? `${Math.round((g.entries / total) * 100)}%` : String(g.entries)}
+        />
       ))}
-    </View>
-  );
-}
-
-function Stat({ value, label, gold = false }: { value: number; label: string; gold?: boolean }) {
-  return (
-    <View style={{ flex: 1, alignItems: "center", gap: 2 }}>
-      <Text variant="heading" tone={gold ? "accent" : "default"}>
-        {value}
-      </Text>
-      <Text variant="caption" tone="faint" style={{ textAlign: "center" }}>
-        {label}
-      </Text>
     </View>
   );
 }
 
 const useStyles = makeStyles((colors) => StyleSheet.create({
   seasonRow: { flexDirection: "row", gap: space.sm, flexWrap: "wrap" },
-  statsCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    paddingVertical: space.md,
-  },
-  divider: { width: 1, height: 28, backgroundColor: colors.hairlineSoft },
   factsRow: {
     flexDirection: "row",
     gap: space.lg,
@@ -359,26 +316,4 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     borderRadius: radius.lg,
     padding: space.md,
   },
-  topRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.md,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: space.md,
-  },
-  personRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.md,
-    paddingVertical: space.sm,
-  },
-  genreLabelRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  genreTrack: {
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.surface2,
-    overflow: "hidden",
-  },
-  genreFill: { height: 6, borderRadius: 3, backgroundColor: colors.gold },
 }));

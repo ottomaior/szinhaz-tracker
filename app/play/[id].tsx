@@ -859,8 +859,16 @@ function formatRuntime(minutes: number) {
  * whole point of the change that made these nullable is that not answering is
  * not a verdict.
  */
+/** One dimension of the reader's own rating. The three sit under one another, so the labels share a column. */
 function RatingBar({ label, value }: { label: string; value?: number }) {
-  return <MeterBar label={label} fraction={value === undefined ? 0 : value / 5} value={value === undefined ? strings.common.noRating : value.toFixed(1)} />;
+  return (
+    <MeterBar
+      label={label}
+      labelWidth={space["5xl"] + space.xl}
+      fraction={value === undefined ? 0 : value / 5}
+      value={value === undefined ? strings.common.noRating : value.toFixed(1)}
+    />
+  );
 }
 
 function ReviewRow({ review }: { review: Review }) {

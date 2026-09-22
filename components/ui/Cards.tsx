@@ -159,6 +159,7 @@ export function MeterBar({
   fraction,
   label,
   value,
+  labelWidth,
   style,
 }: {
   /** 0–1. */
@@ -166,6 +167,8 @@ export function MeterBar({
   label?: string;
   /** The figure printed at the end: "4.5", "12". */
   value?: string;
+  /** A fixed label column, where several bars sit under one another. */
+  labelWidth?: number;
   style?: StyleProp<ViewStyle>;
 }) {
   const styles = useStyles();
@@ -173,7 +176,7 @@ export function MeterBar({
   return (
     <View style={[styles.meter, style]}>
       {!!label && (
-        <Text variant="caption" tone="dim" style={styles.meterLabel} numberOfLines={1}>
+        <Text variant="caption" tone="dim" style={[styles.meterLabel, labelWidth !== undefined && { width: labelWidth }]} numberOfLines={1}>
           {label}
         </Text>
       )}
@@ -181,7 +184,7 @@ export function MeterBar({
         <View style={[styles.fill, { width: `${pct}%` }]} />
       </View>
       {value !== undefined && (
-        <Text variant="label" style={styles.meterValue}>
+        <Text variant="label" numberOfLines={1} style={styles.meterValue}>
           {value}
         </Text>
       )}
@@ -212,8 +215,8 @@ const useStyles = makeStyles((colors, elevation) => StyleSheet.create({
   statLabel: { textAlign: "center" },
 
   meter: { flexDirection: "row", alignItems: "center", gap: space.sm },
-  meterLabel: { width: space["5xl"] + space.xl },
+  meterLabel: { flexShrink: 0 },
   track: { flex: 1, height: space.xs, borderRadius: radius.pill, backgroundColor: colors.surface2, overflow: "hidden" },
   fill: { height: "100%", backgroundColor: colors.gold },
-  meterValue: { width: space["3xl"], textAlign: "right" },
+  meterValue: { minWidth: space["3xl"], textAlign: "right" },
 }));
