@@ -3,7 +3,7 @@ import { View, ScrollView, StyleSheet, Pressable, RefreshControl } from "react-n
 import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
-import { gutter, overlay, radius, space } from "@/theme/tokens";
+import { avatar, gutter, hairlineWidth, icon, mask, overlay, space } from "@/theme/tokens";
 import { getCurrentUser, getDiaryEntriesForUser, getVenuesByIds, getWatchlist, type DiaryEntry } from "@/services/playsService";
 import { signOut } from "@/services/authService";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,7 +12,13 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { PlayRow } from "@/components/ui/PlayRow";
 import { MaskRatingRow } from "@/components/icons/MaskIcon";
-import { ChevronRightIcon, SettingsIcon } from "@/components/icons/Icons";
+import { SettingsIcon } from "@/components/icons/Icons";
+import { ConfirmCard } from "@/components/ui/Cards";
+import { LinkRow } from "@/components/ui/Rows";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Notice } from "@/components/ui/Notice";
+import { ScreenSkeleton } from "@/components/ui/Skeleton";
+import { IconButton } from "@/components/ui/Button";
 import { Screen } from "@/components/ui/Screen";
 import { SignedOutState } from "@/components/ui/SignedOutState";
 import { Text } from "@/components/ui/Text";
@@ -23,7 +29,7 @@ import { CountUp } from "@/components/motion/CountUp";
 import { AnimatedList } from "@/components/motion/Reveal";
 import { strings } from "@/i18n/hu";
 import { currentSeasonStart } from "@/utils/season";
-import { makeStyles } from "@/theme/styles";
+import { makeStyles, useColors } from "@/theme/styles";
 import { countFollowRequests } from "@/services/followService";
 
 const TABS = [strings.profile.tabDiary, strings.profile.tabWatchlists, strings.profile.tabReviews] as const;
@@ -118,7 +124,13 @@ export default function ProfileScreen() {
     }
   }
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg, paddingTop: insets.top + space.md, paddingHorizontal: gutter }}>
+        <ScreenSkeleton />
+      </View>
+    );
+  }
 
   if (!session) {
     return (
@@ -137,13 +149,19 @@ export default function ProfileScreen() {
     );
   }
 
-  if (!user) return null;
+  if (!user) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg, paddingTop: insets.top + space.md, paddingHorizontal: gutter }}>
+        <ScreenSkeleton />
+      </View>
+    );
+  }
 
   const written = diary.filter((e) => e.review.text.trim().length > 0);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <Screen>
+      <Screen width="reading">
       <ScrollView
         contentContainerStyle={{ paddingBottom: dockInset }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.gold} />}
@@ -161,53 +179,18 @@ export default function ProfileScreen() {
               but they open with a line of text; this screen opens with a 78pt
               circle hard against the top edge, so it takes the gutter instead
               and the avatar's top and left spacing agree. */}
-          {/* The controls above the card rather than on it: a ticket does
-              not carry its own edit button. */}
-          <View style={[styles.headerActions, { paddingTop: insets.top + space.md }]}>
-            <Pressable
-              style={styles.headerBtn}
-              onPress={() => router.push("/edit-profile")}
-              accessibilityRole="button"
-            >
-              <Text variant="label">{strings.profile.edit}</Text>
-            </Pressable>
-            <SettingsButton onPress={() => router.push("/settings")} />
-            <Pressable
-              style={styles.headerBtn}
-              onPress={() => setConfirmingSignOut((s) => !s)}
-              accessibilityRole="button"
-              aria-expanded={confirmingSignOut}
-              accessibilityState={{ expanded: confirmingSignOut }}
-            >
-              <Text variant="label" tone="dim">{strings.auth.signOut}</Text>
-            </Pressable>
-          </View>
-
-          {confirmingSignOut && (
-            <View style={styles.confirmCard}>
-              <Text variant="subheading">{strings.auth.signOutConfirmTitle}</Text>
-              <Text variant="bodySmall" tone="dim">{strings.auth.signOutConfirmBody}</Text>
-              {!!signOutError && (
-                <Text accessibilityRole="alert" variant="bodySmall" tone="accent">
-                  {signOutError}
-                </Text>
-              )}
-              <View style={{ flexDirection: "row", gap: 10 }}>
-                <Button label={strings.common.cancel} variant="outline" style={{ flex: 1 }} onPress={() => setConfirmingSignOut(false)} />
-                <Button label={strings.auth.signOut} style={{ flex: 1 }} onPress={handleSignOut} />
-              </View>
-            </View>
-          )}
+          <View style={{ paddingTop: insets.top + space.md }} />
 
           {/* The reader as a season ticket — see components/ui/HoloCard. The
               name, the handle and the four counts used to sit on the page as
               a column of text between two hairlines; on the card they are one
               object, and the one the diary belongs to. Everything on it takes
               `overlay` colours: the card is dark in every theme. */}
-          <HoloCard style={{ marginTop: space.md }}>
+          <HoloCard>
             <View style={styles.cardHead}>
-              <Avatar uri={user.avatarUrl} initials={user.initials} size={56} serif />
-              <View style={{ flex: 1, gap: 2, paddingRight: 48 }}>
+              <Avatar uri={user.avatarUrl} initials={user.initials} size={avatar.hero} serif />
+              {/* Kept clear of the crest stamped in the card's corner (HoloCard). */}
+              <View style={{ flex: 1, gap: space["2xs"], paddingRight: space["4xl"] + space.sm }}>
                 <Text variant="title" numberOfLines={2} style={{ color: overlay.onImageHeading }}>{user.name}</Text>
                 <Text variant="bodySmall" numberOfLines={1} style={{ color: overlay.onImageText }}>
                   {[`@${user.handle}`, user.city].filter(Boolean).join(" · ")}
@@ -238,7 +221,7 @@ export default function ProfileScreen() {
                 accessibilityLabel={strings.profile.thisSeason}
                 style={{ flex: 1 }}
               >
-                <Stat value={user.stats.thisSeason} label={strings.profile.thisSeason} delay={120} />
+                <Stat value={user.stats.thisSeason} label={strings.profile.thisSeason} />
               </Pressable>
               {/* The two numbers open the lists behind them (T-096). */}
               <Pressable
@@ -247,7 +230,7 @@ export default function ProfileScreen() {
                 accessibilityLabel={strings.profile.followers}
                 style={{ flex: 1 }}
               >
-                <Stat value={user.stats.followers} label={strings.profile.followers} delay={240} />
+                <Stat value={user.stats.followers} label={strings.profile.followers} />
               </Pressable>
               <Pressable
                 onPress={() => router.push({ pathname: "/followers", params: { tab: "following" } })}
@@ -255,7 +238,7 @@ export default function ProfileScreen() {
                 accessibilityLabel={strings.profile.following}
                 style={{ flex: 1 }}
               >
-                <Stat value={user.stats.following} label={strings.profile.following} delay={360} />
+                <Stat value={user.stats.following} label={strings.profile.following} />
               </Pressable>
             </View>
             {pendingRequests > 0 && (
@@ -271,18 +254,41 @@ export default function ProfileScreen() {
             )}
           </HoloCard>
 
+          {/* The account's controls under the card rather than above it: the
+              card is what the screen is about, and a row of pills over it put
+              "Kijelentkezés" before the reader's own name. A ticket does not
+              carry its own edit button, so they sit beside it, not on it. */}
+          <View style={styles.headerActions}>
+            <Button variant="outline" size="sm" label={strings.profile.edit} onPress={() => router.push("/edit-profile")} />
+            <SettingsButton onPress={() => router.push("/settings")} />
+            <View style={{ flex: 1 }} />
+            <Button
+              variant="text"
+              size="sm"
+              label={strings.auth.signOut}
+              onPress={() => setConfirmingSignOut((s) => !s)}
+              style={styles.signOut}
+            />
+          </View>
+
+          {confirmingSignOut && (
+            <ConfirmCard
+              title={strings.auth.signOutConfirmTitle}
+              body={strings.auth.signOutConfirmBody}
+              confirmLabel={strings.auth.signOut}
+              cancelLabel={strings.common.cancel}
+              onConfirm={handleSignOut}
+              onCancel={() => setConfirmingSignOut(false)}
+              notice={signOutError ? <Notice>{signOutError}</Notice> : undefined}
+              style={styles.confirm}
+            />
+          )}
+
           {/* Lists are a screen of their own rather than a fourth tab here.
               The three tabs are all "productions, filtered" and read as one
               control; a list is a different kind of object, and burying it as a
               fourth option would make it look like another view of the diary. */}
-          <Pressable
-            onPress={() => router.push("/lists")}
-            accessibilityRole="button"
-            style={styles.listsLink}
-          >
-            <Text variant="label">{strings.lists.headerTitle}</Text>
-            <ChevronRightIcon size={15} color={colors.textFaint} />
-          </Pressable>
+          <LinkRow label={strings.lists.headerTitle} onPress={() => router.push("/lists")} style={styles.listsLink} />
 
           <PillTabs
             tabs={TABS.map((t) => ({ key: t, label: t }))}
@@ -333,7 +339,7 @@ export default function ProfileScreen() {
                   }
                   trailing={
                     entry.review.ratingOverall !== undefined ? (
-                      <MaskRatingRow rating={entry.review.ratingOverall} size={13} />
+                      <MaskRatingRow rating={entry.review.ratingOverall} size={mask.inline} />
                     ) : undefined
                   }
                 />
@@ -374,7 +380,7 @@ export default function ProfileScreen() {
                     <>
                       <View style={styles.reviewMeta}>
                         {entry.review.ratingOverall !== undefined && (
-                          <MaskRatingRow rating={entry.review.ratingOverall} size={13} />
+                          <MaskRatingRow rating={entry.review.ratingOverall} size={mask.inline} />
                         )}
                         <Text variant="caption" tone="faint">
                           {entry.review.seenAt ? formatDate(entry.review.seenAt) : strings.profile.seenUndated}
@@ -421,12 +427,16 @@ function TabBody({
   if (loaded && isEmpty) {
     return (
       <View style={styles.emptyState}>
-        <Text variant="bodySmall" tone="faint">{emptyLabel}</Text>
+        <EmptyState align="center" title={emptyLabel} />
         {emptyAction}
       </View>
     );
   }
-  return <AnimatedList style={styles.tabList} stagger={50}>{children}</AnimatedList>;
+  return (
+    <AnimatedList style={styles.tabList} stagger={50} initialDelay={120}>
+      {children}
+    </AnimatedList>
+  );
 }
 
 /**
@@ -445,12 +455,12 @@ function formatDate(dayKey: string) {
   });
 }
 
-function Stat({ value, label, delay = 0 }: { value: number; label: string; delay?: number }) {
+function Stat({ value, label }: { value: number; label: string }) {
   const styles = useStyles();
 
   return (
     <View style={styles.stat}>
-      <CountUp value={value} delay={delay} style={{ color: overlay.onImageAccent }} />
+      <CountUp value={value} style={{ color: overlay.onImageAccent }} />
       <Text variant="caption" style={{ textAlign: "center", color: overlay.onImageText }}>
         {label}
       </Text>
@@ -460,72 +470,32 @@ function Stat({ value, label, delay = 0 }: { value: number; label: string; delay
 
 /** The way into Settings, identical whether or not anybody is signed in. */
 function SettingsButton({ onPress }: { onPress: () => void }) {
-  const styles = useStyles();
-
+  const palette = useColors();
   return (
-    <Pressable
-      style={[styles.headerBtn, styles.headerIconBtn]}
-      onPress={onPress}
-      hitSlop={8}
-      accessibilityRole="button"
-      accessibilityLabel={strings.settings.title}
-    >
-      <SettingsIcon size={17} color={colors.textDim} />
-    </Pressable>
+    <IconButton onPress={onPress} accessibilityLabel={strings.settings.title}>
+      <SettingsIcon size={icon.inline} color={palette.textDim} />
+    </IconButton>
   );
 }
 
 const useStyles = makeStyles((colors) => StyleSheet.create({
-  // `alignItems: "flex-end"` rather than centred: the right-hand pills wrap to
-  // two lines on a narrow screen, and sitting them on the avatar's baseline
-  // keeps the row reading as one block whether they wrap or not.
-  // Wraps rather than overflows: three pills do not always fit on a 375pt
-  // screen, and the last one was being cut off by the right edge.
-  headerActions: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "flex-end",
-    gap: 8,
-  },
+  headerActions: { flexDirection: "row", alignItems: "center", gap: space.sm, marginTop: space.lg },
+  signOut: { marginRight: -space.sm },
+  confirm: { marginTop: space.lg },
   cardHead: { flexDirection: "row", alignItems: "center", gap: space.md },
   signedOutBar: { flexDirection: "row", justifyContent: "flex-end", paddingHorizontal: gutter, paddingTop: space.md },
-  headerBtn: {
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    borderRadius: 999,
-    paddingVertical: 7,
-    paddingHorizontal: 16,
-  },
-  // An icon has no text to give the pill its width, so it gets its own.
-  headerIconBtn: { paddingHorizontal: 11, alignItems: "center", justifyContent: "center" },
-  confirmCard: {
-    marginTop: 12,
-    gap: 10,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    borderRadius: 14,
-    padding: 14,
-  },
   statsRow: {
     flexDirection: "row",
     marginTop: space.md,
     paddingTop: space.md,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(246,238,232,0.14)",
+    borderTopWidth: hairlineWidth,
+    borderTopColor: overlay.onImageRule,
   },
-  stat: { flex: 1, alignItems: "center", gap: 2 },
-  listsLink: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: space.lg,
-    paddingVertical: space.md,
-    paddingHorizontal: space.md,
-    borderRadius: radius.md,
-    backgroundColor: colors.surface,
-  },
-  tabList: { marginTop: space.lg, gap: space.lg },
+  stat: { flex: 1, alignItems: "center", gap: space["2xs"] },
+  listsLink: { marginTop: space.md },
+  // The rows draw their own hairlines; the list only needs a step of air
+  // after the tabs before the first one.
+  tabList: { marginTop: space.sm },
   reviewMeta: { flexDirection: "row", alignItems: "center", gap: space.sm },
-  emptyState: { marginTop: 24, alignItems: "center", paddingVertical: 30, gap: space.lg },
+  emptyState: { marginTop: space["2xl"], alignItems: "center", gap: space.lg },
 }));

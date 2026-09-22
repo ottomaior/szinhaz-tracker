@@ -17,7 +17,9 @@ import { makeStyles } from "@/theme/styles";
  * in a dark void — the second and third screens a curious visitor taps, and
  * neither said what a diary or a watchlist was for. This is the same block on
  * both, so the two tabs make one argument rather than two apologies, and the
- * tab the reader is on leads the list.
+ * tab the reader is on leads the list and names the page in the eyebrow —
+ * two tabs that showed the identical screen read as the app not responding
+ * (T-079).
  */
 export function SignedOutState({ lead }: { lead: "diary" | "watchlist" }) {
   const styles = useStyles();
@@ -33,7 +35,7 @@ export function SignedOutState({ lead }: { lead: "diary" | "watchlist" }) {
     <ContentColumn style={styles.wrap}>
       <BrandMark size={40} />
       <View style={{ gap: space.xs }}>
-        <Text variant="eyebrow">{strings.signedOut.eyebrow}</Text>
+        <Text variant="eyebrow">{lead === "diary" ? strings.tabs.profile : strings.tabs.watchlist}</Text>
         <Text variant="display">{strings.signedOut.title}</Text>
       </View>
       <View style={{ gap: space.lg }}>
@@ -51,7 +53,7 @@ export function SignedOutState({ lead }: { lead: "diary" | "watchlist" }) {
       </View>
       <View style={{ gap: space.md }}>
         <Button label={strings.signedOut.signUp} onPress={() => router.push("/sign-up")} />
-        <Pressable onPress={() => router.push("/sign-in")} accessibilityRole="button" hitSlop={8} style={{ alignSelf: "center" }}>
+        <Pressable onPress={() => router.push("/sign-in")} accessibilityRole="button" hitSlop={space.sm} style={{ alignSelf: "center" }}>
           <Text variant="bodySmall" tone="faint">
             {strings.signedOut.haveAccount}{" "}
             <Text variant="bodySmall" tone="accent">{strings.signedOut.signIn}</Text>
