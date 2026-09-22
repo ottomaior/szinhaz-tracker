@@ -71,9 +71,40 @@ RUN set -e; \
     done; \
     echo "every dynamic route's shell is routed by nginx"
 
+# Every location block in nginx.conf must include the security headers.
+#
+# nginx does not inherit `add_header` into a block that sets one of its own,
+# and every block in that file sets its own Cache-Control — so a block that
+# forgets the include serves its route with no X-Frame-Options and nothing
+# says so. That is the same shape of mistake as the missing dynamic-route
+# lines above: invisible in review, invisible in the browser unless looked
+# for, and wrong in production only. So the build counts them.
+RUN set -e; \
+    locations=$(grep -cE '^  location ' nginx.conf); \
+    includes=$(grep -c 'include /etc/nginx/security-headers.conf;' nginx.conf); \
+    echo "nginx.conf: $locations location blocks, $includes security-header includes"; \
+    [ "$includes" -eq "$((locations + 1))" ] || { \
+      echo "FAIL: a location block is missing the security-headers include."; \
+      echo "      nginx does not inherit add_header into a block that sets one,"; \
+      echo "      so that route would answer with no security headers at all."; \
+      exit 1; \
+    }; \
+    echo "every location block includes the security headers"
+
 FROM nginx:1.27-alpine
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Not under conf.d/: nginx loads every *.conf there as a server config of its
+# own, and this file is a fragment of directives meant to be included, not a
+# server. It sits one level up and each location block asks for it by path.
+COPY nginx-security-headers.conf /etc/nginx/security-headers.conf
 COPY --from=build /app/dist /usr/share/nginx/html
+
+# Parse the config at image-build time. Without this, a typo in nginx.conf or
+# in the headers fragment is not discovered until the container starts and
+# immediately exits — which is to say, during the deploy, on the production
+# URL. `nginx -t` moves that to the build, where it is just a red check.
+RUN nginx -t
 
 EXPOSE 8080
