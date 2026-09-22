@@ -41,7 +41,7 @@ import { StarBorder } from "@/components/motion/StarBorder";
 import { strings } from "@/i18n/hu";
 import { formatTime, todayInBudapest } from "@/utils/datetime";
 import { closeModal } from "@/utils/navigation";
-import { makeStyles } from "@/theme/styles";
+import { makeStyles, useColors } from "@/theme/styles";
 import { useToast } from "@/components/ui/Toast";
 import { haptic } from "@/utils/haptics";
 
@@ -680,6 +680,9 @@ export default function CheckInScreen() {
  * which made the most prominent action in the app a dead end.
  */
 function PlayPicker({ onPick }: { onPick: (play: Play) => void }) {
+  // The palette through the hook, so the picker re-renders when the theme
+  // changes: it paints its own ground and has no stylesheet to subscribe by.
+  const palette = useColors();
   const [query, setQuery] = useState("");
   const trimmed = query.trim();
   // Twenty rows: a picker is answered by the first few, and the field stays
@@ -689,7 +692,7 @@ function PlayPicker({ onPick }: { onPick: (play: Play) => void }) {
   const searching = search.loading && !search.data;
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <View style={{ flex: 1, backgroundColor: palette.bg }}>
       <ModalHeader title={strings.checkin.headerTitle} />
 
       <ScrollView keyboardShouldPersistTaps="handled">
