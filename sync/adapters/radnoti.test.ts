@@ -11,7 +11,7 @@ const parnaember = readFileSync(join(__dirname, "../__fixtures__/radnoti-a-parna
 const oidipusz = readFileSync(join(__dirname, "../__fixtures__/radnoti-oidipusz.html"), "utf8");
 const programme = readFileSync(join(__dirname, "../__fixtures__/radnoti-musor.html"), "utf8");
 /**
- * The page that exposed T-122: a radiocáfé 98.0 sponsor logo sits in the
+ * The page that exposed T-124: a radiocáfé 98.0 sponsor logo sits in the
  * detail block ahead of the production's own cover image.
  */
 const parasztopera = readFileSync(join(__dirname, "../__fixtures__/radnoti-parasztopera.html"), "utf8");
@@ -189,7 +189,7 @@ describe("the cover image, when something else comes first", () => {
     const details = parseProductionDetail(parasztopera);
 
     // Not `radiocafe98_fekvo-1.png`, which is the 220×156 logo of the
-    // production's radio sponsor and what the app used to show (T-122).
+    // production's radio sponsor and what the app used to show (T-124).
     expect(details.posterUrl).toContain("parasztopera_boritokep");
     expect(details.posterUrl).not.toContain("radiocafe");
   });
