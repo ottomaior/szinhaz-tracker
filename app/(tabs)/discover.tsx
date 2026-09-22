@@ -1153,6 +1153,13 @@ const HERO_ASPECT = 4 / 4.6;
 /** What the caption is assumed to cost before it has been measured once. */
 const CAPTION_FALLBACK = 180;
 
+/**
+ * The lead's column on a wide screen: wide enough for the credit line to sit
+ * on one line under the picture, narrow enough that a poster shortened to fit
+ * the window does not leave much ground beside it.
+ */
+const HERO_COLUMN_WIDTH = 400;
+
 /** Below these the lead stops being a picture and becomes a strip. */
 const MIN_LEAD_HEIGHT = 320;
 const MIN_POSTER_HEIGHT = 160;
@@ -1205,6 +1212,7 @@ function TonightHero({
   // left either way.
   const [captionHeight, setCaptionHeight] = useState(CAPTION_FALLBACK);
   const posterHeight = Math.max(MIN_POSTER_HEIGHT, available - captionHeight - space.md);
+  const aspect = posterAspect(entry.poster, HERO_ASPECT);
 
   return (
     <View style={tall ? styles.heroTall : undefined}>
@@ -1214,7 +1222,7 @@ function TonightHero({
         onPress={onPress}
         accessibilityRole="button"
         accessibilityLabel={entry.title}
-        style={[styles.poster, { aspectRatio: posterAspect(entry.poster, HERO_ASPECT), height: posterHeight }]}
+        style={[styles.poster, tall ? styles.posterWide : styles.posterPhone, { aspectRatio: aspect, height: posterHeight }]}
         surfaceStyle={{ flex: 1 }}
         radius={radius.lg}
         tilt={4}
@@ -1374,7 +1382,18 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   leadSide: { flex: 1 },
   leadStacked: { marginTop: space["2xl"] },
 
-  heroTall: { flex: 1.35, alignSelf: "flex-start" },
+  /*
+   * A column the width of a poster, not a share of the row.
+   *
+   * It was `flex: 1.35`, which was right while the picture filled whatever
+   * width it was given; now that the picture is sized to fit the screen's
+   * height, a flex share left a hand's breadth of empty ground between it
+   * and the programme beside it. Fixed rather than derived from the
+   * picture's own width, because the caption under it wraps to this column
+   * and its height is what decides the picture's height: a column that
+   * followed the picture would be a circle.
+   */
+  heroTall: { width: HERO_COLUMN_WIDTH, alignSelf: "flex-start" },
   /*
    * No width of its own: with a height and an aspect ratio set, the frame
    * derives its width, so the poster keeps its own shape at the largest size
@@ -1383,7 +1402,13 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
    * eyebrow, its title and its button then share one margin, which is the
    * grid the rest of the page is on.
    */
-  poster: { alignSelf: "flex-start", maxWidth: "100%", borderRadius: radius.lg, overflow: "hidden", backgroundColor: colors.surface2 },
+  poster: { maxWidth: "100%", borderRadius: radius.lg, overflow: "hidden", backgroundColor: colors.surface2 },
+  // On a wide screen the column is the picture's width, so the two agree on
+  // a left edge; on a phone the column is the screen and a poster that has
+  // been shortened to fit sits in the middle of it rather than against one
+  // side with the ground showing at the other.
+  posterWide: { alignSelf: "flex-start" },
+  posterPhone: { alignSelf: "center" },
   heroBadge: { position: "absolute", top: space.md, left: space.md },
   heroCaption: { gap: space.sm, paddingTop: space.md },
   heroButton: { alignSelf: "flex-start", marginTop: space.xs },

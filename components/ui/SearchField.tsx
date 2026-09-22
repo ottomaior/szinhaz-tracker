@@ -87,7 +87,13 @@ export function SearchField({
       style={[styles.field, prominent && styles.prominent, focused && styles.focused]}
       accessibilityRole={Platform.OS === "web" ? ("search" as never) : undefined}
     >
-      <SearchIcon size={prominent ? icon.chrome : icon.inline} color={focused ? colors.gold : colors.textFaint} />
+      {/* In its own box, so a narrow field — the top bar's, on a laptop —
+          shrinks the text rather than the magnifier. A flex row shrinks
+          whatever it can, and an icon at nought pixels reads as a field
+          somebody forgot to finish. */}
+      <View style={styles.icon}>
+        <SearchIcon size={prominent ? icon.chrome : icon.inline} color={focused ? colors.gold : colors.textFaint} />
+      </View>
       <TextField
         bare
         ref={inputRef}
@@ -146,7 +152,12 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     borderWidth: hairlineWidth,
     borderColor: colors.hairline,
     backgroundColor: colors.surface,
+    // A long placeholder in a short field spilled out over whatever sat
+    // beside it: a flex item may not shrink below its content unless it is
+    // told it may, and the box has to clip what is still too long.
+    overflow: "hidden",
   },
+  icon: { flexShrink: 0 },
   prominent: {
     minHeight: control.lg,
   },
@@ -156,6 +167,7 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   },
   input: {
     flex: 1,
+    minWidth: 0,
     // Zero vertical padding: the row's minHeight is the height, so the text
     // sits centred instead of on a padding of its own.
     paddingVertical: 0,

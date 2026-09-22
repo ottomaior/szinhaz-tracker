@@ -116,7 +116,10 @@ export function TopBar() {
           <SearchField
             value={query}
             onChangeText={setQuery}
-            placeholder={strings.discover.searchPlaceholder}
+            // The short form: the bar's field is a fraction of the width
+            // the screen's own field has, and "Darabok, színházak, színészek"
+            // arrives there already cut in half.
+            placeholder={strings.discover.searchOpen}
             accessibilityLabel={strings.discover.searchLabel}
             onSubmit={() => {
               const term = query.trim();
@@ -178,12 +181,13 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     alignItems: "center",
     gap: space.lg,
   },
-  brand: { flexDirection: "row", alignItems: "center", gap: space.sm },
-  // The bar's one flexible column: the nav is as wide as its four words, the
-  // actions as wide as they are, and the field takes the rest.
-  search: { flex: 1, maxWidth: maxWidth.reading / 2 },
-  nav: { flexDirection: "row", alignItems: "center" },
-  actions: { flexDirection: "row", alignItems: "center", gap: space.md },
+  brand: { flexDirection: "row", alignItems: "center", gap: space.sm, flexShrink: 0 },
+  // The bar's one flexible column, and the only one that may shrink: the
+  // brand, the sections and the actions are each as wide as their words, and
+  // the field takes what is left between them.
+  search: { flex: 1, minWidth: space["5xl"] * 2, maxWidth: maxWidth.reading / 2 },
+  nav: { flexDirection: "row", alignItems: "center", flexShrink: 0 },
+  actions: { flexDirection: "row", alignItems: "center", gap: space.md, flexShrink: 0 },
   // `overflow: visible` matters: the badge is positioned outside the bell's
   // own box, and clipping it would leave a bell that never looks like it has
   // anything in it.
