@@ -98,7 +98,18 @@ function scales(): string {
     "7xl": 144,
   };
 
-  /** The four display roles, which exist only on a poster. */
+  /**
+   * The roles that exist only on a poster.
+   *
+   * Four display sizes above the app's largest, and two running-text sizes:
+   * `lede` for a standfirst and `copy` for everything read in sentences.
+   *
+   * `copy` is 16 where the app's `body` is 15, and that is the one place the
+   * landing deliberately sets text larger than the app. A tool is read in the
+   * hand and a page is read at arm's length. It is not called `subheading`,
+   * whose size it happens to share, because a name that lies is worse than a
+   * name that is new.
+   */
   const display = {
     // The hero. Continues the app's ladder above `display` at its own ~1.25.
     poster: ["clamp(40px,6.4vw,80px)", "1"],
@@ -108,6 +119,10 @@ function scales(): string {
     act: ["clamp(24px,3.4vw,40px)", "1.15"],
     // A counted figure: the four tallies, the roman numerals.
     tally: ["clamp(40px,5vw,64px)", "1"],
+    // A standfirst: one step above running text, at the app's `heading` size.
+    lede: ["19px", "1.6"],
+    // Running text, everywhere on the page that is read in sentences.
+    copy: ["16px", "1.6"],
   };
 
   const decls = [
@@ -139,6 +154,23 @@ function scales(): string {
     // Not depth but an edge: a one-pixel ring where a border would change the
     // box. The phone mockups and the cropped phone in an act both need it.
     `--vl-elev-ring:0 0 0 1px ${v("hairline")}`,
+
+    // Weights, so a `700` typed at a call site is as visible as a `14.5px`.
+    `--vl-weight-regular:400`,
+    `--vl-weight-medium:500`,
+    `--vl-weight-semibold:600`,
+    `--vl-weight-bold:700`,
+
+    // Two trackings. The app sets its eyebrow at 1.5px and its display at a
+    // small negative; the page had 0.3, 0.4, 0.8, 1.8 and -0.01em.
+    `--vl-tracking-eyebrow:${typeScale.eyebrow.letterSpacing}px`,
+    `--vl-tracking-display:-0.01em`,
+
+    // The two faces, in one stack. The three kinds of page carried three
+    // different fallback lists, so a reader whose browser failed to fetch
+    // Bodoni saw a different substitute depending on which page they were on.
+    `--vl-display:"Bodoni Moda","Bodoni MT","Didot",Georgia,serif`,
+    `--vl-sans:"Sora",ui-sans-serif,system-ui,"Segoe UI",Roboto,sans-serif`,
 
     // The app's three durations and its one easing.
     ...Object.entries(duration).map(([k, n]) => `--vl-dur-${k}:${n}ms`),
@@ -178,6 +210,26 @@ export function landingTokensCss(): string {
     // per page.
     `@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}`,
   ].join("\n");
+}
+
+/**
+ * The one font request, shared by every page.
+ *
+ * The three kinds of page asked for three different weight subsets — index
+ * wanted Bodoni 700 and an italic 600, the questionnaire wanted 500, the legal
+ * template wanted neither — so the same heading could arrive in a different
+ * weight depending on which page a reader landed on first. This is the union
+ * of the weights that survive the pass: Bodoni at 400 and 600 with one italic,
+ * Sora at 400 through 700.
+ */
+export function landingFontLink(): string {
+  return (
+    '<link rel="preconnect" href="https://fonts.googleapis.com">\n' +
+    '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n' +
+    '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?' +
+    "family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,600;1,6..96,400&" +
+    'family=Sora:wght@400;500;600;700&display=swap">'
+  );
 }
 
 /** The generated CSS, wrapped in the element the writer looks for. */
