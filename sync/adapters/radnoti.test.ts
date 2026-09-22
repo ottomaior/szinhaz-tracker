@@ -10,6 +10,11 @@ const parnaember = readFileSync(join(__dirname, "../__fixtures__/radnoti-a-parna
 /** The other of the two credit layouts this site uses. */
 const oidipusz = readFileSync(join(__dirname, "../__fixtures__/radnoti-oidipusz.html"), "utf8");
 const programme = readFileSync(join(__dirname, "../__fixtures__/radnoti-musor.html"), "utf8");
+/**
+ * The page that exposed T-122: a radiocáfé 98.0 sponsor logo sits in the
+ * detail block ahead of the production's own cover image.
+ */
+const parasztopera = readFileSync(join(__dirname, "../__fixtures__/radnoti-parasztopera.html"), "utf8");
 
 describe("productionLinksIn", () => {
   it("finds the repertoire", () => {
@@ -176,5 +181,28 @@ describe("deShoutLabel", () => {
 
   it("leaves a label the house has already cased alone", () => {
     expect(deShoutLabel("Díszlettervező")).toBe("Díszlettervező");
+  });
+});
+
+describe("the cover image, when something else comes first", () => {
+  it("takes the production's cover rather than a sponsor logo above it", () => {
+    const details = parseProductionDetail(parasztopera);
+
+    // Not `radiocafe98_fekvo-1.png`, which is the 220×156 logo of the
+    // production's radio sponsor and what the app used to show (T-122).
+    expect(details.posterUrl).toContain("parasztopera_boritokep");
+    expect(details.posterUrl).not.toContain("radiocafe");
+  });
+
+  it("still drops the WordPress crop suffix on the cover it picks", () => {
+    // The class marks the 1200x480 crop; mirroring wants the original.
+    expect(parseProductionDetail(parasztopera).posterUrl).not.toMatch(/-\d+x\d+\.jpg$/);
+  });
+
+  it("falls back to the first image when a page marks no cover at all", () => {
+    // A production with no cover is better served by its first picture than
+    // by no picture, so the old behaviour stays as the fallback.
+    const stripped = parasztopera.replace(/attachment-imax-single-thumb/g, "");
+    expect(parseProductionDetail(stripped).posterUrl).toContain("radiocafe");
   });
 });
