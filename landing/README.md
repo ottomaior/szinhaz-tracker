@@ -15,13 +15,52 @@ correctly in Hungarian with JavaScript switched off, which is also what a
 crawler and a link preview see. The reader's choice is kept in
 `localStorage` under `vastaps-lang`.
 
-The palette is the app's own `velvetDark` (`theme/themes.ts`), one shade
-deeper at the page ground so the phone screenshots read as the lit object on
-a dark stage, and the two faces are the app's own Bodoni Moda and Sora,
-loaded from Google Fonts. Every colour is painted explicitly rather than
-inherited: the page opens in the dark, and the moon button in the nav flips
-it to the app's `playbillLight` — the same house, printed — with the
-choice kept in `localStorage` under `vastaps.landing.theme`.
+## The design system
+
+Everything the six pages paint with is generated from `theme/` by
+`scripts/landing-tokens.ts`, and written into each page by
+`npm run render:tokens`, which runs first in `npm run deploy:landing`. Before
+September 2026 the site carried three hand-typed copies of the palette under
+three sets of names — `index.html` called `hairline` `--hair`, `kutatas.html`
+called the ground `--ink`, the legal template had a third abbreviation — and
+all three held the right values by luck rather than by construction.
+
+The rule the pass settled on is **one vocabulary, a poster's register**:
+
+- **Colours come from `theme/themes.ts`** under the app's own `--vc-*` names,
+  so the site and the app cannot disagree about what gold is. Two exceptions
+  are named in the generated block: `--vl-ink`, the page ground one shade
+  under the app's, so a phone screenshot reads as the lit object on a dark
+  stage; and `--vl-gold-lift`, one step brighter than the accent, for a link
+  under the cursor. A third would fail `scripts/landing-tokens.test.ts`.
+- **Spacing is the app's 4px grid**, plus two steps for a section rhythm no
+  screen needs. Radii are the app's 6/10/14/20 with two more at the same
+  ratio.
+- **Type is the app's ten roles**, plus six that exist only on a poster: four
+  display sizes above the app's largest, a `lede` for a standfirst, and `copy`
+  for everything read in sentences. `copy` is 16 where the app's `body` is 15,
+  and that is the one place the site deliberately sets text larger than the
+  app: a tool is read in the hand and a page is read at arm's length.
+- **Motion is the app's three durations** — 160ms for a state change, 260 for
+  something arriving, 420 for a reveal — and its one easing. The five loops
+  keep their own, because a loop is not a transition. Nothing moves before the
+  hero is readable: the title waits 120ms and the light rays start after it.
+- **Depth is the app's two recipes**, plus one lifted step at three times
+  `floating`, for objects no screen contains.
+
+Both faces are Bodoni Moda and Sora, from Google Fonts, in **one request**
+shared by every page; the three kinds of page used to ask for three different
+weight subsets. The moon button in the nav flips the site to the app's
+`playbillLight` — the same house, printed — and since the front-of-house pass
+it is on all six pages rather than on this one alone, with the choice kept in
+`localStorage` under `vastaps.landing.theme`.
+
+`npm run drift:landing` counts anything typed at a call site instead of taken
+from `theme/`: 458 when the pass began, 0 now, and a test holds it there. Its
+allowlist names the deliberate art — the five theme swatches, a sheen, a
+phone's brushed shell — and every entry says why.
+`npm run shots:landing` photographs all six pages at three widths in both
+themes; `ux-audit/landing/README.md` explains the evidence.
 
 ## The screenshots
 
