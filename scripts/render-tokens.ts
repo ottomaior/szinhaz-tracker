@@ -18,7 +18,7 @@
  */
 import { readFileSync, writeFileSync } from "node:fs";
 
-import { LANDING_TOKENS_ID, landingTokensStyleTag } from "./landing-tokens";
+import { LANDING_TOKENS_ID, landingThemeScript, landingTokensStyleTag } from "./landing-tokens";
 
 /**
  * `landing/og.html` is not here yet, and that is deliberate.
@@ -34,20 +34,36 @@ import { LANDING_TOKENS_ID, landingTokensStyleTag } from "./landing-tokens";
  */
 const PAGES = ["landing/index.html", "landing/kutatas.html"];
 
-const BLOCK = new RegExp(`<style id=["']${LANDING_TOKENS_ID}["']>[\\s\\S]*?</style>`);
+/** The two generated elements: the palette, and the script that applies it. */
+const BLOCKS = [
+  {
+    re: new RegExp(`<style id=["']${LANDING_TOKENS_ID}["']>[\\s\\S]*?</style>`),
+    render: landingTokensStyleTag,
+    what: '<style id="vl-tokens">',
+  },
+  {
+    re: /<script id=["']vl-theme["']>[\s\S]*?<\/script>/,
+    render: () => landingThemeScript().replace("<script>", '<script id="vl-theme">'),
+    what: '<script id="vl-theme">',
+  },
+];
 
 let wrote = 0;
 for (const page of PAGES) {
   const before = readFileSync(page, "utf8");
-  if (!BLOCK.test(before)) {
-    console.error(
-      `${page} has no <style id="${LANDING_TOKENS_ID}"> block.\n` +
-        `Add an empty one where the palette should be declared — this script fills it, it does not place it.`
-    );
-    process.exitCode = 1;
-    continue;
+  let after = before;
+  for (const block of BLOCKS) {
+    if (!block.re.test(after)) {
+      console.error(
+        `${page} has no ${block.what} element.
+` +
+          `Add an empty one where it belongs — this script fills it, it does not place it.`
+      );
+      process.exitCode = 1;
+      continue;
+    }
+    after = after.replace(block.re, block.render());
   }
-  const after = before.replace(BLOCK, landingTokensStyleTag());
   if (after === before) {
     console.log(`  ${page}  up to date`);
     continue;
@@ -56,5 +72,6 @@ for (const page of PAGES) {
   wrote++;
   console.log(`  ${page}  written`);
 }
+
 
 console.log(`\n${wrote} of ${PAGES.length} pages updated.`);

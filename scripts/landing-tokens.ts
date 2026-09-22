@@ -237,6 +237,65 @@ export function landingFontLink(): string {
   );
 }
 
+/** The key the reader's choice is kept under, shared by all six pages. */
+export const THEME_KEY = "vastaps.landing.theme";
+
+/**
+ * The theme, applied before the first paint, and the toggle wired to it.
+ *
+ * Until this, light mode existed on `index.html` alone. A reader who chose
+ * the printed theme and then followed a footer link to the imprint or the
+ * questionnaire landed on a dark page, with no way to change it and nothing
+ * saying why — the two most common ways off the landing page both undid the
+ * only visual choice the site offers.
+ *
+ * It runs in `<head>`, before anything is drawn, for the reason
+ * `app/+html.tsx` gives for the app's version: a reader who chose a theme
+ * should never see a frame of the other one. `theme-color` is set here too,
+ * because the browser reads that outside of CSS and a custom property cannot
+ * reach it.
+ *
+ * The toggle binds to any element carrying `data-theme-toggle`, so a page
+ * adds the control by putting the attribute on a button and nothing else.
+ */
+export function landingThemeScript(): string {
+  const ink = { dark: INK_DARK, light: themes[DEFAULT_LIGHT].bg };
+  return `<script>
+(function(){
+  var KEY=${JSON.stringify(THEME_KEY)}, INK=${JSON.stringify(ink)}, root=document.documentElement;
+  function paint(t){
+    root.setAttribute("data-theme",t);
+    var m=document.querySelector('meta[name="theme-color"]');
+    if(m) m.setAttribute("content",INK[t]||INK.dark);
+  }
+  var theme="dark";
+  try{ theme=localStorage.getItem(KEY)||"dark" }catch(e){}
+  if(theme!=="light") theme="dark";
+  paint(theme);
+  document.addEventListener("DOMContentLoaded",function(){
+    var meta=document.querySelector('meta[name="theme-color"]');
+    if(meta) meta.setAttribute("content",INK[theme]||INK.dark);
+    Array.prototype.forEach.call(document.querySelectorAll("[data-theme-toggle]"),function(btn){
+      btn.setAttribute("aria-pressed", theme==="light" ? "true" : "false");
+      btn.addEventListener("click",function(){
+        theme = theme==="dark" ? "light" : "dark";
+        paint(theme);
+        try{ localStorage.setItem(KEY,theme) }catch(e){}
+        Array.prototype.forEach.call(document.querySelectorAll("[data-theme-toggle]"),function(b){
+          b.setAttribute("aria-pressed", theme==="light" ? "true" : "false");
+        });
+      });
+    });
+  });
+})();
+</script>`;
+}
+
+/** The `theme-color` meta, whose value the browser reads outside of CSS. */
+export function landingThemeColorMeta(): string {
+  return `<meta name="theme-color" content="${INK_DARK}">`;
+}
+
 /** The generated CSS, wrapped in the element the writer looks for. */
 export function landingTokensStyleTag(): string {
   return `<style id="${LANDING_TOKENS_ID}">\n${landingTokensCss()}\n</style>`;
