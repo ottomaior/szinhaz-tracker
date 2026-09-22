@@ -240,7 +240,9 @@ Native's style engine doesn't accept `oklch()`, so everything there is
 pre-converted sRGB hex. `theme/colors.ts` is the thin layer that picks which
 palette a given platform sees.
 
-Two rules are worth knowing before adding a screen:
+These are the rules a new screen has to keep. They were written down in
+September 2026, at the end of a pass whose only purpose was that every screen
+should look as though one hand had made it on one day:
 
 - **Never set a font size by hand.** `components/ui/Text` takes a `variant`
   (display / title / heading / numeral / subheading / body / bodySmall /
@@ -267,6 +269,43 @@ Two rules are worth knowing before adding a screen:
   and a pill only when it is news: in a grid, `StatusBadge`'s `inline` form
   says nothing at all for a running production, since running is what a
   browsing grid is *of*.
+- **A list has two row shapes, and only two.** `components/ui/PlayRow` is the
+  image row — a 56×84 thumbnail, the title, whatever the screen needs to say
+  under it — and `PersonRow` in `components/ui/Rows.tsx` is the text row, a
+  face or an icon at the left and a hairline underneath. Seven screens used to
+  carry their own, agreeing on nothing but the avatar's diameter, which is how
+  the same production came to sit at a different left edge on the profile than
+  on the watchlist. Rows separate with a hairline; sections separate with
+  space and a `SectionHeader`. Anything tappable at the end of a row goes in
+  its `action` slot, beside the row's pressable rather than inside it: a
+  button within a button is invalid on the web and reads as a single target to
+  a screen reader.
+- **A surface is earned.** A card — `colors.surface`, a soft hairline, one of
+  the two shadows in `tokens.elevation` — belongs to an object the reader acts
+  on as a whole: an evening in the feed, the season ticket, the showtimes, a
+  confirmation. A list is never a stack of cards and a single row is never a
+  card, which is what the settings screen and the search results used to be.
+  A screen's own header row carries no hairline.
+- **Two icon sizes for chrome, three for the mask.** 20 for a standalone
+  target — the bell, the gear, a sheet's close — and 16 inline with text. The
+  mask appears at 12 in a row's metadata, at 16 where it can be pressed, and
+  at 30 for the single large rating in the check-in. Before this there were
+  eight icon sizes and nine mask sizes, every one of them typed at the call
+  site.
+- **Three durations, and nothing moves on first paint.** 160ms for a state
+  change, 260 for something entering or leaving, 420 for a reveal, all of them
+  in `tokens.duration`, eased `out(cubic)` unless it is a loop or a spring. A
+  screen that animates its title, its list and its counters the moment it
+  opens is a screen nobody can read for half a second, so every reveal waits
+  at least 120ms and the looping ornaments start after it. `useReducedMotion`
+  is honoured inside the primitive rather than at each call site.
+- **Pressed, disabled and focus are one rule.** `components/ui/pressable.ts`
+  holds it and every control uses it: a tint on press, the same tint on hover
+  on the web, 45% opacity with `accessibilityState.disabled` for disabled, and
+  a gold focus ring from a single `:focus-visible` rule in `app/+html.tsx`.
+  Posters are the one exception and keep the tilt and glare of
+  `components/motion/PressCard`. An inline `opacity: 0.5` on a button is the
+  thing this rule exists to prevent.
 
 `textFaint` is the token that decides whether a theme passes: it carries
 metadata at the app's smallest sizes *inside cards*, which is exactly where
@@ -280,6 +319,26 @@ no media queries inside `StyleSheet.create`), `components/ui/Screen` caps and
 centres content, `components/ui/Grid` computes tile widths from its own
 measured width rather than percentages, and from the `expanded` breakpoint
 `app/(tabs)/_layout.tsx` swaps the bottom tab bar for `components/ui/TopBar`.
+
+There is one content width per kind of screen: 680 for everything that is
+read as a column, which is most of the app, 420 for a form, and the wider
+1100 only for Discover and a production's page, the two screens with a real
+second column. The top bar and each screen's *header row* run at the wider
+measure even when the text beneath them does not, so that the brand and the
+page title share a left edge — that, rather than the column itself, is what
+stops a desktop page reading as a stretched phone. Sheets stop being
+full-width bottom sheets at the same breakpoint and centre themselves
+instead.
+
+The mechanical half of all this is counted rather than trusted.
+`npm run drift` walks `app/` and `components/` for spacing, radius, border,
+type and colour values typed at a call site instead of taken from `theme/`;
+its allowlist holds only deliberate art, and every entry in it says why. It
+read 331 across 61 files when the pass began and reads 0 now, which is what
+`ux-audit/drift-before.md` and `ux-audit/drift-after.md` are the two ends of.
+`npm run shots -- --audit` photographs every route at both widths in both
+default palettes, so a change that was meant to move nothing can be shown to
+have moved nothing.
 
 ## Five palettes, and how a theme reaches the screen
 

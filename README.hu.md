@@ -255,7 +255,9 @@ valamelyiken — a React Native stílusmotorja nem fogad el `oklch()`-t, ezért 
 minden előre átváltott sRGB hexa. A `theme/colors.ts` az a vékony réteg, ami
 eldönti, melyik palettát látja az adott platform.
 
-Két szabályt érdemes ismerni, mielőtt bárki új képernyőt ír:
+Ezeket a szabályokat kell tartania egy új képernyőnek. 2026 szeptemberében
+íródtak le, egy olyan munka végén, aminek az volt az egyetlen célja, hogy
+minden képernyő úgy nézzen ki, mintha egy kéz csinálta volna egy nap alatt:
 
 - **Sose állíts be betűméretet kézzel.** A `components/ui/Text` egy `variant`-ot
   (display / title / heading / numeral / subheading / body / bodySmall / label /
@@ -281,6 +283,45 @@ Két szabályt érdemes ismerni, mielőtt bárki új képernyőt ír:
   `StatusInline` —, és csak akkor jelvény, ha hír: rácsban a `StatusBadge`
   `inline` formája egy futó előadásról semmit sem mond, hiszen a futó az, *amiből*
   egy böngészőrács áll.
+- **Egy listának kétféle sora van, és csak kétféle.** A
+  `components/ui/PlayRow` a képes sor — 56×84-es bélyegkép, a cím, és amit a
+  képernyő még mondani akar alatta —, a `components/ui/Rows.tsx`-beli
+  `PersonRow` pedig a szöveges sor: egy arc vagy egy ikon balra, alatta
+  hajszálvonal. Korábban hét képernyő hozta a sajátját, és semmiben nem
+  egyeztek az avatar átmérőjén kívül — így kerülhetett ugyanaz az előadás
+  más bal szélre a profilon, mint a kívánságlistán. A sorokat hajszálvonal
+  választja el, a szakaszokat térköz és egy `SectionHeader`. Ami a sor végén
+  megnyomható, az az `action` helyre kerül, a sor nyomógombja *mellé*, nem
+  bele: gombon belüli gomb a weben érvénytelen, és a képernyőolvasó egyetlen
+  célpontként olvassa.
+- **A felületet ki kell érdemelni.** A kártya — `colors.surface`, halvány
+  hajszálvonal, a `tokens.elevation` két árnyéka közül az egyik — olyan
+  dologé, amit az olvasó *egészként* használ: egy este a hírfolyamban, a
+  bérlet, a játszási időpontok, egy megerősítés. Egy lista sosem kártyák
+  halma, és egyetlen sor sosem kártya — pedig a beállítások és a keresési
+  találatok pontosan azok voltak. A képernyő saját fejléce nem visz
+  hajszálvonalat.
+- **Két ikonméret a kezelőfelületnek, három az álarcnak.** 20 az önálló
+  célpontoknak — a csengő, a fogaskerék, egy lap bezárása —, és 16 ott, ahol
+  szöveg mellett áll. Az álarc 12-esben jelenik meg egy sor metaadatában,
+  16-osban ott, ahol megnyomható, és 30-asban a bejelentkező űrlap egyetlen
+  nagy értékelésén. Ezelőtt nyolc ikonméret és kilenc álarcméret volt
+  használatban, mindegyik a hívás helyén beírva.
+- **Három időtartam, és az első kirajzoláskor semmi sem mozdul.** 160 ms egy
+  állapotváltásra, 260 arra, ami érkezik vagy távozik, 420 egy felfedésre —
+  mind a `tokens.duration`-ben, `out(cubic)` lassítással, kivéve a hurkokat és
+  a rugókat. Az a képernyő, amelyik nyitáskor egyszerre animálja a címét, a
+  listáját és a számlálóit, fél másodpercig olvashatatlan, ezért minden
+  felfedés legalább 120 ms-ot vár, a hurkoló díszek pedig csak utána indulnak.
+  A `useReducedMotion`-t a primitív tartja tiszteletben, nem a hívás helye.
+- **A lenyomott, a letiltott és a fókuszált állapot egyetlen szabály.** A
+  `components/ui/pressable.ts` tartja, és minden vezérlő ezt használja:
+  lenyomásra egy árnyalat, a weben ugyanez az egér alá érve is, letiltva
+  45% átlátszatlanság és `accessibilityState.disabled`, a fókuszgyűrű pedig
+  egyetlen `:focus-visible` szabályból jön az `app/+html.tsx`-ben. Az egyetlen
+  kivétel a plakát, ami megtartja a `components/motion/PressCard` dőlését és
+  csillanását. Egy gombra kézzel írt `opacity: 0.5` éppen az, amit ez a
+  szabály megelőz.
 
 A `textFaint` az a token, ami eldönti, megfelel-e egy téma: az app legkisebb
 méretű metaadatait viszi, méghozzá jellemzően *kártyán belül*, vagyis épp a két
@@ -295,6 +336,27 @@ react-native-webben nincs media query a `StyleSheet.create`-en belül), a
 `components/ui/Grid` a saját mért szélességéből számol csempeszélességet, nem
 százalékból, az `expanded` töréspontól pedig az `app/(tabs)/_layout.tsx` az
 alsó fülsávot a `components/ui/TopBar`-ra cseréli.
+
+Képernyőfajtánként egy tartalomszélesség van: 680 mindennek, amit hasábként
+olvas az ember — vagyis az app nagy részének —, 420 egy űrlapnak, és a
+szélesebb 1100 csak a Felfedezőnek és egy előadás oldalának, a két olyan
+képernyőnek, aminek tényleg van második hasábja. A felső sáv és minden
+képernyő *fejlécsora* a szélesebb mértéken fut akkor is, ha a szöveg alatta
+nem, hogy a márkajel és az oldal címe egy bal szélre kerüljön — ez és nem
+maga a hasáb az, ami megakadályozza, hogy egy asztali oldal megnyújtott
+telefonnak látsszon. Az alsó lapok ugyanezen a törésponton hagyják abba a
+teljes szélességet, és középre állnak.
+
+Mindennek a gépies felét nem elhisszük, hanem számoljuk. Az `npm run drift`
+végigjárja az `app/`-ot és a `components/`-et térköz-, lekerekítés-, keret-,
+típus- és színkonstansért, amit a hívás helyén írtak be a `theme/` helyett; a
+kivétellistán csak szándékos rajz van, és minden tétele megmondja, miért. A
+munka elején 331-et mutatott 61 fájlban, most 0-t — ennek a két vége a
+`ux-audit/drift-before.md` és a `ux-audit/drift-after.md`. Az
+`npm run shots -- --audit` minden útvonalról képet készít mindkét
+szélességen és mindkét alapértelmezett palettán, így egy változtatásról,
+aminek semmit nem lett volna szabad elmozdítania, be is bizonyítható, hogy
+nem mozdított el semmit.
 
 ## Öt paletta, és hogyan jut el egy téma a képernyőig
 
