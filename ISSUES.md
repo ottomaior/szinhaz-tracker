@@ -743,30 +743,6 @@ the `verify-bundle` needle, and re-run `npm run render:legal`. If a company is
 formed for it, `operator.registrationNumber` gets the tax number in the same
 change.
 
-### T-079 · Signed out, the watchlist and profile tabs show the same page
-type: bug · area: web · priority: med · status: open · added: 2026-09-18
-
-Open the app without a session and switch between the Watchlist and Profile
-tabs: both render `SignedOutState`, the same sign-in pitch with the same
-three bullets, only their order changing with the `lead` prop
-(`components/ui/SignedOutState.tsx`). Tapping a different tab and seeing what
-looks like the same screen reads as the app not responding, and the page
-never says *which* thing needs a sign-in. Each tab should at least say what
-it is (a heading "Várólista" / "Napló") and what the visitor would get here
-specifically, or show a public preview of the thing itself where one exists.
-
-### T-070 · A list entry's "Levesz" is a button inside a button
-type: bug · area: web · priority: low · status: open · added: 2026-09-11
-
-On `/list/[id]` as the owner, the dev console reports "In HTML, <button>
-cannot be a descendant of <button>. This will cause a hydration error." —
-`PlayRow` is a `Pressable` (rendered as `<button>`) and the owner's
-*Levesz* control in its `trailing` slot is another. Works today because the
-inner click stops propagation, but React warns on every render and the static
-export of a list page could hydrate wrongly. Fix is in `PlayRow`: render the
-row as a `View` with the tappable area and the trailing slot as siblings, or
-give `PlayRow` a `trailing` that is rendered outside the pressable. Noticed
-while fixing T-062; the search result rows do not have this, only lists.
 
 ### T-068 · Drop what 0056 made redundant: search_rank(), the 0019 expression indexes, play_cast_person_slug_idx
 type: chore · area: data · priority: low · status: open · added: 2026-09-11
@@ -941,6 +917,17 @@ real device are the `boxShadow` strings and the per-theme `makeStyles` path,
 both of which behave differently outside react-native-web. An APK exists now, so
 this is an hour with a phone rather than a project.
 
+**Still open, and now written down.** The Velvet Curtain finish pass of 22
+September was web-only for the same reason, and it touched every primitive
+that this entry is about. It ends with a device checklist rather than an
+answer — the dock over the home indicator and the three-button nav bar in
+both palettes, the sheets against the keyboard, `StarBorder` and the
+HoloCard sheen without native-driver warnings in `adb logcat`, Android's
+"Remove animations", Bodoni at 19px on a 1080p panel, and the `boxShadow`
+strings. The checklist is in the plan file for the pass. Run it on the
+closed-test build after the next `eas update` lands, and close this entry
+with what it found.
+
 ### T-016 · The feed has never been seen with real volume
 type: question · area: feed · priority: low · status: open · added: 2026-09-09
 
@@ -951,6 +938,15 @@ three. Left as an open follow-up when the design pass merged. The follow-gate
 shipping on 9 September makes it more pressing, not less: the Mindenki feed now
 carries every evening logged, with the opinion masked on the ones you do not
 follow.
+
+**Still open after the finish pass, 22 September 2026.** The pass
+photographed every route at two widths in two palettes, but against the
+demo data, which is three evenings — so the feed at forty rows is exactly
+the state the captures could not reach. What the pass did change is worth
+knowing before the test: the card, the watchlist row and the backfill tile
+are now one row shape with one rhythm, and the list staggers in rather than
+appearing whole, which is the behaviour most likely to feel wrong at length.
+Seed forty evenings on a demo account and look at it on a phone.
 ### T-020 · A person page shows a partial career and does not say so
 type: bug · area: data · priority: high · status: open · added: 2026-09-09
 
@@ -1173,6 +1169,39 @@ _Nothing yet._
 
 ## Done
 
+### T-079 · Signed out, the watchlist and profile tabs show the same page
+type: bug · area: web · priority: med · status: done · added: 2026-09-18 · done: 2026-09-22
+
+Both tabs rendered `SignedOutState`, the same three bullets in a different
+order, so switching between them read as the app not responding and neither
+page said which thing needed a sign-in.
+
+Done in the Velvet Curtain finish pass. `components/ui/SignedOutState.tsx`
+now opens with an eyebrow naming the tab the visitor is on — Profil or
+Kívánságlista — above the shared argument, and the `lead` prop still orders
+the bullets so the one the tab is about comes first. The public preview the
+entry also floated was not built: there is nothing public to preview on
+either tab, since a diary and a watchlist are both somebody's own.
+
+### T-070 · A list entry's "Levesz" is a button inside a button
+type: bug · area: web · priority: low · status: done · added: 2026-09-11 · done: 2026-09-22
+
+`PlayRow` is a `Pressable`, which react-native-web renders as a `<button>`,
+and the owner's *Levesz* control sat in its `trailing` slot as a second one.
+React warned on every render and a static list page could have hydrated
+wrongly.
+
+Done in two halves, and worth reading as one lesson. `PersonRow`
+(`components/ui/Rows.tsx`) gained an `action` slot during the pass — a
+sibling of the row's pressable rather than a child of it — because the block
+list had the same fault. The list screen was missed at the time: it kept
+passing the remove button through `trailing`, which is inside the pressable,
+so the bug this entry is actually about survived the commit that fixed its
+twin. `PlayRow` now has the same `action` slot, `app/list/[id].tsx` passes
+the remove button through it, and `trailing` is documented as read-only
+content — a rank numeral, a rating — so the next person does not put a
+control there. A row with an action is the same height as one without: the
+hairline and the vertical padding stay on the wrapper.
 ### T-080 · The hero phones on vastaps.app flicker under the mouse
 type: bug · area: web · priority: low · status: done · added: 2026-09-18 · done: 2026-09-22
 
@@ -1908,6 +1937,14 @@ profile (the feed already had it), which meant lifting the profile's inline
 focus effect into a `load` with a generation counter. `Skeleton` holds a
 steady tone under reduced motion now. Still open from this entry: a skeleton
 on the profile's diary list, and optimistic watchlist/follow writes (T-901).
+
+**Finished, 22 September 2026.** The Velvet Curtain pass gave the six
+screens that opened blank a `ScreenSkeleton` and gave list rows a
+`RowSkeleton` in `PlayRow`'s shape. The profile's tabs were the last of it:
+`TabBody` drew an empty column until its rows arrived, because the screen
+and each tab's list load separately, so switching to a tab that had not
+loaded showed nothing. It shows three rows now. Optimistic watchlist and
+follow writes are a different kind of change and stay with T-901.
 
 ### T-088 · Say when the phone is offline
 type: idea · area: native · size: S · status: done · added: 2026-09-18

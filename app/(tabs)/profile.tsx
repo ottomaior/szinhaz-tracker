@@ -17,7 +17,7 @@ import { ConfirmCard } from "@/components/ui/Cards";
 import { LinkRow } from "@/components/ui/Rows";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Notice } from "@/components/ui/Notice";
-import { ScreenSkeleton } from "@/components/ui/Skeleton";
+import { RowSkeleton, ScreenSkeleton } from "@/components/ui/Skeleton";
 import { IconButton } from "@/components/ui/Button";
 import { Screen } from "@/components/ui/Screen";
 import { SignedOutState } from "@/components/ui/SignedOutState";
@@ -429,6 +429,18 @@ function TabBody({
       <View style={styles.emptyState}>
         <EmptyState align="center" title={emptyLabel} />
         {emptyAction}
+      </View>
+    );
+  }
+  // The tab's own rows arrive after the screen does — switching to a tab
+  // whose list has not loaded showed an empty column, which is the last
+  // thing T-093 left open. Three rows in the shape of the real ones.
+  if (!loaded) {
+    return (
+      <View style={styles.tabList}>
+        <RowSkeleton />
+        <RowSkeleton />
+        <RowSkeleton />
       </View>
     );
   }
