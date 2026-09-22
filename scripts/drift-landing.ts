@@ -114,6 +114,14 @@ const ALLOW: { file: string; category: Category; literal: string; why: string }[
   { file: "landing/index.html", category: "motion", literal: "pulse 2s", why: "loop: the live dot" },
   { file: "landing/index.html", category: "motion", literal: "spf 1.1s", why: "loop: a spark's life" },
 
+  // A gradient border drawn as a padded box with its middle masked out — the
+  // star-bordered button and the bento tiles' lit edge. These are the
+  // thickness of a line, not the spacing of a layout; the app allows the same
+  // for StarBorder in scripts/drift.ts.
+  { file: "landing/index.html", category: "space", literal: "padding: 1.5px", why: "the rim a light travels along" },
+  { file: "landing/index.html", category: "space", literal: "padding: 1px", why: "a one-pixel gradient border" },
+  { file: "landing/index.html", category: "space", literal: "inset: -1px", why: "that border sitting outside its box" },
+
   // Light that belongs to a specific ornament rather than to the depth scale:
   // a lit dot, and the gold wash a cropped phone stands in. Naming them as
   // elevation steps would imply other things could sit at those heights.
