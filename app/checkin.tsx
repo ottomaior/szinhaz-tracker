@@ -1,12 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { View, ScrollView, StyleSheet, Pressable, TextInput } from "react-native";
+import { View, ScrollView, StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
-import { inputFontSize } from "@/theme/type";
-import { gutter, radius, space } from "@/theme/tokens";
-import { bodyFont } from "@/theme/typography";
-import { useAppFonts } from "@/hooks/useAppFonts";
+import { duration as motion, gutter, hairlineWidth, mask, radius, space, thumb } from "@/theme/tokens";
 import { useSearchQuery } from "@/hooks/useSearchQuery";
 import {
   countUserEntriesForPlay,
@@ -27,6 +24,11 @@ import { foldSearchTerm } from "@/utils/search";
 import { PinIcon } from "@/components/icons/Icons";
 import { MaskRatingRow } from "@/components/icons/MaskIcon";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
+import { PlayRow } from "@/components/ui/PlayRow";
+import { TextField } from "@/components/ui/TextField";
+import { Notice } from "@/components/ui/Notice";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { RowSkeleton } from "@/components/ui/Skeleton";
 import { DateField } from "@/components/ui/DateField";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { SearchField } from "@/components/ui/SearchField";
@@ -58,7 +60,6 @@ export default function CheckInScreen() {
   const router = useRouter();
   const toast = useToast();
   const insets = useSafeAreaInsets();
-  const fontsLoaded = useAppFonts();
   const { session, loading } = useAuth();
   const [play, setPlay] = useState<Play>();
   const [venue, setVenue] = useState<Venue>();
@@ -453,18 +454,13 @@ export default function CheckInScreen() {
   if (playLoadFailed) {
     return (
       <View style={[styles.centered, { paddingTop: insets.top }]}>
-        <Text variant="body" tone="dim" style={{ textAlign: "center" }}>
-          {strings.checkin.playNotFound}
-        </Text>
-        <Pressable onPress={() => closeModal(router)} accessibilityRole="button">
-          <Text variant="label" tone="accent">{strings.checkin.close}</Text>
-        </Pressable>
+        <EmptyState align="center" title={strings.checkin.playNotFound} actionLabel={strings.checkin.close} onAction={() => closeModal(router)} />
       </View>
     );
   }
 
   if (!play) {
-    return <PlayPicker insetTop={insets.top} onCancel={() => closeModal(router)} onPick={setPlay} />;
+    return <PlayPicker onPick={setPlay} />;
   }
 
   const goTo = (next: Step) => {
@@ -477,34 +473,26 @@ export default function CheckInScreen() {
       <ModalHeader
         title={editingId ? strings.checkin.editTitle : strings.checkin.headerTitle}
         action={
-          <Pressable
+          <Button
+            variant="text"
+            size="sm"
+            label={saving ? strings.checkin.saving : strings.checkin.save}
             onPress={handleSave}
-            hitSlop={12}
             disabled={saving}
-            accessibilityRole="button"
-            aria-busy={saving}
-            accessibilityState={{ disabled: saving, busy: saving }}
-          >
-            <Text variant="label" tone="accent" style={{ opacity: saving ? 0.55 : 1 }}>
-              {saving ? strings.checkin.saving : strings.checkin.save}
-            </Text>
-          </Pressable>
+            style={styles.headerAction}
+          />
         }
       />
 
       <ScrollView keyboardShouldPersistTaps="handled">
         <ContentColumn style={{ padding: gutter, gap: space.xl, paddingBottom: space["4xl"] }}>
-        <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
-          <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} width={44} height={66} radius={radius.sm} preferThumb />
-          <View style={{ flex: 1 }}>
+        <View style={styles.playRow}>
+          <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} width={thumb.row.width} height={thumb.row.height} radius={radius.sm} preferThumb />
+          <View style={{ flex: 1, gap: space["2xs"] }}>
             <Text variant="subheading">{play.title}</Text>
             <Text variant="caption" tone="faint">{venue?.name ?? ""}</Text>
             {!playId && (
-              <Pressable onPress={() => setPlay(undefined)} hitSlop={6} accessibilityRole="button">
-                <Text variant="caption" tone="accent" style={{ marginTop: 4 }}>
-                  {strings.checkin.changePlay}
-                </Text>
-              </Pressable>
+              <Button variant="text" size="sm" label={strings.checkin.changePlay} onPress={() => setPlay(undefined)} style={styles.changePlay} />
             )}
           </View>
         </View>
@@ -515,12 +503,6 @@ export default function CheckInScreen() {
             from any step for somebody who has answered enough. */}
         <StepIndicator steps={3} current={step} labels={strings.checkin.stepLabels} />
 
-        {/* Shown on every step: the header's Mentés can fail from any of them. */}
-        {!!error && step !== 3 && (
-          <Text variant="bodySmall" tone="accent" accessibilityRole="alert">
-            {error}
-          </Text>
-        )}
 
         {step === 1 && (
           <StepPane key="when" direction={direction}>
@@ -534,18 +516,16 @@ export default function CheckInScreen() {
                   correct. Half the catalogue is the theatres' own archives, kept
                   loggable precisely so somebody can record a production they saw
                   years ago. */}
-              <View style={{ gap: 10 }}>
-                <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.checkin.dateLabel}</Text>
-                <View style={{ flexDirection: "row", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+              <View style={{ gap: space.sm }}>
+                <Text variant="label" tone="dim">{strings.checkin.dateLabel}</Text>
+                <View style={styles.chipRow}>
                   <DateField value={seenAt} onChange={setSeenAt} />
-                  <View style={[styles.field, { flex: 1, minWidth: 140 }]}>
-                    <PinIcon />
-                    {/* This was hardcoded to a single stage name for every play, no
-                        matter where it actually runs. It shows the real venue now. */}
-                    <Text numberOfLines={1} variant="bodySmall" style={{ flex: 1 }}>
-                      {venue?.name ?? strings.common.noRating}
-                    </Text>
-                  </View>
+                  {/* The house, as a chip the reader cannot press, at the date
+                      chip's height: it used to be a fake input beside a real
+                      chip, and the two sat at two heights. This was hardcoded
+                      to a single stage name for every play, no matter where it
+                      actually runs; it shows the real venue now. */}
+                  <Chip label={venue?.name ?? strings.common.noRating} leading={<PinIcon color={colors.gold} />} />
                 </View>
 
                 {/* Said out loud, because the screen is quietly doing something other
@@ -566,9 +546,9 @@ export default function CheckInScreen() {
                 )}
 
                 {showtimes.length > 1 && (
-                  <View style={{ gap: 8, marginTop: 4 }}>
+                  <View style={{ gap: space.sm, marginTop: space.xs }}>
                     <Text variant="caption" tone="faint">{strings.checkin.whichShowtime}</Text>
-                    <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
+                    <View style={styles.chipRow}>
                       {showtimes.map((p) => (
                         <Chip
                           key={p.id}
@@ -585,6 +565,8 @@ export default function CheckInScreen() {
                 )}
               </View>
 
+              {!!error && <Notice>{error}</Notice>}
+
               <View style={styles.stepActions}>
                 <Button variant="outline" label={strings.common.cancel} style={{ flex: 1 }} onPress={() => closeModal(router)} />
                 <Button label={strings.checkin.next} style={{ flex: 1 }} onPress={() => goTo(2)} />
@@ -596,15 +578,15 @@ export default function CheckInScreen() {
         {step === 2 && (
           <StepPane key="rate" direction={direction}>
             <View style={{ gap: space.lg }}>
-              <View style={{ gap: 4 }}>
+              <View style={{ gap: space.xs }}>
                 <Text variant="title">{strings.checkin.stepRateTitle}</Text>
                 <Text variant="bodySmall" tone="dim">{strings.checkin.stepRateHint}</Text>
               </View>
 
-              <View style={styles.ratingCard}>
+              <View style={styles.ratingBlock}>
                 <View style={styles.overallBlock}>
-                  <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.checkin.overallRating}</Text>
-                  <MaskRatingRow rating={overall} size={30} gap={8} onPressMask={setOverall} spark />
+                  <Text variant="label" tone="dim">{strings.checkin.overallRating}</Text>
+                  <MaskRatingRow rating={overall} size={mask.hero} gap={space.sm} onPressMask={setOverall} spark />
                   {/* A readout rather than a dash, and always on screen. The sub-rows
                       below can hang their "not answered" cue off the label, but this
                       block is centred and stacked, so anything that appears and
@@ -625,6 +607,8 @@ export default function CheckInScreen() {
                     it, but not take it back. Said once for all four rows. */}
                 <Text variant="caption" tone="faint">{strings.checkin.clearRatingHint}</Text>
               </View>
+
+              {!!error && <Notice>{error}</Notice>}
 
               <View style={styles.stepActions}>
                 <Button variant="outline" label={strings.checkin.back} style={{ flex: 1 }} onPress={() => goTo(1)} />
@@ -650,47 +634,35 @@ export default function CheckInScreen() {
         {step === 3 && (
           <StepPane key="note" direction={direction}>
             <View style={{ gap: space.lg }}>
-              <View style={{ gap: 4 }}>
+              <View style={{ gap: space.xs }}>
                 <Text variant="title">{strings.checkin.stepNoteTitle}</Text>
                 <Text variant="bodySmall" tone="dim">{strings.checkin.stepNoteHint}</Text>
               </View>
 
-              <View style={{ gap: 8 }}>
-                <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.checkin.momentTags}</Text>
-                <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
+              <View style={{ gap: space.sm }}>
+                <Text variant="label" tone="dim">{strings.checkin.momentTags}</Text>
+                <View style={styles.chipRow}>
                   {MOMENT_TAGS.map((tag) => (
                     <Chip key={tag} label={tag} active={selectedTags.includes(tag)} onPress={() => toggleTag(tag)} />
                   ))}
                 </View>
               </View>
 
-              <View style={{ gap: 8 }}>
-                <Text variant="label" tone="dim" style={styles.sectionLabel}>{strings.checkin.reviewLabel}</Text>
-                <TextInput
-                  value={reviewText}
-                  onChangeText={setReviewText}
-                  placeholder={strings.checkin.reviewPlaceholder}
-                  placeholderTextColor={colors.textFaint}
-                  multiline
-                  style={[styles.textArea, { fontFamily: bodyFont(fontsLoaded) }]}
-                />
+              <View style={{ gap: space.sm }}>
+                <Text variant="label" tone="dim">{strings.checkin.reviewLabel}</Text>
+                <TextField value={reviewText} onChangeText={setReviewText} placeholder={strings.checkin.reviewPlaceholder} multiline />
               </View>
 
-              {error && (
-                <Text variant="bodySmall" tone="accent" accessibilityRole="alert">
-                  {error}
-                </Text>
-              )}
+              {/* Shown on every step, once, above the actions: the header's
+                  Mentés can fail from any of them. */}
+              {!!error && <Notice>{error}</Notice>}
 
               <View style={styles.stepActions}>
                 <Button variant="outline" label={strings.checkin.back} style={{ flex: 1 }} onPress={() => goTo(2)} />
-                <StarBorder style={{ flex: 1 }} radius={radius.pill}>
-                  <Button
-                    label={saving ? strings.checkin.saving : strings.checkin.save}
-                    loading={saving}
-                    style={{ borderRadius: radius.pill }}
-                    onPress={handleSave}
-                  />
+                {/* The one lit rim on the screen, on the one action the form
+                    exists for, and only once the pane has arrived. */}
+                <StarBorder style={{ flex: 1 }} radius={radius.md} delay={motion.reveal}>
+                  <Button label={saving ? strings.checkin.saving : strings.checkin.save} loading={saving} onPress={handleSave} />
                 </StarBorder>
               </View>
             </View>
@@ -707,9 +679,7 @@ export default function CheckInScreen() {
  * params. Before this existed that button always landed on "play not found",
  * which made the most prominent action in the app a dead end.
  */
-function PlayPicker({ insetTop, onCancel, onPick }: { insetTop: number; onCancel: () => void; onPick: (play: Play) => void }) {
-  const styles = useStyles();
-
+function PlayPicker({ onPick }: { onPick: (play: Play) => void }) {
   const [query, setQuery] = useState("");
   const trimmed = query.trim();
   // Twenty rows: a picker is answered by the first few, and the field stays
@@ -743,19 +713,30 @@ function PlayPicker({ insetTop, onCancel, onPick }: { insetTop: number; onCancel
           </Text>
         )}
 
-        {results.map((p) => (
-          <Pressable key={p.id} onPress={() => onPick(p)} style={styles.pickerRow} accessibilityRole="button">
-            <PosterPlaceholder poster={p.poster} title={p.title} seed={p.id} width={40} height={60} radius={radius.sm} preferThumb />
-            <View style={{ flex: 1, gap: 3 }}>
-              <Text numberOfLines={2} variant="label">
-                {p.title}
-              </Text>
-              <Text numberOfLines={1} variant="caption" tone="faint">
-                {p.director ? `rend. ${p.director}` : p.author}
-              </Text>
-            </View>
-          </Pressable>
-        ))}
+        {searching && (
+          <View>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <RowSkeleton key={i} />
+            ))}
+          </View>
+        )}
+
+        {results.length > 0 && (
+          <View>
+            {results.map((p) => (
+              <PlayRow
+                key={p.id}
+                play={p}
+                onPress={() => onPick(p)}
+                meta={
+                  <Text numberOfLines={1} variant="caption" tone="faint">
+                    {p.director ? `rend. ${p.director}` : p.author}
+                  </Text>
+                }
+              />
+            ))}
+          </View>
+        )}
 
         {!!trimmed && !searching && results.length === 0 && (
           <Text variant="bodySmall" tone="faint">
@@ -792,7 +773,7 @@ function SubRatingRow({
           <Text variant="bodySmall" tone="faint">{strings.common.noRating}</Text>
         )}
       </View>
-      <MaskRatingRow rating={value} size={16} onPressMask={onChange} />
+      <MaskRatingRow rating={value} size={mask.row} onPressMask={onChange} />
     </View>
   );
 }
@@ -806,51 +787,21 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     gap: space.lg,
     padding: gutter,
   },
-  pickerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  field: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.md,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    borderRadius: radius.md,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-  },
-  ratingCard: {
-    gap: 14,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    borderRadius: radius.lg,
-    padding: 16,
-  },
+  headerAction: { marginRight: -space.sm },
+  playRow: { flexDirection: "row", gap: space.md, alignItems: "center" },
+  changePlay: { alignSelf: "flex-start", marginLeft: -space.sm },
+  chipRow: { flexDirection: "row", gap: space.sm, alignItems: "center", flexWrap: "wrap" },
+  // No card around the questions: the three steps are one form, and a
+  // surface on the middle one made it a different kind of thing from the
+  // two beside it. The hairline between the overall mark and the three
+  // rows under it is what says they are two questions.
+  ratingBlock: { gap: space.lg },
   overallBlock: {
     alignItems: "center",
-    gap: 8,
-    paddingBottom: 14,
-    borderBottomWidth: 1,
+    gap: space.sm,
+    paddingBottom: space.lg,
+    borderBottomWidth: hairlineWidth,
     borderBottomColor: colors.hairlineSoft,
   },
-  sectionLabel: {
-    letterSpacing: 0.2,
-  },
-  stepActions: { flexDirection: "row", gap: 10, marginTop: space.sm },
-  textArea: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    borderRadius: radius.md,
-    padding: 14,
-    minHeight: 76,
-    fontSize: inputFontSize,
-    color: colors.text,
-    textAlignVertical: "top",
-  },
+  stepActions: { flexDirection: "row", gap: space.sm, marginTop: space.sm },
 }));

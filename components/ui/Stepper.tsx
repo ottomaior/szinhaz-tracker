@@ -106,7 +106,9 @@ export function StepPane({ children, direction = 1 }: { children: ReactNode; dir
 const useStyles = makeStyles((colors) => StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center" },
   segment: { flex: 1, flexDirection: "row", alignItems: "center" },
-  segmentLast: { flex: 0 },
+  // Not `flex: 0`: in React Native that is a zero basis, so the last disc
+  // was laid out at no width and drawn past the right edge of the row.
+  segmentLast: { flexGrow: 0, flexShrink: 0, flexBasis: "auto" },
   labels: { flexDirection: "row", justifyContent: "space-between", gap: space.sm },
   disc: {
     width: control.sm,
