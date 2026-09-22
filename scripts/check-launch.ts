@@ -377,6 +377,8 @@ async function checkAuthConfig(): Promise<void> {
     rate_limit_email_sent?: number;
     external_google_enabled?: boolean;
     external_google_client_id?: string | null;
+    password_min_length?: number;
+    mailer_otp_exp?: number;
   };
 
   const origin = `https://${PRODUCTION_HOST}`;
@@ -413,6 +415,28 @@ async function checkAuthConfig(): Promise<void> {
       "configured — with the built-in mailer every stranger's confirmation is refused and nobody " +
       "can sign up at all. Authentication → Sign In / Providers → Confirm email."
   );
+  // The server half of the password rule. The forms enforce
+  // PASSWORD_MIN_LENGTH themselves, so a shorter minimum here is not a hole
+  // somebody walks through by accident — it is the number that applies to
+  // anything reaching the API another way, and the two disagreeing is how the
+  // client one quietly becomes decoration. Read out of the source rather than
+  // written again here, so there is one number and not two.
+  const authServiceSrc = readFileSync(join(root, "services", "authService.ts"), "utf8");
+  const clientMin = Number(/PASSWORD_MIN_LENGTH\s*=\s*(\d+)/.exec(authServiceSrc)?.[1] ?? 0);
+  check(
+    `The server password minimum is at least the ${clientMin} the forms ask for`,
+    clientMin > 0 && (auth.password_min_length ?? 0) >= clientMin,
+    `It is ${auth.password_min_length}. Authentication → Sign In / Providers → minimum password ` +
+      "length, or PATCH config/auth {password_min_length}."
+  );
+  check(
+    "E-mailed codes and links expire within fifteen minutes",
+    (auth.mailer_otp_exp ?? Number.POSITIVE_INFINITY) <= 900,
+    `They last ${auth.mailer_otp_exp} seconds. An hour-long confirmation link is an hour in ` +
+      "which a mail account that is later read is still worth reading. Authentication → " +
+      "Email → OTP expiry, or PATCH config/auth {mailer_otp_exp}."
+  );
+
   check(
     "The mail rate limit is above the 30/hour Supabase sets when SMTP is first configured",
     (auth.rate_limit_email_sent ?? 0) > 30,
