@@ -28,6 +28,11 @@
  */
 import { tokenBlock } from "../theme/cssVars";
 import { cssVarName, DEFAULT_DARK, DEFAULT_LIGHT, themes } from "../theme/themes";
+// From the pure modules, not from `tokens.ts`/`type.ts`: those reach
+// `Platform.select` at runtime, which Metro resolves and a Node script
+// cannot parse. See theme/scales.ts.
+import { control, duration, radius, space } from "../theme/scales";
+import { typeScale } from "../theme/typeScale";
 
 /** The element the writer replaces. Anything outside it is hand-written. */
 export const LANDING_TOKENS_ID = "vl-tokens";
@@ -54,6 +59,92 @@ function rgbTriple(hex: string): string {
 
 const v = (token: string) => `var(${cssVarName(token)})`;
 
+/**
+ * The scales, derived from the app's rather than invented beside them.
+ *
+ * The rule, and it is the whole of the "poster register" the landing is
+ * allowed: **below display size the landing takes the app's value verbatim;
+ * above it the same ladder continues.** A marketing page is read at arm's
+ * length and a tool is read in the hand, so a hero headline may be eighty
+ * pixels where the app's largest type is thirty-two. A caption may not.
+ *
+ * So the radius scale is the app's 6/10/14/20 with two more steps at the
+ * app's own 1.4 ratio; the spacing scale is the app's 4px grid with two more
+ * steps for a section rhythm no screen needs; the type scale is the app's ten
+ * roles unchanged, plus four `clamp()` roles that exist only here.
+ *
+ * Deliberately *not* added: a 48. The landing had 44s and 48s, and giving them
+ * a step of their own would have meant a scale whose names no longer lined up
+ * with the app's, which is the one thing this pass exists to stop. They go to
+ * 40.
+ */
+function scales(): string {
+  const px = (n: number) => `${n}px`;
+
+  const radii = {
+    ...radius,
+    // Continuing at the app's own ratio, for objects no screen contains:
+    // a panel the width of the page, a phone mockup three hundred wide.
+    "2xl": 28,
+    "3xl": 40,
+  };
+
+  const spacing = {
+    ...space,
+    // The section rhythm. A screen separates sections with 24 or 32; a page
+    // that scrolls for twelve thousand pixels needs more than that to read as
+    // chapters rather than as one long column.
+    "6xl": 96,
+    "7xl": 144,
+  };
+
+  /** The four display roles, which exist only on a poster. */
+  const display = {
+    // The hero. Continues the app's ladder above `display` at its own ~1.25.
+    poster: ["clamp(40px,6.4vw,80px)", "1"],
+    // A section's own heading.
+    marquee: ["clamp(32px,4.6vw,50px)", "1.05"],
+    // A card or an act inside a section.
+    act: ["clamp(24px,3.4vw,40px)", "1.15"],
+    // A counted figure: the four tallies, the roman numerals.
+    tally: ["clamp(40px,5vw,64px)", "1"],
+  };
+
+  const decls = [
+    ...Object.entries(radii).map(([k, n]) => `--vl-radius-${k}:${n === 999 ? "999px" : px(n)}`),
+    ...Object.entries(spacing).map(([k, n]) => `--vl-space-${k}:${px(n)}`),
+    ...Object.entries(control).map(([k, n]) => `--vl-control-${k}:${px(n)}`),
+
+    // One gutter for all six pages; there were three.
+    `--vl-gutter:clamp(${px(space.lg)},4vw,${px(space["4xl"])})`,
+
+    // The app's ten type roles, at the app's sizes and leadings.
+    ...Object.entries(typeScale).flatMap(([role, spec]: [string, any]) => [
+      `--vl-size-${role}:${px(spec.size)}`,
+      `--vl-leading-${role}:${px(spec.lineHeight)}`,
+    ]),
+    ...Object.entries(display).flatMap(([role, [size, leading]]) => [
+      `--vl-size-${role}:${size}`,
+      `--vl-leading-${role}:${leading}`,
+    ]),
+
+    // Depth: the app's two recipes, plus one poster step and the gold lift a
+    // button takes on hover. `lifted` is three times `floating` on both offset
+    // and blur, with a negative spread — one documented step, where the page
+    // had five ad-hoc ones ranging up to `0 60px 100px -40px`.
+    `--vl-elev-raised:0 1px 0 ${v("edgeHighlight")} inset`,
+    `--vl-elev-floating:0 8px 24px ${v("shadow")}`,
+    `--vl-elev-lifted:0 24px 48px -24px ${v("shadow")}`,
+    `--vl-elev-glow:0 12px 30px -12px ${v("goldGlow")}`,
+
+    // The app's three durations and its one easing.
+    ...Object.entries(duration).map(([k, n]) => `--vl-dur-${k}:${n}ms`),
+    `--vl-ease:cubic-bezier(.2,.8,.2,1)`,
+  ];
+
+  return `:root{${decls.join(";")}}`;
+}
+
 /** The generated CSS, without its `<style>` wrapper. */
 export function landingTokensCss(): string {
   return [
@@ -72,6 +163,8 @@ export function landingTokensCss(): string {
     `--vl-claret:${themes[DEFAULT_LIGHT].gold};`,
     `}`,
     `:root[data-theme="light"]{--vl-ink:${v("bg")};--vl-ray-rgb:${rgbTriple(themes[DEFAULT_LIGHT].gold)}}`,
+
+    scales(),
 
     // The base every page shares, rather than three copies of it.
     `*,*::before,*::after{box-sizing:border-box}`,

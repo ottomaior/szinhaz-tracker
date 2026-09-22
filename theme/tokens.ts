@@ -13,45 +13,14 @@ import { Platform, type ViewStyle } from "react-native";
 import { colors } from "./colors";
 import type { Palette } from "./themes";
 
-/**
- * Spacing, on a 4px grid.
- *
- * Named by size rather than by purpose, because the same gap does different
- * jobs in different places and purpose-named tokens ("cardPadding") multiply
- * until they mean nothing.
- */
-export const space = {
-  /** Between a title line and the meta line under it, where the leading already carries most of the air. */
-  "2xs": 2,
-  xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  "2xl": 24,
-  "3xl": 32,
-  "4xl": 40,
-  "5xl": 64,
-} as const;
+// The pure numeric scales live in ./scales so a Node script can read them
+// without pulling in React Native; re-exported here so every call site is
+// unchanged. See theme/scales.ts.
+export { space, gutter, radius, control, duration } from "./scales";
+import { space, radius } from "./scales";
 
-/** The screen gutter every full-width screen shares. */
-export const gutter = space.xl;
 
-/**
- * Corner radii, scaled to the element.
- *
- * Deliberately not one radius everywhere: a 40px cast thumbnail and a
- * full-width sheet rounded identically read as the same kind of object, which
- * flattens the hierarchy. Small things get a tight radius, large surfaces a
- * generous one.
- */
-export const radius = {
-  sm: 6, // thumbnails, chips, small tiles
-  md: 10, // cards, inputs, buttons
-  lg: 14, // panels and grouped sections
-  xl: 20, // sheets and modals
-  pill: 999,
-} as const;
+
 
 /** Hairlines should read as one device pixel, not one layout point. */
 export const hairlineWidth = Platform.select({ ios: 0.5, android: 0.5, default: 1 }) as number;
@@ -200,20 +169,6 @@ export const maxWidth = {
 /** Below this, a tap target is hard to hit reliably. */
 export const minTouchTarget = 44;
 
-/**
- * Control heights.
- *
- * Three, and every pressable in the app is one of them: `sm` for a chip, a
- * pill button and a segmented tab; `md` for a button, a field and anything a
- * finger has to land on (`minTouchTarget`, under another name); `lg` only for
- * the search field that heads a screen. A bar — the modal header, the top
- * bar's inner row — is `bar`.
- */
-export const control = {
-  sm: 32,
-  md: 44,
-  lg: 50,
-} as const;
 
 export const bar = 56;
 
@@ -266,21 +221,6 @@ export const icon = {
   chrome: 20,
 } as const;
 
-/**
- * Motion, in three durations.
- *
- * `state` is a thing changing under the finger — a chip toggling, a row
- * pressed, a hover arriving. `enter` is a thing arriving or leaving: a toast,
- * a sheet, the next step of a form. `reveal` is a screen introducing itself:
- * the fade-and-lift of a list, the words of a title, a number counting up.
- * Everything in components/motion picks one of the three; nothing chooses
- * its own number.
- */
-export const duration = {
-  state: 160,
-  enter: 260,
-  reveal: 420,
-} as const;
 
 /** The one spring: quick, with a little give. The dock keeps its own, livelier one. */
 export const spring = { speed: 24, bounciness: 6 } as const;
