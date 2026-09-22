@@ -26,7 +26,7 @@ import {
   type RatingAnswer,
 } from "@/scripts/research-design";
 import { makeStyles, useColors } from "@/theme/styles";
-import { gutter, radius, space } from "@/theme/tokens";
+import { gutter, hairlineWidth, radius, rule, space } from "@/theme/tokens";
 import { elapsedSince, formatShortDate, formatShortDayForSuffix, formatTime } from "@/utils/datetime";
 
 /**
@@ -133,7 +133,7 @@ function Dashboard({ stats, onReload }: { stats: UsageStats; onReload: () => voi
 
   return (
     <>
-      <View style={{ gap: 2 }}>
+      <View style={{ gap: space["2xs"] }}>
         <Text variant="caption" tone="faint">
           {t.generatedAt(formatShortDate(stats.generatedAt), formatTime(stats.generatedAt))}
           {" · "}
@@ -213,7 +213,7 @@ function Dashboard({ stats, onReload }: { stats: UsageStats; onReload: () => voi
           )}
           {stats.recentAccounts.map((a, i) => (
             <View key={`${a.handle ?? "?"}-${i}`} style={[styles.personRow, i > 0 && styles.personRowBorder]}>
-              <View style={{ flex: 1, gap: 2 }}>
+              <View style={{ flex: 1, gap: space["2xs"] }}>
                 <Text variant="subheading" numberOfLines={1}>
                   {a.name || t.noName}
                   {a.handle ? (
@@ -317,7 +317,7 @@ function Questionnaire({ research }: { research: ResearchStats }) {
                 <Text variant="caption" tone="faint" style={styles.rankIndex}>
                   {i + 1}
                 </Text>
-                <View style={{ flex: 1, gap: 4 }}>
+                <View style={{ flex: 1, gap: space.xs }}>
                   <Text variant="bodySmall" numberOfLines={2}>
                     {s.label}
                   </Text>
@@ -354,7 +354,7 @@ function Questionnaire({ research }: { research: ResearchStats }) {
                 <Text variant="caption" tone="faint" style={styles.rankIndex}>
                   {i + 1}
                 </Text>
-                <View style={{ flex: 1, gap: 4 }}>
+                <View style={{ flex: 1, gap: space.xs }}>
                   <Text variant="bodySmall" numberOfLines={2}>
                     {s.label}
                   </Text>
@@ -381,7 +381,7 @@ function Questionnaire({ research }: { research: ResearchStats }) {
               const answered = MISSING_ANSWERS.reduce((sum, k) => sum + c(k), 0);
               return (
                 <View key={f.id} style={[styles.rankRow, i > 0 && styles.personRowBorder]}>
-                  <View style={{ flex: 1, gap: 2 }}>
+                  <View style={{ flex: 1, gap: space["2xs"] }}>
                     <Text variant="bodySmall" numberOfLines={2}>
                       {f.label}
                     </Text>
@@ -422,7 +422,7 @@ function Questionnaire({ research }: { research: ResearchStats }) {
                   {Object.entries(q.options).map(([id, label]) => {
                     const c = counts[id] ?? 0;
                     return (
-                      <View key={id} style={{ gap: 3 }}>
+                      <View key={id} style={{ gap: space["2xs"] }}>
                         <View style={styles.optionRow}>
                           <Text variant="caption" tone={c > 0 ? "default" : "faint"} numberOfLines={1} style={{ flex: 1 }}>
                             {label}
@@ -492,7 +492,7 @@ function verdictTone(zavarna: number, jobb: number, answered: number): "accent" 
 function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
     <View style={{ gap: space.sm }}>
-      <View style={{ gap: 2 }}>
+      <View style={{ gap: space["2xs"] }}>
         <Text variant="heading">{title}</Text>
         {hint ? (
           <Text variant="caption" tone="faint">
@@ -583,7 +583,7 @@ const useStyles = makeStyles((colors) =>
     tiles: { flexDirection: "row", gap: space.sm },
     tile: {
       flex: 1,
-      gap: 2,
+      gap: space["2xs"],
       padding: space.md,
       borderRadius: radius.lg,
       backgroundColor: colors.surface,
@@ -594,23 +594,23 @@ const useStyles = makeStyles((colors) =>
       backgroundColor: colors.surface,
       gap: space.sm,
     },
-    bars: { flexDirection: "row", alignItems: "flex-end", gap: 4, height: 72 },
+    bars: { flexDirection: "row", alignItems: "flex-end", gap: space.xs, height: space["5xl"] + space.sm },
     barSlot: { flex: 1, height: "100%", justifyContent: "flex-end" },
-    bar: { borderRadius: 3, backgroundColor: colors.gold },
+    bar: { borderRadius: radius.sm, backgroundColor: colors.gold },
     barEmpty: { backgroundColor: colors.hairline },
     barsAxis: { flexDirection: "row", justifyContent: "space-between" },
     personRow: { flexDirection: "row", alignItems: "center", gap: space.md, paddingVertical: space.sm },
-    personRowBorder: { borderTopWidth: 1, borderTopColor: colors.hairlineSoft },
+    personRowBorder: { borderTopWidth: hairlineWidth, borderTopColor: colors.hairlineSoft },
     rankRow: { flexDirection: "row", alignItems: "center", gap: space.sm, paddingVertical: space.sm },
     rankIndex: { width: 18, textAlign: "right" },
     rankCells: { minWidth: 72, textAlign: "right" },
     netTrack: { flexDirection: "row", height: 4 },
     netHalf: { flex: 1, height: "100%", justifyContent: "center" },
-    netFillLeft: { alignSelf: "flex-end", height: "100%", borderRadius: 2, backgroundColor: colors.textFaint },
-    netFillRight: { alignSelf: "flex-start", height: "100%", borderRadius: 2, backgroundColor: colors.gold },
+    netFillLeft: { alignSelf: "flex-end", height: "100%", borderRadius: radius.sm, backgroundColor: colors.textFaint },
+    netFillRight: { alignSelf: "flex-start", height: "100%", borderRadius: radius.sm, backgroundColor: colors.gold },
     optionRow: { flexDirection: "row", justifyContent: "space-between", gap: space.sm },
-    optionTrack: { height: 4, borderRadius: 2, backgroundColor: colors.hairlineSoft, overflow: "hidden" },
-    optionFill: { height: "100%", borderRadius: 2, backgroundColor: colors.gold },
-    quote: { borderLeftWidth: 2, borderLeftColor: colors.gold, paddingLeft: space.sm },
+    optionTrack: { height: space.xs, borderRadius: radius.sm, backgroundColor: colors.hairlineSoft, overflow: "hidden" },
+    optionFill: { height: "100%", borderRadius: radius.sm, backgroundColor: colors.gold },
+    quote: { borderLeftWidth: rule, borderLeftColor: colors.gold, paddingLeft: space.sm },
   })
 );

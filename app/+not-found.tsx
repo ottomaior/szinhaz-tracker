@@ -1,6 +1,7 @@
 import { View } from "react-native";
 import { useRouter } from "expo-router";
 import { useColors } from "@/theme/styles";
+import { space } from "@/theme/tokens";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { ContentColumn } from "@/components/ui/Screen";
@@ -23,7 +24,7 @@ export default function NotFoundScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ModalHeader title={strings.appName} fallbackRoute="/(tabs)/discover" />
-      <ContentColumn style={{ paddingTop: 24 }}>
+      <ContentColumn style={{ paddingTop: space["2xl"] }}>
         <EmptyState
           title={strings.common.notFoundTitle}
           body={strings.common.notFoundBody}

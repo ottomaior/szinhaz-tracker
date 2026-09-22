@@ -1,11 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
-import { inputFontSize } from "@/theme/type";
-import { gutter, radius, space } from "@/theme/tokens";
-import { bodyFont } from "@/theme/typography";
-import { useAppFonts } from "@/hooks/useAppFonts";
+import { gutter, hairlineWidth, radius, space } from "@/theme/tokens";
 import { useAuth } from "@/contexts/AuthContext";
 import { getCities, getFilterVenues } from "@/services/playsService";
 import { followSubject } from "@/services/followService";
@@ -21,13 +18,14 @@ import { handleFromName, nameLooksDerived } from "@/utils/handle";
 import type { Venue } from "@/data/types";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
+import { TextField } from "@/components/ui/TextField";
+import { CheckDisc } from "@/components/ui/CheckDisc";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { ContentColumn } from "@/components/ui/Screen";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { StepIndicator, StepPane } from "@/components/ui/Stepper";
 import { Text } from "@/components/ui/Text";
-import { CheckIcon } from "@/components/icons/Icons";
 import { strings } from "@/i18n/hu";
 import { closeModal } from "@/utils/navigation";
 import { makeStyles } from "@/theme/styles";
@@ -49,7 +47,6 @@ type Step = "name" | "city" | "theatres";
 export default function FirstRunScreen() {
   const styles = useStyles();
   const router = useRouter();
-  const fontsLoaded = useAppFonts();
   const { session, loading: authLoading } = useAuth();
   const params = useLocalSearchParams<{ step?: string }>();
   const isDone = params.step === "done";
@@ -272,29 +269,25 @@ export default function FirstRunScreen() {
                 <Text variant="bodySmall" tone="dim">
                   {strings.firstRun.nameLede}
                 </Text>
-                <TextInput
+                <TextField
                   value={name}
                   onChangeText={setName}
                   placeholder={strings.editProfile.namePlaceholder}
-                  placeholderTextColor={colors.textFaint}
                   accessibilityLabel={strings.editProfile.nameLabel}
                   autoComplete="name"
                   autoFocus
-                  style={[styles.input, { fontFamily: bodyFont(fontsLoaded) }]}
                 />
                 <View style={{ gap: space.xs }}>
-                  <TextInput
+                  <TextField
                     value={effectiveHandle}
                     onChangeText={(v) => {
                       setHandleTouched(true);
                       setHandle(v);
                     }}
                     placeholder={strings.editProfile.handlePlaceholder}
-                    placeholderTextColor={colors.textFaint}
                     accessibilityLabel={strings.editProfile.handleLabel}
                     autoCapitalize="none"
                     autoCorrect={false}
-                    style={[styles.input, { fontFamily: bodyFont(fontsLoaded) }]}
                   />
                   <Text variant="caption" tone="faint">
                     {strings.editProfile.handleHint}
@@ -354,7 +347,7 @@ export default function FirstRunScreen() {
                           aria-label={venue.name}
                           style={[styles.venueRow, on && styles.venueRowOn]}
                         >
-                          <View style={{ flex: 1, gap: 2 }}>
+                          <View style={{ flex: 1, gap: space["2xs"] }}>
                             <Text variant="body" numberOfLines={1}>
                               {venue.name}
                             </Text>
@@ -362,9 +355,7 @@ export default function FirstRunScreen() {
                               {[venue.type, city ? undefined : venue.city].filter(Boolean).join(" · ")}
                             </Text>
                           </View>
-                          <View style={[styles.tick, on && styles.tickOn]}>
-                            {on && <CheckIcon size={14} color={colors.onAccent} />}
-                          </View>
+                          <CheckDisc on={on} />
                         </Pressable>
                       );
                     })}
@@ -389,15 +380,6 @@ export default function FirstRunScreen() {
 }
 
 const useStyles = makeStyles((colors) => StyleSheet.create({
-  input: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    borderRadius: radius.md,
-    padding: space.lg,
-    fontSize: inputFontSize,
-    color: colors.text,
-  },
   chipRow: { flexDirection: "row", gap: space.sm, flexWrap: "wrap" },
   venueRow: {
     flexDirection: "row",
@@ -405,19 +387,9 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     gap: space.md,
     padding: space.md,
     borderRadius: radius.md,
-    borderWidth: 1,
+    borderWidth: hairlineWidth,
     borderColor: colors.hairline,
     backgroundColor: colors.surface,
   },
   venueRowOn: { borderColor: colors.gold },
-  tick: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    borderWidth: 1.5,
-    borderColor: colors.hairline,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  tickOn: { backgroundColor: colors.gold, borderColor: colors.gold },
 }));
