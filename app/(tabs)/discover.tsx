@@ -1621,7 +1621,9 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   dotsRow: { flexDirection: "row", alignItems: "center", gap: space["2xs"], paddingTop: space.sm, alignSelf: "center" },
   // The dot is 6pt; the target around it is a finger.
   dotTarget: { padding: space.xs },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.hairline },
+  // `radius.pill` rather than half the width: a circle is a shape, and the
+  // scale has no 3 in it. StatusBadge's own dot is drawn the same way.
+  dot: { width: 6, height: 6, borderRadius: radius.pill, backgroundColor: colors.hairline },
   dotOn: { backgroundColor: colors.gold },
   dotsCount: { marginLeft: space.xs },
   heroButton: { alignSelf: "flex-start", marginTop: space.xs },
