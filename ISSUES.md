@@ -597,6 +597,38 @@ do, and the three legal ones, since a document cannot show its contents from
 its title); draw each section as one card with its rows parted by hairlines;
 replace the six stacked theme cards with a compact strip of swatches. No
 toggle, link or preference is removed — only the chrome and the tautology.
+### T-122 · The questionnaire's error red has no token, because the palette has no danger colour
+type: chore · area: design · priority: low · status: open · added: 2026-09-22
+
+`landing/kutatas.html` paints its validation errors and its "worst" chip in
+four literals — `#f0a5b0`, `#e08a9a`, `rgba(240,165,176,0.35)`,
+`rgba(122,36,51,0.22)` — and they are the only colours left on the landing
+site that the allowlist excuses without being able to check them.
+
+They are literals because `Palette` in `theme/themes.ts` has no danger
+colour. Adding one is not a landing change: it touches all five themes, and
+every screen in the app that currently says something has gone wrong in gold
+— which is the colour that elsewhere means "you can still go and see this".
+`npm run drift` would then find every one of those call sites, which is the
+point, and also the size of it.
+
+Until then the four literals stay, and `scripts/drift-landing.ts` names this
+entry as the reason.
+
+### T-123 · landing/README.hu.md is missing two sections its English original has
+type: chore · area: i18n · priority: low · status: open · added: 2026-09-22
+
+`landing/README.md` gained "The three ways in" and "The mail links are
+drafts, not addresses" in September, and the Hungarian twin never caught up;
+its open-beta section also still calls the app a closed alpha, which it
+stopped being on 18 September. CLAUDE.md makes the English file the original
+and the Hungarian one a translation of it, so this is a translation that was
+skipped rather than a decision.
+
+The front-of-house pass added the design-system section to both, so the gap
+is now exactly those two sections plus the stale beta wording. Noticed while
+writing that section; not folded into the pass because translating marketing
+prose is a different job from moving a token.
 
 ### T-113 · "látta a bemutatkozást" on the operator stats says nothing to its reader
 type: chore · area: design · priority: low · status: open · added: 2026-09-20
@@ -651,21 +683,6 @@ looks like the same screen reads as the app not responding, and the page
 never says *which* thing needs a sign-in. Each tab should at least say what
 it is (a heading "Várólista" / "Napló") and what the visitor would get here
 specifically, or show a public preview of the thing itself where one exists.
-
-### T-080 · The hero phones on vastaps.app flicker under the mouse
-type: bug · area: web · priority: low · status: open · added: 2026-09-18
-
-On https://vastaps.app/, moving the mouse over the two phone screenshots in
-the hero makes them flicker. The tilt handler in `landing/index.html` writes
-`el.style.transform` on every `pointermove` and clears it on `pointerleave`,
-with a `.15s` transition on `.ph`. A guess at the cause: the tilt moves the
-phone under the cursor, and the two phones overlap (`.ph.a` over `.ph.b`),
-so near an edge the pointer alternately leaves one phone and enters the
-other, each leave snapping the transform back and each move re-applying it.
-A second guess: `base` is the computed `matrix(...)` captured once at load,
-so the rotation is applied on top of a matrix and the transition tweens
-between two differently-shaped transform lists. Reproduce with a mouse on
-desktop; touch is excluded by the handler.
 
 ### T-070 · A list entry's "Levesz" is a button inside a button
 type: bug · area: web · priority: low · status: open · added: 2026-09-11
@@ -1084,6 +1101,24 @@ _Nothing yet._
 ---
 
 ## Done
+
+### T-080 · The hero phones on vastaps.app flicker under the mouse
+type: bug · area: web · priority: low · status: done · added: 2026-09-18 · done: 2026-09-22
+
+A duplicate of T-102, filed the same day, and fixed by it. Both describe the
+same flicker; this one describes a cause that has not been in the shipped
+code since T-102 landed — a tilt written as `el.style.transform` per phone,
+reset on `pointerleave`.
+
+Checked on the running site before touching anything, while planning the
+front-of-house pass: the phones carry no inline styles at all, and the tilt is
+a `--tilt` custom property measured against the `.phones` container, which is
+exactly T-102's fix. Nothing to do.
+
+Worth knowing for whoever meets this next: two entries about one symptom,
+filed hours apart, one of them fixed and the other left open because nobody
+connected them. Reproduce before re-fixing, and do not revert the `--tilt`
+architecture, which exists because the per-element version is what flickered.
 
 ### T-115 · Örkény covers kept only in the hero field never reached the app
 type: bug · area: data · priority: med · status: done · added: 2026-09-21 · done: 2026-09-21
@@ -3738,4 +3773,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-122**
+Next free id: **T-124**

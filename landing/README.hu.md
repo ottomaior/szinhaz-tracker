@@ -18,14 +18,55 @@ mellett is helyesen olvasható magyarul — és a keresők meg a
 linkelőnézetek is ezt látják. Az olvasó választását a `localStorage` őrzi
 `vastaps-lang` néven.
 
-A paletta az app saját `velvetDark` témája (`theme/themes.ts`), az oldal
-alapja egy árnyalattal mélyebbre véve, hogy a telefonos képernyőképek
-megvilágított tárgyként olvassanak a sötét színpadon; a két betűtípus az app
-saját Bodoni Modája és Sorája, a Google Fontsról betöltve. Minden szín
-kifejezetten ki van festve, nem örökölt: az oldal sötétben nyílik, és a
-navigáció hold gombja átváltja az app `playbillLight` témájára — ugyanaz a
-ház, nyomtatva —, a választást a `localStorage` őrzi
+## A tervezési rendszer
+
+Amivel a hat oldal fest, azt mind a `theme/`-ből állítja elő a
+`scripts/landing-tokens.ts`, és az `npm run render:tokens` írja bele minden
+oldalba — ez fut elsőként az `npm run deploy:landing`-ben. 2026 szeptembere
+előtt a webhely három kézzel írt palettamásolatot vitt, háromféle néven: az
+`index.html` `--hair`-nek hívta a `hairline`-t, a `kutatas.html` `--ink`-nek
+az alapot, a jogi sablonnak pedig saját rövidítései voltak — és mindhárom
+szerencséből tartotta a helyes értékeket, nem szerkezetből.
+
+A szabály, amiben a munka kiúlt: **egy szókészlet, plakát-hangfekvésben.**
+
+- **A színek a `theme/themes.ts`-ből jönnek**, az app saját `--vc-*` nevein,
+  így a webhely és az app nem tud mást gondolni arról, mi az arany. Két
+  kivételt nevez meg a generált blokk: a `--vl-ink`, az oldal alapja egy
+  árnyalattal az appé alatt, hogy a telefonos képernyőkép megvilágított
+  tárgyként olvasson a sötét színpadon; és a `--vl-gold-lift`, egy fokkal
+  világosabb az akcentusnál, a kurzor alatti linknek. Egy harmadik már
+  megbuktatná a `scripts/landing-tokens.test.ts`-t.
+- **A térköz az app 4 pixeles rácsa**, plusz két fok a szakaszritmusnak, amire
+  egy képernyőnek nincs szüksége. A lekerekítések az app 6/10/14/20-asai,
+  plusz két további ugyanazzal az aránnyal.
+- **A típus az app tíz szerepe**, plusz hat, ami csak plakáton létezik: négy
+  kiemelt méret az app legnagyobbja fölött, egy `lede` a felvezetőnek, és a
+  `copy` mindennek, amit mondatokban olvasunk. A `copy` 16, ahol az app
+  `body`-ja 15, és ez az egyetlen hely, ahol a webhely szándékosan nagyobbra
+  szedi a szöveget az appnál: egy eszközt kézből olvas az ember, egy oldalt
+  karnyújtásnyiról.
+- **A mozgás az app három időtartama** — 160 ms egy állapotváltásra, 260 arra,
+  ami érkezik, 420 egy felfedésre — és az egyetlen lassítása. Az öt hurok
+  megtartja a sajátját, mert a hurok nem átmenet. Az első kirajzoláskor semmi
+  sem mozdul: a cím 120 ms-ot vár, a fénysugarak utána indulnak.
+- **A mélység az app két receptje**, plusz egy emelt fok a `floating`
+  háromszorosán, olyan tárgyaknak, amik egy képernyőre nem férnek rá.
+
+A két betűtípus a Bodoni Moda és a Sora, a Google Fontsról, **egyetlen
+kérésben**, amin minden oldal osztozik; korábban a háromféle oldal háromféle
+súlykészletet kért. A navigáció hold gombja az app `playbillLight` témájára
+vált — ugyanaz a ház, nyomtatva —, és a munka óta mind a hat oldalon ott van,
+nem csak ezen az egyen; a választást a `localStorage` őrzi
 `vastaps.landing.theme` néven.
+
+Az `npm run drift:landing` megszámolja, amit a hívás helyén írtak be a
+`theme/` helyett: 458 volt, amikor a munka indult, most 0, és egy teszt tartja
+ott. A kivétellistája a szándékos rajzot nevezi meg — az öt témacsempe, egy
+csillanás, egy telefon kézzel rajzolt háza —, és minden tétele megmondja,
+miért. Az `npm run shots:landing` mind a hat oldalról képet készít három
+szélességen, mindkét témában; a bizonyítékot az
+`ux-audit/landing/README.md` magyarázza.
 
 ## A képernyőképek
 
