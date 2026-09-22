@@ -21,18 +21,18 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { LANDING_TOKENS_ID, landingThemeScript, landingTokensStyleTag } from "./landing-tokens";
 
 /**
- * `landing/og.html` is not here yet, and that is deliberate.
+ * `landing/og.html` is here, and it does not carry the theme script.
  *
  * It is a 1200×630 render target rather than a page: nothing browses it, and
- * what ships is `landing/og.png`, which `npm run og` bakes out of it. It also
- * carries no custom properties at all — every one of its forty colours is raw
- * hex — so moving it is a rewrite rather than a rename, and it cannot be
- * proved by the page differ because it is not one of the six pages that get
- * photographed. It is converted in its own step, against a re-rendered card.
- *
- * `npm run drift:landing` counts it meanwhile, so it cannot be forgotten.
+ * what ships is `landing/og.png`, which `npm run og` bakes out of it. So it
+ * needs the palette — it was painted in raw hex from top to bottom — but not
+ * a toggle, because a share card has one appearance and it is the dark one.
  */
-const PAGES = ["landing/index.html", "landing/kutatas.html"];
+const PAGES = [
+  { file: "landing/index.html", theme: true },
+  { file: "landing/kutatas.html", theme: true },
+  { file: "landing/og.html", theme: false },
+];
 
 /** The two generated elements: the palette, and the script that applies it. */
 const BLOCKS = [
@@ -49,10 +49,11 @@ const BLOCKS = [
 ];
 
 let wrote = 0;
-for (const page of PAGES) {
+for (const { file: page, theme } of PAGES) {
   const before = readFileSync(page, "utf8");
   let after = before;
   for (const block of BLOCKS) {
+    if (block.what.includes("vl-theme") && !theme) continue;
     if (!block.re.test(after)) {
       console.error(
         `${page} has no ${block.what} element.

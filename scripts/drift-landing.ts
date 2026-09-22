@@ -92,10 +92,10 @@ const ALLOW: { file: string; category: Category; literal: string; why: string }[
   // hand-copied palette this pass exists to delete, and
   // `background: #1c0d13` is the disc quoting it. A bare hex in the allowlist
   // would excuse both.
-  { file: "landing/index.html", category: "colour", literal: "background: #1c0d13", why: "theme swatch: Bársony" },
+  { file: "landing/index.html", category: "colour", literal: "background: #0f0709", why: "theme swatch: Bársony" },
   { file: "landing/index.html", category: "colour", literal: "background: #faf5ec", why: "theme swatch: Színlap" },
   { file: "landing/index.html", category: "colour", literal: "background: #f7f2fb", why: "theme swatch: Levendula" },
-  { file: "landing/index.html", category: "colour", literal: "background: #1c2025", why: "theme swatch: Éjszakai" },
+  { file: "landing/index.html", category: "colour", literal: "background: #0f1114", why: "theme swatch: Éjszakai" },
   { file: "landing/index.html", category: "colour", literal: "background: #ffffff", why: "theme swatch: Letisztult" },
 
   // A sheen swept across a text fill is white on every ground, the same way
@@ -153,6 +153,20 @@ const ALLOW: { file: string; category: Category; literal: string; why: string }[
   // transparency is local, and `color-mix` is how CSS says so.
   { file: "landing/kutatas.html", category: "colour", literal: "color-mix(in srgb, var(", why: "a palette colour made translucent" },
   { file: "landing/index.html", category: "colour", literal: "color-mix(in srgb, var(", why: "a palette colour made translucent" },
+
+  // The share card is one picture rather than a page, and most of what it
+  // paints is light and material: a gold wash above the fold, a lit ellipse
+  // behind the phone, the brushed shell of the phone itself, the glare across
+  // its screen. The palette names colours, not the alphas a gradient fades
+  // through or the four greys a piece of anodised aluminium is drawn with.
+  { file: "landing/og.html", category: "colour", literal: "rgba(228,191,114,", why: "the accent at a gradient's own alphas" },
+  { file: "landing/og.html", category: "colour", literal: "rgba(169,124,46,", why: "the deep accent, fading out" },
+  { file: "landing/og.html", category: "colour", literal: "rgba(10,5,7,0)", why: "the ground, fading to nothing" },
+  { file: "landing/og.html", category: "colour", literal: "rgba(245,237,228,", why: "the glare across the phone's screen" },
+  { file: "landing/og.html", category: "colour", literal: "#4a3a30", why: "the phone's brushed shell" },
+  // A phone's corner is a proportion of the phone, not a step on a scale: it
+  // has to stay right if the mockup is drawn at another size.
+  { file: "landing/og.html", category: "radius", literal: "%/", why: "a phone's corner, as a proportion of itself" },
 
   // The questionnaire's error and "worst" states. `Palette` has no danger
   // colour; adding one touches all five themes and every screen in the app,

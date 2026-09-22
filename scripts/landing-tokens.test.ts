@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { themes } from "../theme/themes";
+import { DEFAULT_DARK, THEME_ORDER, themes } from "../theme/themes";
 import { LANDING_TOKENS_ID, landingTokensCss, landingTokensStyleTag } from "./landing-tokens";
 
 /**
@@ -72,6 +72,30 @@ describe("the landing site's tokens are generated, not typed", () => {
    * colour, which is the thing it exists to prevent.
    */
   const NAMED_EXCEPTIONS = ["#0a0507", "#f0d38f"];
+
+  /**
+   * Two places on the site have to carry literal hex, and both are checked
+   * rather than merely allowed.
+   *
+   * The theme swatches quote five palettes at once, so four of the five can
+   * never be `var()`s — only one theme is current. The favicon is served with
+   * no CSS context at all. Being unable to use a token is a reason to pin the
+   * value, not a reason to stop caring what it is: before this the five
+   * swatches mixed grounds with surfaces, and the icon carried a third gold
+   * that matched neither the palette's accent nor its deep one.
+   */
+  it("the theme swatches are the five palettes' own grounds", () => {
+    const page = readFileSync("landing/index.html", "utf8");
+    const swatches = [...page.matchAll(/<i style="background:(#[0-9a-fA-F]{6})"><\/i>/g)].map((m) => m[1]);
+    const grounds = THEME_ORDER.map((id) => themes[id].bg.toLowerCase());
+    expect(swatches.map((c) => c.toLowerCase()), "a swatch quotes a theme that does not look like that").toEqual(grounds);
+  });
+
+  it("the favicon carries the palette's gold on the page's ground", () => {
+    const icon = readFileSync("landing/icon.svg", "utf8");
+    expect(icon, "the mark should be the palette's accent").toContain(themes[DEFAULT_DARK].gold);
+    expect(icon, "the icon's ground should be the page's").toContain("#0a0507");
+  });
 
   it("carries no colour the palette does not, except the named exceptions", () => {
     const hexes = new Set(landingTokensCss().match(/#[0-9a-fA-F]{6}\b/g) ?? []);
