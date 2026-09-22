@@ -48,11 +48,19 @@ and a merge to `main` changes nothing on those phones by itself.
   must match the channel. It lands at the next launch. The `preview` channel is the sideloadable APK
   and normally has nobody on it.
 - **A native change needs a build**, not an update: a new Expo module, a
-  config-plugin change, a new permission, an SDK bump. The fingerprint
+  config-plugin change, a new permission, an SDK bump — **and an npm
+  script**, because `@expo/fingerprint` counts `packageJson:scripts`. Adding
+  two dev-only scripts to `package.json` on 22 September was enough to move
+  the fingerprint and strand every installed phone (T-120). The fingerprint
   runtime policy in `app.config.ts` makes sure such a change is never
   offered to an old binary; it simply reaches nobody until
   `eas build --profile production --platform android` is uploaded to the
   closed track in the Play Console and clears review.
+- **An update is not done when it says "Published!"** `eas update` prints
+  that whether or not any phone can take it, so the last step is to compare
+  the runtime version it printed against the installed build's fingerprint
+  (`eas build:list --platform android`). If they differ, the update reached
+  nobody, and saying it shipped would be wrong.
 - **The oldest installed build has to keep working against the database.**
   The migration rules below used to protect the deploy; now they protect
   people. Before a migration ask which build is on the phones and whether it

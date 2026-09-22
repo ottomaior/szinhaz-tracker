@@ -420,7 +420,7 @@ attendance and the diary must never record an evening on someone's behalf.
 ## Open
 
 ### T-120 · Two npm scripts changed the native fingerprint and cut the phones off from updates
-type: bug · area: infra · priority: high · status: open · added: 2026-09-22
+type: bug · area: infra · priority: med · status: open · added: 2026-09-22
 
 The 22 September `eas update --channel production` published successfully and
 will reach **nobody**. It went out on runtime version `06ad71df…`; the
@@ -439,16 +439,17 @@ enough. Proven rather than guessed: recomputing the fingerprint with build
 The trap is that `eas update` reports "Published!" either way. Nothing in the
 output says the update is inert, and the phones simply never see it.
 
-Two ways out. Removing the two scripts restores the old fingerprint and lets
-the update reach the phones today; the work they do is still reachable as
-`npx tsx scripts/drift.ts` and `npx tsx scripts/diff-shots.ts`. Otherwise it
-needs `eas build --profile production`, an upload to the closed track and a
-Play review before any over-the-air update flows again.
+**Decided 22 September: left as it is, web only for now.** The scripts stay.
+The web app already has everything, and the push coalescing is server-side
+so it reaches the phones tonight whatever version they run; only the
+settings work (T-117, T-118) and the poster watchdog (T-119) wait, and they
+wait for the next native build, which will carry them anyway. Removing the
+two scripts would have restored the old fingerprint and let the update land
+today — kept here as the cheap option should it become urgent.
 
-Worth a line in `CLAUDE.md` either way: adding an npm script is a native
-change as far as updates are concerned, and after any `eas update` the
-published runtime version should be checked against the installed build's
-before it is called done.
+`CLAUDE.md` now says that an npm script is a native change as far as updates
+are concerned, and that an `eas update` is not done until its runtime
+version has been checked against the installed build's.
 
 ### T-119 · Some covers never arrive and the tile sits on its blurhash forever
 type: bug · area: design · priority: high · status: open · added: 2026-09-22
