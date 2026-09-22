@@ -1,0 +1,106 @@
+name: Fingerprint watch
+
+# Did this merge cut the phones off from over-the-air updates?
+#
+# `app.config.ts` sets `runtimeVersion: { policy: "fingerprint" }`, so an
+# update is only ever offered to a binary whose native fingerprint matches.
+# The trap is that the fingerprint counts things that do not look native at
+# all — `packageJson:scripts` is one of its sources — and `eas update` prints
+# "Published!" whether or not a single phone can take what it published.
+#
+# It has happened twice. On 22 September a pair of dev-only scripts moved it
+# (T-120). Then, between 19 and 22 September, five more — render:tokens,
+# drift:landing, shots:landing, drift, diff:shots, all landing-page and
+# screenshot tooling — moved it again, from ee5018a4 to 06ad71df, and the
+# update published on the 22nd reached nobody. Neither time did anything say
+# so; both were found by hand, afterwards.
+#
+# So this job compares the fingerprint of what just landed on main against the
+# fingerprint of the commit before it, and goes red when they differ. Red here
+# does not block anything — the merge has already happened — it is the
+# notification that the next `eas update` will land on no phone until a new
+# `eas build --profile production --platform android` is on the closed track
+# and through review. It stays red on every push until that build ships, which
+# is accurate: that is exactly how long the condition lasts.
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  fingerprint:
+    runs-on: ubuntu-latest
+    steps:
+      # Two full checkouts, each with its own install, because the fingerprint
+      # reads installed package contents as well as the files in the tree —
+      # comparing two source trees against one node_modules would answer a
+      # different question than the one being asked.
+      - uses: actions/checkout@v4
+        with:
+          path: head
+
+      # `github.event.before` is the tip of main as it stood before this push,
+      # which for an ordinary merge is the commit the phones were measured
+      # against. It is all-zeros for a branch that has just been created, and
+      # there is nothing to compare against in that case.
+      - id: before
+        run: |
+          sha="${{ github.event.before }}"
+          case "$sha" in
+            ""|0000000000000000000000000000000000000000) echo "skip=true" >> "$GITHUB_OUTPUT" ;;
+            *) echo "skip=false" >> "$GITHUB_OUTPUT"; echo "sha=$sha" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      - uses: actions/checkout@v4
+        if: steps.before.outputs.skip == 'false'
+        with:
+          ref: ${{ steps.before.outputs.sha }}
+          path: base
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install both trees
+        if: steps.before.outputs.skip == 'false'
+        run: |
+          npm ci --prefix head --no-audit --no-fund
+          npm ci --prefix base --no-audit --no-fund
+
+      - name: Compare
+        if: steps.before.outputs.skip == 'false'
+        run: |
+          set -e
+          hash_of() {
+            node -e "require('@expo/fingerprint').createFingerprintAsync('$1').then(f=>console.log(f.hash))" 
+          }
+          new=$(hash_of "$PWD/head")
+          old=$(hash_of "$PWD/base")
+          echo "before this push: $old"
+          echo "after  this push: $new"
+          {
+            echo "### Native fingerprint"
+            echo
+            echo "| | runtime |"
+            echo "|---|---|"
+            echo "| before this push | \`$old\` |"
+            echo "| after this push | \`$new\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$new" = "$old" ]; then
+            echo >> "$GITHUB_STEP_SUMMARY"
+            echo "Unchanged — an \`eas update\` from this commit still reaches the installed build." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          {
+            echo
+            echo "**Moved.** An \`eas update\` published from this commit will be offered to"
+            echo "no installed binary. The phones keep running what they have until a new"
+            echo "\`eas build --profile production --platform android\` is uploaded to the"
+            echo "closed track and clears Play review."
+            echo
+            echo "Run \`npx @expo/fingerprint fingerprint:diff\` between the two commits to"
+            echo "see which source moved — \`packageJson:scripts\` is the usual answer, and"
+            echo "the usual cause is a dev-only script that has nothing to do with the app."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::warning title=Native fingerprint moved::$old -> $new. An eas update from this commit reaches no installed phone until a new production build ships."
+          exit 1
