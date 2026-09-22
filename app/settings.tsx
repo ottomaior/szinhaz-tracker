@@ -4,7 +4,7 @@ import { Link, useRouter, type Href } from "expo-router";
 import { colors } from "@/theme/colors";
 import { gutter, hairlineWidth, radius, space } from "@/theme/tokens";
 import { themes, THEME_ORDER, type ThemeId } from "@/theme/themes";
-import { CheckIcon, ChevronRightIcon } from "@/components/icons/Icons";
+import { ChevronRightIcon } from "@/components/icons/Icons";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
 import { Notice } from "@/components/ui/Notice";
@@ -23,6 +23,7 @@ import { strings } from "@/i18n/hu";
 import { makeStyles } from "@/theme/styles";
 import { haptic } from "@/utils/haptics";
 import { InstallCard } from "@/components/ui/InstallCard";
+import { SettingsGroup } from "@/components/ui/SettingsGroup";
 import { NotificationsSection } from "@/components/ui/NotificationsSection";
 
 /**
@@ -53,13 +54,16 @@ export default function SettingsScreen() {
             </Text>
           </View>
 
-          <View style={{ gap: space.sm }} accessibilityRole="radiogroup" aria-label={strings.settings.appearance}>
+          <View style={styles.swatchStrip} accessibilityRole="radiogroup" aria-label={strings.settings.appearance}>
             {THEME_ORDER.map((id) => (
-              <ThemeRow
+              <ThemeSwatch
                 key={id}
                 swatch={id}
                 label={strings.settings.themes[id]}
-                blurb={strings.settings.themeBlurbs[id]}
+                // The palette's description is no longer printed under every
+                // swatch — the drawing says it faster — but it is still the
+                // best thing to read aloud, so it becomes the hint.
+                hint={strings.settings.themeBlurbs[id]}
                 // Nothing is checked until the stored preference has been read,
                 // so the pre-rendered markup does not claim a choice this
                 // browser may not have made.
@@ -70,10 +74,10 @@ export default function SettingsScreen() {
                 }}
               />
             ))}
-            <ThemeRow
+            <ThemeSwatch
               swatch={resolved}
               label={strings.settings.themeSystem}
-              blurb={strings.settings.themeSystemNow(strings.settings.themes[resolved])}
+              hint={strings.settings.themeSystemNow(strings.settings.themes[resolved])}
               selected={hydrated && preference === "system"}
               onPress={() => {
                 haptic("selection");
@@ -90,7 +94,9 @@ export default function SettingsScreen() {
             <Text variant="heading">{strings.settings.legal}</Text>
           </View>
 
-          <View style={{ gap: space.sm }}>
+          {/* The three hints stay: unlike a toggle, a document cannot show
+              what is inside it from its title alone. */}
+          <SettingsGroup>
             <LinkRow
               href="/legal/adatvedelem"
               label={strings.settings.legalPrivacy}
@@ -106,7 +112,7 @@ export default function SettingsScreen() {
               label={strings.settings.legalImprint}
               blurb={strings.settings.legalImprintHint}
             />
-          </View>
+          </SettingsGroup>
 
           {/* A block list belongs to an account, so there is nothing here to
               show a signed-out visitor — and unlike the appearance section
@@ -121,13 +127,13 @@ export default function SettingsScreen() {
               <View style={{ gap: space.xs }}>
                 <Text variant="heading">{strings.settings.safety}</Text>
               </View>
-              <View style={{ gap: space.sm }}>
+              <SettingsGroup>
                 <LinkRow
                   href="/blocked"
                   label={strings.settings.blockedUsers}
                   blurb={strings.settings.blockedUsersHint}
                 />
-              </View>
+              </SettingsGroup>
             </>
           ) : null}
 
@@ -146,22 +152,28 @@ export default function SettingsScreen() {
 }
 
 /**
- * One choice, showing itself.
+ * One choice, showing itself — a miniature of the theme with its name under
+ * it, six across two rows rather than six cards down the page (T-117).
  *
  * The swatch reads its colours from `themes[id]` rather than from `colors`,
  * which is the whole point: `colors` is the *active* palette, so using it here
- * would draw the same five swatches five times over.
+ * would draw the same six swatches six times over.
+ *
+ * The description that used to sit beside each name is now the accessibility
+ * hint. A drawing of a cream page with a burgundy rule says "the same
+ * playbill, printed" quicker than the sentence does — but only to someone
+ * who can see it, which is why the sentence is kept rather than deleted.
  */
-function ThemeRow({
+function ThemeSwatch({
   swatch,
   label,
-  blurb,
+  hint,
   selected,
   onPress,
 }: {
   swatch: ThemeId;
   label: string;
-  blurb: string;
+  hint: string;
   selected: boolean;
   onPress: () => void;
 }) {
@@ -174,27 +186,28 @@ function ThemeRow({
       onPress={onPress}
       accessibilityRole="radio"
       accessibilityLabel={label}
+      accessibilityHint={hint}
       // Both spellings on purpose: react-native-web 0.19 reads `aria-checked`
       // and ignores `accessibilityState` entirely, so a radio group written the
       // older way announces no selection at all in a browser.
       aria-checked={selected}
       accessibilityState={{ checked: selected }}
-      style={[styles.row, selected && styles.rowSelected]}
+      style={styles.swatchCell}
     >
-      <View style={[styles.swatch, { backgroundColor: palette.bg, borderColor: palette.hairline }]}>
+      <View
+        style={[
+          styles.swatch,
+          { backgroundColor: palette.bg, borderColor: palette.hairline },
+          selected && styles.swatchSelected,
+        ]}
+      >
         <View style={[styles.swatchCard, { backgroundColor: palette.surface }]} />
         <View style={[styles.swatchRule, { backgroundColor: palette.text }]} />
         <View style={[styles.swatchDot, { backgroundColor: palette.gold }]} />
       </View>
-
-      <View style={{ flex: 1, gap: space["2xs"] }}>
-        <Text variant="subheading">{label}</Text>
-        <Text variant="caption" tone="faint" numberOfLines={2}>
-          {blurb}
-        </Text>
-      </View>
-
-      {selected ? <CheckIcon /> : <View style={{ width: 16 }} />}
+      <Text variant="caption" tone={selected ? "accent" : "faint"} numberOfLines={1} style={styles.swatchLabel}>
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -224,7 +237,7 @@ function LinkRow({
 
   return (
     <Link href={href} asChild>
-      <Pressable accessibilityRole="link" accessibilityLabel={label} style={styles.row}>
+      <Pressable accessibilityRole="link" accessibilityLabel={label} style={styles.rowBare}>
         <View style={{ flex: 1, gap: space["2xs"] }}>
           <Text variant="subheading">{label}</Text>
           <Text variant="caption" tone="faint">
@@ -264,9 +277,9 @@ function OperationsSection() {
       <View style={{ gap: space.xs }}>
         <Text variant="heading">{strings.settings.operations}</Text>
       </View>
-      <View style={{ gap: space.sm }}>
+      <SettingsGroup>
         <LinkRow href="/stats" label={strings.settings.stats} blurb={strings.settings.statsHint} />
-      </View>
+      </SettingsGroup>
     </>
   );
 }
@@ -416,16 +429,18 @@ const SWATCH_LINE = 3;
 
 const useStyles = makeStyles((colors) => StyleSheet.create({
   content: { paddingHorizontal: gutter, paddingTop: space.xl, paddingBottom: space["4xl"], gap: space.lg },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.md,
-    padding: space.md,
-    borderRadius: radius.md,
-    borderWidth: hairlineWidth,
-    borderColor: colors.hairlineSoft,
-  },
-  rowSelected: { borderColor: colors.gold, backgroundColor: colors.surface },
+  // Rows are drawn bare now: the section's `SettingsGroup` owns the box.
+  rowBare: { flexDirection: "row", alignItems: "center", gap: space.md, padding: space.md },
+  /**
+   * Six palettes across, wrapping to two rows of three on a phone. Percentage
+   * widths rather than a fixed swatch size so the miniatures grow with the
+   * column instead of leaving a ragged gap on a wide screen.
+   */
+  swatchStrip: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
+  // Three across on a phone, and capped so the miniatures do not balloon
+  // into posters on a wide screen: this is a picker, not a gallery.
+  swatchCell: { width: "31.5%", maxWidth: 148, gap: space.xs, alignItems: "center" },
+  swatchLabel: { textAlign: "center" },
   /**
    * The one irreversible control in the app, boxed off from the preferences
    * above it. `gold` rather than a red that does not exist in any of the four
@@ -449,8 +464,8 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
    * read. This is a page with a card, a line of text and the accent on it.
    */
   swatch: {
-    width: 52,
-    height: 40,
+    width: "100%",
+    aspectRatio: 52 / 40,
     borderRadius: radius.sm,
     borderWidth: hairlineWidth,
     overflow: "hidden",
@@ -458,6 +473,8 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     padding: SWATCH_INSET,
     gap: SWATCH_LINE,
   },
+  // The only mark of the choice, now that the row and its tick are gone.
+  swatchSelected: { borderWidth: 2, borderColor: colors.gold },
   swatchCard: { position: "absolute", top: SWATCH_INSET, left: SWATCH_INSET, right: SWATCH_INSET, height: space.lg - SWATCH_LINE, borderRadius: SWATCH_LINE },
   swatchRule: { height: SWATCH_LINE, width: "70%", borderRadius: SWATCH_LINE, opacity: 0.85 },
   swatchDot: { height: SWATCH_LINE, width: "35%", borderRadius: SWATCH_LINE },

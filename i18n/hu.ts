@@ -1075,8 +1075,10 @@ export const strings = {
     /* The weekly letter (T-090). Default on; the letter itself carries the
        way out, and this is the same switch from the other side. */
     digest: "Heti levél e-mailben",
-    digestHint:
-      "Hetente egyszer: a kívánságlistás előadásaid, amelyeket a héten játszanak, és ami a követett színházaidban megy. Üres hétről nem írunk.",
+    /* Shortened with the rest of the settings prose (T-117), down to the two
+       things the title does not already say: what is in it, and that it does
+       not arrive when there is nothing to put in it. */
+    digestHint: "A hét előadásai a listáidról és a követett színházaidból. Üres hétről nem írunk.",
 
     /* The account's own two controls. Only shown to somebody signed in —
        there is nothing to export or delete otherwise — which is why they sit
