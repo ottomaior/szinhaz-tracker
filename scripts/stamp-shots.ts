@@ -18,9 +18,26 @@
  *
  * Idempotent: an already-stamped reference is re-stamped, so running it
  * twice changes nothing the second time.
+ *
+ * ## The questionnaire needs the same thing by another route
+ *
+ * `landing/kutatas.html` builds its nine image URLs in JavaScript, out of the
+ * design blob, so there is no literal `shots/name.webp` in its source for the
+ * pattern above to find. It has therefore never been stamped in its life,
+ * while `_headers` caches those nine files for a day like all the others — so
+ * a respondent who opened the page in the morning saw yesterday's app until
+ * the evening.
+ *
+ * Putting the hash in the design blob was the obvious fix and the wrong one:
+ * `scripts/research-design.test.ts` pins that blob against `designForPage()`,
+ * which would have made a pure design module read the filesystem at import
+ * time. Instead this writes a small manifest of its own, and the page's card
+ * renderer appends `?v=` from it, falling back to the bare path when the
+ * element is absent. The pinned blob is untouched, and the stamping logic
+ * stays in one script.
  */
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 
 const PAGES = ["landing/index.html", "landing/og.html"];
 const REF = /shots\/([a-z0-9_-]+\.webp)(\?v=[0-9a-f]+)?/g;
@@ -45,3 +62,29 @@ for (const page of PAGES) {
   }
 }
 console.log(changed ? `${changed} file(s) updated.` : "All shot references already current.");
+
+/**
+ * The manifest the questionnaire reads: every shot's name against its hash.
+ */
+const MANIFEST_ID = "shot-stamps";
+const MANIFEST = new RegExp(`(<script id="${MANIFEST_ID}" type="application/json">)[\\s\\S]*?(</script>)`);
+const QUESTIONNAIRE = "landing/kutatas.html";
+
+if (existsSync(QUESTIONNAIRE)) {
+  const stamps: Record<string, string> = {};
+  for (const file of readdirSync("landing/shots")) {
+    if (!file.endsWith(".webp")) continue;
+    stamps[file] = createHash("sha1").update(readFileSync(`landing/shots/${file}`)).digest("hex").slice(0, 8);
+  }
+  const before = readFileSync(QUESTIONNAIRE, "utf8");
+  if (!MANIFEST.test(before)) {
+    console.warn(`${QUESTIONNAIRE} has no <script id="${MANIFEST_ID}"> element — its shots will serve from cache.`);
+  } else {
+    const after = before.replace(MANIFEST, `$1${JSON.stringify(stamps)}$2`);
+    if (after !== before) {
+      writeFileSync(QUESTIONNAIRE, after);
+      changed++;
+      console.log(`stamped ${QUESTIONNAIRE}`);
+    }
+  }
+}

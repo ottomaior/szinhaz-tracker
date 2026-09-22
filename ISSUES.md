@@ -419,6 +419,288 @@ attendance and the diary must never record an evening on someone's behalf.
 
 ## Open
 
+### T-124 · A sponsor logo became the cover, because it came first on the page
+type: bug · area: data · priority: med · status: doing · added: 2026-09-22
+
+Parasztopera at the Radnóti showed the radiocáfé 98.0 logo as its cover art
+— a 220×156 sponsor PNG — instead of the production still, everywhere the
+poster appears. Ottó found it on the play page and guessed it would not be
+the only one.
+
+`parseProductionDetail` in `sync/adapters/radnoti.ts` took
+`$(".szindarab_adatlap img").first()`, which is whatever picture the editor
+put at the top of the detail block. On most pages that is the cover; on this
+one a sponsor logo sits in front of it.
+
+The theme marks the real cover with `attachment-imax-single-thumb` — the
+1200×480 crop of the banner the page opens with, usually a file named
+`..._boritokep_...`. Surveyed ten live pages: every one carries exactly one
+image with that class and in every case it is the right picture, so the class
+is a better answer than position. **Two of the ten were wrong** under the old
+rule — Parasztopera (radiocáfé) and KELETI BLoKk (a Sirokkó logo).
+
+Fixed by preferring the marked cover and keeping "first image" only as the
+fallback for a page that marks none, since a production with no cover is
+better served by its first picture than by nothing. Covered by three tests
+against a saved copy of the Parasztopera page; the first fails against the
+old code. A `--source=radnoti` run re-mirrored both posters.
+
+Checked the other adapters for the same shape: they all select a specific
+class or container (`.szinlap-kep`, `.p-img`, `.showViewPageImage`,
+`.artist-image`) rather than the first image in a broad block, so this was
+Radnóti's alone.
+
+### T-125 · "Ma este" showed one poster when the evening has seven
+type: idea · area: design · size: M · status: doing · added: 2026-09-22
+
+**The problem.** The Discover lead badges a poster MA ESTE and shows one
+production, but an evening usually has six or seven curtains. The one the app
+happened to lead with read as the only thing on, and the rest were a rail
+further down that a reader has to reach before learning they exist. Ottó
+asked for the lead to be swipeable and to rotate on its own.
+
+**Roughly.** The lead now carries every curtain of its evening — the same
+list the „Hét függöny, egy este” rail held, so that rail is gone rather
+than saying it twice. Dots and a count under the poster, a swipe to move, and
+a ten-second rotation so the evening introduces itself without a gesture
+nobody knows to make. It stops for good once touched, never runs while the
+tab is in the background, and does not run at all under reduced motion, where
+the dots and the swipe are the whole feature.
+
+Three things the rotation forced:
+
+- **One frame for the evening.** `posterAspect` clamps between 4:5 and 4:3,
+  a two-thirds difference in height, so a changing frame would shove the page
+  up and down every ten seconds. The frame is now driven by the column's
+  width and each poster is shown whole inside it. A single curtain keeps its
+  own proportions.
+- **Paging that works on the web.** `pagingEnabled` left
+  `scroll-snap-type: none`, and neither `onScrollBeginDrag` nor
+  `onTouchStart` fires for a mouse drag. So the CSS is set explicitly, the
+  strip is nudged onto the nearest poster once it has been still for a
+  moment, and "the reader has taken over" is read from the scroll itself.
+- **Re-aligning on a resize.** The offset is pixels, so it means a different
+  slide the moment the slide is a different size — a rotated phone put the
+  wrong poster under the right title until the strip was re-aligned.
+
+**Left behind.** `components/ui/PosterRail.tsx` and the `curtainsTitle`,
+`curtainsEyebrowOn` and `CURTAIN_WORDS` strings now have no caller. Kept for
+the moment rather than deleted in the same change that stopped using them,
+which is the repo's habit; worth a broom in a later one, along with a
+decision about whether the „Hét függöny, egy este” line is worth keeping
+as a heading above the lead.
+
+### T-121 · A paginated list stopped early, and Abigél was never in the catalogue
+type: bug · area: data · priority: high · status: doing · added: 2026-09-22
+
+Ottó found two performances on csokonaiszinhaz.hu — „Kocsák Tibor – Somogyi
+Szilárd – Miklós Tibor: Abigél”, a Kolozsvári Állami Magyar Színház guest
+run at the IX. MagdaFeszt on 30 September and 1 October — that Vastaps did
+not have. It had no row at all: no play, no performances, nothing archived,
+no trace under any source key. The theatre's page was published on 3
+September and last modified on 4 September, so it had been there for nearly
+three weeks, through every nightly run.
+
+Nothing reported a problem. The 22 September run recorded 43 plays upserted
+and **0 failed**.
+
+**The cause.** Both of the adapter's paginated walks — `fetchProductionIndex`
+and `fetchGenreBySlug` in `sync/adapters/csokonai.ts` — stopped as soon as a
+page contributed no slug they had not already seen (`if (urls.size ===
+before) break` and `if (!added) break`). That is not the same question as
+whether the list has ended: these lists overlap heavily, because a production
+carries several genre terms and consecutive pages repeat entries. On a day
+when a term's first page happened to be entirely familiar, the walk stopped
+there and every later page was dropped.
+
+**Why it hit this production in particular.** `run()` keeps a production only
+if the genre map has its slug — that is the filter separating real
+productions from the theatre's talks and building tours. Abigél's only genre
+term is `ix-magdafeszt`; it is in none of `proza-hu`, `zene-opera-hu`,
+`tanc-hu` or the outdoor-stage term. So the one truncated walk was its only
+route into the catalogue, and losing it was silent.
+
+The same loops also swallowed *every* fetch error as "end of list", so a 500
+or a timeout on a term page would quietly delete every production whose only
+term was that one, with reconcile then removing the rows.
+
+**Fixed** by walking until a page has no productions on it, or repeats the
+previous page verbatim — which is what a site that never 404s answers past
+the end — and by letting anything that is not a 404 throw, so a bad fetch
+fails the adapter loudly instead of shrinking the catalogue. Covered by
+`sync/adapters/csokonai-pagination.test.ts`, which fails against the old
+code. A `--source=csokonai` run then brought Abigél in with all three dates.
+
+### T-120 · Two npm scripts changed the native fingerprint and cut the phones off from updates
+type: bug · area: infra · priority: med · status: open · added: 2026-09-22
+
+The 22 September `eas update --channel production` published successfully and
+will reach **nobody**. It went out on runtime version `06ad71df…`; the
+builds actually installed from the closed test (7 and 8, both 20 September)
+carry fingerprint `ee5018a4…`. The fingerprint runtime policy in
+`app.config.ts` then does exactly what it is there for and offers the update
+to no binary.
+
+Nothing native changed. The only difference in `package.json` since build 8
+is two dev-only scripts, `drift` and `diff:shots`. `@expo/fingerprint`
+counts `packageJson:scripts` as a fingerprint source, so adding them was
+enough. Proven rather than guessed: recomputing the fingerprint with build
+8's `package.json` and with the current one differs in exactly one source —
+`packageJson:scripts`, and nothing else — `3b424c89…` against `ed42055c…`.
+
+The trap is that `eas update` reports "Published!" either way. Nothing in the
+output says the update is inert, and the phones simply never see it.
+
+**Decided 22 September: left as it is, web only for now.** The scripts stay.
+The web app already has everything, and the push coalescing is server-side
+so it reaches the phones tonight whatever version they run; only the
+settings work (T-117, T-118) and the poster watchdog (T-119) wait, and they
+wait for the next native build, which will carry them anyway. Removing the
+two scripts would have restored the old fingerprint and let the update land
+today — kept here as the cheap option should it become urgent.
+
+`CLAUDE.md` now says that an npm script is a native change as far as updates
+are concerned, and that an `eas update` is not done until its runtime
+version has been checked against the installed build's.
+
+### T-119 · Some covers never arrive and the tile sits on its blurhash forever
+type: bug · area: design · priority: high · status: open · added: 2026-09-22
+
+On Felfedezés, several tiles in the „Hét függöny, egy este” rail showed no
+artwork: „Izzik a galagonya” blank dark, magyartenger solid blue, Evita
+solid red, while their neighbours drew fine. Seen on desktop web; the same
+markup is served to a phone.
+
+**Not a data problem.** All seven plays in that rail have `poster_path` set,
+a blurhash, and the file present in the `posters` bucket — checked against
+`storage.objects`. The URLs are correct and, on a good run, every one of
+them loads in well under a second.
+
+**The blank is the loading state, not the error state.** `PosterPlaceholder`
+falls back to the gold monogram tile on `onError` — that is what „A kis
+herceg” and „Jeremás” show. A tile still showing its blurhash therefore
+means the image **never loaded and never errored**: it is stuck pending,
+and nothing ever retries it.
+
+**Why the two shapes of blank differ.** With `portraitFrame` and a landscape
+poster, `PosterPlaceholder` letterboxes, and renders the *same uri twice* —
+a `blurRadius={18}` backdrop plus the sharp image. Evita (1600×800) and
+magyartenger (1024×592) are exactly that case, which is why their blanks are
+solid blue and red: the blurred copy painted and the sharp one did not.
+„Izzik a galagonya” is portrait, so it has no backdrop and shows the bare
+blurhash. Measured on production: 59 distinct poster URLs across ~134 `img`
+elements, 38 of those URLs rendered two or three times over.
+
+Every `img` carries `loading="lazy"`, and the page mounts all 134 whatever
+the viewport — six of them visible on a phone. Two candidate mechanisms,
+neither yet proven: a lazily-loaded image whose intersection callback is
+missed during a layout shift never starts its request, and two `Image`
+instances racing on one uri inside expo-image's cache.
+
+Intermittent — reproduced from Ottó's screenshot but not on demand across
+several reloads, which fits a race rather than a broken URL.
+
+### T-118 · The kind toggles govern the phone, but the heading claimed everything
+type: bug · area: notifications · priority: med · status: doing · added: 2026-09-22
+
+`generate_notifications()` (`0030_alerts.sql`) never reads
+`notification_preferences`; only `send-push` does. So the eight per-kind
+toggles in Settings decide **what may interrupt the phone**, and the in-app
+bell keeps every kind whatever is switched off. The section was headed
+„Miről szóljunk?”, which reads as global: somebody who turns off
+„Kedvelés” would reasonably expect to stop seeing likes altogether, and
+would still find them under the bell.
+
+Ottó spotted this looking at the signed-in screen, and it is the same
+separation he asked for in T-116 — what reaches the phone versus what waits
+in the app. The mechanism was already built; only its name denied it.
+Trimming the row hints in T-117 removed the last place that could have said
+so, which made it worse.
+
+Fixed by naming rather than machinery: the heading becomes „Mi szóljon a
+telefonodon?” with one line saying the switched-off kinds stay in the app
+under the bell. Deliberately **not** made global — suppressing the inbox row
+too would let somebody permanently lose a record they might have wanted.
+
+### T-116 · One push per notification row: following one theatre buzzed the phone five times
+type: bug · area: notifications · priority: high · status: open · added: 2026-09-22
+
+Ottó followed a single theatre (Csokonai Nemzeti Színház) and the next sync
+delivered five separate push notifications in the same minute, one per new
+production — „Tizenhárom hattyú”, Amit magunkra veszünk, Öregembert
+játszani, Nőnek lenni, Malter-blokk — each reading „Új bemutató: Csokonai
+Nemzeti Színház”. Seen on the installed Android build and reproducible on
+the web app; it is not specific to either client.
+
+The cause is structural rather than a slip. `generate_notifications()`
+(`0030_alerts.sql`) correctly writes one row per fact — that is what the
+inbox wants, since each row leads to its own production. `send-push`
+(`supabase/functions/send-push/index.ts`) then loops over every unpushed row
+and sends one push per row, with `tag`/`collapseId` set to the row id, so
+nothing collapses. A season announcement at a followed theatre therefore
+buzzes the phone once per production, and the same shape applies to a burst
+of likes or to several watchlist plays running tomorrow.
+
+Ottó's direction: not every kind of notification deserves to interrupt the
+phone. Decide which kinds reach the lock screen and which live only in the
+in-app inbox behind the bell, and coalesce what is left so one night's news
+is one interruption rather than N.
+
+### T-117 · Settings is a wall of boxes and restated labels
+type: chore · area: design · priority: med · status: doing · added: 2026-09-22
+
+Ottó looked at Beállítások on Android and called it crowded and robotic:
+too many controls, too much text, and the useful part lost in it. Signed in,
+the screen drew **19 separately bordered, filled cards**, and 18 of them
+carried a permanent two-line subtitle.
+
+Two causes, both structural. Six of the eight notification hints were the
+label said a second time — "Kedvelés" over "Ha valaki kedveli egy
+bejegyzésedet", "Bemutató egy követett színházban" over "Ha egy színház,
+amit követsz, új előadást hirdet" — so half the prose carried no
+information at all. And every row was its own box, which is what made a
+list of related settings read as a stack of unrelated tiles.
+
+Agreed direction, all four of the recommendations put to Ottó: cut only the
+hints that restate their label and keep the ones that say something (the
+consent line on a follow request, what the weekly letter will and will not
+do, and the three legal ones, since a document cannot show its contents from
+its title); draw each section as one card with its rows parted by hairlines;
+replace the six stacked theme cards with a compact strip of swatches. No
+toggle, link or preference is removed — only the chrome and the tautology.
+### T-122 · The questionnaire's error red has no token, because the palette has no danger colour
+type: chore · area: design · priority: low · status: open · added: 2026-09-22
+
+`landing/kutatas.html` paints its validation errors and its "worst" chip in
+four literals — `#f0a5b0`, `#e08a9a`, `rgba(240,165,176,0.35)`,
+`rgba(122,36,51,0.22)` — and they are the only colours left on the landing
+site that the allowlist excuses without being able to check them.
+
+They are literals because `Palette` in `theme/themes.ts` has no danger
+colour. Adding one is not a landing change: it touches all five themes, and
+every screen in the app that currently says something has gone wrong in gold
+— which is the colour that elsewhere means "you can still go and see this".
+`npm run drift` would then find every one of those call sites, which is the
+point, and also the size of it.
+
+Until then the four literals stay, and `scripts/drift-landing.ts` names this
+entry as the reason.
+
+### T-123 · landing/README.hu.md is missing two sections its English original has
+type: chore · area: i18n · priority: low · status: open · added: 2026-09-22
+
+`landing/README.md` gained "The three ways in" and "The mail links are
+drafts, not addresses" in September, and the Hungarian twin never caught up;
+its open-beta section also still calls the app a closed alpha, which it
+stopped being on 18 September. CLAUDE.md makes the English file the original
+and the Hungarian one a translation of it, so this is a translation that was
+skipped rather than a decision.
+
+The front-of-house pass added the design-system section to both, so the gap
+is now exactly those two sections plus the stale beta wording. Noticed while
+writing that section; not folded into the pass because translating marketing
+prose is a different job from moving a token.
+
 ### T-113 · "látta a bemutatkozást" on the operator stats says nothing to its reader
 type: chore · area: design · priority: low · status: open · added: 2026-09-20
 
@@ -461,20 +743,6 @@ the `verify-bundle` needle, and re-run `npm run render:legal`. If a company is
 formed for it, `operator.registrationNumber` gets the tax number in the same
 change.
 
-### T-080 · The hero phones on vastaps.app flicker under the mouse
-type: bug · area: web · priority: low · status: open · added: 2026-09-18
-
-On https://vastaps.app/, moving the mouse over the two phone screenshots in
-the hero makes them flicker. The tilt handler in `landing/index.html` writes
-`el.style.transform` on every `pointermove` and clears it on `pointerleave`,
-with a `.15s` transition on `.ph`. A guess at the cause: the tilt moves the
-phone under the cursor, and the two phones overlap (`.ph.a` over `.ph.b`),
-so near an edge the pointer alternately leaves one phone and enters the
-other, each leave snapping the transform back and each move re-applying it.
-A second guess: `base` is the computed `matrix(...)` captured once at load,
-so the rotation is applied on top of a matrix and the transition tweens
-between two differently-shaped transform lists. Reproduce with a mouse on
-desktop; touch is excluded by the handler.
 
 ### T-068 · Drop what 0056 made redundant: search_rank(), the 0019 expression indexes, play_cast_person_slug_idx
 type: chore · area: data · priority: low · status: open · added: 2026-09-11
@@ -934,6 +1202,23 @@ the remove button through it, and `trailing` is documented as read-only
 content — a rank numeral, a rating — so the next person does not put a
 control there. A row with an action is the same height as one without: the
 hairline and the vertical padding stay on the wrapper.
+### T-080 · The hero phones on vastaps.app flicker under the mouse
+type: bug · area: web · priority: low · status: done · added: 2026-09-18 · done: 2026-09-22
+
+A duplicate of T-102, filed the same day, and fixed by it. Both describe the
+same flicker; this one describes a cause that has not been in the shipped
+code since T-102 landed — a tilt written as `el.style.transform` per phone,
+reset on `pointerleave`.
+
+Checked on the running site before touching anything, while planning the
+front-of-house pass: the phones carry no inline styles at all, and the tilt is
+a `--tilt` custom property measured against the `.phones` container, which is
+exactly T-102's fix. Nothing to do.
+
+Worth knowing for whoever meets this next: two entries about one symptom,
+filed hours apart, one of them fixed and the other left open because nobody
+connected them. Reproduce before re-fixing, and do not revert the `--tilt`
+architecture, which exists because the per-element version is what flickered.
 
 ### T-115 · Örkény covers kept only in the hero field never reached the app
 type: bug · area: data · priority: med · status: done · added: 2026-09-21 · done: 2026-09-21
@@ -3596,4 +3881,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-116**
+Next free id: **T-126**

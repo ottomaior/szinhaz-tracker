@@ -1,14 +1,13 @@
 import { ScrollViewStyleReset } from "expo-router/html";
 import type { PropsWithChildren } from "react";
+import { tokenBlock } from "@/theme/cssVars";
 import {
   cssVarName,
   DEFAULT_DARK,
   DEFAULT_LIGHT,
   THEME_ORDER,
   THEME_STORAGE_KEY,
-  themeScheme,
   themes,
-  type ThemeId,
 } from "@/theme/themes";
 
 /**
@@ -22,14 +21,6 @@ import {
  * to, it gives the document a ground colour, and it applies the reader's saved
  * theme before the first paint.
  */
-
-/** One theme's tokens as a CSS declaration block. */
-function tokenBlock(selector: string, id: ThemeId) {
-  const decls = Object.entries(themes[id])
-    .map(([token, value]) => `${cssVarName(token)}:${value}`)
-    .join(";");
-  return `${selector}{${decls};color-scheme:${themeScheme[id]}}`;
-}
 
 /**
  * "Follow the system" is pure CSS, and deliberately so.

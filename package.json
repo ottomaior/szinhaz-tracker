@@ -20,7 +20,8 @@
     "stamp:shots": "tsx scripts/stamp-shots.ts",
     "shots": "tsx scripts/render-shots.ts",
     "render:legal": "tsx scripts/render-legal.ts",
-    "deploy:landing": "tsx scripts/render-legal.ts && tsx scripts/stamp-shots.ts && tsx scripts/deploy-landing.ts",
+    "render:tokens": "tsx scripts/render-tokens.ts",
+    "deploy:landing": "tsx scripts/render-tokens.ts && tsx scripts/render-legal.ts && tsx scripts/stamp-shots.ts && tsx scripts/deploy-landing.ts",
     "research:report": "tsx scripts/research-report.ts",
     "promo": "tsx scripts/render-promo.ts",
     "tour": "tsx scripts/render-tour.ts",
@@ -28,6 +29,8 @@
     "store": "tsx scripts/render-store.ts",
     "verify:bundle": "tsx scripts/verify-bundle.ts",
     "drift": "tsx scripts/drift.ts",
+    "drift:landing": "tsx scripts/drift-landing.ts",
+    "shots:landing": "tsx scripts/render-landing-shots.ts",
     "diff:shots": "tsx scripts/diff-shots.ts"
   },
   "dependencies": {

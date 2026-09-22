@@ -358,6 +358,15 @@ szélességen és mindkét alapértelmezett palettán, így egy változtatásró
 aminek semmit nem lett volna szabad elmozdítania, be is bizonyítható, hogy
 nem mozdított el semmit.
 
+A `landing/` nyitóoldalt ugyanez a rendszer tartja, csak nem kézzel, hanem
+generálással: a `scripts/landing-tokens.ts` a `theme/`-ből állítja elő a
+CSS-változóit, így a webhely és az app nem tud mást gondolni arról, mi az
+arany. Az `npm run drift:landing` számolja, amit mégis a hívás helyén írtak be
+— 458 volt a 2026 szeptemberi átfésülés előtt, 0 utána, és egy teszt tartja
+ott —, az `npm run shots:landing` pedig mind a hat oldaláról képet készít
+három szélességen, mindkét témában. Hogy egy plakát hol térhet el egy
+eszköztől, és miért, azt a `landing/README.md` mondja el.
+
 ## Öt paletta, és hogyan jut el egy téma a képernyőig
 
 Az olvasó a Beállításokban választ témát, ahová a profilján lévő fogaskerék

@@ -52,14 +52,13 @@
  * in that palette; `--out` is the directory the set lands in, under
  * `<viewport>/<theme>/`. Route names can still be passed to take a subset.
  */
-import { spawn } from "node:child_process";
-import { existsSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
 import { config } from "dotenv";
 import sharp from "sharp";
+
+import { attachToPage, launchEdge, sleep } from "./cdp";
 
 config();
 
@@ -147,54 +146,6 @@ const PERSON = "fur-aniko";
 const SEARCH_QUERY = "Csuja Imre";
 const LIST = "e3f3561f-d0c8-4bbc-b28d-2036393c7f9f";
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-/** Minimal CDP client: connect, send commands, await replies. */
-async function connect(wsUrl: string) {
-  const ws = new WebSocket(wsUrl);
-  await new Promise<void>((res, rej) => {
-    ws.onopen = () => res();
-    ws.onerror = () => rej(new Error("could not open a DevTools socket"));
-  });
-
-  let id = 0;
-  const pending = new Map<number, { resolve: (v: any) => void; reject: (e: Error) => void }>();
-  ws.onmessage = (event: MessageEvent) => {
-    const msg = JSON.parse(String(event.data));
-    const entry = msg.id && pending.get(msg.id);
-    if (!entry) return;
-    pending.delete(msg.id);
-    if (msg.error) entry.reject(new Error(JSON.stringify(msg.error)));
-    else entry.resolve(msg.result);
-  };
-
-  return {
-    ws,
-    send(method: string, params: Record<string, unknown> = {}): Promise<any> {
-      return new Promise((res, rej) => {
-        const n = ++id;
-        // A renderer that dies mid-navigation never answers, and a promise
-        // that never settles hangs the whole run; thirty seconds is longer
-        // than any real reply takes.
-        const timer = setTimeout(() => {
-          if (pending.delete(n)) rej(new Error(`${method} did not answer within 30s`));
-        }, 30_000);
-        pending.set(n, {
-          resolve: (v) => {
-            clearTimeout(timer);
-            res(v);
-          },
-          reject: (e) => {
-            clearTimeout(timer);
-            rej(e);
-          },
-        });
-        ws.send(JSON.stringify({ id: n, method, params }));
-      });
-    },
-  };
-}
-
 /**
  * A one-shot sign-in link for a demo account.
  *
@@ -237,56 +188,8 @@ async function main() {
   const only = POSITIONAL;
   const wanted = (name: string) => only.length === 0 || only.includes(name.replace(/\.webp$/, ""));
 
-  const edge = [
-    "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
-    "C:/Program Files/Microsoft/Edge/Application/msedge.exe",
-  ].find(existsSync);
-  if (!edge) {
-    console.error("No Microsoft Edge found — this renderer drives it over the DevTools protocol.");
-    process.exit(1);
-  }
-
-  /**
-   * A fresh profile directory every run, and never the default one.
-   *
-   * The signed-out shots are only signed out if the browser has never signed
-   * in, and a developer's own browser is signed in as themselves — which is
-   * both the wrong screen and, per `landing/README.md`, a real account that
-   * must never be photographed.
-   */
-  const profile = join(tmpdir(), `vastaps-shots-${Date.now()}`);
-
-  const browser = spawn(edge, [
-    "--headless=new",
-    "--disable-gpu",
-    "--hide-scrollbars",
-    `--remote-debugging-port=${PORT}`,
-    `--user-data-dir=${profile}`,
-    "--no-first-run",
-    "--no-default-browser-check",
-    "about:blank",
-  ]);
-  browser.on("error", (e) => {
-    console.error("Could not start Edge:", e.message);
-    process.exit(1);
-  });
-
-  let targets: { type: string; webSocketDebuggerUrl: string }[] = [];
-  for (let i = 0; i < 40 && targets.length === 0; i++) {
-    await sleep(400);
-    try {
-      targets = (await (await fetch(`http://127.0.0.1:${PORT}/json/list`)).json()) as typeof targets;
-    } catch {
-      /* not listening yet */
-    }
-  }
-  const page = targets.find((t) => t.type === "page");
-  if (!page) {
-    console.error("Edge started but exposed no page target.");
-    process.exit(1);
-  }
-
-  const { ws, send } = await connect(page.webSocketDebuggerUrl);
+  const browser = launchEdge(PORT, "shots");
+  const { ws, send } = await attachToPage(PORT);
   await send("Page.enable");
   await send("Runtime.enable");
   await send("Emulation.setDeviceMetricsOverride", {

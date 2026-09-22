@@ -87,42 +87,85 @@ export function isPersonKind(kind: NotificationKind): boolean {
 }
 
 /**
+ * One line for several facts of the same kind (T-116).
+ *
+ * The inbox keeps a row per fact, because each one leads somewhere different.
+ * A lock screen cannot: following one theatre through a season announcement
+ * used to buzz a phone once per production. So when a run has more than one
+ * row of a kind for the same person, the sender asks for this instead.
+ *
+ * `subject` is the one name the whole group shares, when it has one — the
+ * theatre for `venue_new_play`, the person for the social kinds, the
+ * production's title for the watchlist kinds. It becomes the push's heading,
+ * exactly as the single-fact title does, which is why the line below may
+ * simply continue from it ("Csokonai Nemzeti Színház" / "5 új bemutató").
+ * With no shared subject the heading is the app's name and the line has to
+ * say what the news is about on its own.
+ */
+export const notificationSummaryLines = {
+  datesPublished: (count: number, named: boolean) =>
+    named ? `${count} új játszási időpont` : `${count} előadásod kapott új játszási időpontot`,
+  playingTomorrow: (count: number, named: boolean) =>
+    named ? `Holnap ${count} alkalommal játsszák` : `Holnap ${count} előadást játszanak a kívánságlistádról`,
+  venueNewPlay: (count: number, named: boolean) =>
+    named ? `${count} új bemutató` : `${count} új bemutató a követett színházaidban`,
+  personNewPlay: (count: number, named: boolean) =>
+    named ? `${count} új előadásban játszik` : `${count} új előadás a követett alkotóknál`,
+  reviewLiked: (count: number, named: boolean) =>
+    named ? `${count} bejegyzésedet kedveli` : `${count} új kedvelés a bejegyzéseiden`,
+  reviewCommented: (count: number, named: boolean) =>
+    named ? `${count} hozzászólást írt a bejegyzéseidhez` : `${count} új hozzászólás a bejegyzéseidhez`,
+  // The two follow kinds never repeat for the same person, so they are only
+  // ever grouped across people and the named form would never be reached.
+  followRequested: (count: number) => `${count} követési kérelem vár rád`,
+  followAccepted: (count: number) => `${count} követési kérelmedet fogadták el`,
+};
+
+export function notificationSummaryLine(kind: NotificationKind, count: number, named: boolean): string {
+  switch (kind) {
+    case "dates_published":
+      return notificationSummaryLines.datesPublished(count, named);
+    case "playing_tomorrow":
+      return notificationSummaryLines.playingTomorrow(count, named);
+    case "venue_new_play":
+      return notificationSummaryLines.venueNewPlay(count, named);
+    case "person_new_play":
+      return notificationSummaryLines.personNewPlay(count, named);
+    case "review_liked":
+      return notificationSummaryLines.reviewLiked(count, named);
+    case "review_commented":
+      return notificationSummaryLines.reviewCommented(count, named);
+    case "follow_requested":
+      return notificationSummaryLines.followRequested(count);
+    case "follow_accepted":
+      return notificationSummaryLines.followAccepted(count);
+  }
+}
+
+/**
  * How each kind is named where a person switches it on or off. Written as
  * what they will get, not as the database's word for it.
+ *
+ * Most of these carry no `hint`, and that is the point (T-117). Six of the
+ * eight used to be followed by a sentence that restated the label —
+ * "Kedvelés" under "Ha valaki kedveli egy bejegyzésedet" — and eight such
+ * sentences stacked were most of the wall of text the settings screen had
+ * become. A hint is kept only where it says something the label cannot:
+ * that a follow is a decision the reader makes, and what the weekly letter
+ * will and will not do.
  */
-export const notificationKindLabels: Record<NotificationKind, { label: string; hint: string }> = {
-  playing_tomorrow: {
-    label: "Holnap játsszák",
-    hint: "Az este előtt, ha egy kívánságlistás előadás másnap megy.",
-  },
-  dates_published: {
-    label: "Új időpontok",
-    hint: "Ha egy kívánságlistás előadás új játszási napokat kap.",
-  },
-  venue_new_play: {
-    label: "Bemutató egy követett színházban",
-    hint: "Ha egy színház, amit követsz, új előadást hirdet.",
-  },
-  person_new_play: {
-    label: "Új szerep egy követett alkotónál",
-    hint: "Ha valaki, akit követsz, új előadásban játszik.",
-  },
-  review_liked: {
-    label: "Kedvelés",
-    hint: "Ha valaki kedveli egy bejegyzésedet.",
-  },
-  review_commented: {
-    label: "Hozzászólás",
-    hint: "Ha valaki hozzászól egy bejegyzésedhez.",
-  },
+export const notificationKindLabels: Record<NotificationKind, { label: string; hint?: string }> = {
+  playing_tomorrow: { label: "Holnap játsszák" },
+  dates_published: { label: "Új időpontok" },
+  venue_new_play: { label: "Bemutató egy követett színházban" },
+  person_new_play: { label: "Új szerep egy követett alkotónál" },
+  review_liked: { label: "Kedvelés" },
+  review_commented: { label: "Hozzászólás" },
   follow_requested: {
     label: "Követési kérelem",
-    hint: "Ha valaki követni szeretne — te döntöd el, hogy láthatja-e a véleményeidet.",
+    hint: "Te döntöd el, hogy láthatja-e a véleményeidet.",
   },
-  follow_accepted: {
-    label: "Elfogadott kérelem",
-    hint: "Ha valaki, akit követni szeretnél, elfogadta a kérelmedet.",
-  },
+  follow_accepted: { label: "Elfogadott kérelem" },
 };
 
 /** The order the settings screen lists them in: what matters most, first. */

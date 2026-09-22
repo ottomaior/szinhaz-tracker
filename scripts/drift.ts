@@ -20,9 +20,9 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 
-type Category = "space" | "radius" | "type" | "colour" | "border";
+import { report, type Hit } from "./drift-report";
 
-type Hit = { file: string; line: number; literal: string; category: Category };
+type Category = "space" | "radius" | "type" | "colour" | "border";
 
 const ROOTS = ["app", "components", "hooks", "contexts"];
 
@@ -66,10 +66,10 @@ function walk(dir: string, out: string[] = []): string[] {
   return out;
 }
 
-function scan(file: string): Hit[] {
+function scan(file: string): Hit<Category>[] {
   const rel = relative(process.cwd(), file).split(sep).join("/");
   const allowed = ALLOW[rel] ?? [];
-  const hits: Hit[] = [];
+  const hits: Hit<Category>[] = [];
   readFileSync(file, "utf8")
     .split("\n")
     .forEach((text, i) => {
@@ -93,22 +93,10 @@ const targets = args.filter((a) => !a.startsWith("--"));
 const files = (targets.length ? targets : ROOTS).flatMap((t) => (statSync(t).isDirectory() ? walk(t) : [t]));
 const hits = files.flatMap(scan);
 
-const byCat = new Map<Category, Hit[]>();
-for (const h of hits) byCat.set(h.category, [...(byCat.get(h.category) ?? []), h]);
-const byFile = new Map<string, number>();
-for (const h of hits) byFile.set(h.file, (byFile.get(h.file) ?? 0) + 1);
-
-if (md) {
-  console.log(`# Token drift\n\n${hits.length} literals outside theme/ across ${byFile.size} files.\n`);
-  console.log("| Category | Count |\n|---|---|");
-  for (const [c, l] of byCat) console.log(`| ${c} | ${l.length} |`);
-  console.log("\n| File | Count |\n|---|---|");
-  for (const [f, n] of [...byFile].sort((a, b) => b[1] - a[1])) console.log(`| ${f} | ${n} |`);
-  console.log("\n| File | Line | Literal | Category |\n|---|---|---|---|");
-  for (const h of hits) console.log(`| ${h.file} | ${h.line} | \`${h.literal}\` | ${h.category} |`);
-} else {
-  for (const [c, l] of byCat) console.log(`${c.padEnd(8)} ${l.length}`);
-  console.log(`total    ${hits.length}   (${byFile.size} files)`);
-  if (targets.length) for (const h of hits) console.log(`  ${h.file}:${h.line}  ${h.literal}`);
-}
+report(hits, {
+  md,
+  title: "Token drift",
+  subject: "outside theme/",
+  verbose: targets.length > 0,
+});
 process.exitCode = 0;

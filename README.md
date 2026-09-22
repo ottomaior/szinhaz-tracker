@@ -340,6 +340,15 @@ read 331 across 61 files when the pass began and reads 0 now, which is what
 default palettes, so a change that was meant to move nothing can be shown to
 have moved nothing.
 
+The landing site at `landing/` is held to the same system, by generation
+rather than by hand: `scripts/landing-tokens.ts` emits its custom properties
+out of `theme/`, so the site and the app cannot disagree about what gold is.
+`npm run drift:landing` counts anything typed at a call site instead — 458
+before the front-of-house pass of September 2026, 0 after, with a test holding
+it there — and `npm run shots:landing` photographs all six of its pages at
+three widths in both themes. Where a poster is allowed to differ from a tool,
+and why, is in `landing/README.md`.
+
 ## Five palettes, and how a theme reaches the screen
 
 The reader picks a theme in Settings, reached from the gear on their profile:
