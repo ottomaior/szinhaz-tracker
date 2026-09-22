@@ -2,13 +2,15 @@ import { useCallback, useState } from "react";
 import { View, ScrollView, StyleSheet, Pressable } from "react-native";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
-import { gutter, radius, space } from "@/theme/tokens";
+import { gutter, hairlineWidth, space } from "@/theme/tokens";
 import { getDiaryEntriesForUser, getUserById, getVenuesByIds, type DiaryEntry } from "@/services/playsService";
 import { getFollowStatus, requestFollow, unfollowUser, type FollowStatus } from "@/services/followService";
 import { blockUser, isBlocked, unblockUser } from "@/services/moderationService";
 import { useAuth } from "@/contexts/AuthContext";
 import type { User, Venue } from "@/data/types";
-import { Avatar } from "@/components/ui/Avatar";
+import { ConfirmCard, ProfileHeader, StatsRow } from "@/components/ui/Cards";
+import { Notice } from "@/components/ui/Notice";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { PlayRow } from "@/components/ui/PlayRow";
@@ -158,24 +160,13 @@ export default function UserProfileScreen() {
       <ModalHeader title={user.name} fallbackRoute="/(tabs)" />
       <ScrollView contentContainerStyle={{ paddingBottom: space["5xl"] }}>
         <ContentColumn style={{ paddingHorizontal: gutter, gap: space.lg }}>
-          <View style={styles.profileRow}>
-            <Avatar uri={user.avatarUrl} initials={user.initials} size={72} serif />
-            <View style={{ flex: 1, gap: 2 }}>
-              <Text variant="title">{user.name}</Text>
-              <Text variant="bodySmall" tone="faint">
-                {[`@${user.handle}`, user.city].filter(Boolean).join(" · ")}
-              </Text>
-            </View>
-          </View>
-
-          {/* Under the row rather than beside the name: a bio runs to three
-              lines often enough that squeezing it next to a 72pt avatar would
-              set it two words wide. */}
-          {!!user.bio && (
-            <Text variant="bodySmall" tone="dim">
-              {user.bio}
-            </Text>
-          )}
+          <ProfileHeader
+            name={user.name}
+            meta={[`@${user.handle}`, user.city].filter(Boolean).join(" · ")}
+            bio={user.bio}
+            avatarUri={user.avatarUrl}
+            initials={user.initials}
+          />
 
           {/* A blocked account keeps its follow button out of the way: the
               trigger in 0037 has already dropped any follow between the two,
@@ -220,22 +211,23 @@ export default function UserProfileScreen() {
             </View>
           )}
 
-          <View style={styles.statsRow}>
-            <Stat value={user.stats.playsSeen} label={strings.profile.playsSeen} />
-            <View style={styles.statDivider} />
-            <Stat value={user.stats.followers} label={strings.profile.followers} />
-            <View style={styles.statDivider} />
-            <Stat value={user.stats.following} label={strings.profile.following} />
-          </View>
+          <StatsRow
+            divided
+            items={[
+              { value: user.stats.playsSeen, label: strings.profile.playsSeen },
+              { value: user.stats.followers, label: strings.profile.followers },
+              { value: user.stats.following, label: strings.profile.following },
+            ]}
+          />
 
           <View style={{ gap: space.sm }}>
             <SectionHeader title={strings.people.diaryTitle} action={loaded && diary.length > 0 ? strings.profile.playsSeen + ": " + diary.length : undefined} />
             {/* A list, like the profile's own diary: a column of poster
                 stand-ins tells you nothing about what someone has seen. */}
             {loaded && diary.length === 0 ? (
-              <Text variant="bodySmall" tone="faint">{strings.people.diaryEmpty}</Text>
+              <EmptyState align="center" title={strings.people.diaryEmpty} />
             ) : (
-              <View style={{ gap: space.lg }}>
+              <View>
                 {diary.map((entry) => (
                   <PlayRow
                     key={entry.review.id}
@@ -296,38 +288,21 @@ export default function UserProfileScreen() {
               directions, and a control that undoes a relationship without
               mentioning it is a control people learn not to trust. */}
           {confirmingBlock && (
-            <View style={styles.confirmCard}>
-              <Text variant="subheading">{strings.moderation.blockConfirmTitle(user.name)}</Text>
-              <Text variant="bodySmall" tone="dim">{strings.moderation.blockConfirmBody}</Text>
-              {!!blockError && (
-                <Text accessibilityRole="alert" variant="bodySmall" tone="accent">
-                  {blockError}
-                </Text>
-              )}
-              <View style={{ flexDirection: "row", gap: space.md }}>
-                <Button
-                  label={strings.common.cancel}
-                  variant="outline"
-                  style={{ flex: 1 }}
-                  onPress={() => setConfirmingBlock(false)}
-                />
-                <Button
-                  label={strings.moderation.blockConfirm}
-                  style={{ flex: 1 }}
-                  disabled={busy}
-                  onPress={toggleBlock}
-                />
-              </View>
-            </View>
+            <ConfirmCard
+              title={strings.moderation.blockConfirmTitle(user.name)}
+              body={strings.moderation.blockConfirmBody}
+              confirmLabel={strings.moderation.blockConfirm}
+              cancelLabel={strings.common.cancel}
+              onConfirm={toggleBlock}
+              onCancel={() => setConfirmingBlock(false)}
+              busy={busy}
+              notice={blockError ? <Notice>{blockError}</Notice> : undefined}
+            />
           )}
 
           {/* Sits outside the confirm card so an unblock failure has somewhere
               to be read once the card has gone. */}
-          {!!blockError && !confirmingBlock && (
-            <Text accessibilityRole="alert" variant="bodySmall" tone="accent">
-              {blockError}
-            </Text>
-          )}
+          {!!blockError && !confirmingBlock && <Notice>{blockError}</Notice>}
         </ContentColumn>
       </ScrollView>
 
@@ -344,46 +319,14 @@ export default function UserProfileScreen() {
   );
 }
 
-function Stat({ value, label }: { value: number; label: string }) {
-  return (
-    <View style={{ alignItems: "center", flex: 1 }}>
-      <Text variant="numeral" tone="default">{value}</Text>
-      <Text variant="caption" tone="faint">{label}</Text>
-    </View>
-  );
-}
-
 const useStyles = makeStyles((colors) => StyleSheet.create({
-  profileRow: { flexDirection: "row", alignItems: "center", gap: space.md, marginTop: space.md },
-  statsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    paddingVertical: space.md,
-  },
-  statDivider: { width: 1, height: 28, backgroundColor: colors.hairline },
-  blockedNotice: {
-    gap: space.md,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    borderRadius: radius.lg,
-    padding: space.md,
-  },
+  blockedNotice: { flexDirection: "row", alignItems: "center", gap: space.md },
   safetyRow: {
     flexDirection: "row",
     gap: space["2xl"],
     paddingTop: space.md,
-    borderTopWidth: 1,
+    borderTopWidth: hairlineWidth,
     borderTopColor: colors.hairlineSoft,
   },
-  confirmCard: {
-    gap: space.md,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    borderRadius: radius.lg,
-    padding: space.md,
-  },
 }));
+

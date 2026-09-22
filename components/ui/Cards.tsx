@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
-import { hairlineWidth, radius, space } from "@/theme/tokens";
+import { avatar, hairlineWidth, radius, space } from "@/theme/tokens";
+import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
 import { makeStyles } from "@/theme/styles";
@@ -49,6 +50,63 @@ export function ConfirmCard({
         <Button label={cancelLabel} variant="outline" style={styles.action} onPress={onCancel} disabled={busy} />
         <Button label={confirmLabel} style={styles.action} onPress={onConfirm} loading={busy} />
       </View>
+    </View>
+  );
+}
+
+/**
+ * The top of a profile: a face, a name, a line under it, and whatever the
+ * page offers to do about the person — a follow button, an unblock.
+ *
+ * The person page and the public profile drew this twice, with the avatar
+ * at 64 on one and 72 on the other and the name in two different roles.
+ * One header, `avatar.hero` and the title role, so a performer's page and
+ * a reader's page are the same kind of page.
+ */
+export function ProfileHeader({
+  name,
+  meta,
+  bio,
+  avatarUri,
+  initials,
+  serif = false,
+  children,
+}: {
+  name: string;
+  meta?: string;
+  /** A paragraph under the row, where one runs to three lines. */
+  bio?: string;
+  avatarUri?: string;
+  initials: string;
+  serif?: boolean;
+  /** The page's own controls: a follow button and its hint. */
+  children?: ReactNode;
+}) {
+  const styles = useStyles();
+  return (
+    <View style={styles.profile}>
+      <View style={styles.profileRow}>
+        <Avatar uri={avatarUri} initials={initials} size={avatar.hero} serif={serif} />
+        <View style={{ flex: 1, gap: space["2xs"] }}>
+          <Text variant="title" numberOfLines={2}>
+            {name}
+          </Text>
+          {!!meta && (
+            <Text variant="bodySmall" tone="faint">
+              {meta}
+            </Text>
+          )}
+        </View>
+      </View>
+      {/* Under the row rather than beside the name: a bio runs to three
+          lines often enough that squeezing it next to a 72pt avatar would
+          set it two words wide. */}
+      {!!bio && (
+        <Text variant="bodySmall" tone="dim">
+          {bio}
+        </Text>
+      )}
+      {children}
     </View>
   );
 }
@@ -144,7 +202,11 @@ const useStyles = makeStyles((colors, elevation) => StyleSheet.create({
   actions: { flexDirection: "row", gap: space.sm },
   action: { flex: 1 },
 
-  stats: { flexDirection: "row" },
+  profile: { gap: space.lg },
+  profileRow: { flexDirection: "row", alignItems: "center", gap: space.md },
+  // Hairlines between the figures, not a surface around them: a row of
+  // counts is a fact about the page, not an object on it.
+  stats: { flexDirection: "row", paddingVertical: space.md },
   stat: { flex: 1, alignItems: "center", gap: space["2xs"] },
   statDivided: { borderLeftWidth: hairlineWidth, borderLeftColor: colors.hairlineSoft },
   statLabel: { textAlign: "center" },
