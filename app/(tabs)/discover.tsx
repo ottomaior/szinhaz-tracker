@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState, useRef } from "react";
-import { View, ScrollView, StyleSheet, Pressable, useWindowDimensions } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { View, ScrollView, StyleSheet, Pressable, useWindowDimensions, type ViewStyle } from "react-native";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
 import { bar, control, gutter, radius, space, thumb } from "@/theme/tokens";
 import { useAtLeast } from "@/hooks/useBreakpoint";
 import { useRecentSearches } from "@/hooks/useRecentSearches";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useSearchQuery } from "@/hooks/useSearchQuery";
 import { useAuth } from "@/contexts/AuthContext";
 import { getFirstRunStatus } from "@/services/profileService";
@@ -37,7 +38,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ListCard } from "@/components/ui/ListCard";
 import { ListsBody } from "@/components/ui/ListsBody";
 import { PosterCardSkeleton, Skeleton } from "@/components/ui/Skeleton";
-import { PosterPlaceholder, posterAspect } from "@/components/ui/PosterPlaceholder";
+import { HERO_MIN_ASPECT, PosterPlaceholder, posterAspect } from "@/components/ui/PosterPlaceholder";
 import { ProgramRow, ProgramRowSkeleton, programKind } from "@/components/ui/ProgramRow";
 import { Screen, ContentColumn } from "@/components/ui/Screen";
 import { ProgramView } from "@/components/ui/ProgramView";
@@ -47,14 +48,13 @@ import { SearchField } from "@/components/ui/SearchField";
 import { Text } from "@/components/ui/Text";
 import { PillTabs } from "@/components/ui/PillTabs";
 import { useDockInset } from "@/components/ui/TabBar";
-import { PosterRail } from "@/components/ui/PosterRail";
 import { PressCard } from "@/components/motion/PressCard";
 import { AnimatedList } from "@/components/motion/Reveal";
 import { SplitText } from "@/components/motion/SplitText";
 import { strings } from "@/i18n/hu";
 import { personInitials } from "@/utils/people";
 import { foldSearchTerm } from "@/utils/search";
-import { budapestDayKey, daypart, daypartOfAll, formatRuntimeMinutes, formatTime, formatWeekday, todayInBudapest } from "@/utils/datetime";
+import { budapestDayKey, daypart, formatRuntimeMinutes, formatTime, formatWeekday, todayInBudapest } from "@/utils/datetime";
 import { makeStyles } from "@/theme/styles";
 
 const FILTERS = [strings.discover.filterAll, strings.discover.filterKoszinhaz, strings.discover.filterFuggetlen, strings.discover.filterSzabadteri];
@@ -764,7 +764,16 @@ export default function DiscoverScreen() {
    */
   const lead = hero && (
     <View style={wide ? styles.leadWide : undefined}>
-      <TonightHero entry={hero} onPress={() => openPlay(hero.playId)} available={leadHeight} tall={wide} />
+      {/* Every curtain that evening, not just the first (T-125). `key` per
+          evening so a change of day or of chips starts the rotation over
+          rather than resuming at whatever slide the last evening reached. */}
+      <TonightHero
+        key={heroDay}
+        entries={curtainsTonight.length ? curtainsTonight : [hero]}
+        onOpen={openPlay}
+        available={leadHeight}
+        tall={wide}
+      />
       {programme.length > 0 && (
         <View style={wide ? styles.leadSide : styles.leadStacked}>
           <SectionHeader
@@ -991,25 +1000,6 @@ export default function DiscoverScreen() {
               <View style={{ gap: space["3xl"] }}>
                 {!!lead && <View style={{ paddingHorizontal: gutter }}>{lead}</View>}
 
-                {/* The evening as a row of faces. Only once there are at
-                    least two curtains going up that night — one is the hero
-                    already, and a rail of one is a hero drawn smaller. */}
-                {curtainsTonight.length > 1 && (
-                  <View style={{ gap: space.md }}>
-                    <SectionHeader
-                      style={{ paddingHorizontal: gutter }}
-                      eyebrow={strings.discover.curtainsEyebrowOn(
-                        curtains.day === todayInBudapest() ? undefined : formatWeekday(curtainsTonight[0].startsAt),
-                        daypartOfAll(curtainsTonight.map((e) => e.startsAt)),
-                      )}
-                      title={strings.discover.curtainsTitle(curtainsTonight.length)}
-                      action={strings.discover.upcomingAction}
-                      onAction={() => setMode("program")}
-                    />
-                    <PosterRail entries={curtainsTonight} onOpen={openPlay} />
-                  </View>
-                )}
-
                 {/* Above the editorial lists, and only for an account that
                     follows somebody: a handful of people you chose beats
                     anything written for everybody, and unlike the lists it is
@@ -1164,88 +1154,300 @@ const HERO_COLUMN_WIDTH = 400;
 const MIN_LEAD_HEIGHT = 320;
 const MIN_POSTER_HEIGHT = 160;
 
+/** The dots and their counter, which the poster has to make room for. */
+const DOTS_ROW_HEIGHT = 28;
+
 /**
- * The next evening, as the thing the screen is for.
+ * Scroll snapping, said in CSS for the web.
  *
- * "What is on tonight" used to be a 132pt thumbnail in a rail. Here it is the
- * lead: the poster whole, and under it the curtain time, the theatre, the
- * title and the one filled gold button on the screen.
+ * Cast because these are not React Native style properties — they are passed
+ * straight through to the browser, and native simply has no use for them
+ * since `pagingEnabled` already works there.
+ */
+const WEB_SNAP_STRIP = { scrollSnapType: "x mandatory" } as unknown as ViewStyle;
+const WEB_SNAP_ITEM = { scrollSnapAlign: "start" } as unknown as ViewStyle;
+
+/** How still the strip has to be before it is nudged onto a poster. */
+const SETTLE_MS = 180;
+
+/** How long a scroll we started ourselves may still be arriving. */
+const OUR_MOVE_MS = 900;
+
+/** How long each curtain holds the lead before the next one slides in. */
+const ROTATE_EVERY_MS = 10_000;
+
+/**
+ * The evening, as the thing the screen is for.
  *
- * Under it rather than on it, and that is the point. A poster carries its own
- * title, set by the house in the house's own lettering, and the app printing
- * the same words over them made every hero read twice. The picture is left to
- * say what it was drawn to say; the app says the things a picture cannot —
- * when it starts and where.
+ * "What is on tonight" used to be a 132pt thumbnail in a rail, then a single
+ * poster as the lead. A single poster was the wrong promise: the badge says
+ * MA ESTE and there are usually six or seven curtains that night, so the one
+ * the app happened to pick read as the only one (T-125). It is now all of
+ * them — swipeable, and rotating on its own every ten seconds so the rest
+ * are not a secret kept behind a gesture nobody knows to make.
  *
- * The poster is shown whole and fits the screen it is opened on: the frame
- * takes the artwork's own proportions and is capped so that the caption and
- * the button are on screen without scrolling. A hero that hides half the
- * artwork, or that pushes the way in below the fold, is a lead that makes the
- * reader's decision for them.
+ * Under the poster rather than on it, and that is the point. A poster carries
+ * its own title, set by the house in the house's own lettering, and the app
+ * printing the same words over them made every hero read twice. The picture
+ * is left to say what it was drawn to say; the app says the things a picture
+ * cannot — when it starts and where.
+ *
+ * Three things the rotation has to get right:
+ *
+ *  - **The frame cannot move.** `posterAspect` clamps to between 4:5 and 4:3,
+ *    which is a two-thirds difference in height between a portrait poster and
+ *    a wide banner; resizing the lead every ten seconds would shove the whole
+ *    screen up and down. So an evening of several takes one frame and each
+ *    poster is shown whole inside it, over a blurred copy of itself. A single
+ *    curtain keeps its own proportions, since nothing is going to follow it.
+ *  - **It stops when touched.** A swipe means somebody is reading rather than
+ *    watching, and nothing should pull the poster out from under them. The
+ *    timer does not come back until the screen does.
+ *  - **It never runs unseen.** Not while the tab is in the background, and
+ *    not at all for a reader who has asked for less motion — for them the
+ *    dots and the swipe are the whole feature, which is what they should be
+ *    anyway.
  */
 function TonightHero({
-  entry,
-  onPress,
+  entries,
+  onOpen,
   available,
   tall,
 }: {
-  entry: ProgramEntry;
-  onPress: () => void;
+  entries: ProgramEntry[];
+  onOpen: (playId: string) => void;
   /** The height the whole lead has to live in — the poster takes what the caption leaves. */
   available: number;
   tall: boolean;
 }) {
   const styles = useStyles();
+  const reducedMotion = useReducedMotion();
 
-  const isToday = budapestDayKey(entry.startsAt) === todayInBudapest();
+  const scroller = useRef<ScrollView>(null);
+  const [width, setWidth] = useState(0);
+  // The index is held twice on purpose: the state draws the dots and the
+  // caption, the ref is what the interval reads, so the timer does not have
+  // to be torn down and rebuilt on every slide.
+  const indexRef = useRef(0);
+  const [index, setIndex] = useState(0);
+  const [stopped, setStopped] = useState(false);
+  const [onScreen, setOnScreen] = useState(true);
+  // Until when the strip is moving because *we* moved it. Neither
+  // `onScrollBeginDrag` nor `onTouchStart` fires for a mouse drag on the web,
+  // so "has the reader taken over" is answered by the scroll itself — and the
+  // only way to tell their movement from ours is to know when ours was.
+  const ourMoveUntil = useRef(0);
+  // Fires once the strip has been still for a moment, to finish a flick that
+  // stopped between two posters.
+  const settle = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(settle.current), []);
+
+  useFocusEffect(
+    useCallback(() => {
+      setOnScreen(true);
+      return () => setOnScreen(false);
+    }, [])
+  );
+
+  const many = entries.length > 1;
+  const entry = entries[Math.min(index, entries.length - 1)];
+
+  // Grows but never shrinks: some titles wrap to two lines and some do not,
+  // and a caption that changed height per slide would move the poster above
+  // it just as surely as a changing frame would.
+  const [captionHeight, setCaptionHeight] = useState(CAPTION_FALLBACK);
+  const posterHeight = Math.max(
+    MIN_POSTER_HEIGHT,
+    available - captionHeight - space.md - (many ? DOTS_ROW_HEIGHT : 0)
+  );
+  /**
+   * The frame an evening of several shares.
+   *
+   * Driven by the column's width rather than by a ratio: deriving the width
+   * from a portrait ratio gave a narrow frame in the middle of a wide column,
+   * which letterboxed every banner into a thin strip and cut the badge off.
+   * So the frame fills the column and takes the height that is going spare,
+   * capped at 5:4 so it cannot become a tower on a tall window. A single
+   * curtain keeps its poster's own proportions, since nothing follows it.
+   */
+  const frameStyle = many
+    ? { width: "100%" as const, height: width ? Math.min(posterHeight, width / HERO_MIN_ASPECT) : posterHeight }
+    : { aspectRatio: posterAspect(entry.poster, HERO_ASPECT), height: posterHeight };
+
+  /**
+   * Keep the strip on the slide the caption is describing when the column
+   * changes width — a rotated phone, a resized window, the two-column
+   * layout arriving. The offset is a number of pixels, so it means a
+   * different slide the moment the slide is a different size, and the poster
+   * ends up belonging to a title further down.
+   */
+  useEffect(() => {
+    if (!width) return;
+    scroller.current?.scrollTo({ x: indexRef.current * width, animated: false });
+  }, [width]);
+
+  useEffect(() => {
+    if (!many || stopped || reducedMotion || !onScreen || !width) return;
+    const timer = setInterval(() => {
+      const next = (indexRef.current + 1) % entries.length;
+      indexRef.current = next;
+      setIndex(next);
+      // Sliding to the next one is the point; sliding *back* over six posters
+      // to reach the first again is a rewind nobody asked to watch, and the
+      // caption changes the moment the index does, so the long way round
+      // shows the wrong poster under the right title for most of a second.
+      // The wrap is a cut.
+      ourMoveUntil.current = Date.now() + OUR_MOVE_MS;
+      scroller.current?.scrollTo({ x: next * width, animated: next !== 0 });
+    }, ROTATE_EVERY_MS);
+    return () => clearInterval(timer);
+  }, [many, stopped, reducedMotion, onScreen, width, entries.length]);
+
   // The house's own line where there is one, the genre bucket otherwise — the
-  // same rule as the rows below, so the hero cannot call an evening `Próza`
-  // that the row under it calls `énekkari próba`.
+  // same rule as the rows below, so the hero cannot call an evening `Proza`
+  // that the row under it calls `enekkari proba`.
   const credits = [
     entry.director ? strings.discover.heroDirected(entry.director) : undefined,
     programKind(entry),
     entry.runtimeMinutes != null ? formatRuntimeMinutes(entry.runtimeMinutes) : undefined,
   ].filter(Boolean);
 
-  // Measured rather than allowed for: the title wraps to two lines for some
-  // productions and one for others, and the poster should have whatever is
-  // left either way.
-  const [captionHeight, setCaptionHeight] = useState(CAPTION_FALLBACK);
-  const posterHeight = Math.max(MIN_POSTER_HEIGHT, available - captionHeight - space.md);
-  const aspect = posterAspect(entry.poster, HERO_ASPECT);
+  // A `useCallback` rather than a plain function: the lint rule cannot tell a
+  // helper declared in the body from one called during render, and this one
+  // reads the clock.
+  const goTo = useCallback(
+    (i: number) => {
+      setStopped(true);
+      indexRef.current = i;
+      setIndex(i);
+      ourMoveUntil.current = Date.now() + OUR_MOVE_MS;
+      scroller.current?.scrollTo({ x: i * width, animated: true });
+    },
+    [width]
+  );
 
   return (
     <View style={tall ? styles.heroTall : undefined}>
-      {/* The frame is the poster's own shape, capped by the room there is, so
-          it narrows and centres rather than cropping or overflowing. */}
-      <PressCard
-        onPress={onPress}
-        accessibilityRole="button"
-        accessibilityLabel={entry.title}
-        style={[styles.poster, tall ? styles.posterWide : styles.posterPhone, { aspectRatio: aspect, height: posterHeight }]}
-        surfaceStyle={{ flex: 1 }}
-        radius={radius.lg}
-        tilt={4}
+      <View
+        onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
+        // `onScrollBeginDrag` is the native answer to "somebody has taken
+        // over", and on the web it does not fire for a mouse drag. A touch
+        // start does, for both a finger and a mouse, so the two together
+        // cover every way in.
+        onTouchStart={() => setStopped(true)}
       >
-        <PosterPlaceholder
-          poster={entry.poster}
-          title={entry.title}
-          seed={entry.playId}
-          height="100%"
-          radius={0}
-          priority="high"
-          contentFit="contain"
-          backdrop
-        />
-        {/* On the picture rather than beside it: the frame is narrower than
-            the column, and a pill floating on the ground would belong to
-            nothing. */}
-        <OverlayPill style={styles.heroBadge}>
-          {isToday ? strings.discover.heroToday(daypart(entry.startsAt)) : strings.discover.heroNext(formatWeekday(entry.startsAt))}
-        </OverlayPill>
-      </PressCard>
+        <ScrollView
+          ref={scroller}
+          horizontal
+          pagingEnabled
+          scrollEnabled={many}
+          showsHorizontalScrollIndicator={false}
+          // `pagingEnabled` alone leaves `scroll-snap-type: none` in this
+          // version of react-native-web, so a flick rests between two
+          // posters. These say it in CSS, which native ignores.
+          style={WEB_SNAP_STRIP}
+          decelerationRate="fast"
+          snapToInterval={width || undefined}
+          snapToAlignment="start"
+          onScrollBeginDrag={() => setStopped(true)}
+          // Momentum events are not dependable on the web either, so where
+          // the strip has come to rest is read from the scroll itself. Only
+          // a change of slide is written down, so this is not a re-render a
+          // frame.
+          scrollEventThrottle={64}
+          onScroll={(e) => {
+            if (!width) return;
+            const x = e.nativeEvent.contentOffset.x;
+            // Movement away from where this slide sits, at a moment we did
+            // not cause, is the reader scrolling. The tolerance keeps a
+            // layout-time event at rest from counting as a gesture.
+            if (Math.abs(x - indexRef.current * width) > 4 && Date.now() > ourMoveUntil.current) setStopped(true);
+            const landed = Math.max(0, Math.min(entries.length - 1, Math.round(x / width)));
 
-      <View style={styles.heroCaption} onLayout={(e) => setCaptionHeight(e.nativeEvent.layout.height)}>
+            /**
+             * Come to rest on a poster, not between two.
+             *
+             * `pagingEnabled` and CSS scroll snapping both claim to do this
+             * and neither could be relied on here \u2014 the strip was left
+             * sitting 69px into a slide, showing two half posters. So once
+             * the scrolling has stopped, whatever stopped it, the nearest
+             * poster is scrolled to. When the strip is already on a boundary,
+             * which is where every move of ours lands, this does nothing.
+             */
+            clearTimeout(settle.current);
+            settle.current = setTimeout(() => {
+              const target = landed * width;
+              if (Math.abs(x - target) <= 1) return;
+              ourMoveUntil.current = Date.now() + OUR_MOVE_MS;
+              scroller.current?.scrollTo({ x: target, animated: true });
+            }, SETTLE_MS);
+
+            if (landed === indexRef.current) return;
+            indexRef.current = landed;
+            setIndex(landed);
+          }}
+        >
+          {entries.map((curtain) => (
+            <View key={curtain.performanceId} style={[{ width: width || undefined }, WEB_SNAP_ITEM]}>
+              {/* The frame is one shape for the whole evening, so the page
+                  below it never moves; the poster is shown whole inside it. */}
+              <PressCard
+                onPress={() => onOpen(curtain.playId)}
+                accessibilityRole="button"
+                accessibilityLabel={curtain.title}
+                style={[styles.poster, tall ? styles.posterWide : styles.posterPhone, frameStyle]}
+                surfaceStyle={{ flex: 1 }}
+                radius={radius.lg}
+                tilt={4}
+              >
+                <PosterPlaceholder
+                  poster={curtain.poster}
+                  title={curtain.title}
+                  seed={curtain.playId}
+                  height="100%"
+                  radius={0}
+                  priority="high"
+                  contentFit="contain"
+                  backdrop
+                />
+                {/* On the picture rather than beside it: the frame is narrower
+                    than the column, and a pill floating on the ground would
+                    belong to nothing. */}
+                <OverlayPill style={styles.heroBadge}>
+                  {budapestDayKey(curtain.startsAt) === todayInBudapest()
+                    ? strings.discover.heroToday(daypart(curtain.startsAt))
+                    : strings.discover.heroNext(formatWeekday(curtain.startsAt))}
+                </OverlayPill>
+              </PressCard>
+            </View>
+          ))}
+        </ScrollView>
+      </View>
+
+      {many && (
+        <View style={styles.dotsRow}>
+          {entries.map((curtain, i) => (
+            <Pressable
+              key={curtain.performanceId}
+              onPress={() => goTo(i)}
+              accessibilityRole="button"
+              accessibilityLabel={strings.discover.curtainAt(formatTime(curtain.startsAt), curtain.title)}
+              accessibilityState={{ selected: i === index }}
+              style={styles.dotTarget}
+            >
+              <View style={[styles.dot, i === index && styles.dotOn]} />
+            </Pressable>
+          ))}
+          <Text variant="caption" tone="faint" style={styles.dotsCount}>
+            {index + 1}/{entries.length}
+          </Text>
+        </View>
+      )}
+
+      <View
+        style={styles.heroCaption}
+        onLayout={(e) => setCaptionHeight((tallest) => Math.max(tallest, e.nativeEvent.layout.height))}
+      >
         <Text variant="eyebrow" numberOfLines={1}>
           {formatTime(entry.startsAt)} · {entry.venueName}
         </Text>
@@ -1257,7 +1459,7 @@ function TonightHero({
             {credits.join(" · ")}
           </Text>
         )}
-        <Button label={strings.discover.heroOpen} onPress={onPress} style={styles.heroButton} />
+        <Button label={strings.discover.heroOpen} onPress={() => onOpen(entry.playId)} style={styles.heroButton} />
       </View>
     </View>
   );
@@ -1411,6 +1613,17 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   posterPhone: { alignSelf: "center" },
   heroBadge: { position: "absolute", top: space.md, left: space.md },
   heroCaption: { gap: space.sm, paddingTop: space.md },
+  /**
+   * The evening at a glance: one dot per curtain, and the count in numbers
+   * beside them. The dots alone answer "is there more than this one"; the
+   * count answers "how many" without asking anybody to count dots.
+   */
+  dotsRow: { flexDirection: "row", alignItems: "center", gap: space["2xs"], paddingTop: space.sm, alignSelf: "center" },
+  // The dot is 6pt; the target around it is a finger.
+  dotTarget: { padding: space.xs },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.hairline },
+  dotOn: { backgroundColor: colors.gold },
+  dotsCount: { marginLeft: space.xs },
   heroButton: { alignSelf: "flex-start", marginTop: space.xs },
 
   rail: { gap: space.md, paddingHorizontal: gutter },
