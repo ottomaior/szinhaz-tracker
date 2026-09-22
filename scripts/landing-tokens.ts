@@ -196,6 +196,11 @@ export function landingTokensCss(): string {
     `--vl-ray-rgb:${rgbTriple(themes[DEFAULT_DARK].gold)};`,
     `/* The printed house's accent, quoted in the dark: the questionnaire's claret. */`,
     `--vl-claret:${themes[DEFAULT_LIGHT].gold};`,
+    `/* A link's hover: one step brighter than the accent. Hand-picked, because
+   the palette names the accent and not a lift above it. */`,
+    `--vl-gold-lift:#f0d38f;`,
+    `/* The ground behind a lightbox, at the app's own scrim opacity. */`,
+    `--vl-scrim:rgba(5,2,3,0.82);`,
     `}`,
     `:root[data-theme="light"]{--vl-ink:${v("bg")};--vl-ray-rgb:${rgbTriple(themes[DEFAULT_LIGHT].gold)}}`,
 

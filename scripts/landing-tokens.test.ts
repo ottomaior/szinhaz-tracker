@@ -58,16 +58,27 @@ describe("the landing site's tokens are generated, not typed", () => {
     expect(landingTokensCss()).toContain(':root[data-theme="light"]');
   });
 
-  it("carries no colour the palette does not, except the named ground", () => {
-    // Every hex in the block has to come from `theme/themes.ts`, bar the one
-    // constant the landing is allowed: the page ground, one shade under the
-    // app's. If a second literal appears here, the generator has grown a
-    // hand-typed colour, which is the thing it exists to prevent.
+  /**
+   * The colours the landing may hold that the palette does not, each listed
+   * here rather than waved through.
+   *
+   * Two, and both are about a marketing page being a different object from a
+   * tool: a ground one shade under the app's, so a phone screenshot reads as
+   * the lit thing on a dark stage, and a gold one step brighter than the
+   * accent, for a link under the cursor. The palette names an accent; it does
+   * not name a lift above one.
+   *
+   * Anything else appearing here means the generator has grown a hand-typed
+   * colour, which is the thing it exists to prevent.
+   */
+  const NAMED_EXCEPTIONS = ["#0a0507", "#f0d38f"];
+
+  it("carries no colour the palette does not, except the named exceptions", () => {
     const hexes = new Set(landingTokensCss().match(/#[0-9a-fA-F]{6}\b/g) ?? []);
     const known = new Set(
       Object.values(themes).flatMap((p) => Object.values(p).filter((x): x is string => typeof x === "string"))
     );
-    const strangers = [...hexes].filter((h) => !known.has(h) && h !== "#0a0507");
+    const strangers = [...hexes].filter((h) => !known.has(h) && !NAMED_EXCEPTIONS.includes(h));
     expect(strangers, "a colour in the generated block belongs to no palette").toEqual([]);
   });
 });

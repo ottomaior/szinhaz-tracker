@@ -127,6 +127,11 @@ const ALLOW: { file: string; category: Category; literal: string; why: string }[
   // numbers rather than a colour.
   { file: "landing/index.html", category: "colour", literal: "rgba(var(--vl-ray-rgb)", why: "the accent at a local alpha" },
 
+  // A two-pixel bar being drawn — the questionnaire's progress rule. The
+  // radius scale starts at six because that is the smallest corner a *box*
+  // should have; this is a line with rounded ends.
+  { file: "landing/kutatas.html", category: "radius", literal: "border-radius: 2px", why: "the progress bar's rounded ends" },
+
   // A gradient border drawn as a padded box with its middle masked out — the
   // star-bordered button and the bento tiles' lit edge. These are the
   // thickness of a line, not the spacing of a layout; the app allows the same
@@ -144,6 +149,11 @@ const ALLOW: { file: string; category: Category; literal: string; why: string }[
   { file: "landing/index.html", category: "elevation", literal: "0 0 0 0", why: "the pulse: a ring expanding out of the live dot" },
   { file: "landing/index.html", category: "elevation", literal: "0 0 0 8px transparent", why: "the pulse: the ring at its widest" },
 
+  // A token made translucent. The colour is the palette's; only the
+  // transparency is local, and `color-mix` is how CSS says so.
+  { file: "landing/kutatas.html", category: "colour", literal: "color-mix(in srgb, var(", why: "a palette colour made translucent" },
+  { file: "landing/index.html", category: "colour", literal: "color-mix(in srgb, var(", why: "a palette colour made translucent" },
+
   // The questionnaire's error and "worst" states. `Palette` has no danger
   // colour; adding one touches all five themes and every screen in the app,
   // which is a change of its own rather than part of this pass. See ISSUES.md.
@@ -151,6 +161,8 @@ const ALLOW: { file: string; category: Category; literal: string; why: string }[
   { file: "landing/kutatas.html", category: "colour", literal: "#e08a9a", why: "error text — no danger token yet" },
   { file: "landing/kutatas.html", category: "colour", literal: "rgba(240,165,176,0.35)", why: "error border — no danger token yet" },
   { file: "landing/kutatas.html", category: "colour", literal: "rgba(122,36,51,0.16)", why: "error ground — no danger token yet" },
+  { file: "landing/kutatas.html", category: "colour", literal: "rgba(168,57,77,0.6)", why: "the \"worst\" chip's edge — no danger token yet" },
+  { file: "landing/kutatas.html", category: "colour", literal: "rgba(122,36,51,0.22)", why: "the \"worst\" chip's ground — no danger token yet" },
 ];
 
 type Decl = { prop: string; value: string };
@@ -167,9 +179,12 @@ const hasLiteral = (v: string, re: RegExp) => re.test(v.replace(/var\([^)]*\)/g,
 const RULES: { category: Category; test: (d: Decl) => boolean }[] = [
   {
     category: "space",
+    // Absolute lengths only. A `6vw` inside a `clamp()` is a rule about how
+    // space should grow with the viewport, not a step somebody typed instead
+    // of using the grid — and there is no grid value it could become.
     test: ({ prop, value }) =>
       /^(padding|margin|gap|row-gap|column-gap|inset)(-[a-z-]+)?$/.test(prop) &&
-      hasLiteral(value, LENGTH) &&
+      hasLiteral(value, /-?\d+(\.\d+)?(px|rem|em)/) &&
       !/^(0|auto)$/.test(value.trim()),
   },
   {
