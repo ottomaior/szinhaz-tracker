@@ -62,6 +62,8 @@ export type Cdp = {
   ws: WebSocket;
   /** `timeoutMs` defaults to 30s; a full-page screenshot needs far longer. */
   send(method: string, params?: Record<string, unknown>, timeoutMs?: number): Promise<any>;
+  /** Subscribe to a protocol event, e.g. `Network.requestWillBeSent`. */
+  on(method: string, handler: (params: any) => void): void;
 };
 
 /** Minimal CDP client: connect, send commands, await replies. */
@@ -74,9 +76,15 @@ export async function connect(wsUrl: string): Promise<Cdp> {
 
   let id = 0;
   const pending = new Map<number, { resolve: (v: any) => void; reject: (e: Error) => void }>();
+  const listeners = new Map<string, ((params: any) => void)[]>();
   ws.onmessage = (event: MessageEvent) => {
     const msg = JSON.parse(String(event.data));
-    const entry = msg.id && pending.get(msg.id);
+    if (!msg.id) {
+      // An event rather than a reply. Nothing subscribed is the normal case.
+      for (const fn of listeners.get(msg.method) ?? []) fn(msg.params);
+      return;
+    }
+    const entry = pending.get(msg.id);
     if (!entry) return;
     pending.delete(msg.id);
     if (msg.error) entry.reject(new Error(JSON.stringify(msg.error)));
@@ -85,6 +93,9 @@ export async function connect(wsUrl: string): Promise<Cdp> {
 
   return {
     ws,
+    on(method: string, handler: (params: any) => void) {
+      listeners.set(method, [...(listeners.get(method) ?? []), handler]);
+    },
     send(method: string, params: Record<string, unknown> = {}, timeoutMs = 30_000): Promise<any> {
       return new Promise((res, rej) => {
         const n = ++id;

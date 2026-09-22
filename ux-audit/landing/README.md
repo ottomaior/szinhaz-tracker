@@ -63,14 +63,28 @@ npm run diff:shots -- --write ux-audit/landing/before ux-audit/landing/after/rad
 
 The same differ the app's audit uses, at zero tolerance.
 
-**These captures are deterministic, and there is no known-noise list.** The
-renderer emulates `prefers-reduced-motion: reduce` for the whole run, which
-holds the five loops, the light-rays canvas, the particle emitter and the
-counting statistics still. Two consecutive runs of the full matrix compare as
-36 identical, 0 changed — that was checked before the before set was trusted,
-and it is worth re-checking if a pair ever differs for no reason anybody can
-name. It also means every capture exercises the reduced-motion path, which is
-one of the four rules the pass commits to.
+**These captures are deterministic, and there is no known-noise list.** Three
+consecutive runs of the full matrix compare as 36 identical, 0 changed. Two
+things buy that, and the second was learned the hard way:
+
+- The renderer emulates `prefers-reduced-motion: reduce` for the whole run,
+  which holds the five loops, the light-rays canvas, the particle emitter and
+  the counting statistics still. It also means every capture exercises the
+  reduced-motion path, which is one of the rules the pass commits to.
+- It resizes the viewport to the page and photographs what fits, rather than
+  asking for a capture beyond the viewport. Chrome's `captureBeyondViewport`
+  resizes the viewport under the renderer while the shutter is open, and five
+  of these six pages size themselves in viewport units — `clamp(…, 4vw, …)`
+  gutters, a `clamp(…vw…)` type scale, `min-height: 100svh`. So the layout
+  moved during the capture by an amount that depended on timing, and two runs
+  of identical code came out differing across a fifth of their pixels.
+  `index.html` was stable throughout, because it is sized in pixels — which
+  is the observation that finally named the cause.
+
+The first version of this file claimed determinism on the strength of one
+comparison that happened to pass. If a pair ever differs for no reason anybody
+can name, do not write it off as noise: run the matrix twice against unchanged
+code first, and find out whether the instrument or the page is lying.
 
 Only the `before/` set is committed. It is 21 MB, and a full set per step would
 be a quarter of a gigabyte for pictures nobody opens twice. Each step's commit
