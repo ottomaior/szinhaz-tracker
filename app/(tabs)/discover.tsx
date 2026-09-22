@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState, useRef } from "react";
-import { View, ScrollView, StyleSheet, Pressable } from "react-native";
+import { View, ScrollView, StyleSheet, Pressable, useWindowDimensions } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
-import { gutter, maxWidth, overlay, radius, space, thumb } from "@/theme/tokens";
+import { bar, control, gutter, radius, space, thumb } from "@/theme/tokens";
 import { useAtLeast } from "@/hooks/useBreakpoint";
 import { useRecentSearches } from "@/hooks/useRecentSearches";
 import { useSearchQuery } from "@/hooks/useSearchQuery";
@@ -37,7 +37,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ListCard } from "@/components/ui/ListCard";
 import { ListsBody } from "@/components/ui/ListsBody";
 import { PosterCardSkeleton, Skeleton } from "@/components/ui/Skeleton";
-import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
+import { PosterPlaceholder, posterAspect } from "@/components/ui/PosterPlaceholder";
 import { ProgramRow, ProgramRowSkeleton, programKind } from "@/components/ui/ProgramRow";
 import { Screen, ContentColumn } from "@/components/ui/Screen";
 import { ProgramView } from "@/components/ui/ProgramView";
@@ -163,6 +163,16 @@ export default function DiscoverScreen() {
   const styles = useStyles();
 
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
+  /**
+   * How much room the lead has, measured rather than guessed: the pinned
+   * header's height is whatever the title, the city, the search and the tabs
+   * come to, and that differs with the palette's type and the reader's
+   * system font. What is left after it, the facet row and the dock is what
+   * the hero may take — see `TonightHero`, which fits its poster and its
+   * caption inside it.
+   */
+  const [headerHeight, setHeaderHeight] = useState(0);
   const dockInset = useDockInset();
   const router = useRouter();
   // From 900pt the lead goes two-column: the hero beside the programme rather
@@ -172,7 +182,7 @@ export default function DiscoverScreen() {
   // that is a followed venue on the watchlist, which has no page of its own to
   // open. Applied once, in an effect below, so the chip stays the user's to
   // change afterwards rather than being reasserted on every render.
-  const { venueId: venueIdParam } = useLocalSearchParams<{ venueId?: string }>();
+  const { venueId: venueIdParam, q: queryParam } = useLocalSearchParams<{ venueId?: string; q?: string }>();
   const { session } = useAuth();
   const [mode, setMode] = useState<DiscoverMode>("browse");
   const [activeFilter, setActiveFilter] = useState(strings.discover.filterAll);
@@ -324,6 +334,17 @@ export default function DiscoverScreen() {
     setActiveVenueId(venueIdParam);
     setMode("browse");
   }, [venueIdParam, venues]);
+
+  /**
+   * A search typed in the top bar, which is where a wide screen's search
+   * lives: the bar hands the term over and this screen answers it. Applied
+   * when the parameter changes rather than on every render, so the field
+   * stays the reader's to edit afterwards.
+   */
+  useEffect(() => {
+    if (queryParam === undefined) return;
+    setQuery(queryParam);
+  }, [queryParam]);
 
   /**
    * What the people this account follows have been to lately.
@@ -718,6 +739,20 @@ export default function DiscoverScreen() {
     </ScrollView>
   );
 
+  // The facet row is a chip and its padding; the dock only covers the page
+  // on a phone. A floor keeps the hero a picture rather than a strip on a
+  // very short window.
+  const leadHeight = Math.max(
+    MIN_LEAD_HEIGHT,
+    windowHeight -
+      // The top bar is part of the window but not of this screen's layout.
+      (wide ? bar : 0) -
+      headerHeight -
+      (control.sm + space.md * 2) -
+      (wide ? space["4xl"] : dockInset) -
+      space.xl
+  );
+
   const hero = upcoming[0];
   const programme = upcoming.slice(1);
   // Only for the day the hero is on; a stale answer for another day is dropped.
@@ -729,7 +764,7 @@ export default function DiscoverScreen() {
    */
   const lead = hero && (
     <View style={wide ? styles.leadWide : undefined}>
-      <TonightHero entry={hero} onPress={() => openPlay(hero.playId)} tall={wide} />
+      <TonightHero entry={hero} onPress={() => openPlay(hero.playId)} available={leadHeight} tall={wide} />
       {programme.length > 0 && (
         <View style={wide ? styles.leadSide : styles.leadStacked}>
           <SectionHeader
@@ -772,7 +807,10 @@ export default function DiscoverScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Screen>
-        <View style={[styles.header, { paddingTop: insets.top + space.md }]}>
+        <View
+          style={[styles.header, { paddingTop: insets.top + space.md }]}
+          onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
+        >
           {/* On a phone the title, the city and the search stack; from the
               `expanded` breakpoint the search sits beside the title, so the
               pinned header is two rows across 1100pt rather than four. */}
@@ -793,9 +831,11 @@ export default function DiscoverScreen() {
                 />
               )}
             </View>
-            {wide && <View style={styles.searchWide}>{search}</View>}
           </View>
 
+          {/* On a wide screen the top bar carries the search — it is the
+              app's chrome, it is where a desktop reader looks for it, and it
+              works from every screen rather than from this one only. */}
           {!wide && <View style={styles.searchRow}>{search}</View>}
 
           {/* Only while the field is focused and empty: once there is a query
@@ -931,7 +971,7 @@ export default function DiscoverScreen() {
 
             {browseLoading && (
               <View style={{ gap: space["2xl"], paddingHorizontal: gutter }}>
-                <View style={{ aspectRatio: wide ? 16 / 7 : HERO_ASPECT }}>
+                <View style={{ aspectRatio: HERO_ASPECT }}>
                   <Skeleton width="100%" height="100%" radius={radius.lg} />
                 </View>
                 <View>
@@ -1110,16 +1150,44 @@ export default function DiscoverScreen() {
  */
 const HERO_ASPECT = 4 / 4.6;
 
+/** What the caption is assumed to cost before it has been measured once. */
+const CAPTION_FALLBACK = 180;
+
+/** Below these the lead stops being a picture and becomes a strip. */
+const MIN_LEAD_HEIGHT = 320;
+const MIN_POSTER_HEIGHT = 160;
+
 /**
  * The next evening, as the thing the screen is for.
  *
  * "What is on tonight" used to be a 132pt thumbnail in a rail. Here it is the
- * lead: the full poster with the title, the curtain time and the theatre set
- * on it, and the one filled gold button on the screen. Everything on the
- * image takes its colour from `overlay` rather than from the palette — the
- * scrim under it is the stage in every theme.
+ * lead: the poster whole, and under it the curtain time, the theatre, the
+ * title and the one filled gold button on the screen.
+ *
+ * Under it rather than on it, and that is the point. A poster carries its own
+ * title, set by the house in the house's own lettering, and the app printing
+ * the same words over them made every hero read twice. The picture is left to
+ * say what it was drawn to say; the app says the things a picture cannot —
+ * when it starts and where.
+ *
+ * The poster is shown whole and fits the screen it is opened on: the frame
+ * takes the artwork's own proportions and is capped so that the caption and
+ * the button are on screen without scrolling. A hero that hides half the
+ * artwork, or that pushes the way in below the fold, is a lead that makes the
+ * reader's decision for them.
  */
-function TonightHero({ entry, onPress, tall }: { entry: ProgramEntry; onPress: () => void; tall: boolean }) {
+function TonightHero({
+  entry,
+  onPress,
+  available,
+  tall,
+}: {
+  entry: ProgramEntry;
+  onPress: () => void;
+  /** The height the whole lead has to live in — the poster takes what the caption leaves. */
+  available: number;
+  tall: boolean;
+}) {
   const styles = useStyles();
 
   const isToday = budapestDayKey(entry.startsAt) === todayInBudapest();
@@ -1132,32 +1200,56 @@ function TonightHero({ entry, onPress, tall }: { entry: ProgramEntry; onPress: (
     entry.runtimeMinutes != null ? formatRuntimeMinutes(entry.runtimeMinutes) : undefined,
   ].filter(Boolean);
 
-  // The image is the pressable and the button sits beside it in the tree, not
-  // inside it: a Pressable within a Pressable renders as a <button> inside a
-  // <button> on the web, which the DOM forbids.
+  // Measured rather than allowed for: the title wraps to two lines for some
+  // productions and one for others, and the poster should have whatever is
+  // left either way.
+  const [captionHeight, setCaptionHeight] = useState(CAPTION_FALLBACK);
+  const posterHeight = Math.max(MIN_POSTER_HEIGHT, available - captionHeight - space.md);
+
   return (
-    <View style={[styles.hero, tall ? styles.heroTall : { aspectRatio: HERO_ASPECT }]}>
-      <PressCard onPress={onPress} accessibilityRole="button" accessibilityLabel={entry.title} style={StyleSheet.absoluteFill} surfaceStyle={{ flex: 1 }} tilt={4}>
-        <PosterPlaceholder poster={entry.poster} title={entry.title} seed={entry.playId} height="100%" radius={0} scrim priority="high" />
+    <View style={tall ? styles.heroTall : undefined}>
+      {/* The frame is the poster's own shape, capped by the room there is, so
+          it narrows and centres rather than cropping or overflowing. */}
+      <PressCard
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={entry.title}
+        style={[styles.poster, { aspectRatio: posterAspect(entry.poster, HERO_ASPECT), height: posterHeight }]}
+        surfaceStyle={{ flex: 1 }}
+        radius={radius.lg}
+        tilt={4}
+      >
+        <PosterPlaceholder
+          poster={entry.poster}
+          title={entry.title}
+          seed={entry.playId}
+          height="100%"
+          radius={0}
+          priority="high"
+          contentFit="contain"
+          backdrop
+        />
+        {/* On the picture rather than beside it: the frame is narrower than
+            the column, and a pill floating on the ground would belong to
+            nothing. */}
+        <OverlayPill style={styles.heroBadge}>
+          {isToday ? strings.discover.heroToday(daypart(entry.startsAt)) : strings.discover.heroNext(formatWeekday(entry.startsAt))}
+        </OverlayPill>
       </PressCard>
-      <OverlayPill style={[styles.heroBadge, { pointerEvents: "none" }]}>
-        {isToday ? strings.discover.heroToday(daypart(entry.startsAt)) : strings.discover.heroNext(formatWeekday(entry.startsAt))}
-      </OverlayPill>
-      <View style={[styles.heroCaption, { pointerEvents: "box-none" }]}>
-        <Text variant="eyebrow" style={{ color: overlay.onImageAccent }}>
+
+      <View style={styles.heroCaption} onLayout={(e) => setCaptionHeight(e.nativeEvent.layout.height)}>
+        <Text variant="eyebrow" numberOfLines={1}>
           {formatTime(entry.startsAt)} · {entry.venueName}
         </Text>
-        <Text variant="display" numberOfLines={2} style={{ color: overlay.onImageHeading }}>
+        <Text variant="title" numberOfLines={2}>
           {entry.title}
         </Text>
         {credits.length > 0 && (
-          <Text variant="bodySmall" numberOfLines={2} style={{ color: overlay.onImageText }}>
+          <Text variant="bodySmall" tone="dim" numberOfLines={1}>
             {credits.join(" · ")}
           </Text>
         )}
-        <View style={styles.heroActions}>
-          <Button label={strings.discover.heroOpen} onPress={onPress} />
-        </View>
+        <Button label={strings.discover.heroOpen} onPress={onPress} style={styles.heroButton} />
       </View>
     </View>
   );
@@ -1264,9 +1356,6 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   },
   titleRowWide: { alignItems: "center", gap: space["2xl"] },
   searchRow: { marginTop: space.lg },
-  // A field the width of a reading column minus its gutters: wide enough
-  // for the placeholder, narrow enough not to be the widest thing on the page.
-  searchWide: { width: maxWidth.reading - gutter * 2 - space["5xl"] * 3 },
   tabs: { marginTop: space.md, marginBottom: space.md },
   // `alignItems: "center"`: a chip keeps its own height even if the row is
   // ever given more than it needs (T-105).
@@ -1285,22 +1374,19 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   leadSide: { flex: 1 },
   leadStacked: { marginTop: space["2xl"] },
 
-  hero: {
-    borderRadius: radius.lg,
-    overflow: "hidden",
-    backgroundColor: colors.surface2,
-    width: "100%",
-  },
-  heroTall: { flex: 1.35, aspectRatio: 1.15, alignSelf: "flex-start" },
-  heroBadge: { position: "absolute", top: space.lg, left: space.lg },
-  heroCaption: {
-    position: "absolute",
-    left: space.lg,
-    right: space.lg,
-    bottom: space.lg,
-    gap: space.sm,
-  },
-  heroActions: { flexDirection: "row", alignItems: "center", gap: space.lg, marginTop: space.sm },
+  heroTall: { flex: 1.35, alignSelf: "flex-start" },
+  /*
+   * No width of its own: with a height and an aspect ratio set, the frame
+   * derives its width, so the poster keeps its own shape at the largest size
+   * the screen has room for. On a wide screen that is narrower than the
+   * column, and it sits on the column's left edge — the picture, its
+   * eyebrow, its title and its button then share one margin, which is the
+   * grid the rest of the page is on.
+   */
+  poster: { alignSelf: "flex-start", maxWidth: "100%", borderRadius: radius.lg, overflow: "hidden", backgroundColor: colors.surface2 },
+  heroBadge: { position: "absolute", top: space.md, left: space.md },
+  heroCaption: { gap: space.sm, paddingTop: space.md },
+  heroButton: { alignSelf: "flex-start", marginTop: space.xs },
 
   rail: { gap: space.md, paddingHorizontal: gutter },
 

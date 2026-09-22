@@ -16,6 +16,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
 import { PillTabs } from "@/components/ui/PillTabs";
+import { SearchField } from "@/components/ui/SearchField";
 import { strings } from "@/i18n/hu";
 import { makeStyles } from "@/theme/styles";
 
@@ -46,6 +47,7 @@ export function TopBar() {
   const palette = useColors();
   const [viewer, setViewer] = useState<User>();
   const [unread, setUnread] = useState(0);
+  const [query, setQuery] = useState("");
 
   // The reader's face, refreshed on focus for the reason the feed header gives:
   // the screen that changes it returns here.
@@ -106,6 +108,24 @@ export function TopBar() {
           />
         </View>
 
+        {/* The app's search, where a desktop reader looks for it and reachable
+            from every screen rather than from Felfedezés alone. Submitting
+            hands the term to that screen, which is the one built to answer
+            it; the phone has no bar, and keeps its field in the screen. */}
+        <View style={styles.search}>
+          <SearchField
+            value={query}
+            onChangeText={setQuery}
+            placeholder={strings.discover.searchPlaceholder}
+            accessibilityLabel={strings.discover.searchLabel}
+            onSubmit={() => {
+              const term = query.trim();
+              if (term) router.push({ pathname: "/(tabs)/discover", params: { q: term } });
+            }}
+            onClear={() => router.push({ pathname: "/(tabs)/discover", params: { q: "" } })}
+          />
+        </View>
+
         <View style={styles.actions}>
           <Button
             label={strings.checkin.headerTitle}
@@ -156,10 +176,13 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     paddingHorizontal: gutter,
     flexDirection: "row",
     alignItems: "center",
-    gap: space["3xl"],
+    gap: space.lg,
   },
   brand: { flexDirection: "row", alignItems: "center", gap: space.sm },
-  nav: { flex: 1, flexDirection: "row", alignItems: "center" },
+  // The bar's one flexible column: the nav is as wide as its four words, the
+  // actions as wide as they are, and the field takes the rest.
+  search: { flex: 1, maxWidth: maxWidth.reading / 2 },
+  nav: { flexDirection: "row", alignItems: "center" },
   actions: { flexDirection: "row", alignItems: "center", gap: space.md },
   // `overflow: visible` matters: the badge is positioned outside the bell's
   // own box, and clipping it would leave a bell that never looks like it has

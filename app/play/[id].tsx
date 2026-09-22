@@ -17,14 +17,14 @@ import {
 } from "@/services/playsService";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAtLeast } from "@/hooks/useBreakpoint";
-import type { Performance, Play, Portrait, Poster, Review, User, Venue } from "@/data/types";
+import type { Performance, Play, Portrait, Review, User, Venue } from "@/data/types";
 import { getPortraits } from "@/services/peopleService";
 import { IconButton, Button } from "@/components/ui/Button";
 import { PersonRow } from "@/components/ui/Rows";
 import { MeterBar } from "@/components/ui/Cards";
 import { Notice } from "@/components/ui/Notice";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
+import { PosterPlaceholder, posterAspect } from "@/components/ui/PosterPlaceholder";
 import { ContentColumn } from "@/components/ui/Screen";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Text } from "@/components/ui/Text";
@@ -49,32 +49,11 @@ import { useToast } from "@/components/ui/Toast";
 import { haptic } from "@/utils/haptics";
 import { Skeleton } from "@/components/ui/Skeleton";
 
-/**
- * The hero honours the poster's real proportions, within limits.
- *
- * There is one image here and room to show it, so unlike the browsing grids
- * this does not force a single ratio — the catalogue is close to half
- * landscape production stills and half portrait artwork, and cropping either
- * into the other's shape loses the part worth looking at. The clamp keeps a
- * panorama from becoming a letterbox slit and a tall poster from pushing the
- * title off a phone screen entirely.
- *
- * The upper bound is tighter than it was, because the title now sits *on* the
- * image: a 16:9 still on a phone is 210pt tall, which is not enough for a
- * scrim, two lines of Bodoni and a credit line. 4:3 gives the caption room and
- * still shows most of a wide production photograph.
- */
-const MIN_HERO_ASPECT = 4 / 5;
-const MAX_HERO_ASPECT = 4 / 3;
+/** The shape the hero takes for a poster whose dimensions the catalogue does not know. */
 const FALLBACK_HERO_ASPECT = 4 / 4.2;
 
 /** How many lines of synopsis are shown before "Tovább". */
 const SYNOPSIS_COLLAPSED_LINES = 6;
-
-function heroAspect(poster?: Poster): number {
-  if (!poster?.width || !poster?.height) return FALLBACK_HERO_ASPECT;
-  return Math.min(MAX_HERO_ASPECT, Math.max(MIN_HERO_ASPECT, poster.width / poster.height));
-}
 
 export default function PlayDetailScreen() {
   const styles = useStyles();
@@ -727,7 +706,7 @@ export default function PlayDetailScreen() {
             {backAndShare}
             <View style={styles.columns}>
               <View style={styles.posterColumn}>
-                <View style={[styles.posterFrame, { aspectRatio: heroAspect(play.poster) }]}>
+                <View style={[styles.posterFrame, { aspectRatio: posterAspect(play.poster, FALLBACK_HERO_ASPECT) }]}>
                   <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} height="100%" radius={radius.lg} priority="high" />
                 </View>
                 {/* These are working photographers' production stills; the
@@ -754,7 +733,7 @@ export default function PlayDetailScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView bounces={false} contentContainerStyle={{ paddingBottom: space["4xl"] }}>
-        <View style={[styles.hero, { aspectRatio: heroAspect(play.poster) }]}>
+        <View style={[styles.hero, { aspectRatio: posterAspect(play.poster, FALLBACK_HERO_ASPECT) }]}>
           <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} height="100%" radius={0} scrim priority="high" />
           <View style={[styles.heroTop, { top: insets.top + space.lg }]}>{backAndShare}</View>
           {/* These are working photographers' production stills; the credit
