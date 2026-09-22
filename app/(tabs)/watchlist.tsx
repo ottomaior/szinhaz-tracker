@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
-import { View, ScrollView, StyleSheet, Pressable, RefreshControl } from "react-native";
+import { View, ScrollView, StyleSheet, RefreshControl } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
-import { gutter, radius, space } from "@/theme/tokens";
+import { gutter, space } from "@/theme/tokens";
 import { getVenueById, getWatchlist } from "@/services/playsService";
 import { getFollowedSubjects, type FollowedSubject } from "@/services/followService";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Play, Venue } from "@/data/types";
-import { CalendarIcon, ChevronRightIcon, PinIcon } from "@/components/icons/Icons";
-import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
+import { CalendarIcon, PinIcon } from "@/components/icons/Icons";
+import { PlayRow } from "@/components/ui/PlayRow";
+import { LinkRow } from "@/components/ui/Rows";
+import { Notice } from "@/components/ui/Notice";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Screen } from "@/components/ui/Screen";
 import { SectionHeader } from "@/components/ui/SectionHeader";
@@ -20,7 +22,7 @@ import { useDockInset } from "@/components/ui/TabBar";
 import { strings } from "@/i18n/hu";
 import { formatLongDate, formatShowtime } from "@/utils/datetime";
 import { makeStyles } from "@/theme/styles";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { RowSkeleton } from "@/components/ui/Skeleton";
 import { PushPrimer } from "@/components/ui/PushPrimer";
 
 export default function WatchlistScreen() {
@@ -109,33 +111,34 @@ export default function WatchlistScreen() {
           {/* The rows' shape while the first load is out, so the tab does
               not open on a blank body that could equally be "nothing saved"
               (T-093). */}
-          {loading &&
-            [0, 1, 2].map((i) => (
-              <View key={i} style={{ flexDirection: "row", gap: space.md, alignItems: "center" }}>
-                <Skeleton width={56} height={84} radius={radius.sm} />
-                <View style={{ flex: 1, gap: space.sm }}>
-                  <Skeleton width="75%" height={16} />
-                  <Skeleton width="50%" height={12} />
-                </View>
-              </View>
-            ))}
+          {loading && (
+            <View>
+              {[0, 1, 2].map((i) => (
+                <RowSkeleton key={i} />
+              ))}
+            </View>
+          )}
           {/* Above the rows once there are rows: the person has just said
               which evenings they care about, and this asks whether the app
               may say when one of them is tomorrow (T-089). */}
           {!loading && items.length > 0 && <PushPrimer />}
 
-          {items.map(({ play }) => (
-            <WatchlistRow key={play.id} play={play} onPress={() => router.push(`/play/${play.id}`)} />
-          ))}
+          {items.length > 0 && (
+            <View>
+              {items.map(({ play }) => (
+                <WatchlistRow key={play.id} play={play} onPress={() => router.push(`/play/${play.id}`)} />
+              ))}
+            </View>
+          )}
 
           {/* Under the productions, because a saved production is a decision
               about a specific evening and a follow is an open question. */}
           {!!session && followed.length > 0 && (
-            <View style={{ gap: space.lg, marginTop: items.length > 0 ? space.xl : 0 }}>
+            <View style={{ gap: space.lg, marginTop: items.length > 0 ? space.sm : 0 }}>
               <SectionHeader title={strings.watchlist.followingHeading} />
 
               {people.length > 0 && (
-                <View style={{ gap: space.md }}>
+                <View style={{ gap: space.xs }}>
                   <Text variant="eyebrow" tone="faint">{strings.watchlist.followingPeople}</Text>
                   {people.map((f) => (
                     <SubjectRow
@@ -149,7 +152,7 @@ export default function WatchlistScreen() {
               )}
 
               {venues.length > 0 && (
-                <View style={{ gap: space.md }}>
+                <View style={{ gap: space.xs }}>
                   <Text variant="eyebrow" tone="faint">{strings.watchlist.followingVenues}</Text>
                   {venues.map((f) => (
                     <SubjectRow
@@ -172,9 +175,7 @@ export default function WatchlistScreen() {
           {/* Only once the productions list is empty too — a screen with two
               theatres on it is not empty. */}
           {!!session && !loading && items.length === 0 && followed.length > 0 && (
-            <Text variant="bodySmall" tone="faint" style={{ marginTop: space.lg }}>
-              {strings.watchlist.emptyBody}
-            </Text>
+            <Notice tone="info">{strings.watchlist.emptyBody}</Notice>
           )}
 
           {showEmpty && (
@@ -215,68 +216,48 @@ function WatchlistRow({ play, onPress }: { play: Play; onPress: () => void }) {
   }, [play.venueId]);
 
   return (
-    <Pressable onPress={onPress} style={styles.row} accessibilityRole="button" accessibilityLabel={play.title}>
-      <PosterPlaceholder poster={play.poster} title={play.title} seed={play.id} width={64} height={96} radius={radius.sm} preferThumb />
-      <View style={{ flex: 1, gap: space.xs }}>
-        <Text variant="subheading" numberOfLines={2}>
-          {play.title}
-        </Text>
-        <View style={styles.metaRow}>
-          <PinIcon size={13} />
-          <Text variant="caption" tone="faint" numberOfLines={1} style={{ flex: 1 }}>
-            {venue?.name}
-          </Text>
-        </View>
-        {when && (
+    <PlayRow
+      play={play}
+      onPress={onPress}
+      meta={
+        <>
           <View style={styles.metaRow}>
-            <CalendarIcon size={13} />
+            <PinIcon />
             <Text variant="caption" tone="faint" numberOfLines={1} style={{ flex: 1 }}>
-              {when}
+              {venue?.name}
             </Text>
           </View>
-        )}
-      </View>
-    </Pressable>
+          {when && (
+            <View style={styles.metaRow}>
+              <CalendarIcon />
+              <Text variant="caption" tone="faint" numberOfLines={1} style={{ flex: 1 }}>
+                {when}
+              </Text>
+            </View>
+          )}
+        </>
+      }
+    />
   );
 }
 
 /**
- * A followed performer or theatre. Deliberately plainer than `WatchlistRow`:
- * these have no poster to show, and inventing a monogram tile for a theatre
- * would give six rows more visual weight than the productions above them.
+ * A followed performer or theatre: the text row, since these have no
+ * poster to show, and inventing a monogram tile for a theatre would give
+ * six rows more visual weight than the productions above them.
  */
 function SubjectRow({ label, detail, onPress }: { label: string; detail: string; onPress: () => void }) {
-  const styles = useStyles();
-
-  return (
-    <Pressable onPress={onPress} style={styles.subjectRow} accessibilityRole="button" accessibilityLabel={label}>
-      <View style={{ flex: 1, gap: 2 }}>
-        <Text variant="body" numberOfLines={1}>{label}</Text>
-        <Text variant="caption" tone="faint" numberOfLines={1}>{detail}</Text>
-      </View>
-      <ChevronRightIcon size={15} color={colors.textFaint} />
-    </Pressable>
-  );
+  return <LinkRow label={label} blurb={detail} onPress={onPress} />;
 }
 
-const useStyles = makeStyles((colors) => StyleSheet.create({
+const useStyles = makeStyles(() => StyleSheet.create({
+  // No hairline under the header: the feed and Discover open on a bare
+  // title too, and this was the one tab that ruled its own off.
   header: {
     paddingHorizontal: gutter,
-    paddingBottom: space.lg,
+    paddingBottom: space.sm,
     gap: space.xs,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.hairlineSoft,
   },
   body: { padding: gutter, gap: space.lg },
-  row: { flexDirection: "row", gap: space.md },
-  subjectRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.md,
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    paddingVertical: space.md,
-    paddingHorizontal: space.md,
-  },
   metaRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
 }));
