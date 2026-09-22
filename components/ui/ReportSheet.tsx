@@ -9,7 +9,7 @@ import {
   type ReportTarget,
 } from "@/services/moderationService";
 import { CheckIcon } from "@/components/icons/Icons";
-import { Sheet, SheetFooter, SheetOption } from "@/components/ui/Sheet";
+import { Sheet, SheetFooter, SheetOption, sheetScroll } from "@/components/ui/Sheet";
 import { TextField } from "@/components/ui/TextField";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
@@ -86,7 +86,7 @@ export function ReportSheet({
 
   return (
     <Sheet visible={visible} onClose={onClose} title={TITLES[target]}>
-          <ScrollView style={{ maxHeight: 420 }} contentContainerStyle={{ paddingBottom: space.sm }}>
+          <ScrollView {...sheetScroll}>
             <Text variant="bodySmall" tone="dim" style={{ paddingVertical: space.sm }}>
               {strings.moderation.reportLead}
             </Text>

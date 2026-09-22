@@ -4,7 +4,7 @@ import { colors } from "@/theme/colors";
 import { control, hairlineWidth, radius, space } from "@/theme/tokens";
 import { CheckIcon, ChevronDownIcon, PinIcon } from "@/components/icons/Icons";
 import { Chip } from "@/components/ui/Chip";
-import { Sheet, SheetOption } from "@/components/ui/Sheet";
+import { Sheet, SheetOption, sheetScroll } from "@/components/ui/Sheet";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 import { makeStyles } from "@/theme/styles";
@@ -133,12 +133,7 @@ export function SelectChip({
       )}
 
       <Sheet visible={open} onClose={() => setOpen(false)} title={title ?? name}>
-            <ScrollView
-              // Bounded so a long list — 8 theatres, 9 genres — scrolls inside
-              // the sheet instead of pushing it off the top of the screen.
-              style={{ maxHeight: 360 }}
-              contentContainerStyle={{ paddingBottom: space.sm }}
-            >
+            <ScrollView {...sheetScroll}>
               {options.map((option) => {
                 const isSelected = option.value === value;
                 return (

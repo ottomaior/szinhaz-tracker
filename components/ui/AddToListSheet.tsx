@@ -4,7 +4,7 @@ import { space } from "@/theme/tokens";
 import { addToList, getListIdsContaining, getLists, removeFromList, type ListSummary } from "@/services/listsService";
 import { getCurrentUser } from "@/services/playsService";
 import { CheckIcon } from "@/components/icons/Icons";
-import { Sheet, SheetFooter, SheetOption } from "@/components/ui/Sheet";
+import { Sheet, SheetFooter, SheetOption, sheetScroll } from "@/components/ui/Sheet";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 
@@ -93,7 +93,7 @@ export function AddToListSheet({
             </Text>
           )}
 
-          <ScrollView style={{ maxHeight: 340 }} contentContainerStyle={{ paddingBottom: space.sm }}>
+          <ScrollView {...sheetScroll}>
             {lists?.length === 0 && (
               <Text variant="bodySmall" tone="dim" style={{ paddingVertical: space.md }}>
                 {strings.lists.noListsYet}

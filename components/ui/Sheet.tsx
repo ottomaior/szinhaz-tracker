@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from "react";
-import { Animated, Easing, Modal, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
+import { Animated, Easing, Modal, Pressable, StyleSheet, useWindowDimensions, View, type StyleProp, type ViewStyle } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAnimatedValue } from "@/hooks/useAnimatedValue";
 import { NATIVE_DRIVER, useReducedMotion } from "@/hooks/useReducedMotion";
@@ -55,6 +55,19 @@ export function Sheet({
   const styles = useStyles();
   const insets = useSafeAreaInsets();
   const wide = useAtLeast("expanded");
+  const { height: windowHeight } = useWindowDimensions();
+
+  /*
+   * How tall the sheet may be, in pixels off the window.
+   *
+   * It was `maxHeight: "80%"`, which a browser resolves against the parent —
+   * and the parent here is a wrapper that is itself as tall as this sheet's
+   * contents, so the cap came out a fifth short of the contents every time
+   * and the list underneath ran out through the bottom of the panel. A cap
+   * has to be measured against the thing it is protecting the reader from,
+   * which is the window.
+   */
+  const maxHeight = Math.round(windowHeight * (wide ? 0.8 : 0.72));
 
   return (
     <Modal
@@ -73,6 +86,7 @@ export function Sheet({
           <Pressable
             style={[
               styles.sheet,
+              { maxHeight },
               wide ? styles.sheetWide : { paddingBottom: Math.max(insets.bottom, space.lg) },
             ]}
             onPress={() => {}}
@@ -87,7 +101,11 @@ export function Sheet({
                 <CloseIcon size={icon.chrome} color={colors.textDim} />
               </Pressable>
             </View>
-            <View style={contentStyle}>{children}</View>
+            {/* The body may shrink, and that is load-bearing: the surface
+                above is capped against the window, and without this the
+                wrapper kept its full natural height, so a list inside it was
+                clipped by the surface with no way to scroll to the rest. */}
+            <View style={[styles.body, contentStyle]}>{children}</View>
           </Pressable>
         </Rise>
       </Pressable>
@@ -173,6 +191,18 @@ export function SheetOption({
   );
 }
 
+/**
+ * The body of a sheet whose contents may be longer than the sheet: it takes
+ * what the header and the footer leave and scrolls inside it, rather than
+ * each sheet guessing a height of its own — they had guessed 340, 360 and
+ * 420. The right-hand padding is the scrollbar's lane, so a tick at the end
+ * of a row is not sitting under it.
+ */
+export const sheetScroll = {
+  style: { flexShrink: 1 } as ViewStyle,
+  contentContainerStyle: { paddingBottom: space.sm, paddingRight: space.sm } as ViewStyle,
+};
+
 /** The line under the options: "Új lista", "Küldés". */
 export function SheetFooter({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
   const styles = useStyles();
@@ -192,11 +222,13 @@ const useStyles = makeStyles((colors, elevation) => StyleSheet.create({
     borderTopRightRadius: radius.xl,
     paddingHorizontal: gutter,
     paddingTop: space.md,
+    // Nothing paints outside a rounded surface: a list long enough to scroll
+    // used to carry on past the corner rather than stop at it.
+    overflow: "hidden",
     ...elevation.floating,
   },
   sheetWide: {
     width: maxWidth.reading / 2,
-    maxHeight: "80%",
     borderRadius: radius.xl,
     paddingBottom: space.lg,
   },
@@ -218,6 +250,7 @@ const useStyles = makeStyles((colors, elevation) => StyleSheet.create({
     borderBottomWidth: hairlineWidth,
     borderBottomColor: colors.hairlineSoft,
   },
+  body: { flexShrink: 1 },
   option: {
     flexDirection: "row",
     alignItems: "center",
