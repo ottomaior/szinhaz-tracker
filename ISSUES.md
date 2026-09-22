@@ -419,6 +419,43 @@ attendance and the diary must never record an evening on someone's behalf.
 
 ## Open
 
+### T-119 · Some covers never arrive and the tile sits on its blurhash forever
+type: bug · area: design · priority: high · status: open · added: 2026-09-22
+
+On Felfedezés, several tiles in the „Hét függöny, egy este” rail showed no
+artwork: „Izzik a galagonya” blank dark, magyartenger solid blue, Evita
+solid red, while their neighbours drew fine. Seen on desktop web; the same
+markup is served to a phone.
+
+**Not a data problem.** All seven plays in that rail have `poster_path` set,
+a blurhash, and the file present in the `posters` bucket — checked against
+`storage.objects`. The URLs are correct and, on a good run, every one of
+them loads in well under a second.
+
+**The blank is the loading state, not the error state.** `PosterPlaceholder`
+falls back to the gold monogram tile on `onError` — that is what „A kis
+herceg” and „Jeremás” show. A tile still showing its blurhash therefore
+means the image **never loaded and never errored**: it is stuck pending,
+and nothing ever retries it.
+
+**Why the two shapes of blank differ.** With `portraitFrame` and a landscape
+poster, `PosterPlaceholder` letterboxes, and renders the *same uri twice* —
+a `blurRadius={18}` backdrop plus the sharp image. Evita (1600×800) and
+magyartenger (1024×592) are exactly that case, which is why their blanks are
+solid blue and red: the blurred copy painted and the sharp one did not.
+„Izzik a galagonya” is portrait, so it has no backdrop and shows the bare
+blurhash. Measured on production: 59 distinct poster URLs across ~134 `img`
+elements, 38 of those URLs rendered two or three times over.
+
+Every `img` carries `loading="lazy"`, and the page mounts all 134 whatever
+the viewport — six of them visible on a phone. Two candidate mechanisms,
+neither yet proven: a lazily-loaded image whose intersection callback is
+missed during a layout shift never starts its request, and two `Image`
+instances racing on one uri inside expo-image's cache.
+
+Intermittent — reproduced from Ottó's screenshot but not on demand across
+several reloads, which fits a race rather than a broken URL.
+
 ### T-118 · The kind toggles govern the phone, but the heading claimed everything
 type: bug · area: notifications · priority: med · status: doing · added: 2026-09-22
 
@@ -3628,4 +3665,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-119**
+Next free id: **T-120**

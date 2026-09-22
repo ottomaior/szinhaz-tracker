@@ -1,5 +1,5 @@
-import { useEffect, useId, useState } from "react";
-import { View, StyleSheet, DimensionValue, Text as RNText } from "react-native";
+import { useEffect, useId, useRef, useState } from "react";
+import { View, StyleSheet, DimensionValue, Platform, Text as RNText } from "react-native";
 import { Image } from "expo-image";
 import Svg, { Defs, RadialGradient, LinearGradient, Stop, Rect, Line } from "react-native-svg";
 import { displayFont } from "@/theme/typography";
@@ -35,6 +35,17 @@ import { makeStyles } from "@/theme/styles";
  * still cuts is handled by `backdrop`, which shows the frame whole over a
  * blurred copy of itself rather than cropping it.
  */
+/**
+ * How long a tile that is on screen may show nothing before it is treated as
+ * stuck rather than slow (T-119). Posters are mirrored into our own bucket
+ * and measured at well under 250ms on production, so this is generous by an
+ * order of magnitude — it should only ever catch a genuine failure.
+ */
+const STUCK_AFTER_MS = 6000;
+
+/** How often the watchdog looks, while a tile it is watching is still empty. */
+const WATCH_TICK_MS = 1500;
+
 export const HERO_MIN_ASPECT = 4 / 5;
 export const HERO_MAX_ASPECT = 4 / 3;
 
@@ -92,6 +103,17 @@ export function PosterPlaceholder({
 
   const [failedUri, setFailedUri] = useState<string>();
 
+  // The watchdog's two pieces of state (T-119). `settled` is whether the
+  // image has arrived; `attempt` is bumped to remount it when it has not.
+  const [settled, setSettled] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const wrapRef = useRef<View>(null);
+  // On a phone every mounted tile loads, so it is on screen as far as this
+  // is concerned; on the web the browser defers until the tile is near the
+  // viewport, and a watchdog that ignored that would pull all 134 posters a
+  // Discover page mounts rather than the six a phone can show.
+  const [onScreen, setOnScreen] = useState(Platform.OS !== "web");
+
   // Gradient ids live in the document's global id namespace on web, so every
   // instance needs its own — otherwise all of them resolve `url(#spot)` to
   // whichever placeholder mounted first, and unmounting that one leaves the
@@ -107,7 +129,60 @@ export function PosterPlaceholder({
   // perfectly good image.
   useEffect(() => {
     setFailedUri((current) => (current === uri ? current : undefined));
+    setSettled(false);
+    setAttempt(0);
   }, [uri]);
+
+  /**
+   * The rescue, and the reason it counts the clock itself (T-119).
+   *
+   * `loading="lazy"` — which expo-image puts on every image on the web — is
+   * implemented with the browser's intersection machinery, and the evidence
+   * says that machinery is what fails: a tile in plain view whose request
+   * never starts, and therefore never errors, so the blurhash stays put. An
+   * `IntersectionObserver` would be the tidy way to notice, except it is the
+   * very thing under suspicion — measured here, one did not fire at all on a
+   * 550px-tall image sitting in the viewport. So this asks the layout
+   * directly instead, on a slow tick, and only for tiles that have not
+   * arrived yet.
+   *
+   * Seeing the tile on screen does two things: it drops `loading` to
+   * `eager`, which is what actually starts a request the browser overlooked,
+   * and it starts the clock. Covers come from our own bucket and answer in
+   * well under 250ms, so a tile still empty after `STUCK_AFTER_MS` is stuck
+   * rather than slow: remount once to try again, and if that is no better
+   * show the monogram, which at least names the production.
+   */
+  useEffect(() => {
+    if (!uri || settled || failedUri === uri) return;
+
+    // A phone loads what it mounts, so there is nothing to wait to become
+    // visible and nothing to make eager — just the clock.
+    if (Platform.OS !== "web") {
+      const timer = setTimeout(
+        () => (attempt === 0 ? setAttempt(1) : setFailedUri(uri)),
+        attempt === 0 ? STUCK_AFTER_MS : STUCK_AFTER_MS * 2
+      );
+      return () => clearTimeout(timer);
+    }
+
+    let waited = 0;
+    const limit = attempt === 0 ? STUCK_AFTER_MS : STUCK_AFTER_MS * 2;
+    const tick = setInterval(() => {
+      const node = wrapRef.current as unknown as HTMLElement | null;
+      const rect = node?.getBoundingClientRect?.();
+      // No box yet, or off screen: the browser is right to be waiting, and
+      // an empty tile nobody can see is not a fault.
+      if (!rect || rect.height <= 0 || rect.bottom <= 0 || rect.top >= window.innerHeight) return;
+      setOnScreen(true);
+      waited += WATCH_TICK_MS;
+      if (waited < limit) return;
+      clearInterval(tick);
+      if (attempt === 0) setAttempt(1);
+      else setFailedUri(uri);
+    }, WATCH_TICK_MS);
+    return () => clearInterval(tick);
+  }, [uri, settled, failedUri, attempt]);
 
   // Wider than 5:4 is a banner, not a poster; anything nearer square still
   // crops acceptably.
@@ -117,18 +192,24 @@ export function PosterPlaceholder({
 
   if (uri && failedUri !== uri) {
     return (
-      <View style={[styles.wrap, { width, height, borderRadius: radius }]}>
+      <View ref={wrapRef} style={[styles.wrap, { width, height, borderRadius: radius }]}>
         {letterbox && (
           <Image
+            key={`backdrop-${attempt}`}
             source={{ uri }}
             style={StyleSheet.absoluteFill}
             contentFit="cover"
             blurRadius={18}
             cachePolicy="memory-disk"
+            loading={onScreen ? "eager" : "lazy"}
             accessible={false}
           />
         )}
         <Image
+          // Remounts the view when the watchdog gives up waiting, which is
+          // what starts the request over. Named, because the letterbox
+          // backdrop above is a sibling and would otherwise share the key.
+          key={`main-${attempt}`}
           source={{ uri }}
           style={StyleSheet.absoluteFill}
           contentFit={fit}
@@ -137,7 +218,12 @@ export function PosterPlaceholder({
           placeholder={poster?.blurhash ? { blurhash: poster.blurhash } : undefined}
           placeholderContentFit={fit}
           cachePolicy="memory-disk"
+          // expo-image defers every image on the web by default. Once this
+          // tile is known to be on screen there is nothing left to defer,
+          // and saying so is what rescues a tile the browser overlooked.
+          loading={onScreen ? "eager" : "lazy"}
           priority={priority}
+          onLoad={() => setSettled(true)}
           onError={() => setFailedUri(uri)}
         />
         {scrim && <Scrim id={scrimId} />}
