@@ -69,6 +69,44 @@ stops the same idea being re-proposed and re-argued in six months.
 
 Proposals, not plans. Unordered — nothing here is next up until it is chosen.
 
+### T-134 · Refuse a password that is already in a breach list
+type: idea · area: auth · size: S · status: idea · added: 2026-09-22
+
+**The problem.** The account is protected by a password with an eight-character
+minimum, no complexity rule, and no check of any kind against the passwords
+that are already public. Credential stuffing — trying address-and-password
+pairs taken from other sites — is the most ordinary way an account like this
+is taken, and nothing here makes it harder.
+
+**Roughly.** One switch in the Supabase auth config: leaked-password protection
+checks a new password against HaveIBeenPwned by k-anonymity prefix, so the
+password itself never leaves the server. It applies to sign-ups and password
+changes only; nobody is locked out of an account they already have. The app
+needs to render the error Supabase returns, which is a string in `i18n/` and a
+branch beside the one that already exists for a password that is too short.
+
+**Depends on.** Nothing. Considered on 22 September during the security audit
+and not taken then — the minimum was raised to eight characters instead.
+
+### T-135 · A captcha in front of sign-up
+type: idea · area: auth · size: M · status: idea · added: 2026-09-22
+
+**The problem.** Sign-up and sign-in are open to anything that can make an
+HTTP request. The per-hour caps Supabase puts on outgoing mail keep it from
+becoming a mail-bombing service, but nothing stops an automated run from
+creating accounts, and the handle namespace is first-come.
+
+**Roughly.** hCaptcha is supported natively by Supabase auth — a project
+setting, a site key in the client, and the token passed in the options of
+`signUp` and `signInWithPassword`. The work is mostly in the app: a captcha
+widget that behaves both on the web and in the native WebView, and a failure
+state on a screen that currently has only two.
+
+**Depends on.** An hCaptcha account. Worth doing before the app is announced
+anywhere rather than after — and worth weighing against what it costs every
+genuine person signing up, which on a small Hungarian app may be more than the
+abuse it prevents.
+
 ### T-084 · Sign in with a link from the mail
 type: idea · area: auth · size: S · status: idea · added: 2026-09-18
 
@@ -418,6 +456,159 @@ attendance and the diary must never record an evening on someone's behalf.
 ---
 
 ## Open
+
+### T-126 · The update of 22 September reached no phone
+type: bug · area: infra · priority: high · status: open · added: 2026-09-22
+
+Found while checking the fingerprint during a security audit, not by anything
+that watches for it.
+
+`eas update` was run on 22 September with the message "Quieter Settings, one
+push per kind, and covers that recover instead of staying blank". It printed
+Published!, as it always does. Its runtime version is
+`06ad71df39810f0b4ea277538dca292305850a78`. The production build the phones are
+running, from 20 September, has fingerprint
+`ee5018a47b131248cabe46615903668e82d869f9`. They do not match, so the update was
+never offered to a single installed binary. The two updates before it both
+carry `ee5018a4…` and did land.
+
+The cause is not a native change. Five npm scripts were added to
+`package.json` between the 19th and the 22nd — `render:tokens`, `drift:landing`,
+`shots:landing` in `e54de16` and `f29ad20`, `drift` and `diff:shots` in
+`f87d325` — every one of them landing-page or screenshot tooling with nothing
+to do with the app. `@expo/fingerprint` counts `packageJson:scripts` among its
+119 sources, so the runtime moved. This is T-120 a second time, by the same
+mechanism, ten days later.
+
+Nothing on the phones is broken: they run the 20 September build plus the
+updates from the 19th and 20th. What is missing is everything merged since.
+The only way to deliver it is
+`eas build --profile production --platform android`, uploaded to the closed
+track and through Play review; an over-the-air update cannot reach back to a
+binary whose fingerprint has moved.
+
+`.github/workflows/fingerprint-watch.yml` now compares the fingerprint of each
+push to main against the commit before it and goes red when it moves, so a
+third occurrence announces itself instead of being found by hand.
+
+### T-127 · The app has no Content-Security-Policy
+type: chore · area: web · priority: med · status: open · added: 2026-09-22
+
+The six other security headers went out with `nginx-security-headers.conf`;
+CSP was deliberately left behind because it is the one that can break the page.
+
+Two things make it more than a one-liner. `app/+html.tsx:135-136` emits an
+inline `<style>` (`THEME_CSS`) and an inline `<script>` (`NO_FLASH_SCRIPT`),
+and react-native-web injects more styles at runtime — so `style-src` needs
+`'unsafe-inline'` permanently, and `script-src` needs the SHA-256 of the inline
+script computed at build time and substituted into the config. The Dockerfile
+already does build-time substitution of this kind for the dynamic-route shells,
+so the pattern exists.
+
+The rest is small: the whole external surface of the app is two origins,
+`https://saelgjlnbpkdwgetpcbj.supabase.co` and
+`https://static.cloudflareinsights.com`.
+
+Ship it as `Content-Security-Policy-Report-Only` first, confirm the console is
+clean on the production URL signed out and on a phone, then rename the header
+in a follow-up commit.
+
+### T-128 · The service-role key does three different jobs
+type: chore · area: infra · priority: med · status: open · added: 2026-09-22
+
+Nothing is disclosed — this is not a leak — but one secret is carrying three
+unrelated responsibilities:
+
+1. the PostgREST credential that bypasses RLS, in `sync/` and the three edge
+   functions;
+2. the shared secret `sync/run.ts` sends as a bearer token to `send-push` and
+   `weekly-digest`, which those functions compare against their own copy
+   (`send-push/index.ts:153`, `weekly-digest/index.ts:70`);
+3. the HMAC key that signs weekly-digest unsubscribe links
+   (`weekly-digest/index.ts:58`).
+
+The consequence is that the key cannot be rotated without silently
+invalidating every unsubscribe link already sitting in somebody inbox, and
+that the master credential travels in an HTTP header to an endpoint whose only
+job is to compare it — one logged error on that path and it is gone. A
+`PUSH_SHARED_SECRET` and a `DIGEST_SIGNING_SECRET` would decouple all three.
+
+While there: those comparisons are a plain `!==`. Timing-attacking a key of
+that length over the public internet is not a practical threat, but
+`crypto.timingSafeEqual` is one line.
+
+### T-129 · The questionnaire rate limit is global, not per person
+type: chore · area: data · priority: med · status: open · added: 2026-09-22
+
+`submit_research_response` is the only anonymous write path in the system and
+is otherwise well guarded — honeypot field, 16 kB payload cap, and a strict
+vocabulary allow-list on every answer, so nothing unexpected can be stored.
+
+Its rate limit is the weak part: it counts rows inserted in the last minute
+across *everybody* and refuses at 30. One script can therefore both flood the
+table and lock every genuine respondent out of the questionnaire for as long
+as it keeps running. A window per `client_id`, or per IP via
+`current_setting` on the request headers, would limit the damage to whoever is
+causing it.
+
+`open_answer` is also the one field with no length cap of its own — only the
+16 kB payload ceiling bounds it.
+
+### T-130 · Nothing tests that `reviews_readable` still masks
+type: chore · area: data · priority: low · status: open · added: 2026-09-22
+
+`public.reviews_readable` is the single most security-load-bearing object in
+the schema. It is an owner-run view — the Supabase linter flags it as
+`security_definer_view`, and `0041` argues why — which re-states the row rule
+by hand and wraps every opinion column in a `case when v.ok`. Any column added
+to it without that wrapper republishes private opinion to anyone who asks, and
+nothing would fail.
+
+Probed by hand during the audit and it is correct today: an anonymous caller
+gets `can_see_opinion:false`, an empty `text`, every rating null, and both
+counts zeroed rather than nulled. That check should be a test rather than
+something somebody remembers to run.
+
+### T-131 · localhost is in the production redirect allow list
+type: chore · area: auth · priority: low · status: open · added: 2026-09-22
+
+`uri_allow_list` on the production project contains `http://localhost:8081` and
+`http://localhost:8081/**` alongside the real hosts. The list is otherwise
+exactly right — every entry is a literal host, there is no wildcard domain,
+which is the part that would actually matter.
+
+The localhost entries are only reachable by something already listening on the
+machine of the person being attacked, so this is a tidiness finding more than
+a hole. But it is development configuration living in production, and the way
+it stops being noticed is by staying there.
+
+### T-132 · `supabaseAdmin` has no guard against being imported by the app
+type: chore · area: infra · priority: low · status: open · added: 2026-09-22
+
+`sync/lib/supabaseAdmin.ts` reads `SUPABASE_SERVICE_ROLE_KEY` and lives under
+the project root with nothing stopping `app/` from importing it. Nothing does
+today — verified against the built bundle, which contains no trace of the key —
+and the env var is never `EXPO_PUBLIC_` prefixed, which is the only way Metro
+inlines a value. So the protection is real, but it is a convention rather than
+a mechanism.
+
+`npm run verify:bundle` already exists and already reads the export. An
+assertion there that no artifact contains the key would make the convention
+mechanical.
+
+### T-133 · Eighteen advisories that cannot be fixed
+type: chore · area: infra · priority: low · status: open · added: 2026-09-22
+
+`npm audit` reports 18 moderate advisories after the vitest bump. Every one of
+them is `@expo/config` or `@expo/config-plugins` reached through the Expo
+toolchain, and the fix npm proposes for the cluster is to downgrade `expo` to
+46.0.21 — eleven majors back. Worse, `npm audit fix` *without* `--force` still
+wants to move `@expo/metro-runtime`, `@expo/ui` and `@expo/metro-file-map`,
+all of which are fingerprint inputs: taking it would buy a moderate advisory
+with an over-the-air blackout on every installed phone (see T-126).
+
+So this waits for Expo to publish fixed versions in the 57 line. Worth
+re-checking at each SDK bump rather than at each audit.
 
 ### T-124 · A sponsor logo became the cover, because it came first on the page
 type: bug · area: data · priority: med · status: doing · added: 2026-09-22
@@ -3881,4 +4072,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-126**
+Next free id: **T-136**

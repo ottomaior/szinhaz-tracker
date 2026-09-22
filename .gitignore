@@ -29,3 +29,23 @@ google-services.json
 # Rendered promo video — regenerate with `npm run promo`, do not commit.
 promo/out/
 supabase/email-templates/out/
+
+# Working directories that are not the project. Each of these is one
+# `git add -A` away from being published to a public repository, and none of
+# them is something a reader of this repo should be handed: scratch output from
+# an agent session, a redesign prototype that is not the app, and the
+# Cloudflare CLI's local state.
+#
+# `.claude/worktrees/` was already excluded — but only in `.git/info/exclude`,
+# which lives in one clone and is never committed. It holds full copies of the
+# source tree, `sync/lib/supabaseAdmin.ts` among them, so its protection has to
+# survive a fresh clone rather than depending on this machine.
+Claude outputs/
+prototype-redesign/
+.wrangler/
+.claude/worktrees/
+
+# Supabase CLI scratch state. It holds only identifiers — the project ref and
+# the organisation id — so nothing leaks, but the CLI rewrites it on its own
+# schedule and it was tracked by accident rather than on purpose.
+supabase/.temp/
