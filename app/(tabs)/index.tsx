@@ -188,7 +188,9 @@ export default function FeedScreen() {
                 can only ever be empty is a control that teaches you to ignore
                 it. The badge is a count, not a dot, because "3 dates published"
                 and "1" are different decisions about whether to look now. */}
-            {!!session && (
+            {/* On a wide screen the top bar carries the bell; two inboxes on
+                one page is one too many. */}
+            {!!session && !wide && (
               <Pressable
                 onPress={() => router.push("/inbox")}
                 hitSlop={space.sm}

@@ -6,7 +6,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getCurrentUser } from "@/services/playsService";
 import type { User } from "@/data/types";
 import { BrandMark } from "@/components/icons/BrandMark";
-import { PlusIcon } from "@/components/icons/Icons";
+import { BellIcon, PlusIcon } from "@/components/icons/Icons";
+import { CountBadge } from "@/components/ui/Badges";
+import { IconButton } from "@/components/ui/Button";
+import { getUnreadCount } from "@/services/notificationService";
+import { pressStyle } from "@/components/ui/pressable";
+import { useColors } from "@/theme/styles";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
@@ -38,7 +43,9 @@ export function TopBar() {
   const router = useRouter();
   const pathname = usePathname();
   const { session } = useAuth();
+  const palette = useColors();
   const [viewer, setViewer] = useState<User>();
+  const [unread, setUnread] = useState(0);
 
   // The reader's face, refreshed on focus for the reason the feed header gives:
   // the screen that changes it returns here.
@@ -46,12 +53,21 @@ export function TopBar() {
     useCallback(() => {
       if (!session) {
         setViewer(undefined);
+        setUnread(0);
         return;
       }
       let active = true;
       getCurrentUser()
         .then((u) => {
           if (active) setViewer(u);
+        })
+        .catch(() => undefined);
+      // The bell's count, for the same reason the phone's feed header
+      // refreshes it on focus: it clears when the reader comes back from
+      // the inbox having read everything.
+      getUnreadCount()
+        .then((n) => {
+          if (active) setUnread(n);
         })
         .catch(() => undefined);
       return () => {
@@ -68,7 +84,12 @@ export function TopBar() {
   return (
     <View style={styles.bar}>
       <View style={styles.inner}>
-        <Pressable onPress={() => router.push("/(tabs)/discover")} style={styles.brand} accessibilityRole="link" accessibilityLabel={strings.appName}>
+        <Pressable
+          onPress={() => router.push("/(tabs)/discover")}
+          style={pressStyle("quiet", palette, styles.brand)}
+          accessibilityRole="link"
+          accessibilityLabel={strings.appName}
+        >
           <BrandMark size={22} />
           <Text variant="heading">{strings.appName}</Text>
         </Pressable>
@@ -92,8 +113,24 @@ export function TopBar() {
             size="sm"
             onPress={() => router.push("/checkin")}
           />
+          {/* The inbox lives here on a wide screen. It used to be on the
+              feed's own header, which meant the notifications were somewhere
+              different depending on which tab the reader was on. */}
+          {!!session && (
+            <View style={styles.bell}>
+              <IconButton onPress={() => router.push("/inbox")} accessibilityLabel={strings.inbox.openNotifications}>
+                <BellIcon />
+              </IconButton>
+              {unread > 0 && <CountBadge count={unread} style={styles.badge} />}
+            </View>
+          )}
           {session ? (
-            <Pressable onPress={() => router.push("/(tabs)/profile")} accessibilityRole="button" accessibilityLabel={strings.tabs.profile}>
+            <Pressable
+              onPress={() => router.push("/(tabs)/profile")}
+              style={pressStyle("quiet", palette, undefined)}
+              accessibilityRole="button"
+              accessibilityLabel={strings.tabs.profile}
+            >
               <Avatar uri={viewer?.avatarUrl} initials={viewer?.initials ?? ""} size={avatar.byline} />
             </Pressable>
           ) : (
@@ -123,5 +160,10 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   },
   brand: { flexDirection: "row", alignItems: "center", gap: space.sm },
   nav: { flex: 1, flexDirection: "row", alignItems: "center" },
-  actions: { flexDirection: "row", alignItems: "center", gap: space.lg },
+  actions: { flexDirection: "row", alignItems: "center", gap: space.md },
+  // `overflow: visible` matters: the badge is positioned outside the bell's
+  // own box, and clipping it would leave a bell that never looks like it has
+  // anything in it.
+  bell: { position: "relative", overflow: "visible" },
+  badge: { position: "absolute", top: 0, right: 0 },
 }));

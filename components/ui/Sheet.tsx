@@ -4,7 +4,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAnimatedValue } from "@/hooks/useAnimatedValue";
 import { NATIVE_DRIVER, useReducedMotion } from "@/hooks/useReducedMotion";
 import { colors } from "@/theme/colors";
-import { duration, gutter, hairlineWidth, icon, minTouchTarget, overlay, radius, space } from "@/theme/tokens";
+import { duration, gutter, hairlineWidth, icon, maxWidth, minTouchTarget, overlay, radius, space } from "@/theme/tokens";
+import { useAtLeast } from "@/hooks/useBreakpoint";
 import { CloseIcon } from "@/components/icons/Icons";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
@@ -30,6 +31,12 @@ import { disabledStyle, pressStyle } from "@/components/ui/pressable";
  * Rises rather than fades: `Modal` fades the scrim, and the surface slides
  * up over `duration.enter` — unless the reader has asked for less motion, in
  * which case it is simply there.
+ *
+ * On a wide screen it is a panel rather than a bar: a bottom sheet the width
+ * of a 1280pt browser window puts four words of a list across a foot of
+ * glass, and the reader's eye is nowhere near the bottom edge there. From
+ * the `expanded` breakpoint it centres at `maxWidth.reading / 2` and keeps
+ * its own corners.
  */
 export function Sheet({
   visible,
@@ -47,6 +54,7 @@ export function Sheet({
 }) {
   const styles = useStyles();
   const insets = useSafeAreaInsets();
+  const wide = useAtLeast("expanded");
 
   return (
     <Modal
@@ -60,10 +68,19 @@ export function Sheet({
     >
       {/* Tapping the dimmed area behind the sheet dismisses it. The sheet
           itself stops the press, so a tap inside never closes it. */}
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel={strings.common.close}>
-        <Rise>
-          <Pressable style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, space.lg) }]} onPress={() => {}}>
-            <View style={styles.grabber} />
+      <Pressable style={[styles.backdrop, wide && styles.backdropWide]} onPress={onClose} accessibilityLabel={strings.common.close}>
+        <Rise distance={wide ? space.md : space["3xl"]}>
+          <Pressable
+            style={[
+              styles.sheet,
+              wide ? styles.sheetWide : { paddingBottom: Math.max(insets.bottom, space.lg) },
+            ]}
+            onPress={() => {}}
+          >
+            {/* The bar that says "drag me down" — on a phone. A centred
+                panel is not dragged anywhere, and the bar on one reads as a
+                control that does nothing. */}
+            {!wide && <View style={styles.grabber} />}
             <View style={styles.header}>
               <Text variant="subheading">{title}</Text>
               <Pressable onPress={onClose} hitSlop={space.sm} accessibilityRole="button" accessibilityLabel={strings.common.close}>
@@ -78,8 +95,12 @@ export function Sheet({
   );
 }
 
-/** The surface arriving from below. */
-function Rise({ children }: { children: ReactNode }) {
+/**
+ * The surface arriving. A bottom sheet travels a step of the screen; a
+ * centred panel only lifts a little, the way a dialog does — a panel that
+ * flies up from the bottom edge of a desktop window reads as a phone.
+ */
+function Rise({ children, distance }: { children: ReactNode; distance: number }) {
   const reduced = useReducedMotion();
   const progress = useAnimatedValue(reduced ? 1 : 0);
 
@@ -96,7 +117,7 @@ function Rise({ children }: { children: ReactNode }) {
   return (
     <Animated.View
       style={{
-        transform: [{ translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [space["3xl"], 0] }) }],
+        transform: [{ translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [distance, 0] }) }],
       }}
     >
       {children}
@@ -164,6 +185,7 @@ const useStyles = makeStyles((colors, elevation) => StyleSheet.create({
     backgroundColor: overlay.scrim,
     justifyContent: "flex-end",
   },
+  backdropWide: { justifyContent: "center", alignItems: "center" },
   sheet: {
     backgroundColor: colors.bgElevated,
     borderTopLeftRadius: radius.xl,
@@ -171,6 +193,12 @@ const useStyles = makeStyles((colors, elevation) => StyleSheet.create({
     paddingHorizontal: gutter,
     paddingTop: space.md,
     ...elevation.floating,
+  },
+  sheetWide: {
+    width: maxWidth.reading / 2,
+    maxHeight: "80%",
+    borderRadius: radius.xl,
+    paddingBottom: space.lg,
   },
   /** The short bar that says a sheet can be dismissed downward. */
   grabber: {
