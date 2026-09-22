@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { colors } from "@/theme/colors";
-import { legacy, space } from "@/theme/tokens";
+import { control, radius, rule, space } from "@/theme/tokens";
 import { useShareCard } from "@/components/share/ShareCardProvider";
 import { ChevronRightIcon } from "@/components/icons/Icons";
 import { Sheet, SheetOption } from "@/components/ui/Sheet";
@@ -148,7 +148,7 @@ function FormatRow({
   onPress: () => void;
 }) {
   const styles = useStyles();
-  const frameH = 34;
+  const frameH = space["3xl"];
   return (
     <SheetOption onPress={onPress} disabled={disabled} busy={busy} keepBusyOpaque accessibilityLabel={label}>
       <View style={styles.frameWell}>
@@ -158,21 +158,21 @@ function FormatRow({
         <Text variant="subheading">{busy ? strings.shareCard.preparing : label}</Text>
         <Text variant="caption" tone="faint">{blurb}</Text>
       </View>
-      <ChevronRightIcon size={15} color={colors.textFaint} />
+      <ChevronRightIcon color={colors.textFaint} />
     </SheetOption>
   );
 }
 
 const useStyles = makeStyles((colors) => StyleSheet.create({
   frameWell: {
-    width: 44,
-    height: 44,
+    width: control.md,
+    height: control.md,
     alignItems: "center",
     justifyContent: "center",
   },
   frame: {
-    borderWidth: legacy.thickHairline,
+    borderWidth: rule,
     borderColor: colors.gold,
-    borderRadius: legacy.frameRadius,
+    borderRadius: radius.sm,
   },
 }));

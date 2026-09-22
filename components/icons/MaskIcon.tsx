@@ -5,6 +5,7 @@ import { useSpark } from "@/components/motion/ClickSpark";
 import { strings } from "@/i18n/hu";
 import { fillPaint, paint, strokePaint } from "@/components/icons/svgPaint";
 import { haptic } from "@/utils/haptics";
+import { mask } from "@/theme/tokens";
 import {
   MASK_BODY_PATH,
   MASK_EYES,
@@ -18,7 +19,7 @@ import {
  * star would normally go (feed cards, play detail, the check-in flow).
  */
 export function MaskIcon({
-  size = 20,
+  size = mask.row,
   state = "off",
   color,
   offColor,
@@ -73,7 +74,7 @@ export function MaskIcon({
 /** A row of 5 masks representing a 0-5 rating (rounded to the nearest whole mask). */
 export function MaskRatingRow({
   rating,
-  size = 16,
+  size = mask.row,
   gap = 4,
   onPressMask,
   spark = false,

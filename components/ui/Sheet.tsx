@@ -4,11 +4,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAnimatedValue } from "@/hooks/useAnimatedValue";
 import { NATIVE_DRIVER, useReducedMotion } from "@/hooks/useReducedMotion";
 import { colors } from "@/theme/colors";
-import { duration, gutter, hairlineWidth, legacy, minTouchTarget, overlay, radius, space } from "@/theme/tokens";
+import { duration, gutter, hairlineWidth, icon, minTouchTarget, overlay, radius, space } from "@/theme/tokens";
 import { CloseIcon } from "@/components/icons/Icons";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
-import { makeStyles } from "@/theme/styles";
+import { makeStyles, useColors } from "@/theme/styles";
+import { disabledStyle, pressStyle } from "@/components/ui/pressable";
 
 /**
  * The bottom sheet: a scrim, a surface with rounded top corners, a grabber, a
@@ -66,7 +67,7 @@ export function Sheet({
             <View style={styles.header}>
               <Text variant="subheading">{title}</Text>
               <Pressable onPress={onClose} hitSlop={space.sm} accessibilityRole="button" accessibilityLabel={strings.common.close}>
-                <CloseIcon size={legacy.sheetCloseIcon} color={colors.textDim} />
+                <CloseIcon size={icon.chrome} color={colors.textDim} />
               </Pressable>
             </View>
             <View style={contentStyle}>{children}</View>
@@ -132,6 +133,7 @@ export function SheetOption({
   trailing?: ReactNode;
 }) {
   const styles = useStyles();
+  const palette = useColors();
   return (
     <Pressable
       onPress={onPress}
@@ -142,7 +144,7 @@ export function SheetOption({
       aria-checked={accessibilityRole === "radio" ? selected : undefined}
       aria-busy={busy}
       accessibilityState={{ selected, disabled, busy }}
-      style={[styles.option, style, busy && !keepBusyOpaque && styles.busy, disabled && !busy && styles.dimmed]}
+      style={pressStyle("row", palette, [styles.option, style, busy && !keepBusyOpaque && styles.busy, disabled && !busy && disabledStyle])}
     >
       {children}
       {trailing}
@@ -196,7 +198,6 @@ const useStyles = makeStyles((colors, elevation) => StyleSheet.create({
     paddingVertical: space.sm,
   },
   busy: { opacity: 0.5 },
-  dimmed: { opacity: 0.4 },
   footer: {
     borderTopWidth: hairlineWidth,
     borderTopColor: colors.hairlineSoft,

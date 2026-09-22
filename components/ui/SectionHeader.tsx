@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
-import { legacy, space } from "@/theme/tokens";
+import { space } from "@/theme/tokens";
 import { Text } from "@/components/ui/Text";
 
 /**
@@ -45,7 +45,7 @@ export function SectionHeader({
       {trailing ??
         (!!action &&
           (onAction ? (
-            <Pressable onPress={onAction} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${title}: ${action}`}>
+            <Pressable onPress={onAction} hitSlop={space.sm} accessibilityRole="button" accessibilityLabel={`${title}: ${action}`}>
               <Text variant="label" tone="accent">
                 {action}
               </Text>
@@ -66,5 +66,5 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: space.md,
   },
-  titles: { flexShrink: 1, gap: legacy.stackGap3 },
+  titles: { flexShrink: 1, gap: space["2xs"] },
 });

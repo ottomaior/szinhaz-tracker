@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Animated, Platform, Pressable, StyleSheet, View, type PressableProps, type StyleProp, type ViewStyle } from "react-native";
 import { useAnimatedValue } from "@/hooks/useAnimatedValue";
 import { NATIVE_DRIVER, useReducedMotion } from "@/hooks/useReducedMotion";
-import { overlay } from "@/theme/tokens";
+import { duration as motion, overlay, spring as springConfig } from "@/theme/tokens";
 
 /**
  * A card that answers the hand, after reactbits' "Tilted Card" and "Glare
@@ -52,7 +52,7 @@ export function PressCard({
   const [size, setSize] = useState({ w: 1, h: 1 });
 
   const spring = (v: Animated.Value, to: number) =>
-    Animated.spring(v, { toValue: to, useNativeDriver: NATIVE_DRIVER, speed: 24, bounciness: 6 }).start();
+    Animated.spring(v, { toValue: to, useNativeDriver: NATIVE_DRIVER, ...springConfig }).start();
 
   const web = Platform.OS === "web" && !reduced && tilt > 0;
 
@@ -85,7 +85,7 @@ export function PressCard({
           ? () => {
               spring(rx, 0);
               spring(ry, 0);
-              Animated.timing(glareX, { toValue: -1, duration: 300, useNativeDriver: NATIVE_DRIVER }).start();
+              Animated.timing(glareX, { toValue: -1, duration: motion.enter, useNativeDriver: NATIVE_DRIVER }).start();
             }
           : undefined
       }

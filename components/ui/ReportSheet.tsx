@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
-import { legacy, space } from "@/theme/tokens";
+import { space } from "@/theme/tokens";
 import {
   REPORT_NOTE_MAX_LENGTH,
   REPORT_REASONS,
@@ -100,7 +100,7 @@ export function ReportSheet({
                     onPress={() => setReason(id)}
                     accessibilityRole="radio"
                     selected={selected}
-                    trailing={selected ? <CheckIcon size={16} /> : undefined}
+                    trailing={selected ? <CheckIcon /> : undefined}
                   >
                     <Text variant="body" tone={selected ? "accent" : "default"} style={{ flex: 1 }}>
                       {strings.moderation.reasons[id]}
@@ -152,8 +152,5 @@ export function ReportSheet({
 }
 
 const useStyles = makeStyles(() => StyleSheet.create({
-  input: {
-    padding: legacy.inputPadding12,
-    marginTop: space.md,
-  },
+  input: { marginTop: space.md },
 }));

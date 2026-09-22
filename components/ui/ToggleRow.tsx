@@ -1,8 +1,9 @@
 import { Pressable, StyleSheet, View } from "react-native";
-import { hairlineWidth, legacy, radius, space } from "@/theme/tokens";
+import { hairlineWidth, radius, space } from "@/theme/tokens";
+import { CheckDisc } from "@/components/ui/CheckDisc";
+import { disabledStyle, pressStyle } from "@/components/ui/pressable";
+import { useColors } from "@/theme/styles";
 import { makeStyles } from "@/theme/styles";
-import { colors } from "@/theme/colors";
-import { CheckIcon } from "@/components/icons/Icons";
 import { Text } from "@/components/ui/Text";
 import { haptic } from "@/utils/haptics";
 
@@ -27,6 +28,7 @@ export function ToggleRow({
   disabled?: boolean;
 }) {
   const styles = useStyles();
+  const palette = useColors();
   return (
     <Pressable
       onPress={() => {
@@ -39,7 +41,7 @@ export function ToggleRow({
       accessibilityRole="switch"
       accessibilityState={{ checked: on, disabled }}
       accessibilityLabel={label}
-      style={[styles.row, on && styles.rowOn, disabled && styles.disabled]}
+      style={pressStyle("row", palette, [styles.row, on && styles.rowOn, disabled && disabledStyle])}
     >
       <View style={{ flex: 1, gap: space["2xs"] }}>
         <Text variant="subheading">{label}</Text>
@@ -49,7 +51,7 @@ export function ToggleRow({
           </Text>
         )}
       </View>
-      <View style={[styles.tick, on && styles.tickOn]}>{on && <CheckIcon size={14} color={colors.onAccent} />}</View>
+      <CheckDisc on={on} />
     </Pressable>
   );
 }
@@ -66,15 +68,4 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     backgroundColor: colors.surface,
   },
   rowOn: { borderColor: colors.gold },
-  disabled: { opacity: 0.55 },
-  tick: {
-    width: 26,
-    height: 26,
-    borderRadius: radius.pill,
-    borderWidth: legacy.thickHairline,
-    borderColor: colors.hairline,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  tickOn: { backgroundColor: colors.gold, borderColor: colors.gold },
 }));

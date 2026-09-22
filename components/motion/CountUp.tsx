@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Animated, Easing } from "react-native";
 import { useAnimatedValue } from "@/hooks/useAnimatedValue";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { duration as motion } from "@/theme/tokens";
 import { Text } from "@/components/ui/Text";
 import type { TypeTone, TypeVariant } from "@/theme/type";
 import type { StyleProp, TextStyle } from "react-native";
@@ -18,7 +19,7 @@ import type { StyleProp, TextStyle } from "react-native";
 export function CountUp({
   value,
   decimals = 0,
-  duration = 900,
+  duration = motion.reveal,
   delay = 0,
   variant = "numeral",
   tone,

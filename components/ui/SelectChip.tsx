@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { colors } from "@/theme/colors";
-import { hairlineWidth, legacy, radius, space } from "@/theme/tokens";
-import { legacyType } from "@/theme/type";
-import { useAppFonts } from "@/hooks/useAppFonts";
+import { control, hairlineWidth, radius, space } from "@/theme/tokens";
 import { CheckIcon, ChevronDownIcon, PinIcon } from "@/components/icons/Icons";
+import { Chip } from "@/components/ui/Chip";
 import { Sheet, SheetOption } from "@/components/ui/Sheet";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
@@ -77,7 +76,6 @@ export function SelectChip({
 }) {
   const styles = useStyles();
 
-  const fontsLoaded = useAppFonts();
   const [open, setOpen] = useState(false);
 
   const selected = options.find((o) => o.value === value);
@@ -109,7 +107,7 @@ export function SelectChip({
                 chevron rather than as a bare line of text: it is the control
                 a reader reaches for most, and printed like a subtitle nobody
                 knew it could be pressed. */}
-            <PinIcon size={14} color={colors.gold} />
+            <PinIcon color={colors.gold} />
             <Text variant="bodySmall" numberOfLines={1} style={{ flexShrink: 1 }}>
               <Text variant="bodySmall" weight="semibold">
                 {selected?.label ?? strings.discover.filterAll}
@@ -120,26 +118,18 @@ export function SelectChip({
                 </Text>
               )}
             </Text>
-            <ChevronDownIcon size={13} color={colors.textDim} />
+            <ChevronDownIcon color={colors.textDim} />
           </View>
         </Pressable>
       ) : (
-        <Pressable
+        <Chip
+          label={label}
+          active={active}
           onPress={() => setOpen(true)}
-          accessibilityRole="button"
           accessibilityLabel={a11yLabel}
-          aria-expanded={open}
-          accessibilityState={{ expanded: open }}
-          style={[styles.chip, active ? styles.chipActive : styles.chipIdle]}
-        >
-          <Text
-            numberOfLines={1}
-            style={[legacyType(active ? "chipActive" : "chip", fontsLoaded), { color: active ? colors.onAccent : colors.textDim, maxWidth: 150 }]}
-          >
-            {label}
-          </Text>
-          <ChevronDownIcon size={12} color={active ? colors.onAccent : colors.textFaint} />
-        </Pressable>
+          trailing={<ChevronDownIcon color={active ? colors.onAccent : colors.textFaint} />}
+          style={styles.chip}
+        />
       )}
 
       <Sheet visible={open} onClose={() => setOpen(false)} title={title ?? name}>
@@ -161,7 +151,7 @@ export function SelectChip({
                     }}
                     selected={isSelected}
                     style={styles.option}
-                    trailing={isSelected ? <CheckIcon size={16} /> : undefined}
+                    trailing={isSelected ? <CheckIcon /> : undefined}
                   >
                     <Text variant="body" tone={isSelected ? "accent" : "default"} style={{ flex: 1 }}>
                       {option.label}
@@ -176,16 +166,9 @@ export function SelectChip({
 }
 
 const useStyles = makeStyles((colors) => StyleSheet.create({
-  chip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.sm,
-    paddingVertical: legacy.chipPaddingVertical,
-    paddingHorizontal: legacy.chipPaddingHorizontal,
-    borderRadius: radius.pill,
-  },
-  chipActive: { backgroundColor: colors.gold },
-  chipIdle: { backgroundColor: colors.surface, borderWidth: hairlineWidth, borderColor: colors.hairline },
+  // A value can be long — "Csokonai Nemzeti Színház" — and the row scrolls,
+  // so the chip is capped and the label clipped rather than the row growing.
+  chip: { maxWidth: control.lg * 4 },
 
   /* Painted like the idle chips, a size up, so it is unmistakably a button:
      the city is the control most readers touch first, and unpainted it read
@@ -193,10 +176,8 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   header: {
     alignSelf: "flex-start",
     marginTop: space.xs,
-    minHeight: legacy.headerChipMinHeight,
-    paddingVertical: legacy.headerChipPaddingVertical,
-    paddingLeft: legacy.headerChipPaddingLeft,
-    paddingRight: legacy.chipPaddingHorizontal,
+    minHeight: control.md,
+    paddingHorizontal: space.md,
     borderRadius: radius.pill,
     backgroundColor: colors.surface,
     borderWidth: hairlineWidth,

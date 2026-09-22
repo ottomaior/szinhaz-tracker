@@ -109,7 +109,7 @@ export function AddToListSheet({
                   disabled={!!busyId && busyId !== list.id}
                   selected={isIn}
                   busy={busyId === list.id}
-                  trailing={isIn ? <CheckIcon size={16} /> : undefined}
+                  trailing={isIn ? <CheckIcon /> : undefined}
                 >
                   <View style={{ flex: 1 }}>
                     <Text variant="body" tone={isIn ? "accent" : "default"}>

@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { useFocusEffect, usePathname, useRouter } from "expo-router";
-import { gutter, hairlineWidth, legacy, maxWidth, radius, space } from "@/theme/tokens";
+import { avatar, bar, gutter, hairlineWidth, icon, maxWidth, space } from "@/theme/tokens";
 import { useAuth } from "@/contexts/AuthContext";
 import { getCurrentUser } from "@/services/playsService";
 import type { User } from "@/data/types";
@@ -88,13 +88,13 @@ export function TopBar() {
         <View style={styles.actions}>
           <Button
             label={strings.checkin.headerTitle}
-            icon={<PlusIcon size={15} />}
+            icon={<PlusIcon size={icon.inline} />}
+            size="sm"
             onPress={() => router.push("/checkin")}
-            style={styles.logButton}
           />
           {session ? (
             <Pressable onPress={() => router.push("/(tabs)/profile")} accessibilityRole="button" accessibilityLabel={strings.tabs.profile}>
-              <Avatar uri={viewer?.avatarUrl} initials={viewer?.initials ?? ""} size={34} />
+              <Avatar uri={viewer?.avatarUrl} initials={viewer?.initials ?? ""} size={avatar.byline} />
             </Pressable>
           ) : (
             <Button label={strings.auth.signInButton} variant="text" onPress={() => router.push("/sign-in")} />
@@ -115,7 +115,7 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   inner: {
     width: "100%",
     maxWidth: maxWidth.content,
-    height: 60,
+    height: bar,
     paddingHorizontal: gutter,
     flexDirection: "row",
     alignItems: "center",
@@ -124,5 +124,4 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   brand: { flexDirection: "row", alignItems: "center", gap: space.sm },
   nav: { flex: 1, flexDirection: "row", alignItems: "center" },
   actions: { flexDirection: "row", alignItems: "center", gap: space.lg },
-  logButton: { paddingVertical: legacy.topBarButtonPaddingVertical, paddingHorizontal: space.lg, borderRadius: radius.pill },
 }));

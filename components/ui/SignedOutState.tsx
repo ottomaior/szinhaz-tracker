@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
 import { colors } from "@/theme/colors";
-import { legacy, space } from "@/theme/tokens";
+import { space } from "@/theme/tokens";
 import { BrandMark } from "@/components/icons/BrandMark";
 import { CalendarIcon, TicketIcon, UserIcon } from "@/components/icons/Icons";
 import { Button } from "@/components/ui/Button";
@@ -24,9 +24,9 @@ export function SignedOutState({ lead }: { lead: "diary" | "watchlist" }) {
 
   const router = useRouter();
   const items = [
-    { key: "diary", icon: <CalendarIcon size={20} color={colors.gold} />, title: strings.signedOut.diaryTitle, body: strings.signedOut.diaryBody },
-    { key: "watchlist", icon: <TicketIcon size={20} color={colors.gold} />, title: strings.signedOut.watchlistTitle, body: strings.signedOut.watchlistBody },
-    { key: "people", icon: <UserIcon size={20} color={colors.gold} />, title: strings.signedOut.peopleTitle, body: strings.signedOut.peopleBody },
+    { key: "diary", icon: <CalendarIcon color={colors.gold} />, title: strings.signedOut.diaryTitle, body: strings.signedOut.diaryBody },
+    { key: "watchlist", icon: <TicketIcon color={colors.gold} />, title: strings.signedOut.watchlistTitle, body: strings.signedOut.watchlistBody },
+    { key: "people", icon: <UserIcon color={colors.gold} />, title: strings.signedOut.peopleTitle, body: strings.signedOut.peopleBody },
   ].sort((a, b) => (a.key === lead ? -1 : b.key === lead ? 1 : 0));
 
   return (
@@ -70,5 +70,5 @@ const useStyles = makeStyles(() => StyleSheet.create({
     gap: space["2xl"],
   },
   item: { flexDirection: "row", gap: space.md, alignItems: "flex-start" },
-  icon: { width: space["2xl"], paddingTop: legacy.signedOutIconNudge, alignItems: "center" },
+  icon: { width: space["2xl"], paddingTop: space["2xs"], alignItems: "center" },
 }));

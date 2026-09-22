@@ -5,7 +5,7 @@ import { NATIVE_DRIVER, useReducedMotion } from "@/hooks/useReducedMotion";
 import { CheckIcon } from "@/components/icons/Icons";
 import { Text } from "@/components/ui/Text";
 import { colors } from "@/theme/colors";
-import { legacy, radius, space } from "@/theme/tokens";
+import { control, duration, radius, rule, space } from "@/theme/tokens";
 import { makeStyles } from "@/theme/styles";
 
 /**
@@ -31,7 +31,7 @@ export function StepIndicator({ steps, current, labels }: { steps: number; curre
             <View key={n} style={[styles.segment, i === steps - 1 && styles.segmentLast]}>
               <View style={[styles.disc, (done || cur) && styles.discOn, cur && styles.discCurrent]}>
                 {done ? (
-                  <CheckIcon size={13} color={colors.onAccent} />
+                  <CheckIcon color={colors.onAccent} />
                 ) : (
                   <Text variant="caption" style={{ color: cur ? colors.onAccent : colors.textFaint }}>
                     {n}
@@ -71,7 +71,7 @@ function Bar({ filled }: { filled: boolean }) {
       scale.setValue(filled ? 1 : 0);
       return;
     }
-    Animated.timing(scale, { toValue: filled ? 1 : 0, duration: 420, easing: Easing.out(Easing.cubic), useNativeDriver: NATIVE_DRIVER }).start();
+    Animated.timing(scale, { toValue: filled ? 1 : 0, duration: duration.reveal, easing: Easing.out(Easing.cubic), useNativeDriver: NATIVE_DRIVER }).start();
   }, [filled, scale, reduced]);
   return (
     <View style={styles.bar}>
@@ -89,7 +89,7 @@ export function StepPane({ children, direction = 1 }: { children: ReactNode; dir
   const progress = useAnimatedValue(reduced ? 1 : 0);
   useEffect(() => {
     if (reduced) return;
-    Animated.timing(progress, { toValue: 1, duration: 380, easing: Easing.out(Easing.cubic), useNativeDriver: NATIVE_DRIVER }).start();
+    Animated.timing(progress, { toValue: 1, duration: duration.reveal, easing: Easing.out(Easing.cubic), useNativeDriver: NATIVE_DRIVER }).start();
   }, [progress, reduced]);
   return (
     <Animated.View
@@ -109,18 +109,18 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   segmentLast: { flex: 0 },
   labels: { flexDirection: "row", justifyContent: "space-between", gap: space.sm },
   disc: {
-    width: legacy.stepperDisc,
-    height: legacy.stepperDisc,
+    width: control.sm,
+    height: control.sm,
     borderRadius: radius.pill,
-    borderWidth: legacy.thickHairline,
+    borderWidth: rule,
     borderColor: colors.hairline,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.bg,
   },
   discOn: { backgroundColor: colors.gold, borderColor: colors.gold },
-  discCurrent: { boxShadow: `0 0 0 5px ${colors.goldTintBg}` },
+  discCurrent: { boxShadow: `0 0 0 ${space.xs}px ${colors.goldTintBg}` },
   label: { flex: 1, textAlign: "center" },
-  bar: { flex: 1, height: 1.5, backgroundColor: colors.hairline, overflow: "hidden" },
+  bar: { flex: 1, height: rule, backgroundColor: colors.hairline, overflow: "hidden" },
   barFill: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: colors.gold, transformOrigin: "left" },
 }));

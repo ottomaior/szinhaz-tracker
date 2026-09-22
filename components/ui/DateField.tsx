@@ -1,11 +1,10 @@
 import { useMemo, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { colors } from "@/theme/colors";
-import { hairlineWidth, legacy, minTouchTarget, radius, space } from "@/theme/tokens";
-import { legacyType } from "@/theme/type";
-import { useAppFonts } from "@/hooks/useAppFonts";
+import { icon, minTouchTarget, radius, space } from "@/theme/tokens";
 import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon } from "@/components/icons/Icons";
 import { Sheet } from "@/components/ui/Sheet";
+import { Chip } from "@/components/ui/Chip";
 import { Text } from "@/components/ui/Text";
 import { strings } from "@/i18n/hu";
 import { dayKeyOffset, formatLongDate, todayInBudapest } from "@/utils/datetime";
@@ -54,8 +53,6 @@ export function DateField({
   label?: string;
 }) {
   const styles = useStyles();
-
-  const fontsLoaded = useAppFonts();
   const [open, setOpen] = useState(false);
 
   const today = todayInBudapest();
@@ -94,47 +91,41 @@ export function DateField({
 
   return (
     <>
-      <Pressable
+      <Chip
+        label={chipLabel}
         onPress={() => {
           const { year, month } = parseDayKey(value ?? today);
           setCursor({ year, month });
           setOpen(true);
         }}
-        accessibilityRole="button"
         accessibilityLabel={`${label}: ${chipLabel}`}
-        aria-expanded={open}
-        accessibilityState={{ expanded: open }}
+        leading={<CalendarIcon color={colors.gold} />}
         style={styles.chip}
-      >
-        <CalendarIcon size={13} color={colors.gold} />
-        <Text numberOfLines={1} style={[legacyType("chip", fontsLoaded), { color: colors.text }]}>
-          {chipLabel}
-        </Text>
-      </Pressable>
+      />
 
       {/* A step more air under the header than the Sheet gives by default:
           the quick picks are pills, and pills hard against a rule read as
           part of it. */}
       <Sheet visible={open} onClose={() => setOpen(false)} title={label} contentStyle={{ paddingTop: space.sm }}>
             <View style={styles.quickRow}>
-              <QuickPick label={strings.checkin.today} active={value === today} onPress={() => choose(today)} />
-              <QuickPick label={strings.checkin.yesterday} active={value === yesterday} onPress={() => choose(yesterday)} />
-              <QuickPick label={strings.checkin.noDate} active={value === undefined} onPress={() => choose(undefined)} />
+              <Chip label={strings.checkin.today} active={value === today} onPress={() => choose(today)} />
+              <Chip label={strings.checkin.yesterday} active={value === yesterday} onPress={() => choose(yesterday)} />
+              <Chip label={strings.checkin.noDate} active={value === undefined} onPress={() => choose(undefined)} />
             </View>
 
             <View style={styles.monthBar}>
-              <Pressable onPress={() => shiftMonth(-1)} hitSlop={10} accessibilityRole="button" accessibilityLabel={strings.checkin.previousMonth}>
-                <ChevronLeftIcon size={16} color={colors.textDim} />
+              <Pressable onPress={() => shiftMonth(-1)} hitSlop={space.sm} accessibilityRole="button" accessibilityLabel={strings.checkin.previousMonth}>
+                <ChevronLeftIcon color={colors.textDim} />
               </Pressable>
               <Text variant="label">{monthHeading(cursor.year, cursor.month)}</Text>
               {/* Hidden rather than disabled at the current month: there is
                   nothing forward of today to reach, and a control that is
                   present but inert invites the tap anyway. */}
               {atCurrentMonth ? (
-                <View style={{ width: 16 }} />
+                <View style={{ width: icon.inline }} />
               ) : (
-                <Pressable onPress={() => shiftMonth(1)} hitSlop={10} accessibilityRole="button" accessibilityLabel={strings.checkin.nextMonth}>
-                  <ChevronRightIcon size={16} color={colors.textDim} />
+                <Pressable onPress={() => shiftMonth(1)} hitSlop={space.sm} accessibilityRole="button" accessibilityLabel={strings.checkin.nextMonth}>
+                  <ChevronRightIcon color={colors.textDim} />
                 </Pressable>
               )}
             </View>
@@ -180,43 +171,10 @@ export function DateField({
   );
 }
 
-function QuickPick({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  const styles = useStyles();
-
-  const fontsLoaded = useAppFonts();
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      aria-pressed={active}
-      accessibilityState={{ selected: active }}
-      style={[styles.quick, active ? styles.quickActive : styles.quickIdle]}
-    >
-      <Text style={[legacyType(active ? "chipActive" : "chip", fontsLoaded), { color: active ? colors.onAccent : colors.textDim }]}>
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
 const useStyles = makeStyles((colors) => StyleSheet.create({
-  chip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.sm,
-    paddingVertical: legacy.dateChipPaddingVertical,
-    paddingHorizontal: legacy.chipPaddingHorizontal,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surface,
-    borderWidth: hairlineWidth,
-    borderColor: colors.hairline,
-    alignSelf: "flex-start",
-  },
+  chip: { alignSelf: "flex-start" },
 
   quickRow: { flexDirection: "row", gap: space.sm, marginBottom: space.lg },
-  quick: { paddingVertical: legacy.followButtonPaddingVertical, paddingHorizontal: space.lg, borderRadius: radius.pill },
-  quickActive: { backgroundColor: colors.gold },
-  quickIdle: { backgroundColor: colors.surface, borderWidth: hairlineWidth, borderColor: colors.hairline },
 
   monthBar: {
     flexDirection: "row",

@@ -4,7 +4,7 @@ import { FadeIn } from "@/components/motion/Reveal";
 import { PosterPlaceholder } from "@/components/ui/PosterPlaceholder";
 import { Text } from "@/components/ui/Text";
 import type { ProgramEntry } from "@/data/types";
-import { gutter, radius, space } from "@/theme/tokens";
+import { gutter, radius, space, thumb } from "@/theme/tokens";
 import { formatTime } from "@/utils/datetime";
 
 /**
@@ -48,7 +48,7 @@ export function PosterRail({ entries, onOpen }: { entries: ProgramEntry[]; onOpe
   );
 }
 
-const TILE_WIDTH = 124;
+const TILE_WIDTH = thumb.tile.width;
 
 const styles = StyleSheet.create({
   rail: { gap: space.md, paddingHorizontal: gutter, paddingVertical: space.xs },

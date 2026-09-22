@@ -1,6 +1,6 @@
 import { StyleSheet, View } from "react-native";
 import { colors } from "@/theme/colors";
-import { icon, legacy, radius, space } from "@/theme/tokens";
+import { icon, radius, rule, space } from "@/theme/tokens";
 import { CheckIcon } from "@/components/icons/Icons";
 import { makeStyles } from "@/theme/styles";
 
@@ -22,7 +22,7 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     width: space["2xl"],
     height: space["2xl"],
     borderRadius: radius.pill,
-    borderWidth: legacy.thickHairline,
+    borderWidth: rule,
     borderColor: colors.hairline,
     alignItems: "center",
     justifyContent: "center",

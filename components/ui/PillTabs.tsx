@@ -3,7 +3,7 @@ import { Animated, Pressable, StyleSheet, View, type StyleProp, type ViewStyle }
 import { useAnimatedValue } from "@/hooks/useAnimatedValue";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { Text } from "@/components/ui/Text";
-import { control, hairlineWidth, legacy, radius } from "@/theme/tokens";
+import { control, hairlineWidth, radius, space, spring } from "@/theme/tokens";
 import { makeStyles } from "@/theme/styles";
 
 /**
@@ -48,8 +48,8 @@ export function PillTabs<K extends string>({
       return;
     }
     Animated.parallel([
-      Animated.spring(x, { toValue: active.x, useNativeDriver: false, speed: 20, bounciness: 7 }),
-      Animated.spring(width, { toValue: active.width, useNativeDriver: false, speed: 20, bounciness: 7 }),
+      Animated.spring(x, { toValue: active.x, useNativeDriver: false, ...spring }),
+      Animated.spring(width, { toValue: active.width, useNativeDriver: false, ...spring }),
     ]).start();
   }, [active, x, width, reduced]);
 
@@ -98,16 +98,16 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   track: {
     flexDirection: "row",
     alignSelf: "flex-start",
-    padding: legacy.pillTabsPadding,
+    padding: space.xs,
     borderRadius: radius.pill,
     backgroundColor: colors.surface,
     borderWidth: hairlineWidth,
     borderColor: colors.hairlineSoft,
-    gap: legacy.pillTabsGap,
+    gap: space["2xs"],
   },
-  trackFlat: { flexDirection: "row", alignSelf: "flex-start", gap: legacy.pillTabsGap },
-  tab: { height: control.sm, paddingHorizontal: legacy.pillTabsPaddingHorizontal, alignItems: "center", justifyContent: "center", borderRadius: radius.pill },
-  pill: { position: "absolute", top: legacy.pillTabsPadding, bottom: legacy.pillTabsPadding, left: 0, borderRadius: radius.pill },
+  trackFlat: { flexDirection: "row", alignSelf: "flex-start", gap: space["2xs"] },
+  tab: { height: control.sm, paddingHorizontal: space.lg, alignItems: "center", justifyContent: "center", borderRadius: radius.pill },
+  pill: { position: "absolute", top: space.xs, bottom: space.xs, left: 0, borderRadius: radius.pill },
   pillGold: { backgroundColor: colors.gold, boxShadow: `0 4px 14px ${colors.goldGlow}` },
   pillFlat: { top: 0, bottom: 0, backgroundColor: colors.neutralTintBg },
 }));

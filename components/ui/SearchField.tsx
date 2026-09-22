@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { colors } from "@/theme/colors";
 import { inputFontSize } from "@/theme/type";
-import { hairlineWidth, minTouchTarget, radius, space } from "@/theme/tokens";
+import { control, hairlineWidth, icon, minTouchTarget, radius, space } from "@/theme/tokens";
 import { TextField } from "@/components/ui/TextField";
 import { SearchIcon, CloseIcon } from "@/components/icons/Icons";
 import { strings } from "@/i18n/hu";
@@ -87,7 +87,7 @@ export function SearchField({
       style={[styles.field, prominent && styles.prominent, focused && styles.focused]}
       accessibilityRole={Platform.OS === "web" ? ("search" as never) : undefined}
     >
-      <SearchIcon size={prominent ? 18 : 17} color={focused ? colors.gold : colors.textFaint} />
+      <SearchIcon size={prominent ? icon.chrome : icon.inline} color={focused ? colors.gold : colors.textFaint} />
       <TextField
         bare
         ref={inputRef}
@@ -121,12 +121,12 @@ export function SearchField({
         ) : hasText ? (
           <Pressable
             onPress={clear}
-            hitSlop={8}
+            hitSlop={space.sm}
             accessibilityRole="button"
             accessibilityLabel={strings.common.clearSearch}
             style={styles.clear}
           >
-            <CloseIcon size={14} color={colors.textDim} strokeWidth={2.2} />
+            <CloseIcon color={colors.textDim} />
           </Pressable>
         ) : null}
       </View>
@@ -148,7 +148,7 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     backgroundColor: colors.surface,
   },
   prominent: {
-    minHeight: 50,
+    minHeight: control.lg,
   },
   focused: {
     borderColor: colors.goldTintBorder,
@@ -165,14 +165,14 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as object) : null),
   },
   trailing: {
-    width: 32,
-    height: 32,
+    width: control.sm,
+    height: control.sm,
     alignItems: "center",
     justifyContent: "center",
   },
   clear: {
-    width: 26,
-    height: 26,
+    width: space["2xl"],
+    height: space["2xl"],
     borderRadius: radius.pill,
     alignItems: "center",
     justifyContent: "center",

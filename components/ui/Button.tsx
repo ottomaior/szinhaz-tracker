@@ -1,14 +1,25 @@
-import { Pressable, Text, StyleSheet, View, ActivityIndicator } from "react-native";
+import { Pressable, StyleSheet, View, ActivityIndicator, type StyleProp, type ViewStyle } from "react-native";
 import { colors } from "@/theme/colors";
-import { hairlineWidth, legacy, overlay, radius, space } from "@/theme/tokens";
-import { legacyType } from "@/theme/type";
-import { useAppFonts } from "@/hooks/useAppFonts";
-import { makeStyles } from "@/theme/styles";
+import { control, hairlineWidth, overlay, radius, space } from "@/theme/tokens";
+import { Text } from "@/components/ui/Text";
+import { disabledStyle, pressStyle } from "@/components/ui/pressable";
+import { makeStyles, useColors } from "@/theme/styles";
 
+/**
+ * The button, in three variants and two sizes.
+ *
+ * `md` is `control.md` tall — the touch target — with the label role and
+ * the card radius; every full-width action in the app is one. `sm` is a
+ * pill at `control.sm`, for the secondary controls that used to be drawn
+ * by hand in nine places with nine paddings: the profile's edit and sign
+ * out, the entry's owner actions, the follow pill on a venue row, the top
+ * bar's log action, a comment's like and send.
+ */
 export function Button({
   label,
   onPress,
   variant = "primary",
+  size = "md",
   icon,
   style,
   disabled = false,
@@ -24,18 +35,20 @@ export function Button({
    * button's height so a row of the three lines up, but paints nothing.
    */
   variant?: "primary" | "outline" | "text";
+  size?: "md" | "sm";
   icon?: React.ReactNode;
-  style?: object;
+  style?: StyleProp<ViewStyle>;
   /** Blocks presses and dims the button — use for "already submitting". */
   disabled?: boolean;
   loading?: boolean;
   accessibilityLabel?: string;
 }) {
   const styles = useStyles();
+  const palette = useColors();
 
-  const fontsLoaded = useAppFonts();
   const isPrimary = variant === "primary";
   const isBlocked = disabled || loading;
+  const tone = isPrimary ? "inverse" : variant === "text" ? "accent" : "default";
   const labelColor = isPrimary ? colors.onAccent : variant === "text" ? colors.gold : colors.text;
   return (
     <Pressable
@@ -45,22 +58,23 @@ export function Button({
       accessibilityLabel={accessibilityLabel ?? label}
       aria-busy={loading}
       accessibilityState={{ disabled: isBlocked, busy: loading }}
-      style={[
+      style={pressStyle(isPrimary ? "fill" : "quiet", palette, [
         styles.base,
+        size === "sm" ? styles.sm : styles.md,
         isPrimary ? styles.primary : variant === "text" ? styles.text : styles.outline,
-        isBlocked && styles.blocked,
+        isBlocked && disabledStyle,
         style,
-      ]}
+      ])}
     >
       {loading ? <ActivityIndicator size="small" color={labelColor} /> : icon}
-      <Text style={[legacyType("button", fontsLoaded), { color: labelColor }]}>
+      <Text variant="label" tone={tone} numberOfLines={1}>
         {label}
       </Text>
     </Pressable>
   );
 }
 
-/** Small square icon-only button (back arrow, share, bookmark…) */
+/** A round icon-only button: back, share, watchlist, add-to-list. */
 export function IconButton({
   onPress,
   children,
@@ -77,6 +91,7 @@ export function IconButton({
   accessibilityLabel: string;
 }) {
   const styles = useStyles();
+  const palette = useColors();
 
   return (
     <Pressable
@@ -86,13 +101,12 @@ export function IconButton({
       accessibilityLabel={accessibilityLabel}
       aria-pressed={active}
       accessibilityState={{ disabled, selected: active }}
-      hitSlop={6}
-      style={[
+      style={pressStyle(active ? "fill" : "row", palette, [
         styles.iconBtn,
         translucent ? styles.iconBtnTranslucent : styles.iconBtnSolid,
         active && styles.iconBtnActive,
-        disabled && styles.blocked,
-      ]}
+        disabled && disabledStyle,
+      ])}
     >
       <View>{children}</View>
     </Pressable>
@@ -104,9 +118,16 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: legacy.buttonGap,
-    borderRadius: legacy.buttonRadius,
-    paddingVertical: legacy.buttonPaddingVertical,
+    gap: space.sm,
+  },
+  md: {
+    minHeight: control.md,
+    borderRadius: radius.md,
+    paddingHorizontal: space.lg,
+  },
+  sm: {
+    minHeight: control.sm,
+    borderRadius: radius.pill,
     paddingHorizontal: space.lg,
   },
   primary: {
@@ -119,12 +140,9 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
   text: {
     paddingHorizontal: space.sm,
   },
-  blocked: {
-    opacity: 0.55,
-  },
   iconBtn: {
-    width: 36,
-    height: 36,
+    width: control.md,
+    height: control.md,
     borderRadius: radius.pill,
     alignItems: "center",
     justifyContent: "center",

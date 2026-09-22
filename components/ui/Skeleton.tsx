@@ -64,8 +64,8 @@ export function PosterCardSkeleton({ aspectRatio = 3 / 4 }: { aspectRatio?: numb
       <View style={{ aspectRatio }}>
         <Skeleton width="100%" height="100%" radius={radii.md} />
       </View>
-      <Skeleton height={12} width="85%" />
-      <Skeleton height={10} width="55%" />
+      <Skeleton height={space.md} width="85%" />
+      <Skeleton height={space.sm} width="55%" />
     </View>
   );
 }
@@ -107,7 +107,7 @@ export function ScreenSkeleton({ rows = 3 }: { rows?: number }) {
 }
 
 /** A horizontal run of tiles, for a rail that has not loaded yet. */
-export function SkeletonRail({ count = 4, width = 132 }: { count?: number; width?: number }) {
+export function SkeletonRail({ count = 4, width = thumb.tile.width }: { count?: number; width?: number }) {
   return (
     <View style={styles.rail}>
       {Array.from({ length: count }).map((_, i) => (

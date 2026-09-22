@@ -5,7 +5,7 @@ import { colors } from "@/theme/colors";
 import { bodyFont, displayFont } from "@/theme/typography";
 import { useAppFonts } from "@/hooks/useAppFonts";
 import { makeStyles } from "@/theme/styles";
-import { hairlineWidth } from "@/theme/tokens";
+import { avatar, hairlineWidth } from "@/theme/tokens";
 
 /**
  * Somebody's picture in a circle, falling back to their initials.
@@ -22,7 +22,7 @@ import { hairlineWidth } from "@/theme/tokens";
 export function Avatar({
   uri,
   initials,
-  size = 36,
+  size = avatar.byline,
   serif = false,
 }: {
   /** Public URL of the profile picture. Omitted or broken falls back to initials. */

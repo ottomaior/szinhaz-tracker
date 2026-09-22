@@ -161,32 +161,3 @@ export const inputFontSize = 16;
  * is visibly a decision.
  */
 export const dockLabel: TextStyle = { fontSize: 10, lineHeight: 13 };
-
-/**
- * Text the primitives set by hand on 22 September 2026, kept exactly as they
- * were so the consolidation commit of the Velvet Curtain finish pass moved
- * no pixel. Each is replaced by a role in the convergence commit that
- * follows (D.0c in the plan) and this map is then deleted. Nothing new may
- * use it.
- */
-const LEGACY: Record<string, { size?: number; weight: "regular" | "medium" | "semibold" | "bold"; letterSpacing?: number }> = {
-  button: { size: 13.5, weight: "bold" },
-  chip: { size: 12.5, weight: "medium" },
-  chipActive: { size: 12.5, weight: "bold" },
-  badge: { size: 10.5, weight: "bold", letterSpacing: 0.04 },
-  badgeSmall: { size: 9.5, weight: "bold", letterSpacing: 0.04 },
-  // No size: it sits inside a `bodySmall` sentence and inherits its 13.5.
-  statusInline: { weight: "semibold" },
-  toastAction: { size: 13, weight: "bold" },
-};
-
-export type LegacyTypeKey = keyof typeof LEGACY;
-
-export function legacyType(key: LegacyTypeKey, fontsLoaded: boolean): TextStyle {
-  const spec = LEGACY[key];
-  return {
-    fontFamily: bodyFont(fontsLoaded, spec.weight),
-    fontSize: spec.size,
-    letterSpacing: spec.letterSpacing,
-  };
-}

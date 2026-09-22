@@ -2,6 +2,7 @@ import { Children, isValidElement, useEffect, type ReactNode } from "react";
 import { Animated, Easing, type StyleProp, type ViewStyle } from "react-native";
 import { useAnimatedValue } from "@/hooks/useAnimatedValue";
 import { NATIVE_DRIVER, useReducedMotion } from "@/hooks/useReducedMotion";
+import { duration as motion } from "@/theme/tokens";
 
 /**
  * Entrance motion, after reactbits' "Fade Content" and "Animated List".
@@ -20,7 +21,7 @@ import { NATIVE_DRIVER, useReducedMotion } from "@/hooks/useReducedMotion";
 export function FadeIn({
   children,
   delay = 0,
-  duration = 420,
+  duration = motion.reveal,
   distance = 12,
   axis = "y",
   style,
