@@ -71,11 +71,26 @@ jobs:
         if: steps.before.outputs.skip == 'false'
         run: |
           set -e
+          # Run node from inside the tree being measured. `node -e` resolves
+          # `require` against the working directory, and the only node_modules
+          # that exist are the two the previous step installed — from the
+          # workspace root there is no @expo/fingerprint to find, which is how
+          # the first run of this job failed.
           hash_of() {
-            node -e "require('@expo/fingerprint').createFingerprintAsync('$1').then(f=>console.log(f.hash))" 
+            ( cd "$1" && node -e "require('@expo/fingerprint').createFingerprintAsync('.').then(f=>console.log(f.hash))" )
           }
-          new=$(hash_of "$PWD/head")
-          old=$(hash_of "$PWD/base")
+          new=$(hash_of head)
+          old=$(hash_of base)
+
+          # A watcher that cannot measure must say so. Without this, two empty
+          # strings compare equal and the job reports "unchanged" — which is the
+          # one answer worse than no job at all, because it is the answer
+          # somebody would act on.
+          if [ -z "$new" ] || [ -z "$old" ]; then
+            echo "::error title=Fingerprint could not be measured::head='$new' base='$old'"
+            exit 1
+          fi
+
           echo "before this push: $old"
           echo "after  this push: $new"
           {
