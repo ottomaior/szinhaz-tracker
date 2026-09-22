@@ -114,6 +114,15 @@ const ALLOW: { file: string; category: Category; literal: string; why: string }[
   { file: "landing/index.html", category: "motion", literal: "pulse 2s", why: "loop: the live dot" },
   { file: "landing/index.html", category: "motion", literal: "spf 1.1s", why: "loop: a spark's life" },
 
+  // Light that belongs to a specific ornament rather than to the depth scale:
+  // a lit dot, and the gold wash a cropped phone stands in. Naming them as
+  // elevation steps would imply other things could sit at those heights.
+  { file: "landing/index.html", category: "elevation", literal: "0 0 8px var(--vc-gold-glow)", why: "a lit dot" },
+  { file: "landing/index.html", category: "elevation", literal: "0 0 10px var(--vc-gold-glow)", why: "a lit bullet" },
+  { file: "landing/index.html", category: "elevation", literal: "0 -20px 60px -30px var(--vc-gold-glow)", why: "the gold wash a cropped phone stands in" },
+  { file: "landing/index.html", category: "elevation", literal: "0 0 0 0", why: "the pulse: a ring expanding out of the live dot" },
+  { file: "landing/index.html", category: "elevation", literal: "0 0 0 8px transparent", why: "the pulse: the ring at its widest" },
+
   // The questionnaire's error and "worst" states. `Palette` has no danger
   // colour; adding one touches all five themes and every screen in the app,
   // which is a change of its own rather than part of this pass. See ISSUES.md.

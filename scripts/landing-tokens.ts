@@ -136,6 +136,9 @@ function scales(): string {
     `--vl-elev-floating:0 8px 24px ${v("shadow")}`,
     `--vl-elev-lifted:0 24px 48px -24px ${v("shadow")}`,
     `--vl-elev-glow:0 12px 30px -12px ${v("goldGlow")}`,
+    // Not depth but an edge: a one-pixel ring where a border would change the
+    // box. The phone mockups and the cropped phone in an act both need it.
+    `--vl-elev-ring:0 0 0 1px ${v("hairline")}`,
 
     // The app's three durations and its one easing.
     ...Object.entries(duration).map(([k, n]) => `--vl-dur-${k}:${n}ms`),
