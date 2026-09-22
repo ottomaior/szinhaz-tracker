@@ -114,6 +114,19 @@ const ALLOW: { file: string; category: Category; literal: string; why: string }[
   { file: "landing/index.html", category: "motion", literal: "pulse 2s", why: "loop: the live dot" },
   { file: "landing/index.html", category: "motion", literal: "spf 1.1s", why: "loop: a spark's life" },
 
+  // Light drawn on the page rather than colour assigned to it: a sheen
+  // sweeping a card, the soft edges of the marquee, the wash under the hero.
+  // All of them are white or transparent at a stated alpha, which is a shape
+  // in light rather than a value the palette could name.
+  { file: "landing/index.html", category: "colour", literal: "rgba(255,255,255,.18)", why: "the glare that follows the cursor across a phone" },
+  { file: "landing/index.html", category: "colour", literal: "linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)", why: "the marquee's soft edges: a mask, not ink" },
+  // The accent at an alpha the palette does not name: a spotlight following
+  // the cursor, the wash under the hero. The *colour* is generated — it is
+  // `--vl-ray-rgb`, which comes from the palette's gold — and only the
+  // transparency is local, which is the whole reason that token is three
+  // numbers rather than a colour.
+  { file: "landing/index.html", category: "colour", literal: "rgba(var(--vl-ray-rgb)", why: "the accent at a local alpha" },
+
   // A gradient border drawn as a padded box with its middle masked out — the
   // star-bordered button and the bento tiles' lit edge. These are the
   // thickness of a line, not the spacing of a layout; the app allows the same
