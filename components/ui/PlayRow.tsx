@@ -20,19 +20,30 @@ export function PlayRow({
   play,
   meta,
   trailing,
+  action,
   onPress,
 }: {
   play: Play;
   /** Secondary lines — venue, the date it was seen, whatever fits the screen. */
   meta?: ReactNode;
-  /** Right-hand content, e.g. a rating. */
+  /** Right-hand content, e.g. a rating. Read-only: it sits inside the row's
+   * own pressable, so anything tappable goes in `action` instead. */
   trailing?: ReactNode;
+  /**
+   * A control at the end of the row — remove from this list, unfollow.
+   *
+   * A sibling of the pressable rather than a child of it, the same way
+   * `PersonRow` does it: a button inside a button is invalid HTML, warns on
+   * every render, and reads as a single target to a screen reader. That is
+   * what T-070 reported on the list screen.
+   */
+  action?: ReactNode;
   onPress: () => void;
 }) {
   const styles = useStyles();
   const palette = useColors();
-  return (
-    <Pressable onPress={onPress} style={pressStyle("row", palette, styles.row)} accessibilityRole="button" accessibilityLabel={play.title}>
+  const body = (
+    <>
       <PosterPlaceholder
         poster={play.poster}
         title={play.title}
@@ -49,6 +60,28 @@ export function PlayRow({
         {meta}
       </View>
       {trailing}
+    </>
+  );
+
+  if (action) {
+    return (
+      <View style={styles.row}>
+        <Pressable
+          onPress={onPress}
+          style={pressStyle("row", palette, styles.pressableRow)}
+          accessibilityRole="button"
+          accessibilityLabel={play.title}
+        >
+          {body}
+        </Pressable>
+        {action}
+      </View>
+    );
+  }
+
+  return (
+    <Pressable onPress={onPress} style={pressStyle("row", palette, styles.row)} accessibilityRole="button" accessibilityLabel={play.title}>
+      {body}
     </Pressable>
   );
 }
@@ -65,4 +98,8 @@ const useStyles = makeStyles((colors) => StyleSheet.create({
     borderBottomWidth: hairlineWidth,
     borderBottomColor: colors.hairlineSoft,
   },
+  // The row's own body when a control sits beside it: the same layout, but
+  // the hairline and the vertical padding stay on the wrapper, so a row with
+  // an action is exactly as tall as one without.
+  pressableRow: { flex: 1, flexDirection: "row", gap: space.md, alignItems: "flex-start" },
 }));

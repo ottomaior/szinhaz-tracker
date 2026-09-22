@@ -215,26 +215,22 @@ export default function ListScreen() {
                         )}
                       </>
                     }
-                    trailing={
-                      <View style={{ alignItems: "flex-end", gap: space.sm }}>
-                        {list.isRanked && (
-                          <Text variant="numeral">
-                            {i + 1}
-                          </Text>
-                        )}
-                        {/* Only while editing (T-078): a control that is
-                            always live inside a tappable row is the one a
-                            tap meant for the row hits. */}
-                        {isOwner && editing && (
-                          <Button
-                            variant="text"
-                            size="sm"
-                            label={strings.lists.removeEntry}
-                            onPress={() => handleRemove(entry.play.id, entry.play.title, entry.note)}
-                            disabled={busy}
-                          />
-                        )}
-                      </View>
+                    trailing={list.isRanked ? <Text variant="numeral">{i + 1}</Text> : undefined}
+                    // Only while editing (T-078): a control that is always
+                    // live inside a tappable row is the one a tap meant for
+                    // the row hits. It goes in `action`, beside the row's
+                    // pressable rather than inside it — nesting it was the
+                    // button-inside-a-button of T-070.
+                    action={
+                      isOwner && editing ? (
+                        <Button
+                          variant="text"
+                          size="sm"
+                          label={strings.lists.removeEntry}
+                          onPress={() => handleRemove(entry.play.id, entry.play.title, entry.note)}
+                          disabled={busy}
+                        />
+                      ) : undefined
                     }
                   />
                 ))}

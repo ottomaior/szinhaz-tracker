@@ -21,6 +21,13 @@ import { defineConfig } from "vitest/config";
  * on native. That failure is invisible by construction — the picker still
  * works, only the colours do not follow — so it needs an assertion too.
  *
+ * `components/` is here for the same reason as `theme/`, and its test is the
+ * same kind of thing: a static check that no screen hands a control to a row
+ * slot that renders inside the row's own pressable. That produces a button
+ * inside a button, which React warns about on every render and a screen
+ * reader collapses into a single target, and it is invisible at the call site
+ * because a prop's name does not say where its contents will be drawn.
+ *
  * `i18n/` is here for a third reason again: `i18n/legal.ts` carries the
  * operator’s name, address and contact address, and a legal document that
  * still says TODO where the data controller should be is worse than no
@@ -54,6 +61,13 @@ export default defineConfig({
       // times against another's two wins on exposure, not on value, and the
       // static page carries its own copy of the design — so both are pinned.
       "scripts/**/*.test.ts",
+      // `components/` for the same reason `theme/` is here: a static check on
+      // the source, not a rendered screen. A tappable control handed to a
+      // row's read-only slot becomes a button inside a button, which is
+      // invalid on the web and reads as one target to a screen reader. It
+      // looks perfectly ordinary at the call site, which is why a convention
+      // was not enough to stop it happening twice (T-070).
+      "components/**/*.test.ts",
     ],
     environment: "node",
     // Fixtures are real, sizeable pages; a slow first parse should not fail.
