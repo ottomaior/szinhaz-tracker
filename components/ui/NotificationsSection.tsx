@@ -165,9 +165,17 @@ export function NotificationsSection() {
 
       {kinds && (
         <View style={{ gap: space.sm }}>
-          <Text variant="eyebrow" tone="faint">
-            {strings.settings.notificationsKinds}
-          </Text>
+          {/* The heading names the phone, and the line under it says what
+              switching one off does not do (T-118): these toggles are read
+              only by `send-push`, so the inbox keeps the row either way. */}
+          <View style={{ gap: space["2xs"] }}>
+            <Text variant="eyebrow" tone="faint">
+              {strings.settings.notificationsKinds}
+            </Text>
+            <Text variant="caption" tone="faint">
+              {strings.settings.notificationsKindsHint}
+            </Text>
+          </View>
           <SettingsGroup>
             {NOTIFICATION_KINDS_IN_SETTINGS_ORDER.map((kind) => (
               <ToggleRow

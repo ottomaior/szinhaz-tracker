@@ -1065,7 +1065,13 @@ export const strings = {
       "Ez a böngésző nem tud értesítést mutatni. iPhone-on előbb tedd az appot a kezdőképernyőre, és onnan nyisd meg.",
     notificationsDenied:
       "A böngésző letiltotta az értesítéseket ehhez az oldalhoz. A címsor melletti lakat ikonnál engedélyezheted újra.",
-    notificationsKinds: "Miről szóljunk?",
+    /* Named for the channel it actually governs (T-118). These toggles are
+       read only by `send-push`; `generate_notifications()` writes the inbox
+       row whatever they say, so a heading that asked "miről szóljunk?" was
+       promising something wider than the switch delivers. */
+    notificationsKinds: "Mi szóljon a telefonodon?",
+    notificationsKindsHint:
+      "A kikapcsoltakról nem szól a telefonod — az appban, a harang alatt továbbra is megtalálod őket.",
     notificationsError: "Nem sikerült bekapcsolni. Próbáld újra.",
     /* The Play build cannot register for push until it ships with Firebase
        configuration (T-107); until then this is the honest answer, not

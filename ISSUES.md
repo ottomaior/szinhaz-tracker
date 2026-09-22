@@ -419,6 +419,28 @@ attendance and the diary must never record an evening on someone's behalf.
 
 ## Open
 
+### T-118 · The kind toggles govern the phone, but the heading claimed everything
+type: bug · area: notifications · priority: med · status: doing · added: 2026-09-22
+
+`generate_notifications()` (`0030_alerts.sql`) never reads
+`notification_preferences`; only `send-push` does. So the eight per-kind
+toggles in Settings decide **what may interrupt the phone**, and the in-app
+bell keeps every kind whatever is switched off. The section was headed
+„Miről szóljunk?”, which reads as global: somebody who turns off
+„Kedvelés” would reasonably expect to stop seeing likes altogether, and
+would still find them under the bell.
+
+Ottó spotted this looking at the signed-in screen, and it is the same
+separation he asked for in T-116 — what reaches the phone versus what waits
+in the app. The mechanism was already built; only its name denied it.
+Trimming the row hints in T-117 removed the last place that could have said
+so, which made it worse.
+
+Fixed by naming rather than machinery: the heading becomes „Mi szóljon a
+telefonodon?” with one line saying the switched-off kinds stay in the app
+under the bell. Deliberately **not** made global — suppressing the inbox row
+too would let somebody permanently lose a record they might have wanted.
+
 ### T-116 · One push per notification row: following one theatre buzzed the phone five times
 type: bug · area: notifications · priority: high · status: open · added: 2026-09-22
 
@@ -3606,4 +3628,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-118**
+Next free id: **T-119**
