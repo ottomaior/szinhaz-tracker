@@ -419,6 +419,28 @@ attendance and the diary must never record an evening on someone's behalf.
 
 ## Open
 
+### T-118 · The kind toggles govern the phone, but the heading claimed everything
+type: bug · area: notifications · priority: med · status: doing · added: 2026-09-22
+
+`generate_notifications()` (`0030_alerts.sql`) never reads
+`notification_preferences`; only `send-push` does. So the eight per-kind
+toggles in Settings decide **what may interrupt the phone**, and the in-app
+bell keeps every kind whatever is switched off. The section was headed
+„Miről szóljunk?”, which reads as global: somebody who turns off
+„Kedvelés” would reasonably expect to stop seeing likes altogether, and
+would still find them under the bell.
+
+Ottó spotted this looking at the signed-in screen, and it is the same
+separation he asked for in T-116 — what reaches the phone versus what waits
+in the app. The mechanism was already built; only its name denied it.
+Trimming the row hints in T-117 removed the last place that could have said
+so, which made it worse.
+
+Fixed by naming rather than machinery: the heading becomes „Mi szóljon a
+telefonodon?” with one line saying the switched-off kinds stay in the app
+under the bell. Deliberately **not** made global — suppressing the inbox row
+too would let somebody permanently lose a record they might have wanted.
+
 ### T-116 · One push per notification row: following one theatre buzzed the phone five times
 type: bug · area: notifications · priority: high · status: open · added: 2026-09-22
 
@@ -442,6 +464,29 @@ Ottó's direction: not every kind of notification deserves to interrupt the
 phone. Decide which kinds reach the lock screen and which live only in the
 in-app inbox behind the bell, and coalesce what is left so one night's news
 is one interruption rather than N.
+
+### T-117 · Settings is a wall of boxes and restated labels
+type: chore · area: design · priority: med · status: doing · added: 2026-09-22
+
+Ottó looked at Beállítások on Android and called it crowded and robotic:
+too many controls, too much text, and the useful part lost in it. Signed in,
+the screen drew **19 separately bordered, filled cards**, and 18 of them
+carried a permanent two-line subtitle.
+
+Two causes, both structural. Six of the eight notification hints were the
+label said a second time — "Kedvelés" over "Ha valaki kedveli egy
+bejegyzésedet", "Bemutató egy követett színházban" over "Ha egy színház,
+amit követsz, új előadást hirdet" — so half the prose carried no
+information at all. And every row was its own box, which is what made a
+list of related settings read as a stack of unrelated tiles.
+
+Agreed direction, all four of the recommendations put to Ottó: cut only the
+hints that restate their label and keep the ones that say something (the
+consent line on a follow request, what the weekly letter will and will not
+do, and the three legal ones, since a document cannot show its contents from
+its title); draw each section as one card with its rows parted by hairlines;
+replace the six stacked theme cards with a compact strip of swatches. No
+toggle, link or preference is removed — only the chrome and the tautology.
 
 ### T-113 · "látta a bemutatkozást" on the operator stats says nothing to its reader
 type: chore · area: design · priority: low · status: open · added: 2026-09-20
@@ -3583,4 +3628,4 @@ The reason matters more than the entry.
 
 ---
 
-Next free id: **T-117**
+Next free id: **T-119**

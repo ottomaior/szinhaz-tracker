@@ -1065,7 +1065,13 @@ export const strings = {
       "Ez a böngésző nem tud értesítést mutatni. iPhone-on előbb tedd az appot a kezdőképernyőre, és onnan nyisd meg.",
     notificationsDenied:
       "A böngésző letiltotta az értesítéseket ehhez az oldalhoz. A címsor melletti lakat ikonnál engedélyezheted újra.",
-    notificationsKinds: "Miről szóljunk?",
+    /* Named for the channel it actually governs (T-118). These toggles are
+       read only by `send-push`; `generate_notifications()` writes the inbox
+       row whatever they say, so a heading that asked "miről szóljunk?" was
+       promising something wider than the switch delivers. */
+    notificationsKinds: "Mi szóljon a telefonodon?",
+    notificationsKindsHint:
+      "A kikapcsoltakról nem szól a telefonod — az appban, a harang alatt továbbra is megtalálod őket.",
     notificationsError: "Nem sikerült bekapcsolni. Próbáld újra.",
     /* The Play build cannot register for push until it ships with Firebase
        configuration (T-107); until then this is the honest answer, not
@@ -1075,8 +1081,10 @@ export const strings = {
     /* The weekly letter (T-090). Default on; the letter itself carries the
        way out, and this is the same switch from the other side. */
     digest: "Heti levél e-mailben",
-    digestHint:
-      "Hetente egyszer: a kívánságlistás előadásaid, amelyeket a héten játszanak, és ami a követett színházaidban megy. Üres hétről nem írunk.",
+    /* Shortened with the rest of the settings prose (T-117), down to the two
+       things the title does not already say: what is in it, and that it does
+       not arrive when there is nothing to put in it. */
+    digestHint: "A hét előadásai a listáidról és a követett színházaidból. Üres hétről nem írunk.",
 
     /* The account's own two controls. Only shown to somebody signed in —
        there is nothing to export or delete otherwise — which is why they sit

@@ -19,6 +19,7 @@ import { space } from "@/theme/tokens";
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
 import { ToggleRow } from "@/components/ui/ToggleRow";
+import { SettingsGroup } from "@/components/ui/SettingsGroup";
 import { useToast } from "@/components/ui/Toast";
 import { haptic } from "@/utils/haptics";
 import { strings } from "@/i18n/hu";
@@ -28,9 +29,14 @@ import { strings } from "@/i18n/hu";
  *
  * Two questions, in this order. Does *this device* hear: a switch that is
  * the OS permission plus a `push_subscriptions` row, and says plainly when a
- * browser cannot do it or has said no. And *what* to hear about: six toggles
- * that apply to the person, on every device, and are written the first time
- * one is turned off.
+ * browser cannot do it or has said no. And *what* to hear about: eight
+ * toggles that apply to the person, on every device, and are written the
+ * first time one is turned off.
+ *
+ * Both lists are one card apiece rather than a card per row (T-117), and
+ * most of the toggles are a label alone: the sentence that used to sit under
+ * each one only said the label again. `notificationKindLabels` keeps the two
+ * hints that still tell the reader something.
  */
 export function NotificationsSection() {
   const toast = useToast();
@@ -146,28 +152,42 @@ export function NotificationsSection() {
           whatever the device, so it sits above the per-kind list rather
           than among it (T-090). */}
       {digest !== undefined && (
-        <ToggleRow
-          label={strings.settings.digest}
-          blurb={strings.settings.digestHint}
-          on={digest}
-          onChange={toggleDigest}
-        />
+        <SettingsGroup>
+          <ToggleRow
+            bare
+            label={strings.settings.digest}
+            blurb={strings.settings.digestHint}
+            on={digest}
+            onChange={toggleDigest}
+          />
+        </SettingsGroup>
       )}
 
       {kinds && (
         <View style={{ gap: space.sm }}>
-          <Text variant="eyebrow" tone="faint">
-            {strings.settings.notificationsKinds}
-          </Text>
-          {NOTIFICATION_KINDS_IN_SETTINGS_ORDER.map((kind) => (
-            <ToggleRow
-              key={kind}
-              label={notificationKindLabels[kind].label}
-              blurb={notificationKindLabels[kind].hint}
-              on={kinds.has(kind)}
-              onChange={(on) => toggleKind(kind, on)}
-            />
-          ))}
+          {/* The heading names the phone, and the line under it says what
+              switching one off does not do (T-118): these toggles are read
+              only by `send-push`, so the inbox keeps the row either way. */}
+          <View style={{ gap: space["2xs"] }}>
+            <Text variant="eyebrow" tone="faint">
+              {strings.settings.notificationsKinds}
+            </Text>
+            <Text variant="caption" tone="faint">
+              {strings.settings.notificationsKindsHint}
+            </Text>
+          </View>
+          <SettingsGroup>
+            {NOTIFICATION_KINDS_IN_SETTINGS_ORDER.map((kind) => (
+              <ToggleRow
+                bare
+                key={kind}
+                label={notificationKindLabels[kind].label}
+                blurb={notificationKindLabels[kind].hint}
+                on={kinds.has(kind)}
+                onChange={(on) => toggleKind(kind, on)}
+              />
+            ))}
+          </SettingsGroup>
         </View>
       )}
     </>

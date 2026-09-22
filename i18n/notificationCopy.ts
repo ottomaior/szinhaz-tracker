@@ -145,40 +145,27 @@ export function notificationSummaryLine(kind: NotificationKind, count: number, n
 /**
  * How each kind is named where a person switches it on or off. Written as
  * what they will get, not as the database's word for it.
+ *
+ * Most of these carry no `hint`, and that is the point (T-117). Six of the
+ * eight used to be followed by a sentence that restated the label —
+ * "Kedvelés" under "Ha valaki kedveli egy bejegyzésedet" — and eight such
+ * sentences stacked were most of the wall of text the settings screen had
+ * become. A hint is kept only where it says something the label cannot:
+ * that a follow is a decision the reader makes, and what the weekly letter
+ * will and will not do.
  */
-export const notificationKindLabels: Record<NotificationKind, { label: string; hint: string }> = {
-  playing_tomorrow: {
-    label: "Holnap játsszák",
-    hint: "Az este előtt, ha egy kívánságlistás előadás másnap megy.",
-  },
-  dates_published: {
-    label: "Új időpontok",
-    hint: "Ha egy kívánságlistás előadás új játszási napokat kap.",
-  },
-  venue_new_play: {
-    label: "Bemutató egy követett színházban",
-    hint: "Ha egy színház, amit követsz, új előadást hirdet.",
-  },
-  person_new_play: {
-    label: "Új szerep egy követett alkotónál",
-    hint: "Ha valaki, akit követsz, új előadásban játszik.",
-  },
-  review_liked: {
-    label: "Kedvelés",
-    hint: "Ha valaki kedveli egy bejegyzésedet.",
-  },
-  review_commented: {
-    label: "Hozzászólás",
-    hint: "Ha valaki hozzászól egy bejegyzésedhez.",
-  },
+export const notificationKindLabels: Record<NotificationKind, { label: string; hint?: string }> = {
+  playing_tomorrow: { label: "Holnap játsszák" },
+  dates_published: { label: "Új időpontok" },
+  venue_new_play: { label: "Bemutató egy követett színházban" },
+  person_new_play: { label: "Új szerep egy követett alkotónál" },
+  review_liked: { label: "Kedvelés" },
+  review_commented: { label: "Hozzászólás" },
   follow_requested: {
     label: "Követési kérelem",
-    hint: "Ha valaki követni szeretne — te döntöd el, hogy láthatja-e a véleményeidet.",
+    hint: "Te döntöd el, hogy láthatja-e a véleményeidet.",
   },
-  follow_accepted: {
-    label: "Elfogadott kérelem",
-    hint: "Ha valaki, akit követni szeretnél, elfogadta a kérelmedet.",
-  },
+  follow_accepted: { label: "Elfogadott kérelem" },
 };
 
 /** The order the settings screen lists them in: what matters most, first. */
