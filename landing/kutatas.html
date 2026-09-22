@@ -29,6 +29,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500;6..96,600;6..96,700&family=Sora:wght@300;400;500;600;700&display=swap">
 
+<script id="shot-stamps" type="application/json">{"checkin.webp":"083c6963","discover.webp":"bc58d6e3","feed.webp":"cbb32226","list.webp":"710eb9c9","musor.webp":"43eb3795","person.webp":"a6ffc587","play.webp":"82a32fd2","search.webp":"6f2b9cd8","user.webp":"2bbc94c4"}</script>
 <script id="vl-theme">
 (function(){
   var KEY="vastaps.landing.theme", INK={"dark":"#0a0507","light":"#faf5ec"}, root=document.documentElement;
@@ -291,6 +292,20 @@ dialog button:focus-visible { outline: 2px solid var(--vc-gold); outline-offset:
 (function () {
   "use strict";
 
+  /* The screenshots' cache-busting stamps, written by scripts/stamp-shots.ts.
+     Cloudflare caches shots/*.webp for a day and this page builds those URLs
+     in JavaScript, so without a stamp a re-taken shot could be a day late.
+     Falls back to the bare path, which is what the page did for its whole
+     life before the stamps existed. */
+  var SHOT_STAMPS = (function () {
+    try { return JSON.parse(document.getElementById("shot-stamps").textContent) || {}; }
+    catch (e) { return {}; }
+  })();
+  function shotUrl(name) {
+    var v = SHOT_STAMPS[name];
+    return "shots/" + name + (v ? "?v=" + v : "");
+  }
+
   // ── Where the answers go ───────────────────────────────────────────────
   // The publishable key is the same one the app ships in its bundle; it can
   // only do what Row Level Security lets `anon` do, which on this table is
@@ -438,7 +453,7 @@ dialog button:focus-visible { outline: 2px solid var(--vc-gold); outline-offset:
   // A rating row: the feature, and the four answers.
   function rateRow(f) {
     var opts = RATING_ANSWERS.map(function (id) { return { id: id, label: RATING_LABELS[id] }; });
-    var shot = f.shot ? ' <button type="button" class="linkish" data-shot="shots/' + esc(f.shot) + '">kép</button>' : "";
+    var shot = f.shot ? ' <button type="button" class="linkish" data-shot="' + esc(shotUrl(f.shot)) + '">kép</button>' : "";
     return '<div class="miss miss--rate" data-rate="' + esc(f.id) + '"><div><div class="miss__label">' + esc(f.label) + shot + '</div><div class="miss__detail">' + esc(f.detail) + "</div></div>" +
       chips("r:" + f.id, opts, state.ratings[f.id], false) + "</div>";
   }
@@ -459,7 +474,7 @@ dialog button:focus-visible { outline: 2px solid var(--vc-gold); outline-offset:
 
   function card(f, checked, disabled) {
     var thumb = f.shot
-      ? '<span class="card__thumb"><img src="shots/' + esc(f.shot) + '" alt="" loading="lazy" width="44" height="60"></span>'
+      ? '<span class="card__thumb"><img src="' + esc(shotUrl(f.shot)) + '" alt="" loading="lazy" width="44" height="60"></span>'
       : '<span class="card__thumb card__thumb--none" aria-hidden="true"></span>';
     return '<label class="card card--best"><input type="checkbox" name="best" value="' + esc(f.id) + '"' + (checked ? " checked" : "") + (disabled ? " disabled" : "") + ' aria-label="' + esc(f.label) + '">' +
       thumb + '<span class="card__text"><span class="card__label">' + esc(f.label) + '</span><span class="card__detail">' + esc(f.detail) + '</span></span>' +
